@@ -289,7 +289,10 @@
     </div>
     <div class="dock-video">
       <div class="video-frame">
-        <div id="clip" data-video-id="aL6hlSKKmKc"></div>
+        <video id="clip" controls playsinline preload="metadata" data-youtube-id="aL6hlSKKmKc" title="しくじり学園放送室 · 岩田ま亜里">
+          <source src="sikujiri-clip.mp4" type="video/mp4">
+          无法播放本地视频文件 <code>sikujiri-clip.mp4</code>（请确认它与本网页在同一目录）。
+        </video>
       </div>
     </div>
   </div>
@@ -1764,40 +1767,29 @@
 
 <script>
 (function(){
-  // Online (GitHub Pages / https) player: embeds the ORIGINAL YouTube video via the
-  // IFrame Player API, so clickable timestamps seek AND karaoke follow-along both work
-  // (unlike player_embed.html's seek-by-reload). Nothing copyrighted is re-hosted.
+  // Unified player: ONE page that works offline AND online, no mode to choose.
+  // The dock ships a native <video src="clip.mp4"> carrying the YouTube id in
+  // data-youtube-id. On load we probe the local file: if it loads → native
+  // <video> (offline, timeupdate follow-along); if it's missing/404 (e.g. on
+  // GitHub Pages) → swap to the YouTube IFrame Player API (poll follow-along).
+  // One follow-along engine, two transports, auto-selected.
   var dock      = document.getElementById('dock');
   var minBtn    = document.getElementById('dockMin');
   var followBtn = document.getElementById('dockFollow');
-  var slot      = document.getElementById('clip');
-  var videoId   = slot ? slot.getAttribute('data-video-id') : '';
+  var video     = document.getElementById('clip');            // <video> + <source> + data-youtube-id
+  var ytid      = video ? (video.getAttribute('data-youtube-id') || '') : '';
   var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 
-  var player = null, ready = false, pendingSeek = null, poll = null;
+  var transport = null;   // { seek(sec) }  — set once local/youtube is chosen
 
-  function toSec(txt){
-    var m = String(txt).match(/(\d+):(\d+)/);
-    return m ? (+m[1]) * 60 + (+m[2]) : 0;
-  }
+  function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
   function setMin(m){
     if (!dock) return;
     dock.classList.toggle('min', m);
-    if (minBtn){
-      minBtn.setAttribute('aria-expanded', m ? 'false' : 'true');
-      minBtn.textContent = m ? '展开 ▸' : '收起 ▾';
-    }
-  }
-  function seek(sec){
-    setMin(false);                          // make sure the video is visible
-    if (ready && player){
-      try { player.seekTo(sec, true); player.playVideo(); } catch (e) {}
-    } else {
-      pendingSeek = sec;                    // clicked before the API finished loading
-    }
+    if (minBtn){ minBtn.setAttribute('aria-expanded', m ? 'false' : 'true'); minBtn.textContent = m ? '展开 ▸' : '收起 ▾'; }
   }
 
-  // ---- timeline of utterances, built from the rendered rows ----
+  // ---------- shared follow-along engine (transport-agnostic) ----------
   var units = [], uEls = document.querySelectorAll('.u');
   for (var i = 0; i < uEls.length; i++){
     var t = uEls[i].querySelector('.ts');
@@ -1805,14 +1797,10 @@
   }
   units.sort(function(a, b){ return a.sec - b.sec; });
 
-  // ---- follow-along state ----
   var following = true, activeIdx = -1;
-
   function dockH(){
     if (!dock) return 0;
-    return dock.classList.contains('min')
-      ? (dock.querySelector('.dock-bar') || dock).offsetHeight
-      : dock.offsetHeight;
+    return dock.classList.contains('min') ? (dock.querySelector('.dock-bar') || dock).offsetHeight : dock.offsetHeight;
   }
   function scrollToActive(force){
     var u = units[activeIdx]; if (!u) return;
@@ -1835,7 +1823,7 @@
     for (var k = 0; k < units.length; k++){ if (units[k].sec <= tt + 0.15) lo = k; else break; }
     return lo;
   }
-  function onTime(tt){
+  function highlight(tt){
     if (!units.length) return;
     var idx = indexAt(tt);
     if (idx === activeIdx) return;
@@ -1845,16 +1833,7 @@
     if (following) scrollToActive(false);
   }
 
-  // the IFrame API emits no continuous time event — poll while playing
-  function startPoll(){
-    if (poll) return;
-    poll = setInterval(function(){
-      if (player && player.getCurrentTime) onTime(player.getCurrentTime());
-    }, 250);
-  }
-  function stopPoll(){ if (poll){ clearInterval(poll); poll = null; } }
-
-  // ---- manually scrolling / navigating the analysis suspends auto-follow ----
+  // manual scroll / nav suspends auto-follow
   function suspend(){ if (following) setFollow(false, true); }
   window.addEventListener('wheel', suspend, { passive: true });
   window.addEventListener('touchmove', suspend, { passive: true });
@@ -1862,7 +1841,7 @@
     if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].indexOf(e.key) !== -1) suspend();
   });
 
-  // ---- clickable timestamps: seek + re-arm follow ----
+  // clickable timestamps → whichever transport is active
   var stamps = document.querySelectorAll('.ts');
   for (var j = 0; j < stamps.length; j++){
     (function(el){
@@ -1870,46 +1849,74 @@
       el.setAttribute('role','button'); el.tabIndex = 0;
       el.title = '跳到 ' + el.textContent.trim() + ' 播放';
       function go(){
-        seek(sec);
-        setFollow(true, true);   // an explicit jump re-arms following (this row is already in view)
+        if (transport) transport.seek(sec);
+        setFollow(true, true);
         el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
       }
       el.addEventListener('click', go);
-      el.addEventListener('keydown', function(e){
-        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); }
-      });
+      el.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
     })(stamps[j]);
   }
-
   if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
   if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
 
-  // ---- YouTube IFrame Player API ----
-  window.onYouTubeIframeAPIReady = function(){
-    player = new YT.Player('clip', {
-      width: '100%', height: '100%', videoId: videoId,
-      playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
-      events: {
-        onReady: function(){
-          ready = true;
-          if (pendingSeek != null){ var s = pendingSeek; pendingSeek = null; seek(s); }
-        },
-        onStateChange: function(e){
-          if (e.data === YT.PlayerState.PLAYING){ onTime(player.getCurrentTime()); startPoll(); }
-          else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED){
-            stopPoll();
-            if (player && player.getCurrentTime) onTime(player.getCurrentTime());
+  // ---------- transport A: native <video> (offline) ----------
+  function useLocal(){
+    video.style.visibility = '';
+    transport = { seek: function(sec){
+      setMin(false);
+      try { video.currentTime = sec; } catch (e) {}
+      var p = video.play(); if (p && p.catch) p.catch(function(){});
+    } };
+    video.addEventListener('timeupdate', function(){ highlight(video.currentTime); });
+  }
+
+  // ---------- transport B: YouTube IFrame Player API (online) ----------
+  function useYouTube(){
+    var slot = document.createElement('div'); slot.id = 'clip';
+    if (video && video.parentNode) video.parentNode.replaceChild(slot, video);
+    var player = null, isReady = false, pending = null, poll = null;
+    transport = { seek: function(sec){
+      setMin(false);
+      if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
+      else pending = sec;
+    } };
+    window.onYouTubeIframeAPIReady = function(){
+      player = new YT.Player('clip', {
+        width: '100%', height: '100%', videoId: ytid,
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onReady: function(){ isReady = true; if (pending != null){ var s = pending; pending = null; transport.seek(s); } },
+          onStateChange: function(e){
+            if (e.data === YT.PlayerState.PLAYING){
+              highlight(player.getCurrentTime());
+              if (!poll) poll = setInterval(function(){ if (player && player.getCurrentTime) highlight(player.getCurrentTime()); }, 250);
+            } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED){
+              if (poll){ clearInterval(poll); poll = null; }
+            }
           }
         }
-      }
-    });
-  };
-  if (videoId){
-    var tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    var first = document.getElementsByTagName('script')[0];
-    first.parentNode.insertBefore(tag, first);
+      });
+    };
+    var tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api';
+    var first = document.getElementsByTagName('script')[0]; first.parentNode.insertBefore(tag, first);
   }
+
+  // ---------- auto-detect: does the local mp4 load? ----------
+  function decide(){
+    if (!video){ if (ytid) useYouTube(); return; }
+    if (!ytid){ useLocal(); return; }            // no fallback available → local only
+    video.style.visibility = 'hidden';           // avoid a broken-controls flash while probing
+    var settled = false;
+    function local(){ if (settled) return; settled = true; useLocal(); }
+    function yt(){ if (settled) return; settled = true; useYouTube(); }
+    video.addEventListener('loadedmetadata', local, { once: true });
+    video.addEventListener('error', yt, { once: true });
+    var src = video.querySelector('source'); if (src) src.addEventListener('error', yt, { once: true });
+    try { video.load(); } catch (e) {}
+    setTimeout(function(){ if (!settled){ (video.readyState >= 1 ? local : yt)(); } }, 6000);
+  }
+  decide();
 })();
 </script>
 </body>
