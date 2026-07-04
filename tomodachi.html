@@ -1,0 +1,1315 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日本語文法分析 · 友達が恋人になる日</title>
+<style>
+  :root{
+    --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
+    --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
+    --line:#e5e1d8; --line-strong:#d4cfc4;
+    --shu:#c0442c;
+    --katsu:#1f7a63;  --katsu-t:rgba(31,122,99,.11);
+    --keigo:#8a4fa8;  --keigo-t:rgba(138,79,168,.12);
+    --joshi:#c0442c;  --joshi-t:rgba(192,68,44,.10);
+    --goi:#2f5fa6;    --goi-t:rgba(47,95,166,.10);
+    --font-mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Songti SC",serif;
+    --font-gothic:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+    --font-cn:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --font-latin:ui-sans-serif,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#12151a; --card:#191d24; --card-2:#20252d;
+      --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
+      --line:#282d36; --line-strong:#39404b;
+      --shu:#e0755c;
+      --katsu:#4bc0a1; --katsu-t:rgba(75,192,161,.14);
+      --keigo:#c091df; --keigo-t:rgba(192,145,223,.15);
+      --joshi:#e8836c; --joshi-t:rgba(232,131,108,.14);
+      --goi:#7aa8e2;   --goi-t:rgba(122,168,226,.15);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
+    --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
+    --line:#e5e1d8; --line-strong:#d4cfc4; --shu:#c0442c;
+    --katsu:#1f7a63; --katsu-t:rgba(31,122,99,.11);
+    --keigo:#8a4fa8; --keigo-t:rgba(138,79,168,.12);
+    --joshi:#c0442c; --joshi-t:rgba(192,68,44,.10);
+    --goi:#2f5fa6;   --goi-t:rgba(47,95,166,.10);
+  }
+  :root[data-theme="dark"]{
+    --paper:#12151a; --card:#191d24; --card-2:#20252d;
+    --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
+    --line:#282d36; --line-strong:#39404b; --shu:#e0755c;
+    --katsu:#4bc0a1; --katsu-t:rgba(75,192,161,.14);
+    --keigo:#c091df; --keigo-t:rgba(192,145,223,.15);
+    --joshi:#e8836c; --joshi-t:rgba(232,131,108,.14);
+    --goi:#7aa8e2;   --goi-t:rgba(122,168,226,.15);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--font-cn);line-height:1.75;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  .wrap{max-width:46rem;margin:0 auto;padding:clamp(1.5rem,4vw,3.5rem) clamp(1.1rem,4vw,2rem) 5rem;}
+
+  /* ---------- header ---------- */
+  .eyebrow{font-family:var(--font-latin);font-size:.72rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--shu);font-weight:600;margin:0 0 .9rem;}
+  h1{font-family:var(--font-mincho);font-weight:600;
+    font-size:clamp(1.7rem,5.4vw,2.55rem);line-height:1.35;margin:0;
+    text-wrap:balance;letter-spacing:.01em;}
+  .sub{color:var(--ink-soft);font-size:1rem;margin:.9rem 0 0;max-width:38rem;}
+  .meta{display:flex;flex-wrap:wrap;gap:.5rem .55rem;margin:1.4rem 0 0;}
+  .tag{font-family:var(--font-gothic);font-size:.78rem;color:var(--ink-soft);
+    background:var(--card);border:1px solid var(--line);border-radius:2rem;
+    padding:.28rem .7rem;white-space:nowrap;}
+  .tag b{color:var(--ink);font-weight:600;}
+
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--shu);
+    border-radius:.5rem;padding:.95rem 1.15rem;margin:1.6rem 0 0;
+    font-size:.9rem;color:var(--ink-soft);line-height:1.7;}
+  .note b{color:var(--ink);}
+
+  /* sticky video dock — click any timestamp to seek */
+  .video-dock{position:sticky;top:0;z-index:30;margin:1.6rem 0 0;background:var(--paper);
+    border:1px solid var(--line);border-radius:.7rem;overflow:hidden;
+    box-shadow:0 10px 24px -16px rgba(0,0,0,.55);}
+  .dock-bar{display:flex;align-items:center;gap:.6rem;
+    padding:.5rem .5rem .5rem .85rem;background:var(--card);border-bottom:1px solid var(--line);}
+  .dock-title{font-family:var(--font-gothic);font-weight:600;font-size:.82rem;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tri{color:var(--shu);}
+  .dock-min{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
+    cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
+    border-radius:2rem;padding:.24rem .75rem;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .dock-min:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-min:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-min{margin-left:0;}
+  .dock-follow{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
+    cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
+    border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;
+    transition:color .15s,border-color .15s,background .15s;}
+  .dock-follow:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-follow.on{color:var(--shu);border-color:var(--shu);background:var(--joshi-t);}
+  .dock-follow:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-video{max-width:32rem;margin:0 auto;}
+  .video-frame{position:relative;aspect-ratio:16/9;background:#000;}
+  .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
+    border:0;display:block;background:#000;object-fit:contain;}
+  .video-dock.min .dock-video{display:none;}
+  .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
+  .play-hint b{color:var(--ink);font-weight:600;}
+
+  /* furigana control bar */
+  .furi-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem 1rem;
+    flex-wrap:wrap;margin:1.5rem 0 0;padding:.7rem .5rem .7rem 1rem;background:var(--card);
+    border:1px solid var(--line);border-left:3px solid var(--goi);border-radius:.55rem;font-size:.85rem;}
+  .furi-hint{color:var(--ink-soft);}
+  .furi-hint b{color:var(--ink);font-weight:600;}
+  #furiToggle{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--goi);background:transparent;border:1px solid var(--goi);border-radius:2rem;
+    padding:.32rem .9rem;white-space:nowrap;transition:background .15s,color .15s;}
+  #furiToggle[aria-pressed="true"]{background:var(--goi);color:var(--paper);}
+  #furiToggle:focus-visible{outline:2px solid var(--goi);outline-offset:2px;}
+
+  .rule{height:1px;background:var(--line-strong);border:0;margin:2.4rem 0;}
+
+  /* ---------- legend ---------- */
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.2rem,1fr));
+    gap:.55rem;margin:1.5rem 0 0;}
+  .lg{display:flex;align-items:baseline;gap:.5rem;font-size:.83rem;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
+  .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
+  .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+
+  /* ---------- section label ---------- */
+  .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--ink-faint);font-weight:600;
+    margin:3.2rem 0 1.2rem;display:flex;align-items:center;gap:.8rem;}
+  .sec::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  /* ---------- grammar card ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:1.35rem 1.4rem 1.5rem;margin:0 0 1.15rem;}
+  .card-top{display:flex;align-items:center;gap:.7rem;margin:0 0 .95rem;flex-wrap:wrap;}
+  .num{font-family:var(--font-mincho);font-size:1.05rem;color:var(--shu);font-weight:600;
+    font-variant-numeric:tabular-nums;}
+  .ts{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-soft);
+    background:var(--card-2);border:1px solid transparent;border-radius:.3rem;
+    padding:.15rem .5rem .15rem .42rem;font-variant-numeric:tabular-nums;cursor:pointer;
+    transition:color .12s,border-color .12s,background .12s;}
+  .ts::before{content:"\25B8";color:var(--shu);margin-right:.3rem;font-size:.92em;}
+  .ts:hover,.ts:focus-visible{color:var(--shu);border-color:var(--shu);outline:none;}
+  .ts.flash{animation:ts-flash .9s ease;}
+  @keyframes ts-flash{0%,22%{background:var(--shu);color:#fff;border-color:var(--shu);}
+    100%{background:var(--card-2);color:var(--ink-soft);border-color:transparent;}}
+  @media (prefers-reduced-motion:reduce){.ts.flash{animation:none;}}
+  .theme{font-family:var(--font-gothic);font-size:.8rem;color:var(--ink-soft);margin-left:auto;}
+
+  .jp{font-family:var(--font-mincho);font-size:clamp(1.24rem,3.7vw,1.5rem);
+    line-height:2.35;margin:.2rem 0 .1rem;color:var(--ink);letter-spacing:.02em;}
+  ruby{cursor:pointer;}
+  ruby rt{font-family:var(--font-gothic);font-size:.46em;color:var(--ink-faint);
+    font-weight:400;letter-spacing:0;
+    visibility:hidden;opacity:0;transition:opacity .12s ease;}
+  /* reveal: hover = peek · tap/click(.reveal) = pin · keyboard focus = peek · master toggle = all */
+  ruby:hover rt,ruby:focus-visible rt,ruby.reveal rt,
+  body.show-furi ruby rt{visibility:visible;opacity:1;}
+  ruby:focus-visible{outline:2px solid var(--shu);outline-offset:1px;border-radius:.15em;}
+  @media (prefers-reduced-motion:reduce){ruby rt{transition:none;}}
+  .fx{padding:.02em .08em;border-radius:.15em;font-weight:600;
+    border-bottom:2px solid currentColor;}
+  .fx.katsu{color:var(--katsu);background:var(--katsu-t);}
+  .fx.keigo{color:var(--keigo);background:var(--keigo-t);}
+  .fx.joshi{color:var(--joshi);background:var(--joshi-t);}
+  .fx.goi{color:var(--goi);background:var(--goi-t);}
+  .fx ruby rt{color:inherit;}
+
+  .cn{font-size:.96rem;color:var(--ink-soft);margin:.55rem 0 0;padding:.55rem 0 0;
+    border-top:1px dashed var(--line);}
+  .cn b{color:var(--ink);font-weight:600;}
+  .cn .lbl{font-family:var(--font-latin);font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-faint);margin-right:.5rem;}
+
+  .points{list-style:none;margin:1.1rem 0 0;padding:0;display:flex;flex-direction:column;gap:.75rem;}
+  .points li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;
+    font-size:.92rem;line-height:1.68;}
+  .chip{font-family:var(--font-gothic);font-size:.72rem;font-weight:600;white-space:nowrap;
+    padding:.2rem .5rem;border-radius:.35rem;border:1px solid;line-height:1.3;margin-top:.16rem;}
+  .chip.katsu{color:var(--katsu);background:var(--katsu-t);border-color:var(--katsu);}
+  .chip.keigo{color:var(--keigo);background:var(--keigo-t);border-color:var(--keigo);}
+  .chip.joshi{color:var(--joshi);background:var(--joshi-t);border-color:var(--joshi);}
+  .chip.goi{color:var(--goi);background:var(--goi-t);border-color:var(--goi);}
+  .points b{color:var(--ink);font-weight:600;}
+  .points .jt{font-family:var(--font-gothic);}
+  .points em{font-style:normal;color:var(--ink-faint);}
+
+  /* ---------- reference tables ---------- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:.7rem;background:var(--card);}
+  table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:26rem;}
+  caption{text-align:left;font-family:var(--font-gothic);font-weight:600;color:var(--ink);
+    padding:.9rem 1rem .2rem;font-size:.98rem;}
+  th,td{text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--line);vertical-align:top;}
+  thead th{font-family:var(--font-gothic);font-size:.76rem;letter-spacing:.04em;
+    color:var(--ink-faint);font-weight:600;background:var(--card-2);}
+  tbody tr:last-child td{border-bottom:0;}
+  td .jt{font-family:var(--font-gothic);color:var(--ink);font-weight:600;}
+  td .rd{color:var(--ink-faint);font-size:.82rem;}
+  .tbl-wrap+.tbl-wrap{margin-top:1.1rem;}
+
+  footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--line);
+    font-size:.8rem;color:var(--ink-faint);line-height:1.7;}
+  a{color:var(--shu);}
+
+  @media (max-width:480px){
+    .points li{grid-template-columns:1fr;gap:.3rem;}
+    .chip{justify-self:start;}
+    .theme{margin-left:0;width:100%;}
+  }
+
+  /* ===== per-sentence analysis ===== */
+  .lead{font-size:.9rem;color:var(--ink-soft);margin:0 0 1.4rem;line-height:1.7;}
+  .lead .tri{color:var(--shu);}
+  .lead .ts-demo{font-family:var(--font-mono);font-size:.8rem;color:var(--shu);
+    border:1px solid var(--shu);border-radius:.3rem;padding:.02rem .35rem;}
+  .chapter{margin:2.4rem 0 0;}
+  .chapter-h{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin:0 0 .35rem;}
+  .chapter-n{font-family:var(--font-mincho);color:var(--shu);font-weight:600;font-size:1.15rem;
+    font-variant-numeric:tabular-nums;}
+  .chapter-t{font-family:var(--font-gothic);font-weight:600;font-size:1.02rem;color:var(--ink);}
+  .chapter-c{color:var(--ink-faint);font-weight:400;font-size:.85rem;margin-left:.5rem;}
+  .chapter-r{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);
+    font-variant-numeric:tabular-nums;}
+  .chapter-h::after{content:"";flex:1;height:1px;background:var(--line);min-width:1.5rem;
+    align-self:center;}
+
+  .u{display:grid;grid-template-columns:4.6rem 1fr;gap:.2rem .85rem;
+    padding:.9rem 0;border-top:1px solid var(--line);scroll-margin-top:5rem;
+    transition:background .25s ease;}
+  .u.key{box-shadow:inset 3px 0 0 var(--shu);padding-left:.75rem;
+    border-radius:0 .4rem .4rem 0;background:linear-gradient(90deg,var(--joshi-t),transparent 55%);}
+  .u.active{background:var(--joshi-t);box-shadow:inset 3px 0 0 var(--shu);
+    border-radius:0 .4rem .4rem 0;padding-left:.75rem;}
+  .u.active .ts{background:var(--shu);color:#fff;border-color:var(--shu);}
+  .u.active .ts::before{color:#fff;}
+  .u.active .u-jp{color:var(--ink);}
+  .u-meta{display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;padding-top:.15rem;}
+  .u-meta .ts{width:100%;text-align:center;}
+  .spk{font-family:var(--font-gothic);font-size:.66rem;font-weight:600;line-height:1.3;
+    padding:.12rem .4rem;border-radius:.3rem;white-space:nowrap;border:1px solid transparent;}
+  .spk.iwata{color:var(--goi);background:var(--goi-t);}
+  .spk.host{color:var(--ink-soft);background:var(--card-2);}
+  .spk.nare{color:var(--katsu);background:var(--katsu-t);}
+  .spk.neta{color:var(--shu);background:var(--joshi-t);}
+  .key-star{color:var(--shu);font-size:.8rem;line-height:1;}
+
+  .u-body{min-width:0;}
+  .u-jp{font-family:var(--font-mincho);font-size:1.14rem;line-height:2.15;color:var(--ink);
+    letter-spacing:.01em;}
+  .u-cn{font-size:.9rem;color:var(--ink-soft);margin-top:.15rem;}
+  .u-cn .lbl{font-family:var(--font-latin);font-size:.64rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-faint);margin-right:.45rem;
+    border:1px solid var(--line-strong);border-radius:.25rem;padding:.02rem .28rem;}
+  .u-asr{font-size:.78rem;color:var(--ink-faint);margin-top:.4rem;line-height:1.55;}
+  .tag-asr{font-family:var(--font-gothic);font-size:.64rem;font-weight:600;color:var(--shu);
+    background:var(--joshi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
+    white-space:nowrap;}
+  .u-points{list-style:none;margin:.55rem 0 0;padding:0;display:flex;flex-direction:column;gap:.4rem;}
+  .u-points li{display:grid;grid-template-columns:auto 1fr;gap:.55rem;align-items:start;
+    font-size:.85rem;line-height:1.6;}
+  .u-points .chip{margin-top:.08rem;font-size:.68rem;}
+  .u-points .star{color:var(--shu);}
+
+  @media (max-width:520px){
+    .u{grid-template-columns:1fr;gap:.45rem;}
+    .u-meta{flex-direction:row;align-items:center;gap:.5rem;}
+    .u-meta .ts{width:auto;}
+    .u.key{background:none;}
+    .u-points li{grid-template-columns:1fr;gap:.2rem;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">日本語文法分析 · 中文精讲</p>
+  <h1>「付き合ったってことでOK？」<br>——恋爱短剧的逐句文法拆解</h1>
+  <p class="sub">一部日语恋爱短剧：咖啡馆里，两个好友男女互相试探能否从「朋友」变成「恋人」，店员还把他们误当成情侣。面向中文母语的日语学习者，逐句还原口语（タメ口）、注音并精讲文法。</p>
+
+  <div class="video-dock" id="dock">
+    <div class="dock-bar">
+      <span class="dock-title"><span class="tri">▶</span> 友達が恋人になる日 · 「付き合ったってことでOK？」</span>
+      <button class="dock-follow on" id="dockFollow" type="button" aria-pressed="true" aria-label="切换字幕自动跟随播放">● 跟随</button>
+      <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
+    </div>
+    <div class="dock-video">
+      <div class="video-frame">
+        <div id="clip" data-video-id="hEvCWsSs0AI"></div>
+      </div>
+    </div>
+  </div>
+  <p class="play-hint"><span class="tri">▸</span> 点击句子的<b>时间戳</b>跳到该处播放；播放时字幕会<b>自动高亮并跟随滚动</b>，手动滚动即暂停，点时间戳或「跟随」恢复。</p>
+
+  <div class="meta">
+    <span class="tag">作品 <b>友達が恋人になる日</b></span>
+    <span class="tag">名台词 <b>「付き合ったってことでOK？」</b></span>
+    <span class="tag">时长 <b>4:25</b></span>
+    <span class="tag">日语恋爱短剧 · 咖啡馆</span>
+    <span class="tag">口语・タメ口 精讲</span>
+  </div>
+
+  <div class="furi-bar">
+    <span class="furi-hint">读音默认<b>隐藏</b> · <b>悬停</b>或<b>点按</b>汉字即可显示（再点一次收起）</span>
+    <button id="furiToggle" type="button" aria-pressed="false">全部读音：关</button>
+  </div>
+
+  <div class="note">
+    <b>关于文本：</b>原始文字来自 YouTube 自动字幕（ASR），含误听，讲解时已还原并标注（如「別っぴン」→「べっぴん（美人）」、「旗から」→「傍（はた）から」、「レ別に」→「別に」、「こらで手打つ」→「ここらで手を打つ」）。这是一段轻松的恋爱短剧，台词多为口语・タメ口。
+  </div>
+
+  <div class="legend">
+    <span class="lg"><span class="swatch" style="background:var(--katsu)"></span><span><b>活用・接续</b><br>ば形/て形/意志形…</span></span>
+    <span class="lg"><span class="swatch" style="background:var(--keigo)"></span><span><b>授受・敬语</b><br>ていただく/させていただく…</span></span>
+    <span class="lg"><span class="swatch" style="background:var(--joshi)"></span><span><b>助词・语气</b><br>から/って/终助词…</span></span>
+    <span class="lg"><span class="swatch" style="background:var(--goi)"></span><span><b>词汇・句式</b><br>复合动词/连体修饰…</span></span>
+  </div>
+
+  <hr class="rule">
+
+    <!-- ============ CARDS ============ -->
+  <div class="sec">逐句精讲 · 全 66 句</div>
+  <p class="lead">全片对话按时间顺序逐句还原、注音、翻译并解析文法。带 <span class="tri">★</span> 的为重点句式。点击任意 <span class="ts-demo">▸ 时间戳</span> 视频即跳到该处播放。</p>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">01</span><span class="chapter-t">髪色と軽口<span class="chapter-c">换发色 · 拌嘴</span></span><span class="chapter-r">0:00–0:28</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:00</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>今更<rt>いまさら</rt></ruby>と<ruby>言<rt>い</rt></ruby>われるかもしれないんだけどさ。</div>
+        <div class="u-cn"><span class="lbl">译</span>可能会被说现在才讲(有点晚)，不过啊…</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「しんない」→「しれない」(口语缩约)。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">かもしれない<span class="star">★</span></span><span>表示推测「也许…」；口语常缩约成「かもしんない」。</span></li>
+          <li><span class="chip joshi">んだけど<span class="star">★</span></span><span>「のだ」的口语「んだ」＋けど，铺垫/软化，引出后面要说的话。</span></li>
+          <li><span class="chip joshi">さ</span><span>间投／终助词，随口引出话题的口语语气。</span></li>
+          <li><span class="chip goi">今更(いまさら)</span><span>「事到如今、现在才」，常用于提起本该早说的旧话题。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:02</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>何<rt>なに</rt></ruby>？</div>
+        <div class="u-cn"><span class="lbl">译</span>什么？</div>
+        <ul class="u-points">
+          <li><span class="chip goi">何(なに)？</span><span>单独一词作反问「什么？」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:03</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>髪色<rt>かみいろ</rt></ruby><ruby>変<rt>か</rt></ruby>えたでしょ？</div>
+        <div class="u-cn"><span class="lbl">译</span>你换发色了吧？</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">でしょ<span class="star">★</span></span><span>「だろう」的口语，向对方确认「…吧？」。</span></li>
+          <li><span class="chip goi">髪色(かみいろ)</span><span>复合名词「发色」。</span></li>
+          <li><span class="chip katsu">変えた</span><span>他动词「変える」的た形(过去)。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:04</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん。<ruby>変<rt>か</rt></ruby>えた。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯，换了。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">変えた</span><span>省略主语的简短口语回答「(我)换了」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:05</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">いい。めっちゃ<ruby>似合<rt>にあ</rt></ruby>ってるよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>不错，超适合你的哦。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">めっちゃ</span><span>关西腔起源的强调副词「超、非常」，年轻人口语。</span></li>
+          <li><span class="chip katsu">似合ってる</span><span>「似合っている」口语省略い(ている→てる)，表状态。</span></li>
+          <li><span class="chip joshi">よ</span><span>终助词，告知/强调自己的判断。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:06</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">え、<ruby>嬉<rt>うれ</rt></ruby>しい。</div>
+        <div class="u-cn"><span class="lbl">译</span>诶，好开心。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">嬉しい</span><span>形容词直接感叹，省略主语的口语。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:08</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>本当<rt>ほんとう</rt></ruby>？</div>
+        <div class="u-cn"><span class="lbl">译</span>真的吗？</div>
+        <ul class="u-points">
+          <li><span class="chip goi">本当？</span><span>口语常读「ほんと？」，向对方确认所言。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:09</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん。<ruby>前<rt>まえ</rt></ruby>の<ruby>髪色<rt>かみいろ</rt></ruby><ruby>微妙<rt>びみょう</rt></ruby>だったもんね。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯。之前那个发色有点微妙(不太行)呢。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">微妙(びみょう)<span class="star">★</span></span><span>口语「不太好说/有点不咋地」的委婉否定评价。</span></li>
+          <li><span class="chip joshi">もんね<span class="star">★</span></span><span>「ものね」口语，陈述理所当然的理由＋ね寻求同感。</span></li>
+          <li><span class="chip joshi">の</span><span>连体修饰「前の髪色」＝之前的发色。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:12</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">ねえ、そんなこと<ruby>言<rt>い</rt></ruby>わないで、ちょっと。</div>
+        <div class="u-cn"><span class="lbl">译</span>喂，别那样说啦，真是的。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜ないで<span class="star">★</span></span><span>动词ない形＋で，请求对方「别做…」。</span></li>
+          <li><span class="chip joshi">ねえ</span><span>呼唤/撒娇的感叹词。</span></li>
+          <li><span class="chip goi">ちょっと</span><span>句末的「ちょっと」表轻微抗议「真是的/等一下」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:15</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>冗談<rt>じょうだん</rt></ruby><ruby>冗談<rt>じょうだん</rt></ruby>。<ruby>嘘<rt>うそ</rt></ruby>、<ruby>嘘<rt>うそ</rt></ruby>、<ruby>嘘<rt>うそ</rt></ruby>。</div>
+        <div class="u-cn"><span class="lbl">译</span>开玩笑开玩笑，骗你的骗你的。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">冗談(じょうだん)</span><span>「开玩笑」，重复以缓和刚才的调侃。</span></li>
+          <li><span class="chip goi">嘘(うそ)</span><span>口语「嘘」＝「骗你的、假的」，收回前言。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:17</span><span class="spk nare">店員</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>失礼<rt>しつれい</rt></ruby>します。</div>
+        <div class="u-cn"><span class="lbl">译</span>打扰了。</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">失礼します<span class="star">★</span></span><span>上餐/进入场合的礼貌用语「打扰了」，ます体。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:19</span><span class="spk nare">店員</span></div>
+      <div class="u-body">
+        <div class="u-jp">コーヒー<ruby>牛乳<rt>ぎゅうにゅう</rt></ruby>のお<ruby>客<rt>きゃく</rt></ruby>さん。</div>
+        <div class="u-cn"><span class="lbl">译</span>点咖啡牛奶的客人(是哪位)。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>店员上餐时确认点单。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">の</span><span>连体修饰「コーヒー牛乳のお客さん」＝点咖啡牛奶的客人。</span></li>
+          <li><span class="chip keigo">お客さん</span><span>「客」加接头辞お＋さん，对顾客的礼貌称呼。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:22</span><span class="spk nare">店員</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>紅茶<rt>こうちゃ</rt></ruby>の<ruby>冷<rt>つめ</rt></ruby>たいです。</div>
+        <div class="u-cn"><span class="lbl">译</span>这是冰红茶。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>上另一杯饮料，「紅茶の冷たい(の)」＝红茶里冰的那杯。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">の</span><span>「冷たいです」前的「の」使形容词名词化，指代「冰的那杯」。</span></li>
+          <li><span class="chip goi">冷たい(つめたい)</span><span>「冰的、凉的」，此处指冰红茶。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:24</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">ありがとうございます。</div>
+        <div class="u-cn"><span class="lbl">译</span>谢谢。</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">ありがとうございます</span><span>郑重道谢，对店员用ます体。</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">02</span><span class="chapter-t">店員にカップルと勘違いされる<span class="chapter-c">被店员误当情侣</span></span><span class="chapter-r">0:28–0:53</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:28</span><span class="spk nare">店員</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>随分<rt>ずいぶん</rt></ruby>べっぴんさんな<ruby>彼女<rt>かのじょ</rt></ruby>だね。</div>
+        <div class="u-cn"><span class="lbl">译</span>你女朋友可真是个大美人啊。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「別っぴンさん」→「べっぴんさん」(美人)。店员误以为二人是情侣，向男方搭话。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">べっぴんさん<span class="star">★</span></span><span>「別嬪(べっぴん)」＝美人，加さん显亲切，略旧派口语。</span></li>
+          <li><span class="chip goi">随分(ずいぶん)</span><span>副词「相当、非常」。</span></li>
+          <li><span class="chip katsu">な</span><span>名词性形容动词「べっぴんさん」＋な作连体修饰(だ的连体形)。</span></li>
+          <li><span class="chip joshi">ね</span><span>终助词，向对方搭话确认。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:28</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>全然<rt>ぜんぜん</rt></ruby>そういうことじゃ…。</div>
+        <div class="u-cn"><span class="lbl">译</span>完全不是那种关系啦…</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR此处仅捕捉到「全然そういうこ」，为男方害羞否认的半句。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">全然〜(ない)<span class="star">★</span></span><span>「全然」后接否定强调「完全不…」；此处省略了「ない」。</span></li>
+          <li><span class="chip goi">そういうこと</span><span>「那样的事/那种关系」，委婉指代恋人关系。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:32</span><span class="spk nare">店員</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">ええ〜、<ruby>彼<rt>かれ</rt></ruby>もイケメンだもんな。</div>
+        <div class="u-cn"><span class="lbl">译</span>哎呀，他也是个帅哥嘛。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「ええ〜」是店员回应否认时「哎呀，别谦虚」的语气。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">も</span><span>提示助词「也」，夸完女方再夸男方。</span></li>
+          <li><span class="chip joshi">もんな<span class="star">★</span></span><span>「ものな」口语，陈述理所当然的理由「…嘛」。</span></li>
+          <li><span class="chip goi">イケメン</span><span>俗语「帅哥」，イケてる＋面(メン)。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:35</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>全然<rt>ぜんぜん</rt></ruby>そんなんじゃないよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>完全不是那样的啦。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">全然〜ない<span class="star">★</span></span><span>「全然」＋否定，强调彻底否定。</span></li>
+          <li><span class="chip katsu">そんなんじゃない</span><span>「そんなのではない」的口语缩约。</span></li>
+          <li><span class="chip joshi">よ</span><span>终助词，强调否定。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:38</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>全然<rt>ぜんぜん</rt></ruby><ruby>彼氏<rt>かれし</rt></ruby>じゃないよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>他才不是我男朋友呢。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「気ない」→「彼氏(かれし)」(据提示)；前面[00:37]「ガプレさん」听不清，未能还原，故并入此句。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">彼氏(かれし)<span class="star">★</span></span><span>「男朋友」；本句从女方视角否认二人是情侣。</span></li>
+          <li><span class="chip katsu">じゃない</span><span>「ではない」的口语，名词否定。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:42</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>完全<rt>かんぜん</rt></ruby>にカップルだと<ruby>思<rt>おも</rt></ruby>われたね。</div>
+        <div class="u-cn"><span class="lbl">译</span>完全被当成情侣了呢。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">思われた<span class="star">★</span></span><span>「思う」的受身(被动)た形「被(别人)认为了」，非敬语。</span></li>
+          <li><span class="chip joshi">と</span><span>引用助词，「カップルだと思う」＝认为是情侣。</span></li>
+          <li><span class="chip goi">完全に</span><span>副词「完全、彻底」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:43</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん。そうだね。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯，是啊。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">ね</span><span>终助词，表同感附和。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:46</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">やっぱ<ruby>傍<rt>はた</rt></ruby>から<ruby>見<rt>み</rt></ruby>ると<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>ってる<ruby>風<rt>ふう</rt></ruby>に<ruby>見<rt>み</rt></ruby>えるのかな。</div>
+        <div class="u-cn"><span class="lbl">译</span>果然在旁人看来，会显得像在交往吧。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「旗から」→「傍(はた)から」(在旁人看来)；「見えんの」→「見えるの」(缩约)。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">傍(はた)から見ると<span class="star">★</span></span><span>惯用句「从旁人角度看」。</span></li>
+          <li><span class="chip goi">〜風(ふう)に見える<span class="star">★</span></span><span>「显得像…的样子」，風＝样子/风格。</span></li>
+          <li><span class="chip katsu">付き合ってる</span><span>「付き合っている」省略い；付き合う＝交往。</span></li>
+          <li><span class="chip joshi">かな</span><span>终助词，自言自语式的推测「…吧？」。</span></li>
+          <li><span class="chip goi">やっぱ</span><span>副词「やっぱり」的口语缩约「果然」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:49</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん。そうかもねえ。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯，也许是吧。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">かも<span class="star">★</span></span><span>「かもしれない」的口语省略「也许」。</span></li>
+          <li><span class="chip joshi">ねえ</span><span>拉长的终助词，柔和附和。</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">03</span><span class="chapter-t">「友達から恋人」ってあり？<span class="chapter-c">“朋友变恋人”行不行？</span></span><span class="chapter-r">0:53–2:37</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:53</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">◯◯はさ、<ruby>友達<rt>ともだち</rt></ruby>から<ruby>恋人<rt>こいびと</rt></ruby>になるのってありなタイプ？</div>
+        <div class="u-cn"><span class="lbl">译</span>你啊，是那种能从朋友变成恋人的类型吗？</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「中はさ」听不清，疑为对对方的称呼(昵称)，以「◯◯」代替；合并[00:53]与[00:55]。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">って<span class="star">★</span></span><span>口语主题提示「って」＝「というのは/は」，「なるのって」＝「变成…这件事」。</span></li>
+          <li><span class="chip goi">なるの(名词化)</span><span>用「の」把动词「なる」名词化，再用って提示为话题。</span></li>
+          <li><span class="chip goi">あり<span class="star">★</span></span><span>口语「あり」＝「可以/OK/行得通」；反义为「なし」。</span></li>
+          <li><span class="chip joshi">から</span><span>起点「从朋友(开始)」。</span></li>
+          <li><span class="chip joshi">はさ</span><span>「◯◯は」提示话题＋随口语气さ。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:58</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">まあ、なくはないかな。</div>
+        <div class="u-cn"><span class="lbl">译</span>嘛…也不是没有(那个可能)吧。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR重复的「なくは、なくは」已整理为一次。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">なくはない<span class="star">★</span></span><span>双重否定「不是没有」＝委婉肯定「多少有点/也不是不行」。</span></li>
+          <li><span class="chip joshi">かな</span><span>终助词，含糊/害羞地下结论。</span></li>
+          <li><span class="chip goi">まあ</span><span>缓冲词「嘛、算是」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:03</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">そうなんだ。</div>
+        <div class="u-cn"><span class="lbl">译</span>这样啊。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">そうなんだ<span class="star">★</span></span><span>「そうなのだ」的口语，接收新信息时「原来如此/这样啊」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:05</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">でもあれでしょ、そのさ、ここがさ、なんかそういうのとは<ruby>違<rt>ちが</rt></ruby>うじゃん。</div>
+        <div class="u-cn"><span class="lbl">译</span>不过你看，那个啊，我们这个(关系)啊，跟那种情况不一样嘛。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「ここがさ」疑指「この関係／俺ら」。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">じゃん<span class="star">★</span></span><span>「じゃない(か)」的口语，寻求同意「…嘛/…对吧」。</span></li>
+          <li><span class="chip katsu">でしょ</span><span>「だろう」口语，「あれでしょ」＝「你懂的那个吧」。</span></li>
+          <li><span class="chip joshi">とは</span><span>「〜とは違う」＝「和…不同」，と＋は强调对比。</span></li>
+          <li><span class="chip goi">なんか</span><span>填充词「总觉得/那个啥」，缓和语气。</span></li>
+          <li><span class="chip goi">そういうの</span><span>「那种(情况/关系)」，の代指事物。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:14</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">なんでって、<ruby>別<rt>べつ</rt></ruby>に、その、<ruby>俺<rt>おれ</rt></ruby>のことを<ruby>男<rt>おとこ</rt></ruby>として<ruby>見<rt>み</rt></ruby>られてるわけでもないだろうし。</div>
+        <div class="u-cn"><span class="lbl">译</span>要说为什么嘛…也没什么，就是…你也不见得把我当成男人(异性)来看嘛。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「レ別に」→「別に」；「見れてる」→「見られてる」(ら抜き言葉的还原，此处为可能形)。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">〜わけでもない<span class="star">★</span></span><span>「也并不是…」，部分否定的惯用句式。</span></li>
+          <li><span class="chip katsu">ら抜き言葉<span class="star">★</span></span><span>「見れてる」是可能形「見られてる」去掉ら的口语；可能形常出现ら抜き。</span></li>
+          <li><span class="chip goi">〜として</span><span>「作为…、当作…」，「男として見る」＝当成男人看待。</span></li>
+          <li><span class="chip goi">別に</span><span>副词，后常接否定，「也没什么特别的/没什么」。</span></li>
+          <li><span class="chip joshi">し</span><span>终助词，列举理由并留有余韵「…而且/…嘛」。</span></li>
+          <li><span class="chip katsu">だろう</span><span>推测「…吧」，「ないだろう」＝「应该不…吧」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">01:26</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">そんなことないや。</div>
+        <div class="u-cn"><span class="lbl">译</span>才没那回事呢。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">そんなことない</span><span>「そんなこと（は）ない」的口语否定形，意为'没那回事、才不是那样'，用来否定对方的说法。</span></li>
+          <li><span class="chip joshi">終助詞「や」</span><span>句末「や」轻声收尾，带自言自语式的柔和断定语气，比「よ」更随意。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:31</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">そうじゃない。てか<ruby>女<rt>おんな</rt></ruby>として<ruby>見<rt>み</rt></ruby>てないのはそっちでしょ。</div>
+        <div class="u-cn"><span class="lbl">译</span>才不是那样。话说，不把（我）当女人看的人是你才对吧。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">てか<span class="star">★</span></span><span>「っていうか／と言うか」的口语缩略，用来打断・转换话题或补充反驳，'话说、倒不如说'。</span></li>
+          <li><span class="chip joshi">〜として</span><span>'作为～'，表资格・立场。「女として見る」＝把（某人）当女人看待。</span></li>
+          <li><span class="chip katsu">見てない（見ている→い脱落）</span><span>「見ていない」在口语中省略「い」变「見てない」，表状态的否定。</span></li>
+          <li><span class="chip joshi">でしょ<span class="star">★</span></span><span>「でしょう」的口语缩约，此处降调向对方确认'～吧？'并带反诘语气；「〜のは…でしょ」用「の」把动词名词化＋係助詞「は」提示，突出'不～的人是你'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:40</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">いや、<ruby>別<rt>べつ</rt></ruby>にそんなことないけど。</div>
+        <div class="u-cn"><span class="lbl">译</span>不，我倒也没有那样啊。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">別に〜ない<span class="star">★</span></span><span>「別に」与后面的否定呼应，'并不特别～、也没什么～'。「別にそんなことない」＝'倒也没那回事'。</span></li>
+          <li><span class="chip joshi">終助詞「けど」</span><span>句末的「けど」不接下文，表含蓄・保留・欲言又止，软化断定语气。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">01:59</span><span class="spk nare">店員</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>失礼<rt>しつれい</rt></ruby>します。こちらどうぞ。</div>
+        <div class="u-cn"><span class="lbl">译</span>打扰了。这个给您。</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">失礼します</span><span>服务・职场礼貌用语，上前、打扰、进入时说，'打扰了／失礼了'。</span></li>
+          <li><span class="chip goi">こちらどうぞ</span><span>「こちら」礼貌地指代事物／方向，＋「どうぞ」＝'这边请／这个给您'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:03</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">え、<ruby>何<rt>なん</rt></ruby>ですか？</div>
+        <div class="u-cn"><span class="lbl">译</span>诶，这是什么？</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜ですか</span><span>丁寧体（です・ます体）的疑问句，对店员使用礼貌语。</span></li>
+          <li><span class="chip goi">え</span><span>感叹词，表轻微惊讶'诶？'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:05</span><span class="spk nare">店員</span></div>
+      <div class="u-body">
+        <div class="u-jp">サービスです。</div>
+        <div class="u-cn"><span class="lbl">译</span>是（本店）赠送的。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">サービス（招待）</span><span>外来语，餐饮店常指'免费赠送・招待'，并非字面的'服务'。</span></li>
+          <li><span class="chip katsu">です</span><span>丁寧的断定助动词。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:06</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">ありがとうございます。</div>
+        <div class="u-cn"><span class="lbl">译</span>谢谢您。</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">ありがとうございます<span class="star">★</span></span><span>比「ありがとう」更郑重的感谢，对店员／长辈／陌生人使用。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:08</span><span class="spk nare">店員</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>甘<rt>あま</rt></ruby>いお<ruby>二人<rt>ふたり</rt></ruby>には<ruby>甘<rt>あま</rt></ruby>いフルーツ、なんてね。<ruby>大事<rt>だいじ</rt></ruby>にしなくちゃだめだぞ。ごゆっくりどうぞ。</div>
+        <div class="u-cn"><span class="lbl">译</span>给甜蜜的二位送上甜甜的水果——开个玩笑啦。可得好好珍惜（对方）哦。请慢慢享用。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「なってね」推测为「なんてね」(?)（不确定）；「ダめだぞ」→「だめだぞ」；「くりどうぞ」→「ごゆっくりどうぞ」。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">甘い（双关）<span class="star">★</span></span><span>既形容水果'甜'，又形容两人关系'甜蜜・恩爱'，店员借此打趣。</span></li>
+          <li><span class="chip keigo">お二人</span><span>接头辞「お」＋「二人」，礼貌地称呼对方'二位'。</span></li>
+          <li><span class="chip goi">なんてね(?)</span><span>说完打趣的话后自嘲'开玩笑的啦'；对应ASR「なってね」，还原不确定但语境高度贴合。</span></li>
+          <li><span class="chip katsu">〜なくちゃ（＝なくては）だめ<span class="star">★</span></span><span>「しなくちゃ」＝「しなくては」的缩约，＋「だめ」＝'不～不行、必须～'。「大事にしなくちゃだめ」＝必须好好珍惜。</span></li>
+          <li><span class="chip joshi">終助詞「ぞ」</span><span>男性常用的强调・提醒终助词，语气强硬而亲昵。</span></li>
+          <li><span class="chip goi">ごゆっくりどうぞ<span class="star">★</span></span><span>待客惯用语，「ご」＋「ゆっくり」＋「どうぞ」＝'请慢用／请慢慢来'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:20</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>美味<rt>おい</rt></ruby>しそう。</div>
+        <div class="u-cn"><span class="lbl">译</span>看起来好好吃。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜そう（様態）<span class="star">★</span></span><span>「美味しい」去词尾「い」＋「そう」＝'看起来好吃'，凭外观推测。い形容词接そう须去「い」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:21</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん。ね。どうぞ。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯。是吧。你请（吃）。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">終助詞「ね」</span><span>'（好吃）吧'，向对方寻求共鸣・同意。</span></li>
+          <li><span class="chip goi">どうぞ</span><span>劝对方（吃／拿），'请（用）'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:24</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">え、ありがとう。うん。</div>
+        <div class="u-cn"><span class="lbl">译</span>诶，谢谢。嗯。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">ありがとう（タメ口）</span><span>对朋友的随意道谢，不加「ございます」。</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">04</span><span class="chapter-t">「付き合っちゃう？」の駆け引き<span class="chapter-c">“要不要在一起？”的试探</span></span><span class="chapter-r">2:37–3:35</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:37</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">じゃあさ、<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>っちゃう？</div>
+        <div class="u-cn"><span class="lbl">译</span>那，我们干脆就在一起（交往）吧？</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜ちゃう<span class="star">★</span></span><span>「〜てしまう」的口语缩约，此处「付き合っちゃう」带'干脆就～吧'的轻松试探语气。</span></li>
+          <li><span class="chip goi">付き合う<span class="star">★</span></span><span>复合动词，'交往、（作为恋人）在一起'。</span></li>
+          <li><span class="chip joshi">じゃあさ</span><span>「じゃあ」承接'那么'；間投助詞「さ」插在句中缓和语气・引起注意。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:39</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">うん</span><span>随意的肯定回应'嗯／好'（タメ口）；「うん」是感叹词（応答詞），非助词。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:44</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>冗談<rt>じょうだん</rt></ruby>。</div>
+        <div class="u-cn"><span class="lbl">译</span>开玩笑的。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">冗談（だよ）<span class="star">★</span></span><span>'开玩笑的'，说完试探性的话后收回・打圆场。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:46</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">き…。いや、なんかその…</div>
+        <div class="u-cn"><span class="lbl">译</span>呃…不，那个，怎么说呢…</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>开头「き」为不清晰ASR，无法确切还原(?)（语境或为「き[れい]…」之类未说完的话）。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">いや</span><span>感叹词，表否定・转折'不、不是'。</span></li>
+          <li><span class="chip goi">なんか／その（填充词）</span><span>「なんか」'总觉得、有点'＋「その…」支吾停顿，说不出口时的填充语。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:55</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">ここらで<ruby>手<rt>て</rt></ruby><ruby>打<rt>う</rt></ruby>つのもありかなって</div>
+        <div class="u-cn"><span class="lbl">译</span>干脆就在这儿把（咱俩的关系）敲定，也不是不行吧，我想。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕原文「ここらで手打つのもありかなって」。ASR「こらで手打つ」已还原为「ここらで手（を）打つ」——惯用句「手を打つ」＝就此谈妥/将就定下来，口语字幕省略「を」。男方提议把关系定下来。【全段说明】本段（第3段，02:55—片尾）为男女二人关于告白/交往的拌嘴；参考ASR提示中的べっぴんさん(美人)、傍から見ると、店员双关「甘いお二人には甘いフルーツ」、ごゆっくりどうぞ、彼氏 等均不在本段，属前面第1—2段。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">手を打つ</span><span>惯用句，本义'击掌成交'，引申为'达成妥协、就此谈妥、将就定下来'；字幕口语省略助词「を」（手打つ）。</span></li>
+          <li><span class="chip joshi">のも</span><span>「の」把前句名词化＋提示助词「も」，'…这么做也（不是不行）'。</span></li>
+          <li><span class="chip joshi">かなって</span><span>終助詞「かな」（自问'是不是…呢'）＋引用「って」，是「〜かなと思って」的口语省略，语气委婉。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:59</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">その<ruby>言<rt>い</rt></ruby>い<ruby>方<rt>かた</rt></ruby>やだ</div>
+        <div class="u-cn"><span class="lbl">译</span>我讨厌你这种说法。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「その言い方やだ」。やだ＝嫌だ的口语缩约。女方嫌'手を打つ（谈妥/将就）'这种说法太不浪漫。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">やだ</span><span>「嫌だ」的口语缩约，'讨厌、不要'。</span></li>
+          <li><span class="chip goi">言い方</span><span>「動詞連用形＋方」构词，'说法、措辞'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:03</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>言<rt>い</rt></ruby>い<ruby>方<rt>かた</rt></ruby>か</div>
+        <div class="u-cn"><span class="lbl">译</span>（原来问题是出在）说法上啊……</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「言い方か」。男方接话自省'（问题）在说法上啊'。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">か</span><span>終助詞，此处表恍然/自语，'（问题出在）说法上啊…'。</span></li>
+          <li><span class="chip goi">言い方</span><span>'说法、措辞'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:07</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>知<rt>し</rt></ruby>らない</div>
+        <div class="u-cn"><span class="lbl">译</span>（哼，）我才不管呢。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「知らない」。女方赌气'我才不管/不知道'。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">知らない</span><span>五段动词「知る」的否定形（未然形＋ない）；口语中赌气意为'我才不管/不知道'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:15</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>告白<rt>こくはく</rt></ruby>するならちゃんと<ruby>告白<rt>こくはく</rt></ruby>して</div>
+        <div class="u-cn"><span class="lbl">译</span>要告白的话，就给我好好地告白。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「告白するならちゃんと告白して」。女方要求一次正式的告白。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">なら</span><span>假定条件，'如果要…的话'。</span></li>
+          <li><span class="chip goi">ちゃんと</span><span>副词，'好好地、规规矩矩地'。</span></li>
+          <li><span class="chip katsu">告白して</span><span>「告白する」的て形，单用作缓和的命令/请求，'（你就）好好告白'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:19</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">カフェとかやだ</div>
+        <div class="u-cn"><span class="lbl">译</span>（告白）在咖啡厅什么的，我可不要。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「カフェとかやだ」。承接前句，女方补充'告白不要选在咖啡厅这种地方'。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">とか</span><span>举例助词，'…之类的、…什么的'，语气随意。</span></li>
+          <li><span class="chip goi">やだ</span><span>「嫌だ」口语缩约，'不要'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:24</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>分<rt>わ</rt></ruby>かった</div>
+        <div class="u-cn"><span class="lbl">译</span>知道了。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「分かった」。男方应承。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">分かった</span><span>「分かる」的タ形（过去/完成），'明白了、知道了'。</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">05</span><span class="chapter-t">付き合ったってことでOK？<span class="chapter-c">“就算在一起了”，行吗？</span></span><span class="chapter-r">3:35–4:25</span></div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:35</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">これ<ruby>実際<rt>じっさい</rt></ruby><ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>ったってことでいいんだよね？</div>
+        <div class="u-cn"><span class="lbl">译</span>这就算是我们实际上开始交往了，对吧？</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「これ実際付き合ったってことでいいんだよね？」。男方想确认关系是否成立。ってことで＝ということで。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">付き合う</span><span>'交往、谈恋爱'；「付き合った」为タ形。</span></li>
+          <li><span class="chip joshi">ってことで</span><span>「ということで」的口语缩约，'就当作…、也就是说…'。</span></li>
+          <li><span class="chip joshi">んだよね</span><span>「のだ」＋終助詞「よね」，向对方寻求确认，'…对吧？'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:38</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">いやだから</div>
+        <div class="u-cn"><span class="lbl">译</span>不是啦，我说啊——</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「いやだから」。いや为感叹词'不'（否定对方前提），だから为口语'我不是说了嘛/我说啊'，带一点不耐烦；非'嫌だから'。女方纠正男方。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">いや</span><span>感叹词'不、不是'（否定对方前提），注意非'嫌'。</span></li>
+          <li><span class="chip goi">だから</span><span>口语中打断/纠正对方时的'我不是说了嘛、我说啊'，略带不耐烦。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:40</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">まだ<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>ってない</div>
+        <div class="u-cn"><span class="lbl">译</span>（我们）还没在交往呢。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「まだ付き合ってない」。〜てない＝〜ていない（口语「い」脱落）。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">まだ</span><span>副词，与否定呼应，'还（没）'。</span></li>
+          <li><span class="chip katsu">付き合ってない</span><span>「付き合っている」的口语否定：ている→てる→てない（「い」脱落）。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:43</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">もう<ruby>一回<rt>いっかい</rt></ruby><ruby>言<rt>い</rt></ruby>って？</div>
+        <div class="u-cn"><span class="lbl">译</span>再说一遍？</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「もう1回言って？」，已把「1回」记作「一回（いっかい）」。男方没听清（或装没听清）要求重说。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">もう一回</span><span>'再一次'（もう＝再，一回＝いっかい）。</span></li>
+          <li><span class="chip katsu">言って</span><span>「言う」的て形，升调作请求，'（你）再说一遍？'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:44</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">まだ<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>ってない</div>
+        <div class="u-cn"><span class="lbl">译</span>还没在交往。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「まだ付き合ってない」。女方重复强调。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜てない</span><span>「〜ていない」的口语形（「い」脱落）；此为重复强调'还没在一起'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:45</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">ってことは</div>
+        <div class="u-cn"><span class="lbl">译</span>也就是说……</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「ってことは」。「ということは」的口语缩约，男方承前作推论。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">ってことは</span><span>「ということは」的口语缩约，承接前句作推论，'这么说来、也就是说'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:48</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>ってない？</div>
+        <div class="u-cn"><span class="lbl">译</span>……（我们）还没在一起？</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「付き合ってない？」。男方半开玩笑地追问确认。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">付き合ってない</span><span>「〜てない」＋疑问升调，确认'（我们）还没在一起？'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:49</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">ねーうざい</div>
+        <div class="u-cn"><span class="lbl">译</span>欸——你好烦。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「ねーうざい」。ねー＝ねえ（拉长音的呼唤/感叹），うざい＝俗语'烦人'。ASR若误作他词应还原为「ねー、うざい」。女方嫌男方缠人。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">うざい</span><span>年轻人俗语，'烦人、讨厌'（「うざったい」的缩略）。</span></li>
+          <li><span class="chip joshi">ねー</span><span>感叹/呼唤词「ねえ」的拉长音，'欸——、喂'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:51</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">ごめん、ごめん</div>
+        <div class="u-cn"><span class="lbl">译</span>抱歉抱歉。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「ごめん、ごめん」。男方连声道歉。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">ごめん</span><span>「ごめんなさい」的随意省略，'抱歉'；叠用表连声道歉。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:52</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp">わかった、わかった</div>
+        <div class="u-cn"><span class="lbl">译</span>好了好了，知道了知道了。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「わかった、わかった」（此处字幕用假名，与前面「分かった」同义）；叠用表敷衍安抚。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">わかった</span><span>「分かる」的タ形；叠用表敷衍安抚，'好了好了，知道了'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:54</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>調子<rt>ちょうし</rt></ruby><ruby>乗<rt>の</rt></ruby>ったらすぐ<ruby>捨<rt>す</rt></ruby>てるから</div>
+        <div class="u-cn"><span class="lbl">译</span>你要是得意忘形，我立马就把你甩了哦。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「調子乗ったらすぐ捨てるから」。惯用句「調子に乗る」口语省略「に」；捨てる＝甩（男友）。女方傲娇式威胁。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">調子に乗る</span><span>惯用句，'得意忘形、翘尾巴'；口语省略助词「に」（調子乗る）。</span></li>
+          <li><span class="chip katsu">〜たら</span><span>条件形「乗ったら」，'如果…就…'。</span></li>
+          <li><span class="chip joshi">から</span><span>終助詞，表宣言/警告，'（我）可要…哦'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:55</span><span class="spk host">男性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>怖<rt>こわ</rt></ruby>っ</div>
+        <div class="u-cn"><span class="lbl">译</span>好可怕！</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「怖っ」。形容词「怖い」的词干＋促音「っ」的口语惊叹。男方被'甩了你'吓到。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">怖っ</span><span>形容词「怖い」的词干＋促音「っ」的口语惊叹用法，'好可怕！'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">03:59</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>怖<rt>こわ</rt></ruby>っじゃないから</div>
+        <div class="u-cn"><span class="lbl">译</span>才不是什么'可怕'呢！</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>字幕「怖っじゃないから」。女方把对方刚说的「怖っ」加以否定/反驳，'别说什么可怕'。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">じゃない</span><span>「ではない」的口语否定；此处否定/反驳对方刚说的「怖っ」。</span></li>
+          <li><span class="chip joshi">から</span><span>終助詞，反驳语气，'才不是…呢'。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">04:18</span><span class="spk iwata">女性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>先輩<rt>せんぱい</rt></ruby>の<ruby>家<rt>いえ</rt></ruby>とかはダメですか?</div>
+        <div class="u-cn"><span class="lbl">译</span>去前辈家之类的不行吗？</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">ですか<span class="star">★</span></span><span>丁宁体疑问句（です＝丁宁语，属敬语范畴）。前几段是タメ口，这里对「先輩」切换成礼貌语体，带撒娇/试探意味。</span></li>
+          <li><span class="chip joshi">とか</span><span>举例列举助词，「…之类的」。此处把「你家」说得含糊委婉，弱化直接提议的尴尬。</span></li>
+          <li><span class="chip joshi">は</span><span>提示主题兼对比。隐含「（别的地方不行的话）你家呢？」的对比语气。</span></li>
+          <li><span class="chip goi">ダメ</span><span>「駄目」＝不行/不可以，な形容词，口语里常写成片假名ダメ以示强调。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">04:21</span><span class="spk host">男性</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">ダメじゃないけど、うち<ruby>歩<rt>ある</rt></ruby>くよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>也不是不行啦，不过去我家得走一段路哦。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「うち歩くよ」并非误听：うち＝口语的「我家」，「歩くよ」意为「到我家要走路（过去）」，暗示有点远/不太方便，属委婉推脱。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">じゃない<span class="star">★</span></span><span>名词・な形容词的口语否定（＝ではない）。「ダメじゃない」＝并不是不行，先部分肯定再转折。</span></li>
+          <li><span class="chip joshi">けど</span><span>逆接接续助词，前句让步、后句转折：「不是不行，不过…」，句中软化拒绝语气。</span></li>
+          <li><span class="chip goi">うち</span><span>口语指「我家/自己家」，比「私の家」随意亲昵。</span></li>
+          <li><span class="chip joshi">よ<span class="star">★</span></span><span>终助词，向对方提示对方尚不知道的信息：「（去我家的话）可是要走路的哦」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">04:24</span><span class="spk iwata">女性</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR 记为英文「Yeah」，实为句尾附和/相槌，还原为「うん」。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">うん（相槌）</span><span>感動詞（相槌・応答），表示「嗯/知道了」，回应对方的话；属独立词而非助词，故归入词汇类（goi）。</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+    <div class="sec">系统速查表</div>
+
+  <div class="tbl-wrap"><table><caption>① 授受动词体系</caption><thead><tr><th>方向 / 视角</th><th>普通</th><th>敬语（尊他 / 自谦）</th></tr></thead><tbody><tr><td>我 → 他人（我为对方做）</td><td><span class="jt">〜てあげる</span></td><td><span class="jt">〜てさしあげる</span></td></tr><tr><td>他人 → 我（对方为我做）</td><td><span class="jt">〜てくれる</span></td><td><span class="jt">〜てくださる</span> <span class="rd">尊他</span></td></tr><tr><td>我请他人做（承蒙对方）</td><td><span class="jt">〜てもらう</span></td><td><span class="jt">〜ていただく</span> <span class="rd">自谦</span></td></tr></tbody></table></div>
+  <div class="tbl-wrap"><table><caption>② 常见口语缩约</caption><thead><tr><th>缩约</th><th>原形</th></tr></thead><tbody><tr><td><span class="jt">〜ちゃう / じゃう</span></td><td><span class="jt">〜てしまう / でしまう</span></td></tr><tr><td><span class="jt">〜な</span></td><td><span class="jt">〜なさい</span></td></tr><tr><td><span class="jt">って</span></td><td><span class="jt">と</span>（引用）</td></tr><tr><td><span class="jt">んだ</span></td><td><span class="jt">のだ</span></td></tr><tr><td><span class="jt">〜てる</span></td><td><span class="jt">〜ている</span></td></tr><tr><td><span class="jt">〜れる</span> <span class="rd">(ら抜き)</span></td><td><span class="jt">〜られる</span></td></tr></tbody></table></div>
+  <div class="tbl-wrap"><table><caption>③ 终助词语气</caption><thead><tr><th>助词</th><th>核心语感</th></tr></thead><tbody><tr><td><span class="jt">ね</span></td><td>寻求共鸣 / 软化语气</td></tr><tr><td><span class="jt">よ</span></td><td>告知 / 提醒对方</td></tr><tr><td><span class="jt">さ</span></td><td>随意抛出主张</td></tr><tr><td><span class="jt">な(あ)</span></td><td>自言自语 / 感慨</td></tr><tr><td><span class="jt">よね</span></td><td>确认 ＋ 共鸣</td></tr></tbody></table></div>
+
+  <footer>
+    素材：YouTube 恋爱短剧片段（自动字幕转写，含 ASR 误听，讲解中已还原）。面向中文母语者的日语文法学习分析，非官方字幕。口语・タメ口 的判定以标准日语语法为准。
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  // tap/click pins a reading (tap again to hide); keyboard Enter/Space too
+  var rubies = document.querySelectorAll('ruby');
+  for (var i = 0; i < rubies.length; i++) {
+    (function(r){
+      r.tabIndex = 0;
+      r.setAttribute('role','button');
+      r.setAttribute('aria-label','显示读音');
+      r.addEventListener('click', function(){ r.classList.toggle('reveal'); });
+      r.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); r.classList.toggle('reveal'); }
+      });
+    })(rubies[i]);
+  }
+  // master toggle: show / hide all readings
+  var btn = document.getElementById('furiToggle');
+  if (btn) {
+    btn.addEventListener('click', function(){
+      var on = document.body.classList.toggle('show-furi');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '全部读音：开' : '全部读音：关';
+    });
+  }
+})();
+</script>
+
+<script>
+(function(){
+  // Online (GitHub Pages / https) player: embeds the ORIGINAL YouTube video via the
+  // IFrame Player API, so clickable timestamps seek AND karaoke follow-along both work
+  // (unlike player_embed.html's seek-by-reload). Nothing copyrighted is re-hosted.
+  var dock      = document.getElementById('dock');
+  var minBtn    = document.getElementById('dockMin');
+  var followBtn = document.getElementById('dockFollow');
+  var slot      = document.getElementById('clip');
+  var videoId   = slot ? slot.getAttribute('data-video-id') : '';
+  var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
+
+  var player = null, ready = false, pendingSeek = null, poll = null;
+
+  function toSec(txt){
+    var m = String(txt).match(/(\d+):(\d+)/);
+    return m ? (+m[1]) * 60 + (+m[2]) : 0;
+  }
+  function setMin(m){
+    if (!dock) return;
+    dock.classList.toggle('min', m);
+    if (minBtn){
+      minBtn.setAttribute('aria-expanded', m ? 'false' : 'true');
+      minBtn.textContent = m ? '展开 ▸' : '收起 ▾';
+    }
+  }
+  function seek(sec){
+    setMin(false);                          // make sure the video is visible
+    if (ready && player){
+      try { player.seekTo(sec, true); player.playVideo(); } catch (e) {}
+    } else {
+      pendingSeek = sec;                    // clicked before the API finished loading
+    }
+  }
+
+  // ---- timeline of utterances, built from the rendered rows ----
+  var units = [], uEls = document.querySelectorAll('.u');
+  for (var i = 0; i < uEls.length; i++){
+    var t = uEls[i].querySelector('.ts');
+    if (t) units.push({ el: uEls[i], sec: toSec(t.textContent) });
+  }
+  units.sort(function(a, b){ return a.sec - b.sec; });
+
+  // ---- follow-along state ----
+  var following = true, activeIdx = -1;
+
+  function dockH(){
+    if (!dock) return 0;
+    return dock.classList.contains('min')
+      ? (dock.querySelector('.dock-bar') || dock).offsetHeight
+      : dock.offsetHeight;
+  }
+  function scrollToActive(force){
+    var u = units[activeIdx]; if (!u) return;
+    var r = u.el.getBoundingClientRect();
+    if (force || r.top < dockH() + 16 || r.bottom > window.innerHeight - 16){
+      window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - dockH() - 24), behavior: SMOOTH });
+    }
+  }
+  function setFollow(on, silent){
+    following = on;
+    if (followBtn){
+      followBtn.classList.toggle('on', on);
+      followBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      followBtn.textContent = on ? '● 跟随' : '○ 跟随';
+    }
+    if (on && !silent) scrollToActive(true);
+  }
+  function indexAt(tt){
+    var lo = -1;
+    for (var k = 0; k < units.length; k++){ if (units[k].sec <= tt + 0.15) lo = k; else break; }
+    return lo;
+  }
+  function onTime(tt){
+    if (!units.length) return;
+    var idx = indexAt(tt);
+    if (idx === activeIdx) return;
+    if (units[activeIdx]) units[activeIdx].el.classList.remove('active');
+    activeIdx = idx;
+    if (units[activeIdx]) units[activeIdx].el.classList.add('active');
+    if (following) scrollToActive(false);
+  }
+
+  // the IFrame API emits no continuous time event — poll while playing
+  function startPoll(){
+    if (poll) return;
+    poll = setInterval(function(){
+      if (player && player.getCurrentTime) onTime(player.getCurrentTime());
+    }, 250);
+  }
+  function stopPoll(){ if (poll){ clearInterval(poll); poll = null; } }
+
+  // ---- manually scrolling / navigating the analysis suspends auto-follow ----
+  function suspend(){ if (following) setFollow(false, true); }
+  window.addEventListener('wheel', suspend, { passive: true });
+  window.addEventListener('touchmove', suspend, { passive: true });
+  window.addEventListener('keydown', function(e){
+    if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].indexOf(e.key) !== -1) suspend();
+  });
+
+  // ---- clickable timestamps: seek + re-arm follow ----
+  var stamps = document.querySelectorAll('.ts');
+  for (var j = 0; j < stamps.length; j++){
+    (function(el){
+      var sec = toSec(el.textContent);
+      el.setAttribute('role','button'); el.tabIndex = 0;
+      el.title = '跳到 ' + el.textContent.trim() + ' 播放';
+      function go(){
+        seek(sec);
+        setFollow(true, true);   // an explicit jump re-arms following (this row is already in view)
+        el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+      }
+      el.addEventListener('click', go);
+      el.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); }
+      });
+    })(stamps[j]);
+  }
+
+  if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
+  if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
+
+  // ---- YouTube IFrame Player API ----
+  window.onYouTubeIframeAPIReady = function(){
+    player = new YT.Player('clip', {
+      width: '100%', height: '100%', videoId: videoId,
+      playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+      events: {
+        onReady: function(){
+          ready = true;
+          if (pendingSeek != null){ var s = pendingSeek; pendingSeek = null; seek(s); }
+        },
+        onStateChange: function(e){
+          if (e.data === YT.PlayerState.PLAYING){ onTime(player.getCurrentTime()); startPoll(); }
+          else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED){
+            stopPoll();
+            if (player && player.getCurrentTime) onTime(player.getCurrentTime());
+          }
+        }
+      }
+    });
+  };
+  if (videoId){
+    var tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    var first = document.getElementsByTagName('script')[0];
+    first.parentNode.insertBefore(tag, first);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日本語文法分析 · 逐句精讲</title>
+<style>
+  :root{
+    --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
+    --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
+    --line:#e5e1d8; --line-strong:#d4cfc4;
+    --shu:#c0442c; --goi:#2f5fa6; --katsu:#1f7a63; --keigo:#8a4fa8;
+    --font-mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Songti SC",serif;
+    --font-gothic:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+    --font-cn:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --font-latin:ui-sans-serif,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#12151a; --card:#191d24; --card-2:#20252d;
+      --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
+      --line:#282d36; --line-strong:#39404b;
+      --shu:#e0755c; --goi:#7aa8e2; --katsu:#4bc0a1; --keigo:#c091df;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
+    --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
+    --line:#e5e1d8; --line-strong:#d4cfc4;
+    --shu:#c0442c; --goi:#2f5fa6; --katsu:#1f7a63; --keigo:#8a4fa8;
+  }
+  :root[data-theme="dark"]{
+    --paper:#12151a; --card:#191d24; --card-2:#20252d;
+    --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
+    --line:#282d36; --line-strong:#39404b;
+    --shu:#e0755c; --goi:#7aa8e2; --katsu:#4bc0a1; --keigo:#c091df;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--font-cn);line-height:1.75;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  .wrap{max-width:44rem;margin:0 auto;padding:clamp(2rem,7vw,4.5rem) clamp(1.1rem,4vw,2rem) 5rem;}
+
+  .eyebrow{font-family:var(--font-latin);font-size:.72rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--shu);font-weight:600;margin:0 0 1rem;}
+  h1{font-family:var(--font-mincho);font-weight:600;
+    font-size:clamp(2rem,7vw,3rem);line-height:1.3;margin:0;
+    text-wrap:balance;letter-spacing:.01em;}
+  .kana{font-family:var(--font-mincho);color:var(--ink-faint);font-size:1.05rem;
+    letter-spacing:.16em;margin:.85rem 0 0;}
+  .sub{color:var(--ink-soft);font-size:1rem;margin:1.1rem 0 0;max-width:34rem;}
+
+  .rule{height:1px;background:var(--line-strong);border:0;margin:2.6rem 0;}
+
+  .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--ink-faint);font-weight:600;
+    margin:0 0 1.3rem;display:flex;align-items:center;gap:.8rem;}
+  .sec::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  .cards{display:flex;flex-direction:column;gap:1.1rem;}
+  a.card{display:block;text-decoration:none;color:inherit;position:relative;
+    background:var(--card);border:1px solid var(--line);border-radius:.9rem;
+    padding:1.5rem 1.5rem 1.4rem;overflow:hidden;
+    transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease;}
+  a.card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent);}
+  a.card:hover{border-color:var(--accent);transform:translateY(-2px);
+    box-shadow:0 14px 30px -20px rgba(0,0,0,.5);}
+  a.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .c1{--accent:var(--goi);} .c2{--accent:var(--shu);}
+
+  .card-eyebrow{font-family:var(--font-latin);font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 .55rem;}
+  .card-jp{font-family:var(--font-mincho);font-size:clamp(1.3rem,4.4vw,1.7rem);
+    line-height:1.4;color:var(--ink);margin:0;text-wrap:balance;letter-spacing:.01em;}
+  .card-src{font-family:var(--font-gothic);font-size:.86rem;color:var(--ink-soft);
+    margin:.55rem 0 0;}
+  .card-src b{color:var(--ink);font-weight:600;}
+  .card-gloss{font-size:.92rem;color:var(--ink-soft);margin:.35rem 0 0;}
+
+  .pills{display:flex;flex-wrap:wrap;gap:.45rem;margin:1.05rem 0 0;}
+  .pill{font-family:var(--font-gothic);font-size:.74rem;color:var(--ink-soft);
+    background:var(--paper);border:1px solid var(--line);border-radius:2rem;
+    padding:.22rem .62rem;white-space:nowrap;}
+  .pill b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+  .pill.pair{color:var(--accent);border-color:var(--accent);}
+
+  .go{display:inline-flex;align-items:center;gap:.4rem;margin:1.1rem 0 0;
+    font-family:var(--font-gothic);font-weight:600;font-size:.9rem;color:var(--accent);}
+  .go .arr{transition:transform .18s ease;}
+  a.card:hover .go .arr{transform:translateX(3px);}
+
+  .how{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--katsu);
+    border-radius:.55rem;padding:1rem 1.2rem;margin:2.4rem 0 0;
+    font-size:.88rem;color:var(--ink-soft);line-height:1.7;}
+  .how b{color:var(--ink);font-weight:600;}
+  .how .k{font-family:var(--font-mono);font-size:.82rem;color:var(--ink);
+    background:var(--card-2);border:1px solid var(--line);border-radius:.3rem;padding:.02rem .35rem;}
+
+  footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--line);
+    font-size:.8rem;color:var(--ink-faint);line-height:1.7;}
+  footer a{color:var(--shu);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">日本語文法分析 · 中文精讲</p>
+  <h1>逐句看懂<br>日语的每一句</h1>
+  <p class="kana">いっく　いっく、にほんご　を　よむ</p>
+  <p class="sub">面向中文母语的日语学习者：把一段视频里的每一句对白从嘈杂的自动字幕中还原、注音、翻译，并逐句解析文法。点时间戳即跳转播放，字幕随视频自动高亮跟随。</p>
+
+  <hr class="rule">
+
+  <div class="sec">选篇 · 全 2 篇</div>
+  <div class="cards">
+
+    <a class="card c1" href="bunpou.html">
+      <p class="card-eyebrow">01 · インタビュー Interview</p>
+      <p class="card-jp">「口を開けばマウントを取ってくる」</p>
+      <p class="card-src">綜藝訪談 · <b>しくじり学園放送室</b> — 岩田ま亜里</p>
+      <p class="card-gloss">一段日语综艺访谈的逐句文法拆解（助词・活用接续・授受・敬语）。</p>
+      <div class="pills">
+        <span class="pill pair">日 → 中</span>
+        <span class="pill"><b>117</b> 句</span>
+        <span class="pill">时长 <b>7:49</b></span>
+        <span class="pill">口语・敬语</span>
+      </div>
+      <span class="go">打开精讲 <span class="arr">→</span></span>
+    </a>
+
+    <a class="card c2" href="tomodachi.html">
+      <p class="card-eyebrow">02 · 恋愛短剧 Skit</p>
+      <p class="card-jp">「付き合ったってことでOK？」</p>
+      <p class="card-src">恋爱短剧 · <b>友達が恋人になる日</b></p>
+      <p class="card-gloss">咖啡馆里两个好友互相试探——从「朋友」到「恋人」的口语・タメ口逐句解析。</p>
+      <div class="pills">
+        <span class="pill pair">日 → 中</span>
+        <span class="pill"><b>66</b> 句</span>
+        <span class="pill">时长 <b>4:25</b></span>
+        <span class="pill">口语・タメ口</span>
+      </div>
+      <span class="go">打开精讲 <span class="arr">→</span></span>
+    </a>
+
+  </div>
+
+  <div class="how">
+    <b>关于播放：</b>本站直接<b>嵌入原版 YouTube 视频</b>（未搬运任何视频文件），点击句子的时间戳即跳转播放，字幕会随视频自动高亮并跟随滚动，手动滚动即暂停。<br>
+    <b>离线版：</b>仓库里另有把视频下载到本地的完全离线版（<span class="k">bunpou-analysis.html</span> / <span class="k">tomodachi-koibito.html</span>），克隆仓库并按 README 生成对应 mp4 即可断网使用。
+  </div>
+
+  <footer>
+    素材为 YouTube 视频片段（自动字幕转写，含 ASR 误听，讲解中已还原），面向中文母语者的日语文法学习分析，非官方字幕。视频版权归原作者所有，本站仅以官方嵌入方式引用、不再托管视频文件。
+  </footer>
+
+</div>
+</body>
+</html>
