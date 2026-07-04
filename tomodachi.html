@@ -272,6 +272,69 @@
     .u.key{background:none;}
     .u-points li{grid-template-columns:1fr;gap:.2rem;}
   }
+
+  /* ============================================================
+     MOBILE / TOUCH ADAPTATION  (additive; later rules override)
+     ============================================================ */
+  :root{ --dock-max:42vh; }
+  @supports (height:100dvh){ :root{ --dock-max:42dvh; } }
+
+  /* narrow screens: keep the sticky video from eating the viewport, honour the notch */
+  @media (max-width:560px){
+    body{ overflow-x:hidden; }                 /* safety net against any stray overflow */
+    .wrap{ padding-left:max(1.1rem,env(safe-area-inset-left));
+           padding-right:max(1.1rem,env(safe-area-inset-right)); }
+    .video-dock{ top:env(safe-area-inset-top,0px); margin-top:1rem; }
+    .dock-video{ max-width:none; }
+    .video-frame{ max-height:var(--dock-max); }
+    /* dock bar: let the long title ellipsize so 跟随 / 收起 never get pushed off-screen */
+    .dock-bar{ gap:.4rem; padding-left:.75rem; }
+    .dock-title{ flex:1 1 auto; min-width:0; }
+    .dock-min,.dock-follow{ flex:none; }
+    .tag{ white-space:normal; }                /* long 名台词 pills wrap instead of overflowing */
+    .sec{ margin-top:2.4rem; }
+  }
+  /* landscape phone: give the video the width, lift the height cap */
+  @media (orientation:landscape) and (max-height:480px){
+    .video-frame{ max-height:82vh; }
+  }
+
+  /* touch devices (no hover): >=44px hit targets. hover-peek can't fire on touch,
+     so the master toggle + tap-to-pin (.reveal) are the furigana controls. */
+  @media (hover:none) and (pointer:coarse){
+    .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
+         align-items:center; justify-content:center; }
+    .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    #furiToggle{ min-height:44px; padding:.55rem 1.1rem; }
+    ruby{ padding:.12em .06em; border-radius:.2em; }
+    .u-points .chip{ padding:.3rem .6rem; }
+  }
+
+  /* re-follow button: the player shows it (bottom, thumb-reach) when auto-follow
+     is off during playback, so re-arming is one tap even far down the page */
+  #refollow{ position:fixed; z-index:40;
+    right:max(1rem,env(safe-area-inset-right));
+    bottom:max(1rem,env(safe-area-inset-bottom));
+    display:none; align-items:center; gap:.4rem; min-height:44px;
+    font-family:var(--font-gothic); font-size:.85rem; font-weight:600;
+    color:#fff; background:var(--shu); border:0; border-radius:2rem;
+    padding:.6rem 1.15rem; box-shadow:0 8px 22px -8px rgba(0,0,0,.55);
+    cursor:pointer; opacity:0; transform:translateY(10px);
+    transition:opacity .2s ease,transform .2s ease; }
+  #refollow.show{ display:inline-flex; opacity:1; transform:none; }
+  #refollow:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ #refollow{ transition:none; } }
+
+  /* horizontally-scrollable reference tables: fade + shadow hint you can swipe */
+  .tbl-wrap{ position:relative;
+    background:
+      linear-gradient(90deg,var(--card),transparent) 0 0,
+      linear-gradient(90deg,transparent,var(--card)) 100% 0,
+      radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.16),transparent) 0 0,
+      radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.16),transparent) 100% 0;
+    background-repeat:no-repeat;
+    background-size:2.4rem 100%,2.4rem 100%,1.1rem 100%,1.1rem 100%;
+    background-attachment:local,local,scroll,scroll; }
 </style>
 </head>
 <body>
@@ -1180,6 +1243,22 @@
   var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 
   var transport = null;   // { seek(sec) }  — set once local/youtube is chosen
+  var fab = null;         // floating re-follow button (created below)
+
+  /*<<follow-guard>>*/
+  // Tell our own (programmatic) scrolling apart from the user's. We arm a short
+  // time window around every auto-scroll; a scroll event inside it is ours → ignore,
+  // otherwise the user moved the page → suspend auto-follow. Pure + unit-tested.
+  function makeScrollGuard(windowMs){
+    var until = 0;
+    return {
+      begin:  function(t){ until = t + windowMs; },
+      action: function(t){ return t < until ? 'ignore' : 'suspend'; }
+    };
+  }
+  /*<</follow-guard>>*/
+  var guard = makeScrollGuard(900);
+  function nowms(){ return Date.now(); }
 
   function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
   function setMin(m){
@@ -1205,6 +1284,7 @@
     var u = units[activeIdx]; if (!u) return;
     var r = u.el.getBoundingClientRect();
     if (force || r.top < dockH() + 16 || r.bottom > window.innerHeight - 16){
+      guard.begin(nowms());   // mark the scroll below as ours so it doesn't self-suspend
       window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - dockH() - 24), behavior: SMOOTH });
     }
   }
@@ -1215,6 +1295,7 @@
       followBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
       followBtn.textContent = on ? '● 跟随' : '○ 跟随';
     }
+    if (fab) fab.classList.toggle('show', !on && activeIdx >= 0);
     if (on && !silent) scrollToActive(true);
   }
   function indexAt(tt){
@@ -1230,15 +1311,25 @@
     activeIdx = idx;
     if (units[activeIdx]) units[activeIdx].el.classList.add('active');
     if (following) scrollToActive(false);
+    else if (fab) fab.classList.toggle('show', activeIdx >= 0);
   }
 
-  // manual scroll / nav suspends auto-follow
+  // one scroll listener drives BOTH follow-suspend and mobile auto-minimize.
+  // the guard makes our own auto-scroll invisible here, so follow never self-cancels
+  // and (unlike the old wheel/touchmove pair) touch scrolling behaves the same.
   function suspend(){ if (following) setFollow(false, true); }
-  window.addEventListener('wheel', suspend, { passive: true });
-  window.addEventListener('touchmove', suspend, { passive: true });
-  window.addEventListener('keydown', function(e){
-    if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].indexOf(e.key) !== -1) suspend();
-  });
+  var lastY = window.pageYOffset;
+  window.addEventListener('scroll', function(){
+    var y = window.pageYOffset;
+    if (guard.action(nowms()) === 'suspend'){          // a genuine user scroll
+      suspend();
+      // on phones, scrolling down into the transcript collapses the video to reclaim space;
+      // tapping any timestamp seeks and re-expands it (transport.seek calls setMin(false)).
+      if (window.innerWidth <= 560 && y > lastY + 6 && y > 200 &&
+          dock && !dock.classList.contains('min')) setMin(true);
+    }
+    lastY = y;
+  }, { passive: true });
 
   // clickable timestamps → whichever transport is active
   var stamps = document.querySelectorAll('.ts');
@@ -1258,6 +1349,15 @@
   }
   if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
   if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
+
+  // floating re-follow control — reachable by thumb even when the dock has scrolled
+  // off-screen; the CSS only reveals it (.show) on touch-sized screens when follow is off.
+  fab = document.createElement('button');
+  fab.id = 'refollow'; fab.type = 'button';
+  fab.setAttribute('aria-label', '恢复字幕自动跟随播放');
+  fab.textContent = '● 跟随';
+  document.body.appendChild(fab);
+  fab.addEventListener('click', function(){ setMin(false); setFollow(true); });
 
   // ---------- transport A: native <video> (offline) ----------
   function useLocal(){

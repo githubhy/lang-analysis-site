@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日本語文法分析 · 憧れの先輩とサシ飲み</title>
+<style>
+  :root{
+    --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
+    --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
+    --line:#e5e1d8; --line-strong:#d4cfc4;
+    --shu:#c0442c;
+    --katsu:#1f7a63;  --katsu-t:rgba(31,122,99,.11);
+    --keigo:#8a4fa8;  --keigo-t:rgba(138,79,168,.12);
+    --joshi:#c0442c;  --joshi-t:rgba(192,68,44,.10);
+    --goi:#2f5fa6;    --goi-t:rgba(47,95,166,.10);
+    --font-mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Songti SC",serif;
+    --font-gothic:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+    --font-cn:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --font-latin:ui-sans-serif,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#12151a; --card:#191d24; --card-2:#20252d;
+      --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
+      --line:#282d36; --line-strong:#39404b;
+      --shu:#e0755c;
+      --katsu:#4bc0a1; --katsu-t:rgba(75,192,161,.14);
+      --keigo:#c091df; --keigo-t:rgba(192,145,223,.15);
+      --joshi:#e8836c; --joshi-t:rgba(232,131,108,.14);
+      --goi:#7aa8e2;   --goi-t:rgba(122,168,226,.15);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
+    --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
+    --line:#e5e1d8; --line-strong:#d4cfc4; --shu:#c0442c;
+    --katsu:#1f7a63; --katsu-t:rgba(31,122,99,.11);
+    --keigo:#8a4fa8; --keigo-t:rgba(138,79,168,.12);
+    --joshi:#c0442c; --joshi-t:rgba(192,68,44,.10);
+    --goi:#2f5fa6;   --goi-t:rgba(47,95,166,.10);
+  }
+  :root[data-theme="dark"]{
+    --paper:#12151a; --card:#191d24; --card-2:#20252d;
+    --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
+    --line:#282d36; --line-strong:#39404b; --shu:#e0755c;
+    --katsu:#4bc0a1; --katsu-t:rgba(75,192,161,.14);
+    --keigo:#c091df; --keigo-t:rgba(192,145,223,.15);
+    --joshi:#e8836c; --joshi-t:rgba(232,131,108,.14);
+    --goi:#7aa8e2;   --goi-t:rgba(122,168,226,.15);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--font-cn);line-height:1.75;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  .wrap{max-width:46rem;margin:0 auto;padding:clamp(1.5rem,4vw,3.5rem) clamp(1.1rem,4vw,2rem) 5rem;}
+
+  /* ---------- header ---------- */
+  .eyebrow{font-family:var(--font-latin);font-size:.72rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--shu);font-weight:600;margin:0 0 .9rem;}
+  h1{font-family:var(--font-mincho);font-weight:600;
+    font-size:clamp(1.7rem,5.4vw,2.55rem);line-height:1.35;margin:0;
+    text-wrap:balance;letter-spacing:.01em;}
+  .sub{color:var(--ink-soft);font-size:1rem;margin:.9rem 0 0;max-width:38rem;}
+  .meta{display:flex;flex-wrap:wrap;gap:.5rem .55rem;margin:1.4rem 0 0;}
+  .tag{font-family:var(--font-gothic);font-size:.78rem;color:var(--ink-soft);
+    background:var(--card);border:1px solid var(--line);border-radius:2rem;
+    padding:.28rem .7rem;white-space:nowrap;}
+  .tag b{color:var(--ink);font-weight:600;}
+
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--shu);
+    border-radius:.5rem;padding:.95rem 1.15rem;margin:1.6rem 0 0;
+    font-size:.9rem;color:var(--ink-soft);line-height:1.7;}
+  .note b{color:var(--ink);}
+
+  /* sticky video dock — click any timestamp to seek */
+  .video-dock{position:sticky;top:0;z-index:30;margin:1.6rem 0 0;background:var(--paper);
+    border:1px solid var(--line);border-radius:.7rem;overflow:hidden;
+    box-shadow:0 10px 24px -16px rgba(0,0,0,.55);}
+  .dock-bar{display:flex;align-items:center;gap:.6rem;
+    padding:.5rem .5rem .5rem .85rem;background:var(--card);border-bottom:1px solid var(--line);}
+  .dock-title{font-family:var(--font-gothic);font-weight:600;font-size:.82rem;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tri{color:var(--shu);}
+  .dock-min{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
+    cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
+    border-radius:2rem;padding:.24rem .75rem;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .dock-min:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-min:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-min{margin-left:0;}
+  .dock-follow{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
+    cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
+    border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;
+    transition:color .15s,border-color .15s,background .15s;}
+  .dock-follow:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-follow.on{color:var(--shu);border-color:var(--shu);background:var(--joshi-t);}
+  .dock-follow:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-video{max-width:32rem;margin:0 auto;}
+  .video-frame{position:relative;aspect-ratio:16/9;background:#000;}
+  .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
+    border:0;display:block;background:#000;object-fit:contain;}
+  .video-dock.min .dock-video{display:none;}
+  .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
+  .play-hint b{color:var(--ink);font-weight:600;}
+
+  /* furigana control bar */
+  .furi-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem 1rem;
+    flex-wrap:wrap;margin:1.5rem 0 0;padding:.7rem .5rem .7rem 1rem;background:var(--card);
+    border:1px solid var(--line);border-left:3px solid var(--goi);border-radius:.55rem;font-size:.85rem;}
+  .furi-hint{color:var(--ink-soft);}
+  .furi-hint b{color:var(--ink);font-weight:600;}
+  #furiToggle{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--goi);background:transparent;border:1px solid var(--goi);border-radius:2rem;
+    padding:.32rem .9rem;white-space:nowrap;transition:background .15s,color .15s;}
+  #furiToggle[aria-pressed="true"]{background:var(--goi);color:var(--paper);}
+  #furiToggle:focus-visible{outline:2px solid var(--goi);outline-offset:2px;}
+
+  .rule{height:1px;background:var(--line-strong);border:0;margin:2.4rem 0;}
+
+  /* ---------- legend ---------- */
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.2rem,1fr));
+    gap:.55rem;margin:1.5rem 0 0;}
+  .lg{display:flex;align-items:baseline;gap:.5rem;font-size:.83rem;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
+  .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
+  .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+
+  /* ---------- section label ---------- */
+  .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--ink-faint);font-weight:600;
+    margin:3.2rem 0 1.2rem;display:flex;align-items:center;gap:.8rem;}
+  .sec::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  /* ---------- grammar card ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:1.35rem 1.4rem 1.5rem;margin:0 0 1.15rem;}
+  .card-top{display:flex;align-items:center;gap:.7rem;margin:0 0 .95rem;flex-wrap:wrap;}
+  .num{font-family:var(--font-mincho);font-size:1.05rem;color:var(--shu);font-weight:600;
+    font-variant-numeric:tabular-nums;}
+  .ts{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-soft);
+    background:var(--card-2);border:1px solid transparent;border-radius:.3rem;
+    padding:.15rem .5rem .15rem .42rem;font-variant-numeric:tabular-nums;cursor:pointer;
+    transition:color .12s,border-color .12s,background .12s;}
+  .ts::before{content:"\25B8";color:var(--shu);margin-right:.3rem;font-size:.92em;}
+  .ts:hover,.ts:focus-visible{color:var(--shu);border-color:var(--shu);outline:none;}
+  .ts.flash{animation:ts-flash .9s ease;}
+  @keyframes ts-flash{0%,22%{background:var(--shu);color:#fff;border-color:var(--shu);}
+    100%{background:var(--card-2);color:var(--ink-soft);border-color:transparent;}}
+  @media (prefers-reduced-motion:reduce){.ts.flash{animation:none;}}
+  .theme{font-family:var(--font-gothic);font-size:.8rem;color:var(--ink-soft);margin-left:auto;}
+
+  .jp{font-family:var(--font-mincho);font-size:clamp(1.24rem,3.7vw,1.5rem);
+    line-height:2.35;margin:.2rem 0 .1rem;color:var(--ink);letter-spacing:.02em;}
+  ruby{cursor:pointer;}
+  ruby rt{font-family:var(--font-gothic);font-size:.46em;color:var(--ink-faint);
+    font-weight:400;letter-spacing:0;
+    visibility:hidden;opacity:0;transition:opacity .12s ease;}
+  /* reveal: hover = peek · tap/click(.reveal) = pin · keyboard focus = peek · master toggle = all */
+  ruby:hover rt,ruby:focus-visible rt,ruby.reveal rt,
+  body.show-furi ruby rt{visibility:visible;opacity:1;}
+  ruby:focus-visible{outline:2px solid var(--shu);outline-offset:1px;border-radius:.15em;}
+  @media (prefers-reduced-motion:reduce){ruby rt{transition:none;}}
+  .fx{padding:.02em .08em;border-radius:.15em;font-weight:600;
+    border-bottom:2px solid currentColor;}
+  .fx.katsu{color:var(--katsu);background:var(--katsu-t);}
+  .fx.keigo{color:var(--keigo);background:var(--keigo-t);}
+  .fx.joshi{color:var(--joshi);background:var(--joshi-t);}
+  .fx.goi{color:var(--goi);background:var(--goi-t);}
+  .fx ruby rt{color:inherit;}
+
+  .cn{font-size:.96rem;color:var(--ink-soft);margin:.55rem 0 0;padding:.55rem 0 0;
+    border-top:1px dashed var(--line);}
+  .cn b{color:var(--ink);font-weight:600;}
+  .cn .lbl{font-family:var(--font-latin);font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-faint);margin-right:.5rem;}
+
+  .points{list-style:none;margin:1.1rem 0 0;padding:0;display:flex;flex-direction:column;gap:.75rem;}
+  .points li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;
+    font-size:.92rem;line-height:1.68;}
+  .chip{font-family:var(--font-gothic);font-size:.72rem;font-weight:600;white-space:nowrap;
+    padding:.2rem .5rem;border-radius:.35rem;border:1px solid;line-height:1.3;margin-top:.16rem;}
+  .chip.katsu{color:var(--katsu);background:var(--katsu-t);border-color:var(--katsu);}
+  .chip.keigo{color:var(--keigo);background:var(--keigo-t);border-color:var(--keigo);}
+  .chip.joshi{color:var(--joshi);background:var(--joshi-t);border-color:var(--joshi);}
+  .chip.goi{color:var(--goi);background:var(--goi-t);border-color:var(--goi);}
+  .points b{color:var(--ink);font-weight:600;}
+  .points .jt{font-family:var(--font-gothic);}
+  .points em{font-style:normal;color:var(--ink-faint);}
+
+  /* ---------- reference tables ---------- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:.7rem;background:var(--card);}
+  table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:26rem;}
+  caption{text-align:left;font-family:var(--font-gothic);font-weight:600;color:var(--ink);
+    padding:.9rem 1rem .2rem;font-size:.98rem;}
+  th,td{text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--line);vertical-align:top;}
+  thead th{font-family:var(--font-gothic);font-size:.76rem;letter-spacing:.04em;
+    color:var(--ink-faint);font-weight:600;background:var(--card-2);}
+  tbody tr:last-child td{border-bottom:0;}
+  td .jt{font-family:var(--font-gothic);color:var(--ink);font-weight:600;}
+  td .rd{color:var(--ink-faint);font-size:.82rem;}
+  .tbl-wrap+.tbl-wrap{margin-top:1.1rem;}
+
+  footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--line);
+    font-size:.8rem;color:var(--ink-faint);line-height:1.7;}
+  a{color:var(--shu);}
+
+  @media (max-width:480px){
+    .points li{grid-template-columns:1fr;gap:.3rem;}
+    .chip{justify-self:start;}
+    .theme{margin-left:0;width:100%;}
+  }
+
+  /* ===== per-sentence analysis ===== */
+  .lead{font-size:.9rem;color:var(--ink-soft);margin:0 0 1.4rem;line-height:1.7;}
+  .lead .tri{color:var(--shu);}
+  .lead .ts-demo{font-family:var(--font-mono);font-size:.8rem;color:var(--shu);
+    border:1px solid var(--shu);border-radius:.3rem;padding:.02rem .35rem;}
+  .chapter{margin:2.4rem 0 0;}
+  .chapter-h{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin:0 0 .35rem;}
+  .chapter-n{font-family:var(--font-mincho);color:var(--shu);font-weight:600;font-size:1.15rem;
+    font-variant-numeric:tabular-nums;}
+  .chapter-t{font-family:var(--font-gothic);font-weight:600;font-size:1.02rem;color:var(--ink);}
+  .chapter-c{color:var(--ink-faint);font-weight:400;font-size:.85rem;margin-left:.5rem;}
+  .chapter-r{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);
+    font-variant-numeric:tabular-nums;}
+  .chapter-h::after{content:"";flex:1;height:1px;background:var(--line);min-width:1.5rem;
+    align-self:center;}
+
+  .u{display:grid;grid-template-columns:4.6rem 1fr;gap:.2rem .85rem;
+    padding:.9rem 0;border-top:1px solid var(--line);scroll-margin-top:5rem;
+    transition:background .25s ease;}
+  .u.key{box-shadow:inset 3px 0 0 var(--shu);padding-left:.75rem;
+    border-radius:0 .4rem .4rem 0;background:linear-gradient(90deg,var(--joshi-t),transparent 55%);}
+  .u.active{background:var(--joshi-t);box-shadow:inset 3px 0 0 var(--shu);
+    border-radius:0 .4rem .4rem 0;padding-left:.75rem;}
+  .u.active .ts{background:var(--shu);color:#fff;border-color:var(--shu);}
+  .u.active .ts::before{color:#fff;}
+  .u.active .u-jp{color:var(--ink);}
+  .u-meta{display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;padding-top:.15rem;}
+  .u-meta .ts{width:100%;text-align:center;}
+  .spk{font-family:var(--font-gothic);font-size:.66rem;font-weight:600;line-height:1.3;
+    padding:.12rem .4rem;border-radius:.3rem;white-space:nowrap;border:1px solid transparent;}
+  .spk.iwata{color:var(--goi);background:var(--goi-t);}
+  .spk.host{color:var(--ink-soft);background:var(--card-2);}
+  .spk.nare{color:var(--katsu);background:var(--katsu-t);}
+  .spk.neta{color:var(--shu);background:var(--joshi-t);}
+  .key-star{color:var(--shu);font-size:.8rem;line-height:1;}
+
+  .u-body{min-width:0;}
+  .u-jp{font-family:var(--font-mincho);font-size:1.14rem;line-height:2.15;color:var(--ink);
+    letter-spacing:.01em;}
+  .u-cn{font-size:.9rem;color:var(--ink-soft);margin-top:.15rem;}
+  .u-cn .lbl{font-family:var(--font-latin);font-size:.64rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-faint);margin-right:.45rem;
+    border:1px solid var(--line-strong);border-radius:.25rem;padding:.02rem .28rem;}
+  .u-asr{font-size:.78rem;color:var(--ink-faint);margin-top:.4rem;line-height:1.55;}
+  .tag-asr{font-family:var(--font-gothic);font-size:.64rem;font-weight:600;color:var(--shu);
+    background:var(--joshi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
+    white-space:nowrap;}
+  .u-points{list-style:none;margin:.55rem 0 0;padding:0;display:flex;flex-direction:column;gap:.4rem;}
+  .u-points li{display:grid;grid-template-columns:auto 1fr;gap:.55rem;align-items:start;
+    font-size:.85rem;line-height:1.6;}
+  .u-points .chip{margin-top:.08rem;font-size:.68rem;}
+  .u-points .star{color:var(--shu);}
+
+  @media (max-width:520px){
+    .u{grid-template-columns:1fr;gap:.45rem;}
+    .u-meta{flex-direction:row;align-items:center;gap:.5rem;}
+    .u-meta .ts{width:auto;}
+    .u.key{background:none;}
+    .u-points li{grid-template-columns:1fr;gap:.2rem;}
+  }
+
+  /* ============================================================
+     MOBILE / TOUCH ADAPTATION  (additive; later rules override)
+     ============================================================ */
+  :root{ --dock-max:42vh; }
+  @supports (height:100dvh){ :root{ --dock-max:42dvh; } }
+
+  /* narrow screens: keep the sticky video from eating the viewport, honour the notch */
+  @media (max-width:560px){
+    body{ overflow-x:hidden; }                 /* safety net against any stray overflow */
+    .wrap{ padding-left:max(1.1rem,env(safe-area-inset-left));
+           padding-right:max(1.1rem,env(safe-area-inset-right)); }
+    .video-dock{ top:env(safe-area-inset-top,0px); margin-top:1rem; }
+    .dock-video{ max-width:none; }
+    .video-frame{ max-height:var(--dock-max); }
+    /* dock bar: let the long title ellipsize so 跟随 / 收起 never get pushed off-screen */
+    .dock-bar{ gap:.4rem; padding-left:.75rem; }
+    .dock-title{ flex:1 1 auto; min-width:0; }
+    .dock-min,.dock-follow{ flex:none; }
+    .tag{ white-space:normal; }                /* long 名台词 pills wrap instead of overflowing */
+    .sec{ margin-top:2.4rem; }
+  }
+  /* landscape phone: give the video the width, lift the height cap */
+  @media (orientation:landscape) and (max-height:480px){
+    .video-frame{ max-height:82vh; }
+  }
+
+  /* touch devices (no hover): >=44px hit targets. hover-peek can't fire on touch,
+     so the master toggle + tap-to-pin (.reveal) are the furigana controls. */
+  @media (hover:none) and (pointer:coarse){
+    .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
+         align-items:center; justify-content:center; }
+    .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    #furiToggle{ min-height:44px; padding:.55rem 1.1rem; }
+    ruby{ padding:.12em .06em; border-radius:.2em; }
+    .u-points .chip{ padding:.3rem .6rem; }
+  }
+
+  /* re-follow button: the player shows it (bottom, thumb-reach) when auto-follow
+     is off during playback, so re-arming is one tap even far down the page */
+  #refollow{ position:fixed; z-index:40;
+    right:max(1rem,env(safe-area-inset-right));
+    bottom:max(1rem,env(safe-area-inset-bottom));
+    display:none; align-items:center; gap:.4rem; min-height:44px;
+    font-family:var(--font-gothic); font-size:.85rem; font-weight:600;
+    color:#fff; background:var(--shu); border:0; border-radius:2rem;
+    padding:.6rem 1.15rem; box-shadow:0 8px 22px -8px rgba(0,0,0,.55);
+    cursor:pointer; opacity:0; transform:translateY(10px);
+    transition:opacity .2s ease,transform .2s ease; }
+  #refollow.show{ display:inline-flex; opacity:1; transform:none; }
+  #refollow:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ #refollow{ transition:none; } }
+
+  /* horizontally-scrollable reference tables: fade + shadow hint you can swipe */
+  .tbl-wrap{ position:relative;
+    background:
+      linear-gradient(90deg,var(--card),transparent) 0 0,
+      linear-gradient(90deg,transparent,var(--card)) 100% 0,
+      radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.16),transparent) 0 0,
+      radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.16),transparent) 100% 0;
+    background-repeat:no-repeat;
+    background-size:2.4rem 100%,2.4rem 100%,1.1rem 100%,1.1rem 100%;
+    background-attachment:local,local,scroll,scroll; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">日本語文法分析 · 中文精讲</p>
+  <h1>「帰りたくないっていったら…」<br>——恋爱短剧的逐句文法拆解</h1>
+  <p class="sub">一部日语恋爱短剧：居酒屋里，后辈「南」和自己憧憬的前辈单独喝酒（サシ飲み）。前辈聊起前任和自己的恋爱观，南鼓起勇气说「不想回家」来试探，前辈却以「我们是以前辈后辈的身份来的」轻轻回避。面向中文母语的日语学习者，逐句还原口语（タメ口／敬体）、注音并精讲文法。</p>
+
+  <div class="video-dock" id="dock">
+    <div class="dock-bar">
+      <span class="dock-title"><span class="tri">▶</span> 憧れの先輩とサシ飲み</span>
+      <button class="dock-follow on" id="dockFollow" type="button" aria-pressed="true" aria-label="切换字幕自动跟随播放">● 跟随</button>
+      <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
+    </div>
+    <div class="dock-video">
+      <div class="video-frame">
+        <video id="clip" controls playsinline preload="metadata" data-youtube-id="EP8pYHrmyig" title="憧れの先輩とサシ飲み">
+          <source src="sashinomi-clip.mp4" type="video/mp4">
+          无法播放本地视频文件 <code>sashinomi-clip.mp4</code>（请确认它与本网页在同一目录）。
+        </video>
+      </div>
+    </div>
+  </div>
+  <p class="play-hint"><span class="tri">▸</span> 点击句子的<b>时间戳</b>跳到该处播放；播放时字幕会<b>自动高亮并跟随滚动</b>，手动滚动即暂停，点时间戳或「跟随」恢复。</p>
+
+  <div class="meta">
+    <span class="tag">作品 <b>憧れの先輩とサシ飲み</b></span>
+    <span class="tag">名台词 <b>「帰りたくないっていったら…」</b></span>
+    <span class="tag">时长 <b>4:27</b></span>
+    <span class="tag">日语恋爱短剧 · 居酒屋</span>
+    <span class="tag">口语・タメ口／敬语 精讲</span>
+  </div>
+
+  <div class="furi-bar">
+    <span class="furi-hint">读音默认<b>隐藏</b> · <b>悬停</b>或<b>点按</b>汉字即可显示（再点一次收起）</span>
+    <button id="furiToggle" type="button" aria-pressed="false">全部读音：关</button>
+  </div>
+
+  <div class="note">
+    <b>关于文本：</b>原始文字来自 YouTube 自动字幕（ASR），含误听，讲解时已还原并标注（如「分かれちゃった」→「別れちゃった」、「借りたくない」→「帰りたくない」、「めどくさい」→「めんどくさい」、「おちそうさです」→「ごちそうさまです」）。这是一段轻松的恋爱短剧，台词多为口语・タメ口 与敬体交替。
+  </div>
+
+  <div class="legend">
+    <span class="lg"><span class="swatch" style="background:var(--katsu)"></span><span><b>活用・接续</b><br>ば形/て形/意志形…</span></span>
+    <span class="lg"><span class="swatch" style="background:var(--keigo)"></span><span><b>授受・敬语</b><br>ていただく/させていただく…</span></span>
+    <span class="lg"><span class="swatch" style="background:var(--joshi)"></span><span><b>助词・语气</b><br>から/って/终助词…</span></span>
+    <span class="lg"><span class="swatch" style="background:var(--goi)"></span><span><b>词汇・句式</b><br>复合动词/连体修饰…</span></span>
+  </div>
+
+  <hr class="rule">
+
+    <!-- ============ CARDS ============ -->
+  <div class="sec">逐句精讲 · 全 38 句</div>
+  <p class="lead">全片对话按时间顺序逐句还原、注音、翻译并解析文法。带 <span class="tri">★</span> 的为重点句式。点击任意 <span class="ts-demo">▸ 时间戳</span> 视频即跳到该处播放。</p>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">01</span><span class="chapter-t">元カノと『呼び捨て』<span class="chapter-c">聊前任・脱口直呼其名</span></span><span class="chapter-r">0:00–1:00</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:00</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">あ、そういえばなんで<ruby>別<rt>わか</rt></ruby>れちゃったんですか？<ruby>岩田<rt>いわた</rt></ruby>さん、めっちゃ<ruby>綺麗<rt>きれい</rt></ruby>な<ruby>人<rt>ひと</rt></ruby>だったのに。</div>
+        <div class="u-cn"><span class="lbl">译</span>啊，说起来，你们为什么分手了呀？岩田小姐明明是那么漂亮的人。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「分かれちゃった」→「別れちゃった」（分手）。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">～ちゃった（てしまった）<span class="star">★</span></span><span>「別れちゃった」＝「別れてしまった」的口语缩约，表示（无奈地）已经分手了、事已至此的语气</span></li>
+          <li><span class="chip joshi">のに</span><span>逆接「明明…却」；「綺麗な人だったのに」暗含「明明那么漂亮（怎么会分手呢）」的惋惜</span></li>
+          <li><span class="chip joshi">んですか（のですか）</span><span>「んです」＝のです，带关心地请求说明；ですか为敬体，后辈对前辈用敬语</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:08</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">いや、<ruby>色々<rt>いろいろ</rt></ruby><ruby>我慢<rt>がまん</rt></ruby>させちゃってたんだよ、きっと。</div>
+        <div class="u-cn"><span class="lbl">译</span>不…大概是我让她忍了很多委屈吧。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">使役「させる」<span class="star">★</span></span><span>「我慢する→我慢させる」＝让（对方）忍耐；这里是「（我）一直在让她忍耐」</span></li>
+          <li><span class="chip goi">～ちゃってた（てしまっていた）</span><span>「させてしまっていた」的口语缩约，表示不知不觉一直处于那种状态</span></li>
+          <li><span class="chip joshi">んだよ</span><span>「んだ（のだ）＋よ」，说明并断定，男性随意口吻</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:15</span><span class="spk iwata">南</span></div>
+      <div class="u-body">
+        <div class="u-jp">そうなんだ。</div>
+        <div class="u-cn"><span class="lbl">译</span>这样啊。</div>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:17</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp">まあ、めっちゃいい<ruby>子<rt>こ</rt></ruby>だったからね。いい<ruby>子<rt>こ</rt></ruby>。</div>
+        <div class="u-cn"><span class="lbl">译</span>嘛，毕竟是个很好的女孩子嘛。好女孩。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">からね</span><span>「から（原因）＋ね（寻求共鸣）」：「（毕竟）是个好女孩嘛」</span></li>
+          <li><span class="chip goi">めっちゃ</span><span>口语的「非常」，＝とても</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:23</span><span class="spk iwata">南</span></div>
+      <div class="u-body">
+        <div class="u-jp">へえ。まだ<ruby>好<rt>す</rt></ruby>きですか？</div>
+        <div class="u-cn"><span class="lbl">译</span>诶。现在还喜欢（她）吗？</div>
+        <ul class="u-points">
+          <li><span class="chip goi">まだ</span><span>「还、仍然」；「まだ好き」＝现在仍然喜欢</span></li>
+          <li><span class="chip joshi">ですか</span><span>敬体疑问，后辈对前辈用敬语</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:23</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">いや、それはないかな。</div>
+        <div class="u-cn"><span class="lbl">译</span>不，那倒不至于吧。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">かな <span class="star">★</span></span><span>自问/推测的缓和语气，「それはないかな」＝那应该没有吧，比断定更委婉</span></li>
+          <li><span class="chip goi">それはない</span><span>惯用「那可没有／那倒不至于」</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:32</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>南<rt>みなみ</rt></ruby>。ごめん、<ruby>普通<rt>ふつう</rt></ruby>に<ruby>呼<rt>よ</rt></ruby>び<ruby>捨<rt>す</rt></ruby>てしちゃった。びっくりした？ごめんごめんごめんごめん。</div>
+        <div class="u-cn"><span class="lbl">译</span>南。抱歉，我很自然地就直呼你名字了。吓到你了吧？对不起对不起对不起对不起。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「普通普通に」→「普通に」（重复为误听）。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">呼び捨て <span class="star">★</span></span><span>直呼其名、不加「さん／君」等敬称</span></li>
+          <li><span class="chip goi">～しちゃった</span><span>「呼び捨てしてしまった」＝脱口就直呼名字了，含歉意</span></li>
+          <li><span class="chip goi">びっくりする</span><span>吓一跳、吃惊</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:45</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>上野<rt>うえの</rt></ruby>。</div>
+        <div class="u-cn"><span class="lbl">译</span>上野（同学）。</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">呼び捨て⇔姓＋さん</span><span>先輩慌忙改口用姓「上野」，以收回失礼、恢复礼貌的称呼方式</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:45</span><span class="spk iwata">南</span></div>
+      <div class="u-body">
+        <div class="u-jp">はい。いや、<ruby>別<rt>べつ</rt></ruby>に「<ruby>南<rt>みなみ</rt></ruby>」でもいいですよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯。啊，其实叫我「南」也没关系啦。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">～でもいい</span><span>「南でもいい」＝叫「南」也可以（让步许可）</span></li>
+          <li><span class="chip goi">別に</span><span>（并）没什么、不在意</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:47</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">いいから、いいから。</div>
+        <div class="u-cn"><span class="lbl">译</span>没关系没关系（别在意）。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">いいから <span class="star">★</span></span><span>惯用「いいから」＝行了、别在意，用来安抚/打断对方</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:47</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">え、<ruby>最近<rt>さいきん</rt></ruby>どう？いい<ruby>人<rt>ひと</rt></ruby>とかいないの？</div>
+        <div class="u-cn"><span class="lbl">译</span>诶，最近怎么样？有没有什么好对象啊？</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">とか</span><span>「いい人とか」＝好对象之类的，举例并缓和语气</span></li>
+          <li><span class="chip joshi">の？<span class="star">★</span></span><span>随意的疑问终助词（简体口语，相当于「んですか」）</span></li>
+          <li><span class="chip goi">いい人</span><span>（恋爱意义上的）好对象、合适的人</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:51</span><span class="spk iwata">南</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>ですか？</div>
+        <div class="u-cn"><span class="lbl">译</span>我吗？</div>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">00:51</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">あ、<ruby>言<rt>い</rt></ruby>いたくなかったら<ruby>言<rt>い</rt></ruby>わなくていいから。</div>
+        <div class="u-cn"><span class="lbl">译</span>啊，你要是不想说的话，不说也没关系的。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">～たくなかったら <span class="star">★</span></span><span>「言いたくない」（たい的否定）＋「たら」条件：如果不想说的话</span></li>
+          <li><span class="chip katsu">～なくていい</span><span>「言わなくていい」＝不说也可以／不必说</span></li>
+          <li><span class="chip joshi">から</span><span>句尾「から」缓和语气、给出体谅的理由</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">00:55</span><span class="spk iwata">南</span></div>
+      <div class="u-body">
+        <div class="u-jp">いや、<ruby>別<rt>べつ</rt></ruby>にそんなんじゃないんですけど。</div>
+        <div class="u-cn"><span class="lbl">译</span>不，也不是那样的啦…</div>
+        <ul class="u-points">
+          <li><span class="chip goi">そんなん</span><span>口语「そんなもの／そんなの」＝那样的（事）</span></li>
+          <li><span class="chip joshi">けど</span><span>句尾「けど」缓和、欲言又止</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">02</span><span class="chapter-t">南の恋バナ<span class="chapter-c">后辈的恋爱苦恼</span></span><span class="chapter-r">1:00–1:25</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:00</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">なんか、<ruby>恋人<rt>こいびと</rt></ruby>いる<ruby>人<rt>ひと</rt></ruby>ばっかり<ruby>好<rt>す</rt></ruby>きになっちゃうんですよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>就是…我老是会喜欢上已经有恋人的人。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">ばっかり <span class="star">★</span></span><span>「ばかり」的口语，「净是、总是」；老是喜欢上有恋人的人</span></li>
+          <li><span class="chip goi">好きになっちゃう <span class="star">★</span></span><span>「好きになる（喜欢上）＋ちゃう」＝不由自主地喜欢上</span></li>
+          <li><span class="chip goi">連体修飾「恋人（が）いる人」</span><span>「有恋人的人」；「いる」直接修饰「人」，口语省略了「が」</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">01:05</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp">ああ、そういうことね。</div>
+        <div class="u-cn"><span class="lbl">译</span>啊，原来是这么回事啊。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">そういうこと</span><span>「原来是这么回事」，表示领会</span></li>
+          <li><span class="chip joshi">ね</span><span>确认/领会的终助词</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:05</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">あ、<ruby>別<rt>べつ</rt></ruby>に<ruby>取<rt>と</rt></ruby>ったりしないですよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>啊，我可不会去抢人家的哦。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">～たりしない <span class="star">★</span></span><span>「取ったりしない」＝不会做出（抢人）之类的事；「たり」举例列举</span></li>
+          <li><span class="chip goi">取る</span><span>此处指「抢走（别人的）恋人」</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">01:09</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp">いやいや、それは<ruby>分<rt>わ</rt></ruby>かってる。</div>
+        <div class="u-cn"><span class="lbl">译</span>不不，那个我懂的。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">分かってる（分かっている）</span><span>「ている」口语缩约，表「我明白／我知道」的状态</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:11</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">そう、だから<ruby>恋愛<rt>れんあい</rt></ruby><ruby>経験<rt>けいけん</rt></ruby><ruby>少<rt>すく</rt></ruby>ないっていうか。</div>
+        <div class="u-cn"><span class="lbl">译</span>对，所以说…该说是恋爱经验很少吧。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">だから</span><span>「所以、因此」，承接前句得出的结论</span></li>
+          <li><span class="chip goi">っていうか <span class="star">★</span></span><span>「というか」的口语，「该说是…呢」，用于修正/补充措辞</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:16</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">でも、<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>うとか、<ruby>振<rt>ふ</rt></ruby>られると…</div>
+        <div class="u-cn"><span class="lbl">译</span>但是，像是交往啊、被甩的时候…</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>句子未说完，接下一段。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">とか</span><span>「付き合うとか」列举、举例（还有别的）</span></li>
+          <li><span class="chip katsu">受身「振られる」<span class="star">★</span></span><span>「振る（甩）」的被动＝被甩</span></li>
+          <li><span class="chip katsu">～と（条件）</span><span>「振られると…」一（被甩）就…（后句省略，留白）</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">03</span><span class="chapter-t">先輩の恋愛観<span class="chapter-c">前辈的恋爱观</span></span><span class="chapter-r">1:25–2:22</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:25</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">そういう<ruby>形<rt>かたち</rt></ruby>あるものだけが<ruby>恋愛<rt>れんあい</rt></ruby>じゃないと、<ruby>俺<rt>おれ</rt></ruby>は<ruby>思<rt>おも</rt></ruby>ってるのね。</div>
+        <div class="u-cn"><span class="lbl">译</span>并不是只有那种「有具体形式」的东西才算恋爱，我是这么想的。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>开头「かそう」＝上文的「〜とか」＋「そう（いう）」，承接前段（形あるもの＝交往/被甩那种有形式的关系）。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">だけが〜じゃない</span><span>「だけ」表示「只／仅」；「〜だけが恋愛じゃない」＝并非「只有…」才是恋爱，否定的是「只有」这个限定。</span></li>
+          <li><span class="chip goi">〜と思ってる<span class="star">★</span></span><span>「と思っている」表达持续的看法／主张「我一直觉得…」，口语常缩为「思ってる」。</span></li>
+          <li><span class="chip joshi">のね</span><span>終助詞「の＋ね」：柔和地陈述自己的想法并寻求对方认同。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:31</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>好<rt>す</rt></ruby>きとか<ruby>嫉妬<rt>しっと</rt></ruby>するとか、そういう<ruby>感情的<rt>かんじょうてき</rt></ruby>なものも<ruby>恋愛<rt>れんあい</rt></ruby>だと<ruby>思<rt>おも</rt></ruby>うんだよね、<ruby>俺<rt>おれ</rt></ruby>は。</div>
+        <div class="u-cn"><span class="lbl">译</span>喜欢啦、嫉妒啦，我觉得这种感情上的东西也算是恋爱。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">〜とか〜とか<span class="star">★</span></span><span>列举例子「…啦…啦（之类的）」，语气随意，常不穷尽地举几个例。</span></li>
+          <li><span class="chip joshi">も</span><span>「感情的なものも恋愛だ」的「も」表添加／类比「也」：这种感情的东西「也」是恋爱。</span></li>
+          <li><span class="chip goi">〜んだよね</span><span>「んだ（＝のだ）」表说明・强调，＋「よね」寻求同感，男性随意口语。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:49</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>難<rt>むずか</rt></ruby>しいけど、ごめんごめんごめん。<ruby>俺<rt>おれ</rt></ruby>ね、もう<ruby>酔<rt>よ</rt></ruby>っ<ruby>払<rt>ぱら</rt></ruby>うとめんどくさいんだよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>有点难懂吧，抱歉抱歉抱歉。我这人啊，一喝醉就变得很难搞。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「めどくさい」为「めんどくさい」误听；「ごめごめ」为「ごめんごめん」。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜と（条件）<span class="star">★</span></span><span>动词辞书形＋「と」：表示「一…就…」的必然／恒常结果；「酔っ払うとめんどくさい」＝一喝醉就变麻烦。</span></li>
+          <li><span class="chip goi">めんどくさい</span><span>口语形容词「麻烦、嫌麻烦、难搞」；「めんどう＋くさい」，会话中常发成「めんどくさい／めんどい」。</span></li>
+          <li><span class="chip keigo">ため口</span><span>先輩对后辈全程用简体（无丁寧語），体现上对下的随意语体。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">01:57</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">あ、そうなんですか。ちょ、ちょっとちょっと。</div>
+        <div class="u-cn"><span class="lbl">译</span>啊，是这样吗。等、等一下等一下。</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">そうなんですか<span class="star">★</span></span><span>＝「そうなのですか」，「なん」是「なの（のだ）」的口语形；后辈南对先辈用丁寧体确认「是这样吗」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:00</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">でも、いつかね、その<ruby>思<rt>おも</rt></ruby>いが<ruby>届<rt>とど</rt></ruby>くといいね。</div>
+        <div class="u-cn"><span class="lbl">译</span>不过啊，总有一天，那份心意能传达到就好了。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>句尾 ASR「といいんで」还原为「といいね」（表愿望）。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜といい<span class="star">★</span></span><span>动词辞书形＋「と＋いい」，表希望／愿望「（要是）…就好了」；「届くといい」＝希望能传达到。</span></li>
+          <li><span class="chip joshi">ね</span><span>終助詞「ね」（いつかね／いいね）缓和语气、拉近与对方距离。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:09</span><span class="spk iwata">南</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>届<rt>とど</rt></ruby>きますか？</div>
+        <div class="u-cn"><span class="lbl">译</span>会传达到吗？</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">届きますか</span><span>「届く」的ます体疑问；南对先辈保持丁寧体的礼貌问法。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:12</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp">ね、どうかな。<ruby>大丈夫<rt>だいじょうぶ</rt></ruby>だよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯，谁知道呢。没问题的啦。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">どうかな</span><span>惯用表达，表不确定「谁知道呢／不好说」，自问语气。</span></li>
+          <li><span class="chip joshi">よ</span><span>終助詞「よ」：告知・安抚对方，「大丈夫だよ」＝没事的啦。</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">04</span><span class="chapter-t">「帰りたくない」<span class="chapter-c">『不想回家』的试探</span></span><span class="chapter-r">2:22–2:50</span></div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:22</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">よし、じゃあ<ruby>帰<rt>かえ</rt></ruby>るか。</div>
+        <div class="u-cn"><span class="lbl">译</span>好了，那，回家吧？</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">帰るか（勧誘/自問）<span class="star">★</span></span><span>动词辞书形＋「か」：表提议／下决心「（那就）…吧」，如「帰るか＝回去吧」。</span></li>
+          <li><span class="chip goi">よし／じゃあ</span><span>「よし」下决心的感叹，「じゃあ」＝那么，用于转入下一动作的口语。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:32</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>帰<rt>かえ</rt></ruby>るよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>走了哦。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">よ</span><span>終助詞「よ」催促・告知对方：（该）走了哦。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:40</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>何<rt>なに</rt></ruby>？</div>
+        <div class="u-cn"><span class="lbl">译</span>怎么了？</div>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:41</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">いや、もし…うん、<ruby>私<rt>わたし</rt></ruby>が<ruby>帰<rt>かえ</rt></ruby>りたくないって<ruby>言<rt>い</rt></ruby>ったら、どうします？</div>
+        <div class="u-cn"><span class="lbl">译</span>不…如果…嗯，我要是说「不想回家」呢，你会怎么办？</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「借りたくない」为「帰りたくない」误听（与标题「不想回家」一致）。</div>
+        <ul class="u-points">
+          <li><span class="chip katsu">〜たら（条件）<span class="star">★</span></span><span>「言ったら」＝动词た形＋「ら」，表假设「如果…（的话）」，后接「どうします」问结果。</span></li>
+          <li><span class="chip joshi">〜って（引用）</span><span>口语引用助词，＝「と」；「帰りたくないって言ったら」＝要是说「不想回家」的话。</span></li>
+          <li><span class="chip keigo">どうします</span><span>「する」的ます体疑问；南对先辈用丁寧体「你会怎么办」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:47</span><span class="spk host">先輩</span></div>
+      <div class="u-body">
+        <div class="u-jp">いやいや、<ruby>金曜<rt>きんよう</rt></ruby>じゃないからだめだよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>不行不行，又不是星期五，不可以啦。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>先輩用「不是星期五」这种半开玩笑的理由回避南的试探。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">から（理由）</span><span>「〜から」表原因・理由；「金曜じゃないからだめ」＝因为不是星期五所以不行。</span></li>
+          <li><span class="chip goi">じゃない</span><span>＝「ではない」的口语否定形，会话中普遍使用。</span></li>
+        </ul>
+      </div>
+    </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">05</span><span class="chapter-t">先輩後輩として<span class="chapter-c">前辈后辈的界线・结账</span></span><span class="chapter-r">2:50–4:01</span></div>
+    <div class="u">
+      <div class="u-meta"><span class="ts">02:50</span><span class="spk iwata">南</span></div>
+      <div class="u-body">
+        <div class="u-jp">いや、そうじゃなくて…</div>
+        <div class="u-cn"><span class="lbl">译</span>不，我不是那个意思…</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「いやそうじゃなくてん」末尾「ん」为杂音，还原为「いや、そうじゃなくて…」；南欲言又止。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">そうじゃなくて</span><span>＝「そうではなくて」的口语缩约，「不是那样／不是那个意思」。用来否定并纠正对方或自己刚说的话，后面本应接真正想说的内容，这里被打断/含糊带过。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">02:56</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp"><ruby>何<rt>なに</rt></ruby>、いや、だから、<ruby>今<rt>いま</rt></ruby>これは<ruby>仕事<rt>しごと</rt></ruby>で<ruby>後輩<rt>こうはい</rt></ruby>と<ruby>飲<rt>の</rt></ruby>んでるっていう<ruby>感<rt>かん</rt></ruby>じですか？</div>
+        <div class="u-cn"><span class="lbl">译</span>什么…不，我是说，现在这个算是「因为工作、和后辈一起喝酒」这种感觉吗？</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「今これ／は仕事で…飲んでるっていう感じです／か」被时间戳切成三段，合并还原为一问句；南带着试探与失落。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">～っていう感じ <span class="star">★</span></span><span>＝「という感じ」的口语形，「…这样的感觉／算是…的样子」，给一件事下一个模糊的定性。这里给「仕事で飲んでる」定性，用来婉转确认对方怎么看待此刻。</span></li>
+          <li><span class="chip joshi">って（＝という）</span><span>引用助词「と」的口语音变。「っていう」＝「という」，把前面整段内容名词化后接「感じ」。</span></li>
+          <li><span class="chip katsu">飲んでる</span><span>＝「飲んでいる」，て形＋いる 表进行/状态；口语中「い」常脱落成「～てる」。</span></li>
+          <li><span class="chip keigo">～ですか</span><span>敬体疑问。南对前辈保持「です」的礼貌距离，语气里却藏着试探。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">03:12</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん、いや、<ruby>仕事<rt>しごと</rt></ruby>じゃないけど…けど、<ruby>先輩<rt>せんぱい</rt></ruby><ruby>後輩<rt>こうはい</rt></ruby>として<ruby>来<rt>き</rt></ruby>てるよ。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯，不，虽然不是工作…但，我是以「前辈后辈」的身份来的哦。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「仕事じゃないけど」「けど」「先輩後輩として来てる」「よ」被切碎，合并为一句；连说两个「けど」是前辈支吾回避，「来てる」＝「来ている」口语脱落。</div>
+        <ul class="u-points">
+          <li><span class="chip joshi">けど</span><span>逆接接续助词，「虽然…但…」。「仕事じゃないけど」＝虽然不是工作。口语里也常放句尾软化语气；此处前辈接连两个「けど」是在支吾、回避暧昧。</span></li>
+          <li><span class="chip joshi">～として <span class="star">★</span></span><span>「作为／以…的身份」。「先輩後輩として来てる」＝以「前辈后辈」这层关系来的；前辈借此把气氛拉回工作/前后辈关系，回避南的暗示。</span></li>
+          <li><span class="chip katsu">来てる</span><span>＝「来ている」，て形＋いる，口语脱落「い」。这里表「（现在）是以…身份来的」这一持续状态。</span></li>
+          <li><span class="chip joshi">よ</span><span>终助词，向对方强调、告知自己的立场（＝我可是以前后辈身份来的哦）。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">03:41</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">はい、すいません、なんでもないです。</div>
+        <div class="u-cn"><span class="lbl">译</span>好的，对不起，没什么。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「なんでもない」「です」被切开，合并为「なんでもないです」；南尴尬地收回话头。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">なんでもない <span class="star">★</span></span><span>惯用表达「没什么／不是什么事」。用来把刚才的话或暧昧含糊带过、收回。加「です」成敬体「なんでもないです」。</span></li>
+          <li><span class="chip keigo">すいません</span><span>＝「すみません」的口语音变，这里作道歉「不好意思、抱歉」。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">03:56</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">うん、よし。じゃ、<ruby>俺<rt>おれ</rt></ruby>、<ruby>会計<rt>かいけい</rt></ruby>してくるわ。すいません。</div>
+        <div class="u-cn"><span class="lbl">译</span>嗯，好。那，我去结一下账。（店员～）不好意思。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>「会計してくるわ」的「わ」为口语终助词；句尾「すいません」是招呼店员，非道歉。</div>
+        <ul class="u-points">
+          <li><span class="chip goi">会計 <span class="star">★</span></span><span>名词「结账、买单」。「会計してくる」＝去把账结了（再回来）。餐厅买单也常说「お会計（お願いします）」。</span></li>
+          <li><span class="chip katsu">～してくる</span><span>「～てくる」：去做某事再回来。「会計してくる」＝去结个账就回来。</span></li>
+          <li><span class="chip joshi">わ</span><span>口语终助词。此处是男性用的「わ」（平/降调），表达自己的决定、打算，≠女性上扬的「わ」。「会計してくるわ」＝我去结个账啊。</span></li>
+          <li><span class="chip keigo">すいません</span><span>这里是招呼店员「不好意思、麻烦一下」，非道歉；同一句形因场景不同而含义不同。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="u key">
+      <div class="u-meta"><span class="ts">04:00</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
+      <div class="u-body">
+        <div class="u-jp">ごちそうさまです。</div>
+        <div class="u-cn"><span class="lbl">译</span>谢谢款待。</div>
+        <div class="u-asr"><span class="tag-asr">还原</span>ASR「おちそうさです」→「ごちそうさまです」。</div>
+        <ul class="u-points">
+          <li><span class="chip keigo">ごちそうさまです <span class="star">★</span></span><span>用餐后的固定寒暄「多谢款待」；被请客时说，含感谢对方买单之意。更礼貌为「ごちそうさまでした」，对应饭前的「いただきます」。</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+    <div class="sec">系统速查表</div>
+
+  <div class="tbl-wrap"><table><caption>① 授受动词体系</caption><thead><tr><th>方向 / 视角</th><th>普通</th><th>敬语（尊他 / 自谦）</th></tr></thead><tbody><tr><td>我 → 他人（我为对方做）</td><td><span class="jt">〜てあげる</span></td><td><span class="jt">〜てさしあげる</span></td></tr><tr><td>他人 → 我（对方为我做）</td><td><span class="jt">〜てくれる</span></td><td><span class="jt">〜てくださる</span> <span class="rd">尊他</span></td></tr><tr><td>我请他人做（承蒙对方）</td><td><span class="jt">〜てもらう</span></td><td><span class="jt">〜ていただく</span> <span class="rd">自谦</span></td></tr></tbody></table></div>
+  <div class="tbl-wrap"><table><caption>② 常见口语缩约</caption><thead><tr><th>缩约</th><th>原形</th></tr></thead><tbody><tr><td><span class="jt">〜ちゃう / じゃう</span></td><td><span class="jt">〜てしまう / でしまう</span></td></tr><tr><td><span class="jt">〜な</span></td><td><span class="jt">〜なさい</span></td></tr><tr><td><span class="jt">って</span></td><td><span class="jt">と</span>（引用）</td></tr><tr><td><span class="jt">んだ</span></td><td><span class="jt">のだ</span></td></tr><tr><td><span class="jt">〜てる</span></td><td><span class="jt">〜ている</span></td></tr><tr><td><span class="jt">〜れる</span> <span class="rd">(ら抜き)</span></td><td><span class="jt">〜られる</span></td></tr></tbody></table></div>
+  <div class="tbl-wrap"><table><caption>③ 终助词语气</caption><thead><tr><th>助词</th><th>核心语感</th></tr></thead><tbody><tr><td><span class="jt">ね</span></td><td>寻求共鸣 / 软化语气</td></tr><tr><td><span class="jt">よ</span></td><td>告知 / 提醒对方</td></tr><tr><td><span class="jt">さ</span></td><td>随意抛出主张</td></tr><tr><td><span class="jt">な(あ)</span></td><td>自言自语 / 感慨</td></tr><tr><td><span class="jt">よね</span></td><td>确认 ＋ 共鸣</td></tr></tbody></table></div>
+
+  <footer>
+    素材：YouTube 恋爱短剧片段（自动字幕转写，含 ASR 误听，讲解中已还原）。面向中文母语者的日语文法学习分析，非官方字幕。口语・タメ口／敬语 的判定以标准日语语法为准。
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  // tap/click pins a reading (tap again to hide); keyboard Enter/Space too
+  var rubies = document.querySelectorAll('ruby');
+  for (var i = 0; i < rubies.length; i++) {
+    (function(r){
+      r.tabIndex = 0;
+      r.setAttribute('role','button');
+      r.setAttribute('aria-label','显示读音');
+      r.addEventListener('click', function(){ r.classList.toggle('reveal'); });
+      r.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); r.classList.toggle('reveal'); }
+      });
+    })(rubies[i]);
+  }
+  // master toggle: show / hide all readings
+  var btn = document.getElementById('furiToggle');
+  if (btn) {
+    btn.addEventListener('click', function(){
+      var on = document.body.classList.toggle('show-furi');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '全部读音：开' : '全部读音：关';
+    });
+  }
+})();
+</script>
+
+<script>
+(function(){
+  // Unified player: ONE page that works offline AND online, no mode to choose.
+  // The dock ships a native <video src="clip.mp4"> carrying the YouTube id in
+  // data-youtube-id. On load we probe the local file: if it loads → native
+  // <video> (offline, timeupdate follow-along); if it's missing/404 (e.g. on
+  // GitHub Pages) → swap to the YouTube IFrame Player API (poll follow-along).
+  // One follow-along engine, two transports, auto-selected.
+  var dock      = document.getElementById('dock');
+  var minBtn    = document.getElementById('dockMin');
+  var followBtn = document.getElementById('dockFollow');
+  var video     = document.getElementById('clip');            // <video> + <source> + data-youtube-id
+  var ytid      = video ? (video.getAttribute('data-youtube-id') || '') : '';
+  var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
+
+  var transport = null;   // { seek(sec) }  — set once local/youtube is chosen
+  var fab = null;         // floating re-follow button (created below)
+
+  /*<<follow-guard>>*/
+  // Tell our own (programmatic) scrolling apart from the user's. We arm a short
+  // time window around every auto-scroll; a scroll event inside it is ours → ignore,
+  // otherwise the user moved the page → suspend auto-follow. Pure + unit-tested.
+  function makeScrollGuard(windowMs){
+    var until = 0;
+    return {
+      begin:  function(t){ until = t + windowMs; },
+      action: function(t){ return t < until ? 'ignore' : 'suspend'; }
+    };
+  }
+  /*<</follow-guard>>*/
+  var guard = makeScrollGuard(900);
+  function nowms(){ return Date.now(); }
+
+  function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
+  function setMin(m){
+    if (!dock) return;
+    dock.classList.toggle('min', m);
+    if (minBtn){ minBtn.setAttribute('aria-expanded', m ? 'false' : 'true'); minBtn.textContent = m ? '展开 ▸' : '收起 ▾'; }
+  }
+
+  // ---------- shared follow-along engine (transport-agnostic) ----------
+  var units = [], uEls = document.querySelectorAll('.u');
+  for (var i = 0; i < uEls.length; i++){
+    var t = uEls[i].querySelector('.ts');
+    if (t) units.push({ el: uEls[i], sec: toSec(t.textContent) });
+  }
+  units.sort(function(a, b){ return a.sec - b.sec; });
+
+  var following = true, activeIdx = -1;
+  function dockH(){
+    if (!dock) return 0;
+    return dock.classList.contains('min') ? (dock.querySelector('.dock-bar') || dock).offsetHeight : dock.offsetHeight;
+  }
+  function scrollToActive(force){
+    var u = units[activeIdx]; if (!u) return;
+    var r = u.el.getBoundingClientRect();
+    if (force || r.top < dockH() + 16 || r.bottom > window.innerHeight - 16){
+      guard.begin(nowms());   // mark the scroll below as ours so it doesn't self-suspend
+      window.scrollTo({ top: Math.max(0, window.pageYOffset + r.top - dockH() - 24), behavior: SMOOTH });
+    }
+  }
+  function setFollow(on, silent){
+    following = on;
+    if (followBtn){
+      followBtn.classList.toggle('on', on);
+      followBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      followBtn.textContent = on ? '● 跟随' : '○ 跟随';
+    }
+    if (fab) fab.classList.toggle('show', !on && activeIdx >= 0);
+    if (on && !silent) scrollToActive(true);
+  }
+  function indexAt(tt){
+    var lo = -1;
+    for (var k = 0; k < units.length; k++){ if (units[k].sec <= tt + 0.15) lo = k; else break; }
+    return lo;
+  }
+  function highlight(tt){
+    if (!units.length) return;
+    var idx = indexAt(tt);
+    if (idx === activeIdx) return;
+    if (units[activeIdx]) units[activeIdx].el.classList.remove('active');
+    activeIdx = idx;
+    if (units[activeIdx]) units[activeIdx].el.classList.add('active');
+    if (following) scrollToActive(false);
+    else if (fab) fab.classList.toggle('show', activeIdx >= 0);
+  }
+
+  // one scroll listener drives BOTH follow-suspend and mobile auto-minimize.
+  // the guard makes our own auto-scroll invisible here, so follow never self-cancels
+  // and (unlike the old wheel/touchmove pair) touch scrolling behaves the same.
+  function suspend(){ if (following) setFollow(false, true); }
+  var lastY = window.pageYOffset;
+  window.addEventListener('scroll', function(){
+    var y = window.pageYOffset;
+    if (guard.action(nowms()) === 'suspend'){          // a genuine user scroll
+      suspend();
+      // on phones, scrolling down into the transcript collapses the video to reclaim space;
+      // tapping any timestamp seeks and re-expands it (transport.seek calls setMin(false)).
+      if (window.innerWidth <= 560 && y > lastY + 6 && y > 200 &&
+          dock && !dock.classList.contains('min')) setMin(true);
+    }
+    lastY = y;
+  }, { passive: true });
+
+  // clickable timestamps → whichever transport is active
+  var stamps = document.querySelectorAll('.ts');
+  for (var j = 0; j < stamps.length; j++){
+    (function(el){
+      var sec = toSec(el.textContent);
+      el.setAttribute('role','button'); el.tabIndex = 0;
+      el.title = '跳到 ' + el.textContent.trim() + ' 播放';
+      function go(){
+        if (transport) transport.seek(sec);
+        setFollow(true, true);
+        el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+      }
+      el.addEventListener('click', go);
+      el.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
+    })(stamps[j]);
+  }
+  if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
+  if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
+
+  // floating re-follow control — reachable by thumb even when the dock has scrolled
+  // off-screen; the CSS only reveals it (.show) on touch-sized screens when follow is off.
+  fab = document.createElement('button');
+  fab.id = 'refollow'; fab.type = 'button';
+  fab.setAttribute('aria-label', '恢复字幕自动跟随播放');
+  fab.textContent = '● 跟随';
+  document.body.appendChild(fab);
+  fab.addEventListener('click', function(){ setMin(false); setFollow(true); });
+
+  // ---------- transport A: native <video> (offline) ----------
+  function useLocal(){
+    transport = { seek: function(sec){
+      setMin(false);
+      try { video.currentTime = sec; } catch (e) {}
+      var p = video.play(); if (p && p.catch) p.catch(function(){});
+    } };
+    video.addEventListener('timeupdate', function(){ highlight(video.currentTime); });
+  }
+
+  // ---------- transport B: YouTube IFrame Player API (online) ----------
+  function useYouTube(){
+    var slot = document.createElement('div'); slot.id = 'clip';
+    if (video && video.parentNode) video.parentNode.replaceChild(slot, video);
+    var player = null, isReady = false, pending = null, poll = null;
+    transport = { seek: function(sec){
+      setMin(false);
+      if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
+      else pending = sec;
+    } };
+    window.onYouTubeIframeAPIReady = function(){
+      player = new YT.Player('clip', {
+        width: '100%', height: '100%', videoId: ytid,
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onReady: function(){ isReady = true; if (pending != null){ var s = pending; pending = null; transport.seek(s); } },
+          onStateChange: function(e){
+            if (e.data === YT.PlayerState.PLAYING){
+              highlight(player.getCurrentTime());
+              if (!poll) poll = setInterval(function(){ if (player && player.getCurrentTime) highlight(player.getCurrentTime()); }, 250);
+            } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED){
+              if (poll){ clearInterval(poll); poll = null; }
+            }
+          }
+        }
+      });
+    };
+    var tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api';
+    var first = document.getElementsByTagName('script')[0]; first.parentNode.insertBefore(tag, first);
+  }
+
+  // ---------- auto-detect: does the local mp4 load? ----------
+  function decide(){
+    if (!video){ if (ytid) useYouTube(); return; }
+    if (!ytid){ useLocal(); return; }            // no fallback available → local only
+    var settled = false;
+    function local(){ if (settled) return; settled = true; useLocal(); }
+    function yt(){ if (settled) return; settled = true; useYouTube(); }
+    // any sign the local file is usable → play it natively (offline)
+    ['loadedmetadata', 'loadeddata', 'canplay'].forEach(function(ev){
+      video.addEventListener(ev, local, { once: true });
+    });
+    // a genuine media error (mp4 absent / 404, e.g. on GitHub Pages) → embed the original
+    video.addEventListener('error', yt, { once: true });
+    var src = video.querySelector('source'); if (src) src.addEventListener('error', yt, { once: true });
+    if (video.readyState >= 1) local();           // metadata already available synchronously
+    else { try { video.load(); } catch (e) {} }
+    // if neither event fires (slow load): on file:// bias to LOCAL so offline never breaks;
+    // online, the 404 error fires fast so we rarely reach here.
+    setTimeout(function(){
+      if (!settled) (video.readyState >= 1 || location.protocol === 'file:' ? local : yt)();
+    }, 4000);
+  }
+  decide();
+})();
+</script>
+</body>
+</html>
