@@ -1261,7 +1261,6 @@
 
   // ---------- transport A: native <video> (offline) ----------
   function useLocal(){
-    video.style.visibility = '';
     transport = { seek: function(sec){
       setMin(false);
       try { video.currentTime = sec; } catch (e) {}
@@ -1305,15 +1304,23 @@
   function decide(){
     if (!video){ if (ytid) useYouTube(); return; }
     if (!ytid){ useLocal(); return; }            // no fallback available → local only
-    video.style.visibility = 'hidden';           // avoid a broken-controls flash while probing
     var settled = false;
     function local(){ if (settled) return; settled = true; useLocal(); }
     function yt(){ if (settled) return; settled = true; useYouTube(); }
-    video.addEventListener('loadedmetadata', local, { once: true });
+    // any sign the local file is usable → play it natively (offline)
+    ['loadedmetadata', 'loadeddata', 'canplay'].forEach(function(ev){
+      video.addEventListener(ev, local, { once: true });
+    });
+    // a genuine media error (mp4 absent / 404, e.g. on GitHub Pages) → embed the original
     video.addEventListener('error', yt, { once: true });
     var src = video.querySelector('source'); if (src) src.addEventListener('error', yt, { once: true });
-    try { video.load(); } catch (e) {}
-    setTimeout(function(){ if (!settled){ (video.readyState >= 1 ? local : yt)(); } }, 6000);
+    if (video.readyState >= 1) local();           // metadata already available synchronously
+    else { try { video.load(); } catch (e) {} }
+    // if neither event fires (slow load): on file:// bias to LOCAL so offline never breaks;
+    // online, the 404 error fires fast so we rarely reach here.
+    setTimeout(function(){
+      if (!settled) (video.readyState >= 1 || location.protocol === 'file:' ? local : yt)();
+    }, 4000);
   }
   decide();
 })();
