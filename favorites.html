@@ -547,11 +547,31 @@
           var res = await request('PATCH', { ifMatch: etag, body: { items: merged } });
           if (res.ok) return { items: merged, etag: res.etag };
           if (res.status === 412){ var re = await request('GET'); base = re.body.items || {}; etag = re.etag; continue; }
-          throw new Error('sync PATCH failed: ' + res.status);
+          var perr = new Error('sync PATCH failed: ' + res.status); perr.status = res.status; throw perr;
         }
         throw new Error('sync: too many conflicts');
       }
       return { flush: flush };
+    }
+    // ---- self-heal wrapper: a cached gist id can go stale (deleted, or created
+    // under a different account during setup) and then every GET/PATCH 404s forever.
+    // On a 404, drop the id, re-resolve (force), and retry ONCE; any other failure
+    // propagates so the UI can report it honestly instead of a false "已同步".
+    function makeSyncEngine(deps){
+      var resolve = deps.resolve;   // (force) -> Promise<gid>  (force=true bypasses the cache)
+      var makeReq = deps.makeReq;   // (gid) -> request(kind, opts)
+      async function withHeal(run){
+        var gid = await resolve(false);
+        try { return await run(makeReq(gid)); }
+        catch (e){
+          if (!(e && e.status === 404)) throw e;
+          var fresh = await resolve(true);
+          return await run(makeReq(fresh));
+        }
+      }
+      function push(ops){ return withHeal(function(req){ return makeSync({ request: req }).flush(ops); }); }
+      function pull(){ return withHeal(function(req){ return req('GET'); }); }
+      return { push: push, pull: pull };
     }
     // ---- optional client-side encryption (AES-GCM, PBKDF2). A token/URL leak then
     // yields ciphertext, not the study profile. Uses WebCrypto (browser + Node v26).
@@ -578,7 +598,7 @@
     }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
-             applyOps: applyOps, makeSync: makeSync, makeCrypto: makeCrypto };
+             applyOps: applyOps, makeSync: makeSync, makeSyncEngine: makeSyncEngine, makeCrypto: makeCrypto };
   }
   /*<</fav-pure>>*/
 
@@ -620,18 +640,18 @@
   async function findGist(){
     var gid = null; try { gid = localStorage.getItem(K.gid); } catch (e){}
     if (gid) return gid;
-    var r = await api('GET', '/gists?per_page=100'); if (!r.ok) throw new Error('gist list ' + r.status);
+    var r = await api('GET', '/gists?per_page=100'); if (!r.ok){ var le = new Error('gist list ' + r.status); le.status = r.status; throw le; }
     var hit = (await r.json()).filter(function(g){ return g.files && g.files[FILE]; })[0];
     if (hit){ try { localStorage.setItem(K.gid, hit.id); } catch (e){} return hit.id; }
     var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: {} }) };
     var c = await api('POST', '/gists', { description: 'lang-analysis favorites (do not delete)', public: false, files: files });
-    if (!c.ok) throw new Error('gist create ' + c.status);
+    if (!c.ok){ var ce = new Error('gist create ' + c.status); ce.status = c.status; throw ce; }
     var g = await c.json(); try { localStorage.setItem(K.gid, g.id); } catch (e){} return g.id;
   }
   function makeRequest(gid){
     return async function(kind, opts){
       if (kind === 'GET'){
-        var r = await api('GET', '/gists/' + gid); if (!r.ok) throw new Error('gist get ' + r.status);
+        var r = await api('GET', '/gists/' + gid); if (!r.ok){ var ge = new Error('gist get ' + r.status); ge.status = r.status; throw ge; }
         var etag = r.headers.get('ETag'); var g = await r.json();
         var f = g.files && g.files[FILE]; var content = f ? f.content : '';
         if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
@@ -644,32 +664,40 @@
       return { ok: r2.ok, status: r2.status, etag: r2.headers.get('ETag'), body: opts.body };
     };
   }
+  function dropGid(){ try { localStorage.removeItem(K.gid); } catch (e){} }
+  function resolveGid(force){ if (force) dropGid(); return findGist(); }   // force=true re-discovers/creates
+  function engine(){ return P.makeSyncEngine({ resolve: resolveGid, makeReq: makeRequest }); }
+
   var flushing = false, dirtyAgain = false, timer = null;
+  // Returns a result the panel can report honestly:
+  //   {ok:true, count, pushed}  |  {ok:false, status, error}  |  {ok:false, reason:'offline'|'no-token'|'busy'}
   async function doFlush(){
-    if (!token() || !navigator.onLine) return;
-    if (flushing){ dirtyAgain = true; return; }
+    if (!token()) return { ok: false, reason: 'no-token' };
+    if (!navigator.onLine) return { ok: false, reason: 'offline' };
+    if (flushing){ dirtyAgain = true; return { ok: false, reason: 'busy' }; }
     flushing = true;
     try {
-      var gid = await findGist();
       var pending = readJSON(K.ops, []);
-      if (pending.length){
-        var out = await P.makeSync({ request: makeRequest(gid) }).flush(pending);
-        favs = out.items; persist(); writeJSON(K.ops, []); ops = [];
-        fireChange();
-      }
-    } catch (e){ /* keep ops queued; retry on next trigger */ }
-    finally { flushing = false; if (dirtyAgain){ dirtyAgain = false; scheduleFlush(); } }
+      if (!pending.length) return { ok: true, count: favCount(), pushed: 0 };
+      var out = await engine().push(pending);                  // self-heals a stale gid on 404
+      favs = out.items; persist(); writeJSON(K.ops, []); ops = [];
+      fireChange();
+      return { ok: true, count: favCount(), pushed: pending.length };
+    } catch (e){                                               // keep ops queued; retry on next trigger
+      return { ok: false, status: e && e.status, error: String((e && e.message) || e) };
+    } finally { flushing = false; if (dirtyAgain){ dirtyAgain = false; scheduleFlush(); } }
   }
   function scheduleFlush(){ if (timer) clearTimeout(timer); timer = setTimeout(doFlush, 1200); }
   async function pullOnLoad(){
-    if (!token() || !navigator.onLine) return;
+    if (!token()) return { ok: false, reason: 'no-token' };
+    if (!navigator.onLine) return { ok: false, reason: 'offline' };
     try {
-      var gid = await findGist();
-      var r = await makeRequest(gid)('GET');
-      favs = P.applyOps(r.body.items, readJSON(K.ops, []));   // gist truth + our un-pushed ops
+      var r = await engine().pull();                           // self-heals a stale gid on 404
+      favs = P.applyOps(r.body.items, readJSON(K.ops, []));    // gist truth + our un-pushed ops
       persist(); fireChange();
       if (ops.length) scheduleFlush();
-    } catch (e){}
+      return { ok: true, count: favCount() };
+    } catch (e){ return { ok: false, status: e && e.status, error: String((e && e.message) || e) }; }
   }
 
   // ---------- capture UI (study pages only: where .u cards exist) ----------
@@ -872,15 +900,33 @@
     var status = document.getElementById('syncStatus');
     document.getElementById('tokenInput').value = '';
     if (LF.hasToken()) status.textContent = '已配置令牌';
+    // Report the REAL outcome of pull+push — never a blanket "已同步" that hides a
+    // failed upload (a stale-gist 404, an expired token, a missing gist scope…).
+    function syncMsg(pr, sr){
+      var bad = (sr && !sr.ok) ? sr : ((pr && !pr.ok) ? pr : null);
+      if (!bad) return '已同步（' + ((sr && sr.count) || 0) + ' 句）';
+      if (bad.reason === 'offline') return '离线，稍后自动重试';
+      if (bad.reason === 'no-token') return '请先保存令牌';
+      var s = bad.status;
+      if (s === 401) return '同步失败：令牌无效或已过期（401）';
+      if (s === 403) return '同步失败：令牌缺少 gist 权限（403）';
+      if (s === 404) return '同步失败：找不到云端 gist（404）';
+      return '同步失败：' + (s || String(bad.error || '').slice(0, 60));
+    }
+    function runSync(){
+      status.textContent = '同步中…';
+      return LF.pull().then(function(pr){
+        return LF.sync().then(function(sr){ status.textContent = syncMsg(pr, sr); render(); });
+      });
+    }
     document.getElementById('tokenSave').addEventListener('click', function(){
       var v = document.getElementById('tokenInput').value.trim();
       if (!v){ status.textContent = '请粘贴令牌'; return; }
-      LF.setToken(v); document.getElementById('tokenInput').value = '';
-      status.textContent = '同步中…'; LF.pull().then(function(){ LF.sync().then(function(){ status.textContent = '已同步'; render(); }); });
+      LF.setToken(v); document.getElementById('tokenInput').value = ''; runSync();
     });
     document.getElementById('syncNow').addEventListener('click', function(){
       if (!LF.hasToken()){ status.textContent = '请先保存令牌'; return; }
-      status.textContent = '同步中…'; LF.pull().then(function(){ return LF.sync(); }).then(function(){ status.textContent = '已同步'; render(); });
+      runSync();
     });
     document.getElementById('tokenClear').addEventListener('click', function(){
       LF.setToken(''); LF.forgetGist(); status.textContent = '已清除'; });
