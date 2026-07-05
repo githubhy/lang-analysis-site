@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://api.github.com https://gist.githubusercontent.com https://www.youtube.com; img-src 'self' data: https://*.ytimg.com https://*.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>日本語文法分析 · 憧れの先輩とサシ飲み</title>
 <style>
   :root{
@@ -335,6 +336,44 @@
     background-repeat:no-repeat;
     background-size:2.4rem 100%,2.4rem 100%,1.1rem 100%,1.1rem 100%;
     background-attachment:local,local,scroll,scroll; }
+
+  /* ============================================================
+     FAVORITES (收藏) — capture per sentence, filter, deep-link.
+     The user bookmark is deliberately DISTINCT from the author ★
+     (.key-star, --shu): a bookmark glyph in --goi. See plans/favorites.md.
+     ============================================================ */
+  .fav-btn{ appearance:none;-webkit-appearance:none;background:transparent;border:0;
+    color:var(--goi);cursor:pointer;padding:.25rem;margin-top:.1rem;line-height:0;
+    border-radius:.35rem;opacity:.5;transition:opacity .15s,color .15s,transform .1s;}
+  .fav-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;display:block;}
+  .fav-btn:hover{opacity:1;}
+  .fav-btn:active{transform:scale(.9);}
+  .fav-btn[aria-pressed="true"]{opacity:1;}
+  .fav-btn[aria-pressed="true"] svg{fill:currentColor;}
+  .fav-btn:focus-visible{outline:2px solid var(--goi);outline-offset:2px;opacity:1;}
+
+  #favFilter{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--goi);background:transparent;border:1px solid var(--goi);border-radius:2rem;
+    padding:.32rem .9rem;white-space:nowrap;transition:background .15s,color .15s;}
+  #favFilter[aria-pressed="true"]{background:var(--goi);color:var(--paper);}
+  #favFilter:focus-visible{outline:2px solid var(--goi);outline-offset:2px;}
+  #favEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
+    background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
+
+  /* filter view: hide everything not favorited */
+  body.fav-only .u:not(.faved){display:none;}
+
+  /* deep-link arrival flash (from favorites.html #fav=…) */
+  .u.fav-jump{animation:fav-jump 1.5s ease;}
+  @keyframes fav-jump{0%,28%{background:var(--goi-t);box-shadow:inset 3px 0 0 var(--goi);
+    border-radius:0 .4rem .4rem 0;}100%{background:transparent;}}
+  @media (prefers-reduced-motion:reduce){.u.fav-jump{animation:none;}}
+
+  /* touch: the bookmark is a >=44px target, well clear of the seeking .ts */
+  @media (hover:none) and (pointer:coarse){
+    .fav-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
+    #favFilter{min-height:44px;padding:.55rem 1.1rem;}
+  }
 </style>
 </head>
 <body>
@@ -1072,6 +1111,310 @@
     }, 4000);
   }
   decide();
+})();
+</script>
+<script>
+/* ============================================================================
+   Favorites (收藏) — capture on any study page, review pooled on favorites.html.
+   Store = localStorage cache; SOURCE OF TRUTH = a private GitHub Gist (opt-in
+   sync). Online-only (gated on isSecureContext) so offline file:// deliverables
+   stay self-contained. The pure core below is unit-tested (tools/test_favorites.mjs).
+   Exposes window.LangFav on EVERY page (study pages inject capture UI; favorites.html
+   renders the pooled library). Design + rationale: plans/favorites.md.
+   ========================================================================== */
+(function(){
+  /*<<fav-pure>>*/
+  // Pure, DOM/Network-free core. Extracted verbatim by the unit test.
+  function FAV_PURE(){
+    // ---- timestamps ----
+    function tsToSec(t){
+      var p = (String(t).match(/\d+/g) || []).map(Number);
+      var s = 0; for (var i = 0; i < p.length; i++) s = s * 60 + p[i];
+      return s;
+    }
+    function secToMmss(s){
+      s = Math.max(0, Math.floor(+s || 0));
+      var m = Math.floor(s / 60), ss = s % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (ss < 10 ? '0' : '') + ss;
+    }
+    // ---- identity: <yt>#<mmss>#<n>, n = within-second ordinal in DOM order.
+    // Fixes the v1 bug where same-second cards collided (verified 5x in sashinomi).
+    function assignFavIds(yt, tsList){
+      var seen = {}, out = [];
+      for (var i = 0; i < tsList.length; i++){
+        var mmss = secToMmss(tsToSec(tsList[i]));
+        var n = (seen[mmss] == null) ? 0 : seen[mmss] + 1;
+        seen[mmss] = n;
+        out.push(yt + '#' + mmss + '#' + n);
+      }
+      return out;
+    }
+    // ---- furigana stripping (for the Anki FRONT: reading must not give the answer)
+    function stripFuri(html){
+      return String(html == null ? '' : html)
+        .replace(/<rp\b[^>]*>[\s\S]*?<\/rp>/gi, '')
+        .replace(/<rt\b[^>]*>[\s\S]*?<\/rt>/gi, '')
+        .replace(/<[^>]+>/g, '');
+    }
+    function sanitizeField(s){
+      return String(s == null ? '' : s).replace(/\t/g, ' ').replace(/\r?\n/g, '<br>');
+    }
+    // ---- Anki card: plain JP front, ruby+译+grammar back. Caller writes the file
+    // with a leading "#separator:tab" + "#html:true" so ruby renders and TSV holds.
+    function ankiCard(rec){
+      var front = sanitizeField(stripFuri(rec.jp_html || ''));
+      var parts = [rec.jp_html || ''];                  // ruby intact → furigana on back
+      if (rec.cn) parts.push('【译】' + rec.cn);
+      var pts = rec.points || [];
+      for (var i = 0; i < pts.length; i++)
+        parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
+      return { front: front, back: sanitizeField(parts.join('\n')) };
+    }
+    // ---- op-replay merge (pure; no wall-clock, no tombstones). add sets, del removes.
+    function applyOps(items, ops){
+      var out = {};
+      for (var k in items) if (Object.prototype.hasOwnProperty.call(items, k)) out[k] = items[k];
+      for (var i = 0; i < (ops || []).length; i++){
+        var o = ops[i];
+        if (o.op === 'add') out[o.id] = o.record;
+        else if (o.op === 'del') delete out[o.id];
+      }
+      return out;
+    }
+    // ---- sync engine: pull → apply pending ops → PATCH with If-Match(etag).
+    // On 412 (another device pushed since our pull) re-pull, re-apply, retry.
+    // This is what prevents the silent lost-update the review flagged.
+    function makeSync(deps){
+      var request = deps.request;                        // (kind, opts) -> {ok,status,etag,body}
+      async function flush(ops, pulled){
+        var base = pulled ? pulled.items : null, etag = pulled ? pulled.etag : null;
+        if (base == null){ var g = await request('GET'); base = g.body.items || {}; etag = g.etag; }
+        for (var attempt = 0; attempt < 5; attempt++){
+          var merged = applyOps(base, ops);
+          var res = await request('PATCH', { ifMatch: etag, body: { items: merged } });
+          if (res.ok) return { items: merged, etag: res.etag };
+          if (res.status === 412){ var re = await request('GET'); base = re.body.items || {}; etag = re.etag; continue; }
+          throw new Error('sync PATCH failed: ' + res.status);
+        }
+        throw new Error('sync: too many conflicts');
+      }
+      return { flush: flush };
+    }
+    // ---- optional client-side encryption (AES-GCM, PBKDF2). A token/URL leak then
+    // yields ciphertext, not the study profile. Uses WebCrypto (browser + Node v26).
+    function makeCrypto(subtle, getRandom){
+      var enc = new TextEncoder(), dec = new TextDecoder();
+      function b64(buf){ var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
+      function unb64(str){ var s = atob(str), b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
+      async function keyFrom(pass, salt){
+        var base = await subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+        return subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 150000, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+      }
+      async function encrypt(pass, text){
+        var salt = getRandom(16), iv = getRandom(12), key = await keyFrom(pass, salt);
+        var ct = await subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, enc.encode(text));
+        return { v: 1, alg: 'AES-GCM', salt: b64(salt), iv: b64(iv), ct: b64(ct) };
+      }
+      async function decrypt(pass, blob){
+        var key = await keyFrom(pass, unb64(blob.salt));
+        var pt = await subtle.decrypt({ name: 'AES-GCM', iv: unb64(blob.iv) }, key, unb64(blob.ct));
+        return dec.decode(pt);
+      }
+      return { encrypt: encrypt, decrypt: decrypt };
+    }
+    return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds,
+             stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
+             applyOps: applyOps, makeSync: makeSync, makeCrypto: makeCrypto };
+  }
+  /*<</fav-pure>>*/
+
+  // ---- online-only: the published site (https) or local dev (localhost); NOT file://.
+  // (Chrome reports file:// AS a secure context, so isSecureContext is the wrong gate —
+  // this keeps the offline mp4 deliverables self-contained: no favorites/network code runs.)
+  var loc = window.location || {};
+  if (!(loc.protocol === 'https:' || loc.hostname === 'localhost' || loc.hostname === '127.0.0.1')) return;
+  var P = FAV_PURE();
+
+  var K = { store: 'langfav:v1', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
+  function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
+
+  var favs = readJSON(K.store, {});      // { id: record }  (cache; may be ITP-evicted)
+  var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
+  var onChange = null;                   // favorites.html registers a re-render hook
+
+  function persist(){ writeJSON(K.store, favs); }
+  function queueOp(op, id, record){
+    ops.push(record ? { op: op, id: id, record: record } : { op: op, id: id });
+    writeJSON(K.ops, ops);
+  }
+  function fireChange(){ reflect(); if (typeof onChange === 'function') { try { onChange(); } catch (e){} } }
+  function addFav(record){ favs[record.id] = record; queueOp('add', record.id, record); persist(); fireChange(); scheduleFlush(); }
+  function removeFav(id){ if (!favs[id]) return; delete favs[id]; queueOp('del', id); persist(); fireChange(); scheduleFlush(); }
+
+  // ---------- sync (opt-in): localStorage cache ⇄ private Gist (source of truth) ----------
+  var FILE = 'lang-favorites.json';
+  function token(){ try { return localStorage.getItem(K.tok) || ''; } catch (e){ return ''; } }
+  async function api(method, path, body){
+    return fetch('https://api.github.com' + path, {
+      method: method,
+      headers: { 'Authorization': 'Bearer ' + token(), 'Accept': 'application/vnd.github+json',
+                 'X-GitHub-Api-Version': '2022-11-28' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+  }
+  async function findGist(){
+    var gid = null; try { gid = localStorage.getItem(K.gid); } catch (e){}
+    if (gid) return gid;
+    var r = await api('GET', '/gists?per_page=100'); if (!r.ok) throw new Error('gist list ' + r.status);
+    var hit = (await r.json()).filter(function(g){ return g.files && g.files[FILE]; })[0];
+    if (hit){ try { localStorage.setItem(K.gid, hit.id); } catch (e){} return hit.id; }
+    var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: {} }) };
+    var c = await api('POST', '/gists', { description: 'lang-analysis favorites (do not delete)', public: false, files: files });
+    if (!c.ok) throw new Error('gist create ' + c.status);
+    var g = await c.json(); try { localStorage.setItem(K.gid, g.id); } catch (e){} return g.id;
+  }
+  function makeRequest(gid){
+    return async function(kind, opts){
+      if (kind === 'GET'){
+        var r = await api('GET', '/gists/' + gid); if (!r.ok) throw new Error('gist get ' + r.status);
+        var etag = r.headers.get('ETag'); var g = await r.json();
+        var f = g.files && g.files[FILE]; var content = f ? f.content : '';
+        if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
+        var parsed; try { parsed = content ? JSON.parse(content) : { items: {} }; }
+        catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
+        return { ok: true, etag: etag, body: { items: parsed.items || {} } };
+      }
+      var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: opts.body.items }) };
+      var r2 = await api('PATCH', '/gists/' + gid, { files: files });
+      return { ok: r2.ok, status: r2.status, etag: r2.headers.get('ETag'), body: opts.body };
+    };
+  }
+  var flushing = false, dirtyAgain = false, timer = null;
+  async function doFlush(){
+    if (!token() || !navigator.onLine) return;
+    if (flushing){ dirtyAgain = true; return; }
+    flushing = true;
+    try {
+      var gid = await findGist();
+      var pending = readJSON(K.ops, []);
+      if (pending.length){
+        var out = await P.makeSync({ request: makeRequest(gid) }).flush(pending);
+        favs = out.items; persist(); writeJSON(K.ops, []); ops = [];
+        fireChange();
+      }
+    } catch (e){ /* keep ops queued; retry on next trigger */ }
+    finally { flushing = false; if (dirtyAgain){ dirtyAgain = false; scheduleFlush(); } }
+  }
+  function scheduleFlush(){ if (timer) clearTimeout(timer); timer = setTimeout(doFlush, 1200); }
+  async function pullOnLoad(){
+    if (!token() || !navigator.onLine) return;
+    try {
+      var gid = await findGist();
+      var r = await makeRequest(gid)('GET');
+      favs = P.applyOps(r.body.items, readJSON(K.ops, []));   // gist truth + our un-pushed ops
+      persist(); fireChange();
+      if (ops.length) scheduleFlush();
+    } catch (e){}
+  }
+
+  // ---------- capture UI (study pages only: where .u cards exist) ----------
+  var cards = [].slice.call(document.querySelectorAll('.u'));
+  var IDS = [], filterBtn = null, favEmpty = null;
+  function pageYt(){
+    var el = document.getElementById('clip'); if (!el) return '';
+    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id'); if (y) return y;
+    var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+  }
+  function cnText(card){
+    var el = card.querySelector('.u-cn'); if (!el) return '';
+    var c = el.cloneNode(true); var lbl = c.querySelector('.lbl'); if (lbl) lbl.remove();
+    return c.textContent.trim();
+  }
+  function pointsOf(card){
+    return [].slice.call(card.querySelectorAll('.u-points li')).map(function(li){
+      var chip = li.querySelector('.chip');
+      var cat = chip ? ([].slice.call(chip.classList).filter(function(x){ return x !== 'chip' && x !== 'star'; })[0] || '') : '';
+      return { cat: cat, term: chip ? chip.textContent.trim() : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
+    });
+  }
+  function recordFor(card, id){
+    var jp = card.querySelector('.u-jp'), ts = card.querySelector('.ts');
+    var sec = ts ? P.tsToSec(ts.textContent) : 0;
+    return { id: id, yt: pageYt(), page: (location.pathname.split('/').pop() || ''), mmss: P.secToMmss(sec), sec: sec,
+             jp_html: jp ? jp.innerHTML : '', cn: cnText(card), points: pointsOf(card),
+             page_title: (document.title || ''), added_at: Date.now() };
+  }
+  function favCount(){ return Object.keys(favs).length; }
+  function reflect(){
+    if (!cards.length) return;
+    cards.forEach(function(card, i){
+      var on = !!favs[IDS[i]], b = card.querySelector('.fav-btn');
+      card.classList.toggle('faved', on); if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    if (filterBtn) filterBtn.textContent = '只看收藏 (' + favCount() + ')';
+    if (favEmpty) favEmpty.hidden = !(document.body.classList.contains('fav-only') && favCount() === 0);
+  }
+  if (cards.length){
+    var YT = pageYt();
+    var IDS0 = P.assignFavIds(YT, cards.map(function(c){ var t = c.querySelector('.ts'); return t ? t.textContent : ''; }));
+    IDS = IDS0;
+    var BOOKMARK = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+      '<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+    cards.forEach(function(card, i){
+      var id = IDS[i]; card.dataset.favId = id;
+      var meta = card.querySelector('.u-meta') || card;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'fav-btn'; b.setAttribute('aria-label', '收藏这句'); b.title = '收藏这句';
+      b.innerHTML = BOOKMARK;
+      b.addEventListener('click', function(){ favs[id] ? removeFav(id) : addFav(recordFor(card, id)); });
+      meta.appendChild(b);
+    });
+    // filter "只看收藏 (N)"
+    filterBtn = document.createElement('button');
+    filterBtn.id = 'favFilter'; filterBtn.type = 'button'; filterBtn.setAttribute('aria-pressed', 'false');
+    filterBtn.addEventListener('click', function(){
+      var on = document.body.classList.toggle('fav-only');
+      filterBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); reflect();
+    });
+    var furiBar = document.querySelector('.furi-bar'); if (furiBar) furiBar.appendChild(filterBtn);
+    favEmpty = document.createElement('p'); favEmpty.id = 'favEmpty'; favEmpty.hidden = true;
+    favEmpty.textContent = '还没有收藏。点句子的书签图标即可收藏，稍后在收藏页复习。';
+    var anchor = document.querySelector('.legend') || furiBar;
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(favEmpty, anchor);
+    reflect();
+    // deep-link from favorites.html: #fav=<id> → scroll + flash the exact card (no autoplay)
+    var gotoHash = function(){
+      var m = (location.hash || '').match(/fav=([^&]+)/); if (!m) return;
+      var id = decodeURIComponent(m[1]);
+      var card = document.querySelector('.u[data-fav-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (!card) return;
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      card.classList.remove('fav-jump'); void card.offsetWidth; card.classList.add('fav-jump');
+    };
+    window.addEventListener('hashchange', gotoHash);
+    if (/fav=/.test(location.hash || '')) setTimeout(gotoHash, 300);
+  }
+
+  // ---------- triggers: pull on load, push eagerly before backgrounding ----------
+  window.addEventListener('online', scheduleFlush);
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) doFlush(); });
+  window.addEventListener('pagehide', function(){ doFlush(); });
+  pullOnLoad();
+
+  // ---------- public surface (used by favorites.html) ----------
+  window.LangFav = {
+    all: function(){ return favs; },
+    count: favCount,
+    remove: removeFav,
+    add: addFav,
+    setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} },
+    hasToken: function(){ return !!token(); },
+    forgetGist: function(){ try { localStorage.removeItem(K.gid); } catch (e){} },
+    sync: doFlush, pull: pullOnLoad, pure: P,
+    onChange: function(fn){ onChange = fn; }
+  };
 })();
 </script>
 </body>
