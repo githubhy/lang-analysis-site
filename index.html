@@ -3,13 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.github.com https://gist.githubusercontent.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>日本語文法分析 · 逐句精讲</title>
 <style>
   :root{
     --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
     --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
     --line:#e5e1d8; --line-strong:#d4cfc4;
-    --shu:#c0442c; --goi:#2f5fa6; --katsu:#1f7a63; --keigo:#8a4fa8;
+    --shu:#c0442c;
+    --katsu:#1f7a63;  --katsu-t:rgba(31,122,99,.11);
+    --keigo:#8a4fa8;  --keigo-t:rgba(138,79,168,.12);
+    --joshi:#c0442c;  --joshi-t:rgba(192,68,44,.10);
+    --goi:#2f5fa6;    --goi-t:rgba(47,95,166,.10);
     --font-mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Songti SC",serif;
     --font-gothic:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
     --font-cn:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
@@ -21,175 +26,896 @@
       --paper:#12151a; --card:#191d24; --card-2:#20252d;
       --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
       --line:#282d36; --line-strong:#39404b;
-      --shu:#e0755c; --goi:#7aa8e2; --katsu:#4bc0a1; --keigo:#c091df;
+      --shu:#e0755c;
+      --katsu:#4bc0a1; --katsu-t:rgba(75,192,161,.14);
+      --keigo:#c091df; --keigo-t:rgba(192,145,223,.15);
+      --joshi:#e8836c; --joshi-t:rgba(232,131,108,.14);
+      --goi:#7aa8e2;   --goi-t:rgba(122,168,226,.15);
     }
   }
   :root[data-theme="light"]{
     --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
     --ink:#1e2630; --ink-soft:#586374; --ink-faint:#8b93a0;
-    --line:#e5e1d8; --line-strong:#d4cfc4;
-    --shu:#c0442c; --goi:#2f5fa6; --katsu:#1f7a63; --keigo:#8a4fa8;
+    --line:#e5e1d8; --line-strong:#d4cfc4; --shu:#c0442c;
+    --katsu:#1f7a63; --katsu-t:rgba(31,122,99,.11);
+    --keigo:#8a4fa8; --keigo-t:rgba(138,79,168,.12);
+    --joshi:#c0442c; --joshi-t:rgba(192,68,44,.10);
+    --goi:#2f5fa6;   --goi-t:rgba(47,95,166,.10);
   }
   :root[data-theme="dark"]{
     --paper:#12151a; --card:#191d24; --card-2:#20252d;
     --ink:#e9e7e1; --ink-soft:#a4adb9; --ink-faint:#727b88;
-    --line:#282d36; --line-strong:#39404b;
-    --shu:#e0755c; --goi:#7aa8e2; --katsu:#4bc0a1; --keigo:#c091df;
+    --line:#282d36; --line-strong:#39404b; --shu:#e0755c;
+    --katsu:#4bc0a1; --katsu-t:rgba(75,192,161,.14);
+    --keigo:#c091df; --keigo-t:rgba(192,145,223,.15);
+    --joshi:#e8836c; --joshi-t:rgba(232,131,108,.14);
+    --goi:#7aa8e2;   --goi-t:rgba(122,168,226,.15);
   }
+
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);
     font-family:var(--font-cn);line-height:1.75;
     -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
-  .wrap{max-width:44rem;margin:0 auto;padding:clamp(2rem,7vw,4.5rem) clamp(1.1rem,4vw,2rem) 5rem;}
+  .wrap{max-width:46rem;margin:0 auto;padding:clamp(1.5rem,4vw,3.5rem) clamp(1.1rem,4vw,2rem) 5rem;}
 
+  /* ---------- header ---------- */
   .eyebrow{font-family:var(--font-latin);font-size:.72rem;letter-spacing:.22em;
-    text-transform:uppercase;color:var(--shu);font-weight:600;margin:0 0 1rem;}
+    text-transform:uppercase;color:var(--shu);font-weight:600;margin:0 0 .9rem;}
   h1{font-family:var(--font-mincho);font-weight:600;
-    font-size:clamp(2rem,7vw,3rem);line-height:1.3;margin:0;
+    font-size:clamp(1.7rem,5.4vw,2.55rem);line-height:1.35;margin:0;
     text-wrap:balance;letter-spacing:.01em;}
-  .kana{font-family:var(--font-mincho);color:var(--ink-faint);font-size:1.05rem;
-    letter-spacing:.16em;margin:.85rem 0 0;}
-  .sub{color:var(--ink-soft);font-size:1rem;margin:1.1rem 0 0;max-width:34rem;}
+  .sub{color:var(--ink-soft);font-size:1rem;margin:.9rem 0 0;max-width:38rem;}
+  .meta{display:flex;flex-wrap:wrap;gap:.5rem .55rem;margin:1.4rem 0 0;}
+  .tag{font-family:var(--font-gothic);font-size:.78rem;color:var(--ink-soft);
+    background:var(--card);border:1px solid var(--line);border-radius:2rem;
+    padding:.28rem .7rem;white-space:nowrap;}
+  .tag b{color:var(--ink);font-weight:600;}
 
-  .rule{height:1px;background:var(--line-strong);border:0;margin:2.6rem 0;}
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--shu);
+    border-radius:.5rem;padding:.95rem 1.15rem;margin:1.6rem 0 0;
+    font-size:.9rem;color:var(--ink-soft);line-height:1.7;}
+  .note b{color:var(--ink);}
 
+  /* sticky video dock — click any timestamp to seek */
+  .video-dock{position:sticky;top:0;z-index:30;margin:1.6rem 0 0;background:var(--paper);
+    border:1px solid var(--line);border-radius:.7rem;overflow:hidden;
+    box-shadow:0 10px 24px -16px rgba(0,0,0,.55);}
+  .dock-bar{display:flex;align-items:center;gap:.6rem;
+    padding:.5rem .5rem .5rem .85rem;background:var(--card);border-bottom:1px solid var(--line);}
+  .dock-title{font-family:var(--font-gothic);font-weight:600;font-size:.82rem;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tri{color:var(--shu);}
+  .dock-min{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
+    cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
+    border-radius:2rem;padding:.24rem .75rem;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .dock-min:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-min:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-min{margin-left:0;}
+  .dock-follow{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
+    cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
+    border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;
+    transition:color .15s,border-color .15s,background .15s;}
+  .dock-follow:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-follow.on{color:var(--shu);border-color:var(--shu);background:var(--joshi-t);}
+  .dock-follow:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-video{max-width:32rem;margin:0 auto;}
+  .video-frame{position:relative;aspect-ratio:16/9;background:#000;}
+  .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
+    border:0;display:block;background:#000;object-fit:contain;}
+  .video-dock.min .dock-video{display:none;}
+  .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
+  .play-hint b{color:var(--ink);font-weight:600;}
+
+  /* furigana control bar */
+  .furi-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem 1rem;
+    flex-wrap:wrap;margin:1.5rem 0 0;padding:.7rem .5rem .7rem 1rem;background:var(--card);
+    border:1px solid var(--line);border-left:3px solid var(--goi);border-radius:.55rem;font-size:.85rem;}
+  .furi-hint{color:var(--ink-soft);}
+  .furi-hint b{color:var(--ink);font-weight:600;}
+  #furiToggle{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--goi);background:transparent;border:1px solid var(--goi);border-radius:2rem;
+    padding:.32rem .9rem;white-space:nowrap;transition:background .15s,color .15s;}
+  #furiToggle[aria-pressed="true"]{background:var(--goi);color:var(--paper);}
+  #furiToggle:focus-visible{outline:2px solid var(--goi);outline-offset:2px;}
+
+  .rule{height:1px;background:var(--line-strong);border:0;margin:2.4rem 0;}
+
+  /* ---------- legend ---------- */
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.2rem,1fr));
+    gap:.55rem;margin:1.5rem 0 0;}
+  .lg{display:flex;align-items:baseline;gap:.5rem;font-size:.83rem;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
+  .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
+  .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+
+  /* ---------- section label ---------- */
   .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
     text-transform:uppercase;color:var(--ink-faint);font-weight:600;
-    margin:0 0 1.3rem;display:flex;align-items:center;gap:.8rem;}
+    margin:3.2rem 0 1.2rem;display:flex;align-items:center;gap:.8rem;}
   .sec::after{content:"";flex:1;height:1px;background:var(--line);}
 
-  .cards{display:flex;flex-direction:column;gap:1.1rem;}
-  a.card{display:block;text-decoration:none;color:inherit;position:relative;
-    background:var(--card);border:1px solid var(--line);border-radius:.9rem;
-    padding:1.5rem 1.5rem 1.4rem;overflow:hidden;
-    transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease;}
-  a.card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent);}
-  a.card:hover{border-color:var(--accent);transform:translateY(-2px);
-    box-shadow:0 14px 30px -20px rgba(0,0,0,.5);}
-  a.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  .c1{--accent:var(--goi);} .c2{--accent:var(--shu);} .c3{--accent:var(--katsu);}.c4{--accent:var(--keigo);}
+  /* ---------- grammar card ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:1.35rem 1.4rem 1.5rem;margin:0 0 1.15rem;}
+  .card-top{display:flex;align-items:center;gap:.7rem;margin:0 0 .95rem;flex-wrap:wrap;}
+  .num{font-family:var(--font-mincho);font-size:1.05rem;color:var(--shu);font-weight:600;
+    font-variant-numeric:tabular-nums;}
+  .ts{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-soft);
+    background:var(--card-2);border:1px solid transparent;border-radius:.3rem;
+    padding:.15rem .5rem .15rem .42rem;font-variant-numeric:tabular-nums;cursor:pointer;
+    transition:color .12s,border-color .12s,background .12s;}
+  .ts::before{content:"\25B8";color:var(--shu);margin-right:.3rem;font-size:.92em;}
+  .ts:hover,.ts:focus-visible{color:var(--shu);border-color:var(--shu);outline:none;}
+  .ts.flash{animation:ts-flash .9s ease;}
+  @keyframes ts-flash{0%,22%{background:var(--shu);color:#fff;border-color:var(--shu);}
+    100%{background:var(--card-2);color:var(--ink-soft);border-color:transparent;}}
+  @media (prefers-reduced-motion:reduce){.ts.flash{animation:none;}}
+  .theme{font-family:var(--font-gothic);font-size:.8rem;color:var(--ink-soft);margin-left:auto;}
 
-  .card-eyebrow{font-family:var(--font-latin);font-size:.68rem;letter-spacing:.16em;
-    text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 .55rem;}
-  .card-jp{font-family:var(--font-mincho);font-size:clamp(1.3rem,4.4vw,1.7rem);
-    line-height:1.4;color:var(--ink);margin:0;text-wrap:balance;letter-spacing:.01em;}
-  .card-src{font-family:var(--font-gothic);font-size:.86rem;color:var(--ink-soft);
-    margin:.55rem 0 0;}
-  .card-src b{color:var(--ink);font-weight:600;}
-  .card-gloss{font-size:.92rem;color:var(--ink-soft);margin:.35rem 0 0;}
+  .jp{font-family:var(--font-mincho);font-size:clamp(1.24rem,3.7vw,1.5rem);
+    line-height:2.35;margin:.2rem 0 .1rem;color:var(--ink);letter-spacing:.02em;}
+  ruby{cursor:pointer;}
+  ruby rt{font-family:var(--font-gothic);font-size:.46em;color:var(--ink-faint);
+    font-weight:400;letter-spacing:0;
+    visibility:hidden;opacity:0;transition:opacity .12s ease;}
+  /* reveal: hover = peek · tap/click(.reveal) = pin · keyboard focus = peek · master toggle = all */
+  ruby:hover rt,ruby:focus-visible rt,ruby.reveal rt,
+  body.show-furi ruby rt{visibility:visible;opacity:1;}
+  ruby:focus-visible{outline:2px solid var(--shu);outline-offset:1px;border-radius:.15em;}
+  @media (prefers-reduced-motion:reduce){ruby rt{transition:none;}}
+  .fx{padding:.02em .08em;border-radius:.15em;font-weight:600;
+    border-bottom:2px solid currentColor;}
+  .fx.katsu{color:var(--katsu);background:var(--katsu-t);}
+  .fx.keigo{color:var(--keigo);background:var(--keigo-t);}
+  .fx.joshi{color:var(--joshi);background:var(--joshi-t);}
+  .fx.goi{color:var(--goi);background:var(--goi-t);}
+  .fx ruby rt{color:inherit;}
 
-  .pills{display:flex;flex-wrap:wrap;gap:.45rem;margin:1.05rem 0 0;}
-  .pill{font-family:var(--font-gothic);font-size:.74rem;color:var(--ink-soft);
-    background:var(--paper);border:1px solid var(--line);border-radius:2rem;
-    padding:.22rem .62rem;white-space:nowrap;}
-  .pill b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
-  .pill.pair{color:var(--accent);border-color:var(--accent);}
+  .cn{font-size:.96rem;color:var(--ink-soft);margin:.55rem 0 0;padding:.55rem 0 0;
+    border-top:1px dashed var(--line);}
+  .cn b{color:var(--ink);font-weight:600;}
+  .cn .lbl{font-family:var(--font-latin);font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-faint);margin-right:.5rem;}
 
-  .go{display:inline-flex;align-items:center;gap:.4rem;margin:1.1rem 0 0;
-    font-family:var(--font-gothic);font-weight:600;font-size:.9rem;color:var(--accent);}
-  .go .arr{transition:transform .18s ease;}
-  a.card:hover .go .arr{transform:translateX(3px);}
+  .points{list-style:none;margin:1.1rem 0 0;padding:0;display:flex;flex-direction:column;gap:.75rem;}
+  .points li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;
+    font-size:.92rem;line-height:1.68;}
+  .chip{font-family:var(--font-gothic);font-size:.72rem;font-weight:600;white-space:nowrap;
+    padding:.2rem .5rem;border-radius:.35rem;border:1px solid;line-height:1.3;margin-top:.16rem;}
+  .chip.katsu{color:var(--katsu);background:var(--katsu-t);border-color:var(--katsu);}
+  .chip.keigo{color:var(--keigo);background:var(--keigo-t);border-color:var(--keigo);}
+  .chip.joshi{color:var(--joshi);background:var(--joshi-t);border-color:var(--joshi);}
+  .chip.goi{color:var(--goi);background:var(--goi-t);border-color:var(--goi);}
+  .points b{color:var(--ink);font-weight:600;}
+  .points .jt{font-family:var(--font-gothic);}
+  .points em{font-style:normal;color:var(--ink-faint);}
 
-  .how{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--katsu);
-    border-radius:.55rem;padding:1rem 1.2rem;margin:2.4rem 0 0;
-    font-size:.88rem;color:var(--ink-soft);line-height:1.7;}
-  .how b{color:var(--ink);font-weight:600;}
-  .how .k{font-family:var(--font-mono);font-size:.82rem;color:var(--ink);
-    background:var(--card-2);border:1px solid var(--line);border-radius:.3rem;padding:.02rem .35rem;}
+  /* ---------- reference tables ---------- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:.7rem;background:var(--card);}
+  table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:26rem;}
+  caption{text-align:left;font-family:var(--font-gothic);font-weight:600;color:var(--ink);
+    padding:.9rem 1rem .2rem;font-size:.98rem;}
+  th,td{text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--line);vertical-align:top;}
+  thead th{font-family:var(--font-gothic);font-size:.76rem;letter-spacing:.04em;
+    color:var(--ink-faint);font-weight:600;background:var(--card-2);}
+  tbody tr:last-child td{border-bottom:0;}
+  td .jt{font-family:var(--font-gothic);color:var(--ink);font-weight:600;}
+  td .rd{color:var(--ink-faint);font-size:.82rem;}
+  .tbl-wrap+.tbl-wrap{margin-top:1.1rem;}
 
-  footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--line);
+  footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--line);
     font-size:.8rem;color:var(--ink-faint);line-height:1.7;}
-  footer a{color:var(--shu);}
+  a{color:var(--shu);}
 
-  /* ===== MOBILE / TOUCH ===== cards already stack (flex column); honour the notch */
+  @media (max-width:480px){
+    .points li{grid-template-columns:1fr;gap:.3rem;}
+    .chip{justify-self:start;}
+    .theme{margin-left:0;width:100%;}
+  }
+
+  /* ===== per-sentence analysis ===== */
+  .lead{font-size:.9rem;color:var(--ink-soft);margin:0 0 1.4rem;line-height:1.7;}
+  .lead .tri{color:var(--shu);}
+  .lead .ts-demo{font-family:var(--font-mono);font-size:.8rem;color:var(--shu);
+    border:1px solid var(--shu);border-radius:.3rem;padding:.02rem .35rem;}
+  .chapter{margin:2.4rem 0 0;}
+  .chapter-h{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin:0 0 .35rem;}
+  .chapter-n{font-family:var(--font-mincho);color:var(--shu);font-weight:600;font-size:1.15rem;
+    font-variant-numeric:tabular-nums;}
+  .chapter-t{font-family:var(--font-gothic);font-weight:600;font-size:1.02rem;color:var(--ink);}
+  .chapter-c{color:var(--ink-faint);font-weight:400;font-size:.85rem;margin-left:.5rem;}
+  .chapter-r{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);
+    font-variant-numeric:tabular-nums;}
+  .chapter-h::after{content:"";flex:1;height:1px;background:var(--line);min-width:1.5rem;
+    align-self:center;}
+
+  .u{display:grid;grid-template-columns:4.6rem 1fr;gap:.2rem .85rem;
+    padding:.9rem 0;border-top:1px solid var(--line);scroll-margin-top:5rem;
+    transition:background .25s ease;}
+  .u.key{box-shadow:inset 3px 0 0 var(--shu);padding-left:.75rem;
+    border-radius:0 .4rem .4rem 0;background:linear-gradient(90deg,var(--joshi-t),transparent 55%);}
+  .u.active{background:var(--joshi-t);box-shadow:inset 3px 0 0 var(--shu);
+    border-radius:0 .4rem .4rem 0;padding-left:.75rem;}
+  .u.active .ts{background:var(--shu);color:#fff;border-color:var(--shu);}
+  .u.active .ts::before{color:#fff;}
+  .u.active .u-jp{color:var(--ink);}
+  .u-meta{display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;padding-top:.15rem;}
+  .u-meta .ts{width:100%;text-align:center;}
+  .spk{font-family:var(--font-gothic);font-size:.66rem;font-weight:600;line-height:1.3;
+    padding:.12rem .4rem;border-radius:.3rem;white-space:nowrap;border:1px solid transparent;}
+  .spk.iwata{color:var(--goi);background:var(--goi-t);}
+  .spk.host{color:var(--ink-soft);background:var(--card-2);}
+  .spk.nare{color:var(--katsu);background:var(--katsu-t);}
+  .spk.neta{color:var(--shu);background:var(--joshi-t);}
+  .key-star{color:var(--shu);font-size:.8rem;line-height:1;}
+
+  .u-body{min-width:0;}
+  .u-jp{font-family:var(--font-mincho);font-size:1.14rem;line-height:2.15;color:var(--ink);
+    letter-spacing:.01em;}
+  .u-cn{font-size:.9rem;color:var(--ink-soft);margin-top:.15rem;}
+  .u-cn .lbl{font-family:var(--font-latin);font-size:.64rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-faint);margin-right:.45rem;
+    border:1px solid var(--line-strong);border-radius:.25rem;padding:.02rem .28rem;}
+  .u-asr{font-size:.78rem;color:var(--ink-faint);margin-top:.4rem;line-height:1.55;}
+  .tag-asr{font-family:var(--font-gothic);font-size:.64rem;font-weight:600;color:var(--shu);
+    background:var(--joshi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
+    white-space:nowrap;}
+  .u-points{list-style:none;margin:.55rem 0 0;padding:0;display:flex;flex-direction:column;gap:.4rem;}
+  .u-points li{display:grid;grid-template-columns:auto 1fr;gap:.55rem;align-items:start;
+    font-size:.85rem;line-height:1.6;}
+  .u-points .chip{margin-top:.08rem;font-size:.68rem;}
+  .u-points .star{color:var(--shu);}
+
+  @media (max-width:520px){
+    .u{grid-template-columns:1fr;gap:.45rem;}
+    .u-meta{flex-direction:row;align-items:center;gap:.5rem;}
+    .u-meta .ts{width:auto;}
+    .u.key{background:none;}
+    .u-points li{grid-template-columns:1fr;gap:.2rem;}
+  }
+
+  /* ============================================================
+     MOBILE / TOUCH ADAPTATION  (additive; later rules override)
+     ============================================================ */
+  :root{ --dock-max:42vh; }
+  @supports (height:100dvh){ :root{ --dock-max:42dvh; } }
+
+  /* narrow screens: keep the sticky video from eating the viewport, honour the notch */
   @media (max-width:560px){
+    body{ overflow-x:hidden; }                 /* safety net against any stray overflow */
     .wrap{ padding-left:max(1.1rem,env(safe-area-inset-left));
            padding-right:max(1.1rem,env(safe-area-inset-right)); }
-    a.card{ padding:1.25rem 1.25rem 1.15rem; }
+    .video-dock{ top:env(safe-area-inset-top,0px); margin-top:1rem; }
+    .dock-video{ max-width:none; }
+    .video-frame{ max-height:var(--dock-max); }
+    /* dock bar: let the long title ellipsize so 跟随 / 收起 never get pushed off-screen */
+    .dock-bar{ gap:.4rem; padding-left:.75rem; }
+    .dock-title{ flex:1 1 auto; min-width:0; }
+    .dock-min,.dock-follow{ flex:none; }
+    .tag{ white-space:normal; }                /* long 名台词 pills wrap instead of overflowing */
+    .sec{ margin-top:2.4rem; }
   }
+  /* landscape phone: give the video the width, lift the height cap */
+  @media (orientation:landscape) and (max-height:480px){
+    .video-frame{ max-height:82vh; }
+  }
+
+  /* touch devices (no hover): >=44px hit targets. hover-peek can't fire on touch,
+     so the master toggle + tap-to-pin (.reveal) are the furigana controls. */
+  @media (hover:none) and (pointer:coarse){
+    .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
+         align-items:center; justify-content:center; }
+    .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    #furiToggle{ min-height:44px; padding:.55rem 1.1rem; }
+    ruby{ padding:.12em .06em; border-radius:.2em; }
+    .u-points .chip{ padding:.3rem .6rem; }
+  }
+
+  /* re-follow button: the player shows it (bottom, thumb-reach) when auto-follow
+     is off during playback, so re-arming is one tap even far down the page */
+  #refollow{ position:fixed; z-index:40;
+    right:max(1rem,env(safe-area-inset-right));
+    bottom:max(1rem,env(safe-area-inset-bottom));
+    display:none; align-items:center; gap:.4rem; min-height:44px;
+    font-family:var(--font-gothic); font-size:.85rem; font-weight:600;
+    color:#fff; background:var(--shu); border:0; border-radius:2rem;
+    padding:.6rem 1.15rem; box-shadow:0 8px 22px -8px rgba(0,0,0,.55);
+    cursor:pointer; opacity:0; transform:translateY(10px);
+    transition:opacity .2s ease,transform .2s ease; }
+  #refollow.show{ display:inline-flex; opacity:1; transform:none; }
+  #refollow:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ #refollow{ transition:none; } }
+
+  /* horizontally-scrollable reference tables: fade + shadow hint you can swipe */
+  .tbl-wrap{ position:relative;
+    background:
+      linear-gradient(90deg,var(--card),transparent) 0 0,
+      linear-gradient(90deg,transparent,var(--card)) 100% 0,
+      radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.16),transparent) 0 0,
+      radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.16),transparent) 100% 0;
+    background-repeat:no-repeat;
+    background-size:2.4rem 100%,2.4rem 100%,1.1rem 100%,1.1rem 100%;
+    background-attachment:local,local,scroll,scroll; }
+
+  /* ============================================================
+     LANG-NAV — slim cross-page nav (目录 home / prev·next / 收藏 + sync dot).
+     Non-sticky: scrolls away so it never fights the sticky .video-dock.
+     Markup: scripts/nav.py · live badge: assets/nav.js.
+     ============================================================ */
+  .lang-nav{display:flex;align-items:center;gap:.5rem .7rem;flex-wrap:nowrap;
+    margin:0 0 1.6rem;padding:.5rem .1rem;font-family:var(--font-gothic);
+    font-size:.82rem;border-bottom:1px solid var(--line);}
+  .lang-nav a{text-decoration:none;color:var(--ink-soft);}
+  .ln-brand{font-weight:700;color:var(--keigo);white-space:nowrap;
+    display:inline-flex;gap:.3rem;align-items:center;}
+  .ln-brand.ln-current{cursor:default;}
+  .ln-mark{font-size:1.05em;}
+  .ln-ctx{color:var(--ink-faint);font-size:.75rem;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .ln-pn{display:inline-flex;gap:.35rem;margin-left:auto;}
+  .ln-pn a{border:1px solid var(--line);border-radius:.4rem;padding:.15rem .55rem;white-space:nowrap;}
+  .ln-pn a:hover{color:var(--shu);border-color:var(--shu);}
+  .ln-fav{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);
+    border-radius:.5rem;padding:.2rem .6rem;font-weight:600;white-space:nowrap;margin-left:auto;}
+  .ln-pn ~ .ln-fav{margin-left:.4rem;}
+  .ln-fav.ln-current{color:var(--goi);border-color:var(--goi);cursor:default;}
+  .ln-star{color:var(--shu);}
+  .ln-fav-n{font-variant-numeric:tabular-nums;}
+  .ln-dot{width:.5rem;height:.5rem;border-radius:50%;box-shadow:0 0 0 3px rgba(127,127,127,.10);flex:none;}
+  .ln-ok{background:#3aa76d;} .ln-wait{background:#d9a520;}
+  .ln-off{background:#9aa0a6;} .ln-err{background:#d1453b;}
+  @media (max-width:560px){
+    .ln-ctx{display:none;}
+    .ln-prev,.ln-next{font-size:0;}
+    .ln-prev::before{content:"‹";font-size:.9rem;}
+    .ln-next::before{content:"›";font-size:.9rem;}
+  }
+
+  /* ============================================================
+     FAVORITES (收藏) — capture per sentence, filter, deep-link.
+     The user bookmark is deliberately DISTINCT from the author ★
+     (.key-star, --shu): a bookmark glyph in --goi. See plans/favorites.md.
+     ============================================================ */
+  .fav-btn{ appearance:none;-webkit-appearance:none;background:transparent;border:0;
+    color:var(--goi);cursor:pointer;padding:.25rem;margin-top:.1rem;line-height:0;
+    border-radius:.35rem;opacity:.5;transition:opacity .15s,color .15s,transform .1s;}
+  .fav-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;display:block;}
+  .fav-btn:hover{opacity:1;}
+  .fav-btn:active{transform:scale(.9);}
+  .fav-btn[aria-pressed="true"]{opacity:1;}
+  .fav-btn[aria-pressed="true"] svg{fill:currentColor;}
+  .fav-btn:focus-visible{outline:2px solid var(--goi);outline-offset:2px;opacity:1;}
+
+  #favFilter{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--goi);background:transparent;border:1px solid var(--goi);border-radius:2rem;
+    padding:.32rem .9rem;white-space:nowrap;transition:background .15s,color .15s;}
+  #favFilter[aria-pressed="true"]{background:var(--goi);color:var(--paper);}
+  #favFilter:focus-visible{outline:2px solid var(--goi);outline-offset:2px;}
+  #favEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
+    background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
+
+  /* filter view: hide everything not favorited */
+  body.fav-only .u:not(.faved){display:none;}
+
+  /* deep-link arrival flash (from favorites.html #fav=…) */
+  .u.fav-jump{animation:fav-jump 1.5s ease;}
+  @keyframes fav-jump{0%,28%{background:var(--goi-t);box-shadow:inset 3px 0 0 var(--goi);
+    border-radius:0 .4rem .4rem 0;}100%{background:transparent;}}
+  @media (prefers-reduced-motion:reduce){.u.fav-jump{animation:none;}}
+
+  /* touch: the bookmark is a >=44px target, well clear of the seeking .ts */
+  @media (hover:none) and (pointer:coarse){
+    .fav-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
+    #favFilter{min-height:44px;padding:.55rem 1.1rem;}
+  }
+</style>
+<style>
+  /* index-specific chrome on top of the shared design system */
+  .idx-head{display:flex;flex-direction:column;gap:.7rem;margin:0 0 1.4rem;}
+  #idxSearch{font:inherit;font-size:.95rem;color:var(--ink);background:var(--card);
+    border:1px solid var(--line-strong);border-radius:2rem;padding:.6rem 1.1rem;}
+  .idx-chips{display:flex;flex-wrap:wrap;gap:.45rem;}
+  .idx-chip{font-family:var(--font-gothic);font-size:.8rem;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.28rem .8rem;}
+  .idx-chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .idx-recent{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.8rem;margin:0 0 .5rem;}
+  a.idx-card{display:flex;flex-direction:column;gap:.35rem;text-decoration:none;color:inherit;
+    background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.1rem;
+    transition:border-color .18s,transform .18s;}
+  a.idx-card:hover{transform:translateY(-2px);}
+  .idx-card-eb{font-family:var(--font-latin);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;}
+  .idx-card-jp{font-family:var(--font-mincho);font-size:1.15rem;line-height:1.4;color:var(--ink);}
+  .idx-card-src{font-family:var(--font-gothic);font-size:.82rem;color:var(--ink-soft);}
+  .idx-card-pills{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.2rem;}
+  .idx-pill{font-family:var(--font-gothic);font-size:.72rem;color:var(--ink-soft);
+    background:var(--paper);border:1px solid var(--line);border-radius:.5rem;padding:.1rem .5rem;font-variant-numeric:tabular-nums;}
+  .idx-fav-n{color:var(--shu);font-weight:600;}
+  .idx-month{font-family:var(--font-gothic);font-size:.78rem;color:var(--ink-faint);font-weight:600;
+    font-variant-numeric:tabular-nums;margin:1.2rem 2px .3rem;}
+  a.idx-row{display:grid;grid-template-columns:3.4rem 4.5rem 1fr auto auto;gap:.6rem;align-items:center;
+    text-decoration:none;color:inherit;padding:.6rem 4px;border-bottom:1px solid var(--line);font-size:.9rem;}
+  a.idx-row:hover{background:var(--card);}
+  .idx-date{font-size:.75rem;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .idx-gtag{font-size:.72rem;padding:.1rem .5rem;border-radius:2rem;border:1px solid currentColor;text-align:center;white-space:nowrap;}
+  .idx-title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
+  .idx-n,.idx-dur{font-size:.78rem;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .idx-empty{margin:1.4rem 0;padding:1rem 1.2rem;color:var(--ink-soft);background:var(--card);
+    border:1px dashed var(--line-strong);border-radius:.6rem;}
+  @media (max-width:520px){ a.idx-row{grid-template-columns:3.2rem 1fr auto;} .idx-gtag,.idx-n{display:none;} }
 </style>
 </head>
 <body>
 <div class="wrap">
-
+  <nav class="lang-nav" data-kind="index"><span class="ln-brand ln-current"><span class="ln-mark">☰</span> lang分析 · 目录</span><a class="ln-fav" href="favorites.html"><span class="ln-star">★</span> 收藏 <b class="ln-fav-n">0</b><span class="ln-dot ln-off" title="未开启"></span></a></nav>
   <p class="eyebrow">日本語文法分析 · 中文精讲</p>
-  <h1>逐句看懂<br>日语的每一句</h1>
-  <p class="kana">いっく　いっく、にほんご　を　よむ</p>
-  <p class="sub">面向中文母语的日语学习者：把一段视频里的每一句对白从嘈杂的自动字幕中还原、注音、翻译，并逐句解析文法。点时间戳即跳转播放，字幕随视频自动高亮跟随。</p>
-  <p style="margin:1.1rem 0 0;font-size:.9rem;"><a href="favorites.html" style="font-weight:600;text-decoration:none;">我的收藏 →</a> <span style="color:var(--ink-faint);">集中复习你在各篇里标记的句子（可导出 Anki）</span></p>
+  <h1>逐句看懂日语的每一句</h1>
+  <p class="sub">面向中文母语的日语学习者：把视频里的每一句对白从嘈杂的自动字幕中还原、注音、翻译，并逐句解析文法。点时间戳即跳转播放，字幕随视频自动高亮跟随。</p>
 
-  <hr class="rule">
-
-  <div class="sec">选篇 · 全 4 篇</div>
-  <div class="cards">
-
-    <a class="card c1" href="bunpou.html">
-      <p class="card-eyebrow">01 · インタビュー Interview</p>
-      <p class="card-jp">「口を開けばマウントを取ってくる」</p>
-      <p class="card-src">綜藝訪談 · <b>しくじり学園放送室</b> — 岩田ま亜里</p>
-      <p class="card-gloss">一段日语综艺访谈的逐句文法拆解（助词・活用接续・授受・敬语）。</p>
-      <div class="pills">
-        <span class="pill pair">日 → 中</span>
-        <span class="pill"><b>117</b> 句</span>
-        <span class="pill">时长 <b>7:49</b></span>
-        <span class="pill">口语・敬语</span>
-      </div>
-      <span class="go">打开精讲 <span class="arr">→</span></span>
-    </a>
-
-    <a class="card c2" href="tomodachi.html">
-      <p class="card-eyebrow">02 · 恋愛短剧 Skit</p>
-      <p class="card-jp">「付き合ったってことでOK？」</p>
-      <p class="card-src">恋爱短剧 · <b>友達が恋人になる日</b></p>
-      <p class="card-gloss">咖啡馆里两个好友互相试探——从「朋友」到「恋人」的口语・タメ口逐句解析。</p>
-      <div class="pills">
-        <span class="pill pair">日 → 中</span>
-        <span class="pill"><b>66</b> 句</span>
-        <span class="pill">时长 <b>4:25</b></span>
-        <span class="pill">口语・タメ口</span>
-      </div>
-      <span class="go">打开精讲 <span class="arr">→</span></span>
-    </a>
-
-    <a class="card c3" href="sashinomi.html">
-      <p class="card-eyebrow">03 · 恋愛短剧 Skit</p>
-      <p class="card-jp">「帰りたくないっていったら…」</p>
-      <p class="card-src">恋爱短剧 · <b>憧れの先輩とサシ飲み</b></p>
-      <p class="card-gloss">居酒屋里后辈和心仪的前辈单独喝酒，一句「不想回家」的试探——タメ口与敬语交替的逐句解析。</p>
-      <div class="pills">
-        <span class="pill pair">日 → 中</span>
-        <span class="pill"><b>38</b> 句</span>
-        <span class="pill">时长 <b>4:27</b></span>
-        <span class="pill">口语・敬语</span>
-      </div>
-      <span class="go">打开精讲 <span class="arr">→</span></span>
-    </a>
-
-    <a class="card c4" href="konkatsu.html">
-      <p class="card-eyebrow">04 · 婚活バラエティ Variety</p>
-      <p class="card-jp">「会話が続かないんですよ」</p>
-      <p class="card-src">婚活综艺 · <b>婚活お見合い実践編</b> — 植草先生</p>
-      <p class="card-gloss">婚活のプロ 植草先生 用真实相亲失败案例，逐句拆解「婚活男」为何搞砸——犀利吐槽里全是敬语与口语。</p>
-      <div class="pills">
-        <span class="pill pair">日 → 中</span>
-        <span class="pill"><b>213</b> 句</span>
-        <span class="pill">时长 <b>13:09</b></span>
-        <span class="pill">敬语・口语</span>
-      </div>
-      <span class="go">打开精讲 <span class="arr">→</span></span>
-    </a>
-
+  <div class="idx-head">
+    <input id="idxSearch" type="search" placeholder="搜索标题 / 频道 / 关键词…" aria-label="搜索">
+    <div class="idx-chips"><button class="idx-chip on" data-genre="" type="button">全部</button>
+      <button class="idx-chip" data-genre="koi" type="button" style="color:#c0442c">恋愛短剧</button>
+      <button class="idx-chip" data-genre="int" type="button" style="color:#2f5fa6">インタビュー</button>
+      <button class="idx-chip" data-genre="kon" type="button" style="color:#8a4fa8">婚活</button>
+      <button class="idx-chip" data-genre="news" type="button" style="color:#1f7a63">ニュース</button>
+      <button class="idx-chip" data-genre="var" type="button" style="color:#b8860b">バラエティ</button></div>
   </div>
 
-  <div class="how">
-    <b>关于播放：</b>本站直接<b>嵌入原版 YouTube 视频</b>（未搬运任何视频文件），点击句子的时间戳即跳转播放，字幕会随视频自动高亮并跟随滚动，手动滚动即暂停。<br>
-    <b>离线版：</b>仓库里另有把视频下载到本地的完全离线版（<span class="k">bunpou-analysis.html</span> / <span class="k">tomodachi-koibito.html</span> / <span class="k">sashinomi-analysis.html</span>），克隆仓库并按 README 生成对应 mp4 即可断网使用。
+  <div class="sec idx-recent-h">最近更新</div>
+  <div class="idx-recent"><a class="idx-card" href="konkatsu.html"><span class="idx-card-eb" style="color:#8a4fa8">婚活 · 07-05</span><span class="idx-card-jp">「会話が続かないんですよ」</span><span class="idx-card-src">婚活お見合い実践編</span><span class="idx-card-pills"><span class="idx-pill">213 句</span><span class="idx-pill">13:09</span><span class="idx-pill idx-fav-n" data-yt="TOu_aXJptMc" hidden></span></span></a><a class="idx-card" href="sashinomi.html"><span class="idx-card-eb" style="color:#c0442c">恋愛短剧 · 06-30</span><span class="idx-card-jp">「帰りたくないっていったら…」</span><span class="idx-card-src">憧れの先輩とサシ飲み</span><span class="idx-card-pills"><span class="idx-pill">38 句</span><span class="idx-pill">4:27</span><span class="idx-pill idx-fav-n" data-yt="EP8pYHrmyig" hidden></span></span></a><a class="idx-card" href="tomodachi.html"><span class="idx-card-eb" style="color:#c0442c">恋愛短剧 · 06-28</span><span class="idx-card-jp">「付き合ったってことでOK？」</span><span class="idx-card-src">友達が恋人になる日</span><span class="idx-card-pills"><span class="idx-pill">66 句</span><span class="idx-pill">4:25</span><span class="idx-pill idx-fav-n" data-yt="hEvCWsSs0AI" hidden></span></span></a></div>
+
+  <div class="sec idx-all-h">全部 · 全 4 篇</div>
+  <div class="idx-list">
+    <div class="idx-month">2026 年 7 月</div>
+    <a class="idx-row" href="konkatsu.html" data-genre="kon" data-search="「会話が続かないんですよ」 婚活お見合い実践編 konkatsu 婚活"><span class="idx-date">07-05</span><span class="idx-gtag" style="color:#8a4fa8">婚活</span><span class="idx-title">「会話が続かないんですよ」</span><span class="idx-n">213 句</span><span class="idx-dur">13:09</span></a>
+    <div class="idx-month">2026 年 6 月</div>
+    <a class="idx-row" href="sashinomi.html" data-genre="koi" data-search="「帰りたくないっていったら…」 憧れの先輩とサシ飲み sashinomi 恋愛短剧"><span class="idx-date">06-30</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">「帰りたくないっていったら…」</span><span class="idx-n">38 句</span><span class="idx-dur">4:27</span></a>
+    <a class="idx-row" href="tomodachi.html" data-genre="koi" data-search="「付き合ったってことでok？」 友達が恋人になる日 tomodachi 恋愛短剧"><span class="idx-date">06-28</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">「付き合ったってことでOK？」</span><span class="idx-n">66 句</span><span class="idx-dur">4:25</span></a>
+    <a class="idx-row" href="bunpou.html" data-genre="int" data-search="「口を開けばマウントを取ってくる」 しくじり学園放送室 bunpou インタビュー"><span class="idx-date">06-25</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「口を開けばマウントを取ってくる」</span><span class="idx-n">117 句</span><span class="idx-dur">7:49</span></a>
   </div>
+  <p class="idx-empty" hidden>无匹配 — 换个关键词或点「全部」。</p>
 
-  <footer>
-    素材为 YouTube 视频片段（自动字幕转写，含 ASR 误听，讲解中已还原），面向中文母语者的日语文法学习分析，非官方字幕。视频版权归原作者所有，本站仅以官方嵌入方式引用、不再托管视频文件。
-  </footer>
-
+  <div class="how"><b>关于播放：</b>本站直接<b>嵌入原版 YouTube 视频</b>（未搬运任何视频文件），点句子时间戳即跳转播放，字幕随视频自动高亮并跟随滚动。仓库另有把视频下载到本地的完全离线版。</div>
+  <footer>素材为 YouTube 视频片段（自动字幕转写，讲解中已还原），面向中文母语者的日语文法学习分析。视频版权归原作者所有，本站仅以官方嵌入方式引用、不再托管视频文件。</footer>
 </div>
+<script>
+/* ============================================================================
+   Favorites (收藏) — capture on any study page, review pooled on favorites.html.
+   Store = localStorage cache; SOURCE OF TRUTH = a private GitHub Gist (opt-in
+   sync). Online-only (gated on isSecureContext) so offline file:// deliverables
+   stay self-contained. The pure core below is unit-tested (tools/test_favorites.mjs).
+   Exposes window.LangFav on EVERY page (study pages inject capture UI; favorites.html
+   renders the pooled library). Design + rationale: plans/favorites.md.
+   ========================================================================== */
+(function(){
+  /*<<fav-pure>>*/
+  // Pure, DOM/Network-free core. Extracted verbatim by the unit test.
+  function FAV_PURE(){
+    // ---- timestamps ----
+    function tsToSec(t){
+      var p = (String(t).match(/\d+/g) || []).map(Number);
+      var s = 0; for (var i = 0; i < p.length; i++) s = s * 60 + p[i];
+      return s;
+    }
+    function secToMmss(s){
+      s = Math.max(0, Math.floor(+s || 0));
+      var m = Math.floor(s / 60), ss = s % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (ss < 10 ? '0' : '') + ss;
+    }
+    // ---- identity: <yt>#<mmss>#<n>, n = within-second ordinal in DOM order.
+    // Fixes the v1 bug where same-second cards collided (verified 5x in sashinomi).
+    function assignFavIds(yt, tsList){
+      var seen = {}, out = [];
+      for (var i = 0; i < tsList.length; i++){
+        var mmss = secToMmss(tsToSec(tsList[i]));
+        var n = (seen[mmss] == null) ? 0 : seen[mmss] + 1;
+        seen[mmss] = n;
+        out.push(yt + '#' + mmss + '#' + n);
+      }
+      return out;
+    }
+    // ---- furigana stripping (for the Anki FRONT: reading must not give the answer)
+    function stripFuri(html){
+      return String(html == null ? '' : html)
+        .replace(/<rp\b[^>]*>[\s\S]*?<\/rp>/gi, '')
+        .replace(/<rt\b[^>]*>[\s\S]*?<\/rt>/gi, '')
+        .replace(/<[^>]+>/g, '');
+    }
+    function sanitizeField(s){
+      return String(s == null ? '' : s).replace(/\t/g, ' ').replace(/\r?\n/g, '<br>');
+    }
+    // ---- Anki card: plain JP front, ruby+译+grammar back. Caller writes the file
+    // with a leading "#separator:tab" + "#html:true" so ruby renders and TSV holds.
+    function ankiCard(rec){
+      var front = sanitizeField(stripFuri(rec.jp_html || ''));
+      var parts = [rec.jp_html || ''];                  // ruby intact → furigana on back
+      if (rec.cn) parts.push('【译】' + rec.cn);
+      var pts = rec.points || [];
+      for (var i = 0; i < pts.length; i++)
+        parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
+      return { front: front, back: sanitizeField(parts.join('\n')) };
+    }
+    // ---- op-replay merge (pure; no wall-clock, no tombstones). add sets, del removes.
+    function applyOps(items, ops){
+      var out = {};
+      for (var k in items) if (Object.prototype.hasOwnProperty.call(items, k)) out[k] = items[k];
+      for (var i = 0; i < (ops || []).length; i++){
+        var o = ops[i];
+        if (o.op === 'add') out[o.id] = o.record;
+        else if (o.op === 'del') delete out[o.id];
+      }
+      return out;
+    }
+    // ---- sync engine: pull → apply pending ops → PATCH with If-Match(etag).
+    // On 412 (another device pushed since our pull) re-pull, re-apply, retry.
+    // This is what prevents the silent lost-update the review flagged.
+    function makeSync(deps){
+      var request = deps.request;                        // (kind, opts) -> {ok,status,etag,body}
+      async function flush(ops, pulled){
+        var base = pulled ? pulled.items : null, etag = pulled ? pulled.etag : null;
+        if (base == null){ var g = await request('GET'); base = g.body.items || {}; etag = g.etag; }
+        for (var attempt = 0; attempt < 5; attempt++){
+          var merged = applyOps(base, ops);
+          var res = await request('PATCH', { ifMatch: etag, body: { items: merged } });
+          if (res.ok) return { items: merged, etag: res.etag };
+          if (res.status === 412){ var re = await request('GET'); base = re.body.items || {}; etag = re.etag; continue; }
+          var perr = new Error('sync PATCH failed: ' + res.status); perr.status = res.status; throw perr;
+        }
+        throw new Error('sync: too many conflicts');
+      }
+      return { flush: flush };
+    }
+    // ---- self-heal wrapper: a cached gist id can go stale (deleted, or created
+    // under a different account during setup) and then every GET/PATCH 404s forever.
+    // On a 404, drop the id, re-resolve (force), and retry ONCE; any other failure
+    // propagates so the UI can report it honestly instead of a false "已同步".
+    function makeSyncEngine(deps){
+      var resolve = deps.resolve;   // (force) -> Promise<gid>  (force=true bypasses the cache)
+      var makeReq = deps.makeReq;   // (gid) -> request(kind, opts)
+      async function withHeal(run){
+        var gid = await resolve(false);
+        try { return await run(makeReq(gid)); }
+        catch (e){
+          if (!(e && e.status === 404)) throw e;
+          var fresh = await resolve(true);
+          return await run(makeReq(fresh));
+        }
+      }
+      function push(ops){ return withHeal(function(req){ return makeSync({ request: req }).flush(ops); }); }
+      function pull(){ return withHeal(function(req){ return req('GET'); }); }
+      return { push: push, pull: pull };
+    }
+    // ---- optional client-side encryption (AES-GCM, PBKDF2). A token/URL leak then
+    // yields ciphertext, not the study profile. Uses WebCrypto (browser + Node v26).
+    function makeCrypto(subtle, getRandom){
+      var enc = new TextEncoder(), dec = new TextDecoder();
+      function b64(buf){ var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
+      function unb64(str){ var s = atob(str), b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
+      async function keyFrom(pass, salt){
+        var base = await subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+        return subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 150000, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+      }
+      async function encrypt(pass, text){
+        var salt = getRandom(16), iv = getRandom(12), key = await keyFrom(pass, salt);
+        var ct = await subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, enc.encode(text));
+        return { v: 1, alg: 'AES-GCM', salt: b64(salt), iv: b64(iv), ct: b64(ct) };
+      }
+      async function decrypt(pass, blob){
+        var key = await keyFrom(pass, unb64(blob.salt));
+        var pt = await subtle.decrypt({ name: 'AES-GCM', iv: unb64(blob.iv) }, key, unb64(blob.ct));
+        return dec.decode(pt);
+      }
+      return { encrypt: encrypt, decrypt: decrypt };
+    }
+    // ---- sync-dot state: 'off' (no token) | 'err' (hard failure) | 'wait' (queued) | 'ok'
+    function syncStatus(s){
+      s = s || {};
+      if (!s.hasToken) return 'off';
+      if (s.lastErr) return 'err';
+      if (s.pending > 0) return 'wait';
+      return 'ok';
+    }
+    return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds,
+             stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
+             applyOps: applyOps, makeSync: makeSync, makeSyncEngine: makeSyncEngine,
+             makeCrypto: makeCrypto, syncStatus: syncStatus };
+  }
+  /*<</fav-pure>>*/
+
+  // ---- online-only: the published site (https) or local dev (localhost); NOT file://.
+  // (Chrome reports file:// AS a secure context, so isSecureContext is the wrong gate —
+  // this keeps the offline mp4 deliverables self-contained: no favorites/network code runs.)
+  var loc = window.location || {};
+  if (!(loc.protocol === 'https:' || loc.hostname === 'localhost' || loc.hostname === '127.0.0.1')) return;
+  var P = FAV_PURE();
+
+  var K = { store: 'langfav:v1', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
+  function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
+
+  var favs = readJSON(K.store, {});      // { id: record }  (cache; may be ITP-evicted)
+  var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
+  var changeHooks = [];                  // favorites.html render + nav.js badge both subscribe
+  var lastErr = false;                   // true after a hard sync failure (401/403/404/…)
+
+  function persist(){ writeJSON(K.store, favs); }
+  function queueOp(op, id, record){
+    ops.push(record ? { op: op, id: id, record: record } : { op: op, id: id });
+    writeJSON(K.ops, ops);
+  }
+  function fireChange(){ reflect(); for (var i = 0; i < changeHooks.length; i++){ try { changeHooks[i](); } catch (e){} } }
+  function addFav(record){ favs[record.id] = record; queueOp('add', record.id, record); persist(); fireChange(); scheduleFlush(); }
+  function removeFav(id){ if (!favs[id]) return; delete favs[id]; queueOp('del', id); persist(); fireChange(); scheduleFlush(); }
+
+  // ---------- sync (opt-in): localStorage cache ⇄ private Gist (source of truth) ----------
+  var FILE = 'lang-favorites.json';
+  function token(){ try { return localStorage.getItem(K.tok) || ''; } catch (e){ return ''; } }
+  async function api(method, path, body){
+    return fetch('https://api.github.com' + path, {
+      method: method,
+      headers: { 'Authorization': 'Bearer ' + token(), 'Accept': 'application/vnd.github+json',
+                 'X-GitHub-Api-Version': '2022-11-28' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+  }
+  async function findGist(){
+    var gid = null; try { gid = localStorage.getItem(K.gid); } catch (e){}
+    if (gid) return gid;
+    var r = await api('GET', '/gists?per_page=100'); if (!r.ok){ var le = new Error('gist list ' + r.status); le.status = r.status; throw le; }
+    var hit = (await r.json()).filter(function(g){ return g.files && g.files[FILE]; })[0];
+    if (hit){ try { localStorage.setItem(K.gid, hit.id); } catch (e){} return hit.id; }
+    var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: {} }) };
+    var c = await api('POST', '/gists', { description: 'lang-analysis favorites (do not delete)', public: false, files: files });
+    if (!c.ok){ var ce = new Error('gist create ' + c.status); ce.status = c.status; throw ce; }
+    var g = await c.json(); try { localStorage.setItem(K.gid, g.id); } catch (e){} return g.id;
+  }
+  function makeRequest(gid){
+    return async function(kind, opts){
+      if (kind === 'GET'){
+        var r = await api('GET', '/gists/' + gid); if (!r.ok){ var ge = new Error('gist get ' + r.status); ge.status = r.status; throw ge; }
+        var etag = r.headers.get('ETag'); var g = await r.json();
+        var f = g.files && g.files[FILE]; var content = f ? f.content : '';
+        if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
+        var parsed; try { parsed = content ? JSON.parse(content) : { items: {} }; }
+        catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
+        return { ok: true, etag: etag, body: { items: parsed.items || {} } };
+      }
+      var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: opts.body.items }) };
+      var r2 = await api('PATCH', '/gists/' + gid, { files: files });
+      return { ok: r2.ok, status: r2.status, etag: r2.headers.get('ETag'), body: opts.body };
+    };
+  }
+  function dropGid(){ try { localStorage.removeItem(K.gid); } catch (e){} }
+  function resolveGid(force){ if (force) dropGid(); return findGist(); }   // force=true re-discovers/creates
+  function engine(){ return P.makeSyncEngine({ resolve: resolveGid, makeReq: makeRequest }); }
+
+  var flushing = false, dirtyAgain = false, timer = null;
+  // Returns a result the panel can report honestly:
+  //   {ok:true, count, pushed}  |  {ok:false, status, error}  |  {ok:false, reason:'offline'|'no-token'|'busy'}
+  async function doFlush(){
+    if (!token()) return { ok: false, reason: 'no-token' };
+    if (!navigator.onLine) return { ok: false, reason: 'offline' };
+    if (flushing){ dirtyAgain = true; return { ok: false, reason: 'busy' }; }
+    flushing = true;
+    try {
+      var pending = readJSON(K.ops, []);
+      if (!pending.length) return { ok: true, count: favCount(), pushed: 0 };
+      var out = await engine().push(pending);                  // self-heals a stale gid on 404
+      favs = out.items; persist(); writeJSON(K.ops, []); ops = [];
+      lastErr = false; fireChange();
+      return { ok: true, count: favCount(), pushed: pending.length };
+    } catch (e){                                               // keep ops queued; retry on next trigger
+      if (e && e.status) lastErr = true;
+      fireChange();
+      return { ok: false, status: e && e.status, error: String((e && e.message) || e) };
+    } finally { flushing = false; if (dirtyAgain){ dirtyAgain = false; scheduleFlush(); } }
+  }
+  function scheduleFlush(){ if (timer) clearTimeout(timer); timer = setTimeout(doFlush, 1200); }
+  async function pullOnLoad(){
+    if (!token()) return { ok: false, reason: 'no-token' };
+    if (!navigator.onLine) return { ok: false, reason: 'offline' };
+    try {
+      var r = await engine().pull();                           // self-heals a stale gid on 404
+      favs = P.applyOps(r.body.items, readJSON(K.ops, []));    // gist truth + our un-pushed ops
+      persist(); lastErr = false; fireChange();
+      if (ops.length) scheduleFlush();
+      return { ok: true, count: favCount() };
+    } catch (e){ if (e && e.status) lastErr = true; fireChange(); return { ok: false, status: e && e.status, error: String((e && e.message) || e) }; }
+  }
+
+  // ---------- capture UI (study pages only: where .u cards exist) ----------
+  var cards = [].slice.call(document.querySelectorAll('.u'));
+  var IDS = [], filterBtn = null, favEmpty = null;
+  function pageYt(){
+    var el = document.getElementById('clip'); if (!el) return '';
+    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id'); if (y) return y;
+    var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+  }
+  function cnText(card){
+    var el = card.querySelector('.u-cn'); if (!el) return '';
+    var c = el.cloneNode(true); var lbl = c.querySelector('.lbl'); if (lbl) lbl.remove();
+    return c.textContent.trim();
+  }
+  function pointsOf(card){
+    return [].slice.call(card.querySelectorAll('.u-points li')).map(function(li){
+      var chip = li.querySelector('.chip');
+      var cat = chip ? ([].slice.call(chip.classList).filter(function(x){ return x !== 'chip' && x !== 'star'; })[0] || '') : '';
+      return { cat: cat, term: chip ? chip.textContent.trim() : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
+    });
+  }
+  function recordFor(card, id){
+    var jp = card.querySelector('.u-jp'), ts = card.querySelector('.ts');
+    var sec = ts ? P.tsToSec(ts.textContent) : 0;
+    return { id: id, yt: pageYt(), page: (location.pathname.split('/').pop() || ''), mmss: P.secToMmss(sec), sec: sec,
+             jp_html: jp ? jp.innerHTML : '', cn: cnText(card), points: pointsOf(card),
+             page_title: (document.title || ''), added_at: Date.now() };
+  }
+  function favCount(){ return Object.keys(favs).length; }
+  function reflect(){
+    if (!cards.length) return;
+    cards.forEach(function(card, i){
+      var on = !!favs[IDS[i]], b = card.querySelector('.fav-btn');
+      card.classList.toggle('faved', on); if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    if (filterBtn) filterBtn.textContent = '只看收藏 (' + favCount() + ')';
+    if (favEmpty) favEmpty.hidden = !(document.body.classList.contains('fav-only') && favCount() === 0);
+  }
+  if (cards.length){
+    var YT = pageYt();
+    var IDS0 = P.assignFavIds(YT, cards.map(function(c){ var t = c.querySelector('.ts'); return t ? t.textContent : ''; }));
+    IDS = IDS0;
+    var BOOKMARK = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+      '<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+    cards.forEach(function(card, i){
+      var id = IDS[i]; card.dataset.favId = id;
+      var meta = card.querySelector('.u-meta') || card;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'fav-btn'; b.setAttribute('aria-label', '收藏这句'); b.title = '收藏这句';
+      b.innerHTML = BOOKMARK;
+      b.addEventListener('click', function(){ favs[id] ? removeFav(id) : addFav(recordFor(card, id)); });
+      meta.appendChild(b);
+    });
+    // filter "只看收藏 (N)"
+    filterBtn = document.createElement('button');
+    filterBtn.id = 'favFilter'; filterBtn.type = 'button'; filterBtn.setAttribute('aria-pressed', 'false');
+    filterBtn.addEventListener('click', function(){
+      var on = document.body.classList.toggle('fav-only');
+      filterBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); reflect();
+    });
+    var furiBar = document.querySelector('.furi-bar'); if (furiBar) furiBar.appendChild(filterBtn);
+    favEmpty = document.createElement('p'); favEmpty.id = 'favEmpty'; favEmpty.hidden = true;
+    favEmpty.textContent = '还没有收藏。点句子的书签图标即可收藏，稍后在收藏页复习。';
+    var anchor = document.querySelector('.legend') || furiBar;
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(favEmpty, anchor);
+    reflect();
+    // deep-link from favorites.html: #fav=<id> → scroll + flash the exact card (no autoplay)
+    var gotoHash = function(){
+      var m = (location.hash || '').match(/fav=([^&]+)/); if (!m) return;
+      var id = decodeURIComponent(m[1]);
+      var card = document.querySelector('.u[data-fav-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (!card) return;
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      card.classList.remove('fav-jump'); void card.offsetWidth; card.classList.add('fav-jump');
+    };
+    window.addEventListener('hashchange', gotoHash);
+    if (/fav=/.test(location.hash || '')) setTimeout(gotoHash, 300);
+  }
+
+  // ---------- triggers: pull on load, push eagerly before backgrounding ----------
+  window.addEventListener('online', scheduleFlush);
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) doFlush(); });
+  window.addEventListener('pagehide', function(){ doFlush(); });
+  pullOnLoad();
+
+  // ---------- public surface (used by favorites.html) ----------
+  window.LangFav = {
+    all: function(){ return favs; },
+    count: favCount,
+    status: function(){ return P.syncStatus({ hasToken: !!token(), lastErr: lastErr, pending: readJSON(K.ops, []).length }); },
+    remove: removeFav,
+    add: addFav,
+    setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} lastErr = false; fireChange(); },
+    hasToken: function(){ return !!token(); },
+    forgetGist: function(){ try { localStorage.removeItem(K.gid); } catch (e){} },
+    sync: doFlush, pull: pullOnLoad, pure: P,
+    onChange: function(fn){ if (typeof fn === 'function') changeHooks.push(fn); }
+  };
+})();
+</script>
+<script>
+/* lang-nav live badge: 收藏 count + honest sync dot, from window.LangFav.
+   No-op where LangFav is absent (offline file:// deliverables). */
+(function(){
+  var nav = document.querySelector('.lang-nav'); if (!nav) return;
+  var nEl = nav.querySelector('.ln-fav-n'), dot = nav.querySelector('.ln-dot');
+  var DOT = { ok: ['ln-ok', '已同步'], wait: ['ln-wait', '待同步'],
+              off: ['ln-off', '未开启'], err: ['ln-err', '同步失败'] };
+  function refresh(){
+    var LF = window.LangFav; if (!LF) return;
+    if (nEl) nEl.textContent = LF.count();
+    if (dot){ var s = (LF.status && LF.status()) || 'off'; var d = DOT[s] || DOT.off;
+      dot.className = 'ln-dot ' + d[0]; dot.title = d[1]; }
+  }
+  (function wait(tries){
+    var LF = window.LangFav;
+    if (LF){ if (LF.onChange) LF.onChange(refresh); refresh(); return; }
+    if (tries < 30) setTimeout(function(){ wait(tries + 1); }, 80);
+  })(0);
+})();
+</script>
+<script>
+/* Index filter: search + genre chips toggle row visibility; recent strip hides while
+   filtering; empty months hide; ★fav counts come from window.LangFav at runtime. */
+/*<<index-pure>>*/
+function INDEX_PURE(){
+  function matchRow(dataSearch, dataGenre, query, genre){
+    if (genre && dataGenre !== genre) return false;
+    if (!query) return true;
+    return String(dataSearch == null ? '' : dataSearch).indexOf(query) >= 0;  // query pre-lowercased
+  }
+  function countByVideo(items){
+    var out = {};
+    for (var k in items){
+      if (!Object.prototype.hasOwnProperty.call(items, k)) continue;
+      var y = items[k] && items[k].yt; if (!y) continue;
+      out[y] = (out[y] || 0) + 1;
+    }
+    return out;
+  }
+  return { matchRow: matchRow, countByVideo: countByVideo };
+}
+/*<</index-pure>>*/
+(function(){
+  var P = INDEX_PURE();
+  var search = document.getElementById('idxSearch');
+  var chips  = [].slice.call(document.querySelectorAll('.idx-chip'));
+  var rows   = [].slice.call(document.querySelectorAll('.idx-row'));
+  var months = [].slice.call(document.querySelectorAll('.idx-month'));
+  var recentH = document.querySelector('.idx-recent-h');
+  var recent  = document.querySelector('.idx-recent');
+  var empty   = document.querySelector('.idx-empty');
+  var genre = '';
+  function apply(){
+    var q = ((search && search.value) || '').trim().toLowerCase();
+    var filtering = !!(q || genre), shown = 0;
+    rows.forEach(function(r){
+      var on = P.matchRow(r.getAttribute('data-search'), r.getAttribute('data-genre'), q, genre);
+      r.hidden = !on; if (on) shown++;
+    });
+    months.forEach(function(h){
+      var any = false, el = h.nextElementSibling;
+      while (el && el.classList.contains('idx-row')){ if (!el.hidden){ any = true; break; } el = el.nextElementSibling; }
+      h.hidden = !any;
+    });
+    if (recentH) recentH.hidden = filtering;
+    if (recent)  recent.hidden  = filtering;
+    if (empty)   empty.hidden   = shown !== 0;
+  }
+  if (search) search.addEventListener('input', apply);
+  chips.forEach(function(c){
+    c.addEventListener('click', function(){
+      var g = c.getAttribute('data-genre');
+      genre = (genre === g) ? '' : g;
+      chips.forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-genre') === genre); });
+      apply();
+    });
+  });
+  apply();
+  function badges(){
+    var LF = window.LangFav; if (!LF) return;
+    var by = P.countByVideo(LF.all());
+    [].slice.call(document.querySelectorAll('.idx-fav-n')).forEach(function(el){
+      var n = by[el.getAttribute('data-yt')] || 0;
+      el.hidden = !n; el.textContent = '★' + n;
+    });
+  }
+  (function wait(tries){
+    var LF = window.LangFav;
+    if (LF){ if (LF.onChange) LF.onChange(badges); badges(); return; }
+    if (tries < 30) setTimeout(function(){ wait(tries + 1); }, 80);
+  })(0);
+})();
+</script>
 </body>
 </html>

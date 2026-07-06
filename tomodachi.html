@@ -338,6 +338,40 @@
     background-attachment:local,local,scroll,scroll; }
 
   /* ============================================================
+     LANG-NAV — slim cross-page nav (目录 home / prev·next / 收藏 + sync dot).
+     Non-sticky: scrolls away so it never fights the sticky .video-dock.
+     Markup: scripts/nav.py · live badge: assets/nav.js.
+     ============================================================ */
+  .lang-nav{display:flex;align-items:center;gap:.5rem .7rem;flex-wrap:nowrap;
+    margin:0 0 1.6rem;padding:.5rem .1rem;font-family:var(--font-gothic);
+    font-size:.82rem;border-bottom:1px solid var(--line);}
+  .lang-nav a{text-decoration:none;color:var(--ink-soft);}
+  .ln-brand{font-weight:700;color:var(--keigo);white-space:nowrap;
+    display:inline-flex;gap:.3rem;align-items:center;}
+  .ln-brand.ln-current{cursor:default;}
+  .ln-mark{font-size:1.05em;}
+  .ln-ctx{color:var(--ink-faint);font-size:.75rem;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .ln-pn{display:inline-flex;gap:.35rem;margin-left:auto;}
+  .ln-pn a{border:1px solid var(--line);border-radius:.4rem;padding:.15rem .55rem;white-space:nowrap;}
+  .ln-pn a:hover{color:var(--shu);border-color:var(--shu);}
+  .ln-fav{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);
+    border-radius:.5rem;padding:.2rem .6rem;font-weight:600;white-space:nowrap;margin-left:auto;}
+  .ln-pn ~ .ln-fav{margin-left:.4rem;}
+  .ln-fav.ln-current{color:var(--goi);border-color:var(--goi);cursor:default;}
+  .ln-star{color:var(--shu);}
+  .ln-fav-n{font-variant-numeric:tabular-nums;}
+  .ln-dot{width:.5rem;height:.5rem;border-radius:50%;box-shadow:0 0 0 3px rgba(127,127,127,.10);flex:none;}
+  .ln-ok{background:#3aa76d;} .ln-wait{background:#d9a520;}
+  .ln-off{background:#9aa0a6;} .ln-err{background:#d1453b;}
+  @media (max-width:560px){
+    .ln-ctx{display:none;}
+    .ln-prev,.ln-next{font-size:0;}
+    .ln-prev::before{content:"‹";font-size:.9rem;}
+    .ln-next::before{content:"›";font-size:.9rem;}
+  }
+
+  /* ============================================================
      FAVORITES (收藏) — capture per sentence, filter, deep-link.
      The user bookmark is deliberately DISTINCT from the author ★
      (.key-star, --shu): a bookmark glyph in --goi. See plans/favorites.md.
@@ -378,6 +412,7 @@
 </head>
 <body>
 <div class="wrap">
+  <nav class="lang-nav" data-kind="study"><a class="ln-brand" href="index.html"><span class="ln-mark">◂</span> lang分析</a><span class="ln-ctx">· 恋愛短剧 · 06-28</span><span class="ln-pn"><a class="ln-prev" href="sashinomi.html">‹ 上一篇</a><a class="ln-next" href="bunpou.html">下一篇 ›</a></span><a class="ln-fav" href="favorites.html"><span class="ln-star">★</span> 收藏 <b class="ln-fav-n">0</b><span class="ln-dot ln-off" title="未开启"></span></a></nav>
 
   <p class="eyebrow">日本語文法分析 · 中文精讲</p>
   <h1>「付き合ったってことでOK？」<br>——恋爱短剧的逐句文法拆解</h1>
@@ -1594,9 +1629,18 @@
       }
       return { encrypt: encrypt, decrypt: decrypt };
     }
+    // ---- sync-dot state: 'off' (no token) | 'err' (hard failure) | 'wait' (queued) | 'ok'
+    function syncStatus(s){
+      s = s || {};
+      if (!s.hasToken) return 'off';
+      if (s.lastErr) return 'err';
+      if (s.pending > 0) return 'wait';
+      return 'ok';
+    }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
-             applyOps: applyOps, makeSync: makeSync, makeSyncEngine: makeSyncEngine, makeCrypto: makeCrypto };
+             applyOps: applyOps, makeSync: makeSync, makeSyncEngine: makeSyncEngine,
+             makeCrypto: makeCrypto, syncStatus: syncStatus };
   }
   /*<</fav-pure>>*/
 
@@ -1613,14 +1657,15 @@
 
   var favs = readJSON(K.store, {});      // { id: record }  (cache; may be ITP-evicted)
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
-  var onChange = null;                   // favorites.html registers a re-render hook
+  var changeHooks = [];                  // favorites.html render + nav.js badge both subscribe
+  var lastErr = false;                   // true after a hard sync failure (401/403/404/…)
 
   function persist(){ writeJSON(K.store, favs); }
   function queueOp(op, id, record){
     ops.push(record ? { op: op, id: id, record: record } : { op: op, id: id });
     writeJSON(K.ops, ops);
   }
-  function fireChange(){ reflect(); if (typeof onChange === 'function') { try { onChange(); } catch (e){} } }
+  function fireChange(){ reflect(); for (var i = 0; i < changeHooks.length; i++){ try { changeHooks[i](); } catch (e){} } }
   function addFav(record){ favs[record.id] = record; queueOp('add', record.id, record); persist(); fireChange(); scheduleFlush(); }
   function removeFav(id){ if (!favs[id]) return; delete favs[id]; queueOp('del', id); persist(); fireChange(); scheduleFlush(); }
 
@@ -1679,9 +1724,11 @@
       if (!pending.length) return { ok: true, count: favCount(), pushed: 0 };
       var out = await engine().push(pending);                  // self-heals a stale gid on 404
       favs = out.items; persist(); writeJSON(K.ops, []); ops = [];
-      fireChange();
+      lastErr = false; fireChange();
       return { ok: true, count: favCount(), pushed: pending.length };
     } catch (e){                                               // keep ops queued; retry on next trigger
+      if (e && e.status) lastErr = true;
+      fireChange();
       return { ok: false, status: e && e.status, error: String((e && e.message) || e) };
     } finally { flushing = false; if (dirtyAgain){ dirtyAgain = false; scheduleFlush(); } }
   }
@@ -1692,10 +1739,10 @@
     try {
       var r = await engine().pull();                           // self-heals a stale gid on 404
       favs = P.applyOps(r.body.items, readJSON(K.ops, []));    // gist truth + our un-pushed ops
-      persist(); fireChange();
+      persist(); lastErr = false; fireChange();
       if (ops.length) scheduleFlush();
       return { ok: true, count: favCount() };
-    } catch (e){ return { ok: false, status: e && e.status, error: String((e && e.message) || e) }; }
+    } catch (e){ if (e && e.status) lastErr = true; fireChange(); return { ok: false, status: e && e.status, error: String((e && e.message) || e) }; }
   }
 
   // ---------- capture UI (study pages only: where .u cards exist) ----------
@@ -1786,14 +1833,36 @@
   window.LangFav = {
     all: function(){ return favs; },
     count: favCount,
+    status: function(){ return P.syncStatus({ hasToken: !!token(), lastErr: lastErr, pending: readJSON(K.ops, []).length }); },
     remove: removeFav,
     add: addFav,
-    setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} },
+    setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} lastErr = false; fireChange(); },
     hasToken: function(){ return !!token(); },
     forgetGist: function(){ try { localStorage.removeItem(K.gid); } catch (e){} },
     sync: doFlush, pull: pullOnLoad, pure: P,
-    onChange: function(fn){ onChange = fn; }
+    onChange: function(fn){ if (typeof fn === 'function') changeHooks.push(fn); }
   };
+})();
+</script>
+<script>
+/* lang-nav live badge: 收藏 count + honest sync dot, from window.LangFav.
+   No-op where LangFav is absent (offline file:// deliverables). */
+(function(){
+  var nav = document.querySelector('.lang-nav'); if (!nav) return;
+  var nEl = nav.querySelector('.ln-fav-n'), dot = nav.querySelector('.ln-dot');
+  var DOT = { ok: ['ln-ok', '已同步'], wait: ['ln-wait', '待同步'],
+              off: ['ln-off', '未开启'], err: ['ln-err', '同步失败'] };
+  function refresh(){
+    var LF = window.LangFav; if (!LF) return;
+    if (nEl) nEl.textContent = LF.count();
+    if (dot){ var s = (LF.status && LF.status()) || 'off'; var d = DOT[s] || DOT.off;
+      dot.className = 'ln-dot ' + d[0]; dot.title = d[1]; }
+  }
+  (function wait(tries){
+    var LF = window.LangFav;
+    if (LF){ if (LF.onChange) LF.onChange(refresh); refresh(); return; }
+    if (tries < 30) setTimeout(function(){ wait(tries + 1); }, 80);
+  })(0);
 })();
 </script>
 </body>
