@@ -408,6 +408,81 @@
     .fav-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
     #favFilter{min-height:44px;padding:.55rem 1.1rem;}
   }
+
+  /* ============================================================
+     IN-PAGE STUDY UX — shadow drill (跟读) · filter/search · per-row share.
+     shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
+     ============================================================ */
+  /* shadow toggle in the dock bar (sits next to 跟随) */
+  .dock-shadow-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+    color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
+    padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
+  .dock-shadow-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
+  /* control cluster, revealed under the dock bar when shadow is on */
+  .dock-shadow{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
+    padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
+  .dock-shadow[hidden]{display:none;}
+  .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{
+    font-family:var(--font-gothic);font-size:.74rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.22rem .6rem;
+    white-space:nowrap;transition:color .12s,border-color .12s,background .12s;}
+  .dock-shadow .sh-mode{display:inline-flex;gap:.3rem;}
+  .dock-shadow .sh-rates{display:inline-flex;gap:.3rem;margin-left:auto;}
+  .dock-shadow button:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow .sh-mode button.on,.dock-shadow .sh-rate.on{color:var(--paper);background:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow button:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  @media (hover:none) and (pointer:coarse){
+    .dock-shadow-toggle{min-height:44px;padding:.5rem .9rem;}
+    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{min-height:44px;padding:.5rem .8rem;}
+  }
+
+  /* filter / search bar (page_tools.js) */
+  .filter-bar{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .6rem;margin:1.6rem 0 0;
+    padding:.7rem .8rem;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--keigo);border-radius:.55rem;}
+  #filterInput{font:inherit;font-size:.9rem;color:var(--ink);background:var(--paper);
+    border:1px solid var(--line-strong);border-radius:2rem;padding:.4rem .9rem;flex:1 1 12rem;min-width:0;}
+  .filter-cats{display:flex;flex-wrap:wrap;gap:.4rem;}
+  .filter-cat{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;
+    background:transparent;border:1px solid currentColor;border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;opacity:.75;transition:opacity .12s,background .12s;}
+  .filter-cat.on{opacity:1;color:var(--paper)!important;}
+  .filter-cat[data-cat="katsu"]{color:var(--katsu);} .filter-cat[data-cat="katsu"].on{background:var(--katsu);border-color:var(--katsu);}
+  .filter-cat[data-cat="keigo"]{color:var(--keigo);} .filter-cat[data-cat="keigo"].on{background:var(--keigo);border-color:var(--keigo);}
+  .filter-cat[data-cat="joshi"]{color:var(--joshi);} .filter-cat[data-cat="joshi"].on{background:var(--joshi);border-color:var(--joshi);}
+  .filter-cat[data-cat="goi"]{color:var(--goi);}     .filter-cat[data-cat="goi"].on{background:var(--goi);border-color:var(--goi);}
+  .filter-reset{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.24rem .7rem;}
+  .filter-reset:hover{color:var(--shu);border-color:var(--shu);}
+  .filter-cat:focus-visible,.filter-reset:focus-visible,#filterInput:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  #filterEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
+    background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
+  body.filtering .u.nomatch{display:none;}
+
+  /* deep-link arrival flash (#s=<id>) — distinct from favorites' fav-jump */
+  .u.s-jump{animation:s-jump 1.5s ease;}
+  @keyframes s-jump{0%,28%{background:var(--keigo-t);box-shadow:inset 3px 0 0 var(--keigo);
+    border-radius:0 .4rem .4rem 0;}100%{background:transparent;}}
+  @media (prefers-reduced-motion:reduce){.u.s-jump{animation:none;}}
+
+  /* per-row action cluster (share / copy-link) next to ★ / bookmark; hidden until hover/focus */
+  .u-actions{display:inline-flex;gap:.25rem;margin-top:.1rem;opacity:0;transition:opacity .15s;}
+  .u:hover .u-actions,.u:focus-within .u-actions{opacity:1;}
+  .u-act{appearance:none;-webkit-appearance:none;background:transparent;border:0;color:var(--ink-faint);
+    cursor:pointer;padding:.25rem;line-height:0;border-radius:.35rem;transition:color .15s,transform .1s;}
+  .u-act:hover{color:var(--keigo);} .u-act:active{transform:scale(.9);}
+  .u-act:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;opacity:1;}
+  .u-act svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;display:block;}
+  #toast{position:fixed;left:50%;bottom:max(1.2rem,env(safe-area-inset-bottom));transform:translateX(-50%);
+    z-index:50;font-family:var(--font-gothic);font-size:.82rem;color:var(--paper);background:var(--ink);
+    border-radius:2rem;padding:.5rem 1rem;box-shadow:0 8px 22px -8px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
+  #toast.show{opacity:.96;}
+  @media (hover:none) and (pointer:coarse){
+    .u-actions{opacity:1;}                 /* no hover on touch → always visible */
+    .u-act{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
+    .filter-cat,.filter-reset{min-height:44px;}
+  }
 </style>
 <style>
   /* review page — specific chrome on top of the shared design system */

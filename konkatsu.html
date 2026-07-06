@@ -408,6 +408,81 @@
     .fav-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
     #favFilter{min-height:44px;padding:.55rem 1.1rem;}
   }
+
+  /* ============================================================
+     IN-PAGE STUDY UX — shadow drill (跟读) · filter/search · per-row share.
+     shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
+     ============================================================ */
+  /* shadow toggle in the dock bar (sits next to 跟随) */
+  .dock-shadow-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+    color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
+    padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
+  .dock-shadow-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
+  /* control cluster, revealed under the dock bar when shadow is on */
+  .dock-shadow{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
+    padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
+  .dock-shadow[hidden]{display:none;}
+  .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{
+    font-family:var(--font-gothic);font-size:.74rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.22rem .6rem;
+    white-space:nowrap;transition:color .12s,border-color .12s,background .12s;}
+  .dock-shadow .sh-mode{display:inline-flex;gap:.3rem;}
+  .dock-shadow .sh-rates{display:inline-flex;gap:.3rem;margin-left:auto;}
+  .dock-shadow button:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow .sh-mode button.on,.dock-shadow .sh-rate.on{color:var(--paper);background:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow button:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  @media (hover:none) and (pointer:coarse){
+    .dock-shadow-toggle{min-height:44px;padding:.5rem .9rem;}
+    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{min-height:44px;padding:.5rem .8rem;}
+  }
+
+  /* filter / search bar (page_tools.js) */
+  .filter-bar{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .6rem;margin:1.6rem 0 0;
+    padding:.7rem .8rem;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--keigo);border-radius:.55rem;}
+  #filterInput{font:inherit;font-size:.9rem;color:var(--ink);background:var(--paper);
+    border:1px solid var(--line-strong);border-radius:2rem;padding:.4rem .9rem;flex:1 1 12rem;min-width:0;}
+  .filter-cats{display:flex;flex-wrap:wrap;gap:.4rem;}
+  .filter-cat{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;
+    background:transparent;border:1px solid currentColor;border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;opacity:.75;transition:opacity .12s,background .12s;}
+  .filter-cat.on{opacity:1;color:var(--paper)!important;}
+  .filter-cat[data-cat="katsu"]{color:var(--katsu);} .filter-cat[data-cat="katsu"].on{background:var(--katsu);border-color:var(--katsu);}
+  .filter-cat[data-cat="keigo"]{color:var(--keigo);} .filter-cat[data-cat="keigo"].on{background:var(--keigo);border-color:var(--keigo);}
+  .filter-cat[data-cat="joshi"]{color:var(--joshi);} .filter-cat[data-cat="joshi"].on{background:var(--joshi);border-color:var(--joshi);}
+  .filter-cat[data-cat="goi"]{color:var(--goi);}     .filter-cat[data-cat="goi"].on{background:var(--goi);border-color:var(--goi);}
+  .filter-reset{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.24rem .7rem;}
+  .filter-reset:hover{color:var(--shu);border-color:var(--shu);}
+  .filter-cat:focus-visible,.filter-reset:focus-visible,#filterInput:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  #filterEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
+    background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
+  body.filtering .u.nomatch{display:none;}
+
+  /* deep-link arrival flash (#s=<id>) — distinct from favorites' fav-jump */
+  .u.s-jump{animation:s-jump 1.5s ease;}
+  @keyframes s-jump{0%,28%{background:var(--keigo-t);box-shadow:inset 3px 0 0 var(--keigo);
+    border-radius:0 .4rem .4rem 0;}100%{background:transparent;}}
+  @media (prefers-reduced-motion:reduce){.u.s-jump{animation:none;}}
+
+  /* per-row action cluster (share / copy-link) next to ★ / bookmark; hidden until hover/focus */
+  .u-actions{display:inline-flex;gap:.25rem;margin-top:.1rem;opacity:0;transition:opacity .15s;}
+  .u:hover .u-actions,.u:focus-within .u-actions{opacity:1;}
+  .u-act{appearance:none;-webkit-appearance:none;background:transparent;border:0;color:var(--ink-faint);
+    cursor:pointer;padding:.25rem;line-height:0;border-radius:.35rem;transition:color .15s,transform .1s;}
+  .u-act:hover{color:var(--keigo);} .u-act:active{transform:scale(.9);}
+  .u-act:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;opacity:1;}
+  .u-act svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;display:block;}
+  #toast{position:fixed;left:50%;bottom:max(1.2rem,env(safe-area-inset-bottom));transform:translateX(-50%);
+    z-index:50;font-family:var(--font-gothic);font-size:.82rem;color:var(--paper);background:var(--ink);
+    border-radius:2rem;padding:.5rem 1rem;box-shadow:0 8px 22px -8px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
+  #toast.show{opacity:.96;}
+  @media (hover:none) and (pointer:coarse){
+    .u-actions{opacity:1;}                 /* no hover on touch → always visible */
+    .u-act{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
+    .filter-cat,.filter-reset{min-height:44px;}
+  }
 </style>
 </head>
 <body>
@@ -422,8 +497,24 @@
     <div class="dock-bar">
       <span class="dock-title"><span class="tri">▶</span> なぜ上手くいかない？婚活でつまずく人の共通点とは</span>
       <button class="dock-follow on" id="dockFollow" type="button" aria-pressed="true" aria-label="切换字幕自动跟随播放">● 跟随</button>
+      <button class="dock-shadow-toggle" id="shadowToggle" type="button" aria-pressed="false" aria-controls="shadowBar" aria-label="切换跟读练习模式">跟读</button>
       <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
     </div>
+    <!--shadow-bar-->
+    <div class="dock-shadow" id="shadowBar" role="group" aria-label="跟读控制" hidden>
+      <button class="sh-step" id="shPrev" type="button" aria-label="上一句">◁ 句</button>
+      <span class="sh-mode" role="group" aria-label="跟读模式">
+        <button class="sh-loop on" id="shLoop" type="button" aria-pressed="true">循环</button>
+        <button class="sh-run" id="shRun" type="button" aria-pressed="false">通读</button>
+      </span>
+      <span class="sh-rates" role="group" aria-label="播放速度">
+        <button class="sh-rate" data-rate="0.5" type="button" aria-pressed="false">0.5×</button>
+        <button class="sh-rate" data-rate="0.75" type="button" aria-pressed="false">0.75×</button>
+        <button class="sh-rate on" data-rate="1" type="button" aria-pressed="true">1×</button>
+      </span>
+      <button class="sh-step" id="shNext" type="button" aria-label="下一句">句 ▷</button>
+    </div>
+    <!--/shadow-bar-->
     <div class="dock-video">
       <div class="video-frame">
         <video id="clip" controls playsinline preload="metadata" data-youtube-id="TOu_aXJptMc" title="なぜ上手くいかない？婚活でつまずく人の共通点とは">
@@ -462,13 +553,22 @@
 
   <hr class="rule">
 
+  <!--filter-bar-->
+  <div class="filter-bar" id="filterBar" role="search">
+    <input id="filterInput" type="search" placeholder="筛选句子：关键词 / 读音 / 译文…" aria-label="筛选句子">
+    <div class="filter-cats" id="filterCats" aria-label="语法类别筛选"></div>
+    <button class="filter-reset" id="filterReset" type="button">全部</button>
+  </div>
+  <p id="filterEmpty" hidden>无匹配 — 换个关键词或点「全部」。</p>
+  <!--/filter-bar-->
+
     <!-- ============ CARDS ============ -->
   <div class="sec">全片逐句精讲 · 全 213 句</div>
   <p class="lead">植草先生 语速快、吐槽犀利，敬语与口语齐飞——正好练「〜んですよ／〜ちゃう／〜ていただく／って」这些高频口语文法。点任意 <span class="ts-demo">▸ 时间戳</span> 视频即跳到该处，字幕自动高亮跟随。</p>
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">01</span><span class="chapter-t">実践編：婚活男の落とし穴<span class="chapter-c">实践篇：相亲男的坑</span></span><span class="chapter-r">0:00–1:30</span></div>
-    <div class="u">
+    <div class="u" data-search="ここからは実践編じっせんへんです。 从这里开始进入实践篇。" data-cats="goi">
       <div class="u-meta"><span class="ts">00:00</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">ここからは<ruby>実践編<rt>じっせんへん</rt></ruby>です。</div>
@@ -478,7 +578,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="いざお見合みあいにたどり着ついた時ときにも、様々さまざまなしくじりが起おこります。 好不容易走到相亲这一步时，也会发生各种各样的失误。" data-cats="goi">
       <div class="u-meta"><span class="ts">00:02</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">いざお<ruby>見合<rt>みあ</rt></ruby>いにたどり<ruby>着<rt>つ</rt></ruby>いた<ruby>時<rt>とき</rt></ruby>にも、<ruby>様々<rt>さまざま</rt></ruby>なしくじりが<ruby>起<rt>お</rt></ruby>こります。</div>
@@ -491,7 +591,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="実際じっさいのお見合みあいの流ながれを紹介しょうかいしながら、しくじりがちな婚活男こんかつだんを紹介しょうかいしていきます。 一边介绍实际的相亲流程，一边介绍容易搞砸的「婚活男」（想结婚的男性）。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">00:06</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>実際<rt>じっさい</rt></ruby>のお<ruby>見合<rt>みあ</rt></ruby>いの<ruby>流<rt>なが</rt></ruby>れを<ruby>紹介<rt>しょうかい</rt></ruby>しながら、しくじりがちな<ruby>婚活男<rt>こんかつだん</rt></ruby>を<ruby>紹介<rt>しょうかい</rt></ruby>していきます。</div>
@@ -504,7 +604,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="流ながれを書かいております。 （画面上）写着流程。" data-cats="keigo">
       <div class="u-meta"><span class="ts">00:12</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>流<rt>なが</rt></ruby>れを<ruby>書<rt>か</rt></ruby>いております。</div>
@@ -514,7 +614,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="お見合みあいの流ながれね。 相亲的流程是吧。" data-cats="joshi">
       <div class="u-meta"><span class="ts">00:14</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">お<ruby>見合<rt>みあ</rt></ruby>いの<ruby>流<rt>なが</rt></ruby>れね。</div>
@@ -525,7 +625,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="2人ふたりで待まち合あわせをします。 两个人约见面。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:16</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>2人<rt>ふたり</rt></ruby>で<ruby>待<rt>ま</rt></ruby>ち<ruby>合<rt>あ</rt></ruby>わせをします。</div>
@@ -537,7 +637,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="こっからもうすでにね。 从这里就已经开始（有讲究）了呢。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:18</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">こっからもうすでにね。</div>
@@ -549,7 +649,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="神対応かみたいおうできるかどうかっていうところなんです。 关键就在于（对方）能不能做出「神应对」（完美的应对）。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:21</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>神対応<rt>かみたいおう</rt></ruby>できるかどうかっていうところなんです。</div>
@@ -562,14 +662,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="そうか。 这样啊。" data-cats="">
       <div class="u-meta"><span class="ts">00:24</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">そうか。</div>
         <div class="u-cn"><span class="lbl">译</span>这样啊。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="そもそもね、お見合みあいまでたどり着つけないのが現実げんじつ。 说到底啊，连相亲这一步都走不到才是现实。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">00:25</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">そもそもね、お<ruby>見合<rt>みあ</rt></ruby>いまでたどり<ruby>着<rt>つ</rt></ruby>けないのが<ruby>現実<rt>げんじつ</rt></ruby>。</div>
@@ -582,7 +682,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="待まち合あわせの段階だんかいからしくじった人ひとが現あらわれます。次つぎのページ行いきましょう。 从约见面碰头的阶段起，就出现了搞砸的人。我们进入下一页吧。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">00:29</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>待<rt>ま</rt></ruby>ち<ruby>合<rt>あ</rt></ruby>わせの<ruby>段階<rt>だんかい</rt></ruby>からしくじった<ruby>人<rt>ひと</rt></ruby>が<ruby>現<rt>あらわ</rt></ruby>れます。<ruby>次<rt>つぎ</rt></ruby>のページ<ruby>行<rt>い</rt></ruby>きましょう。</div>
@@ -595,7 +695,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="一切いっさい自分じぶんから声こえをかけられない。ただそこに立たっているだけ。電柱男でんちゅうおとこ。 完全不主动搭话。只是站在那里而已。（这就是）电线杆男。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">00:35</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>一切<rt>いっさい</rt></ruby><ruby>自分<rt>じぶん</rt></ruby>から<ruby>声<rt>こえ</rt></ruby>をかけられない。ただそこに<ruby>立<rt>た</rt></ruby>っているだけ。<ruby>電柱男<rt>でんちゅうおとこ</rt></ruby>。</div>
@@ -607,7 +707,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="電柱女でんちゅうおんな。 电线杆女。" data-cats="">
       <div class="u-meta"><span class="ts">00:42</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>電柱女<rt>でんちゅうおんな</rt></ruby>。</div>
@@ -615,7 +715,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「電中女」→「電柱女」。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="怖こわいな。 好可怕啊。" data-cats="joshi">
       <div class="u-meta"><span class="ts">00:42</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>怖<rt>こわ</rt></ruby>いな。</div>
@@ -625,7 +725,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="これね、立たってるだけですから。 这个啊，就只是站着而已嘛。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:46</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">これね、<ruby>立<rt>た</rt></ruby>ってるだけですから。</div>
@@ -637,7 +737,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="目めの前まえに人ひとがいるのに、声こえもかけない。 明明眼前有人，却连话都不搭。" data-cats="joshi">
       <div class="u-meta"><span class="ts">00:48</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>目<rt>め</rt></ruby>の<ruby>前<rt>まえ</rt></ruby>に<ruby>人<rt>ひと</rt></ruby>がいるのに、<ruby>声<rt>こえ</rt></ruby>もかけない。</div>
@@ -649,7 +749,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="立たってるだけ。これ電柱男でんちゅうおとこね。 只是站着而已。这就是电线杆男吧。" data-cats="joshi">
       <div class="u-meta"><span class="ts">00:53</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>立<rt>た</rt></ruby>ってるだけ。これ<ruby>電柱男<rt>でんちゅうおとこ</rt></ruby>ね。</div>
@@ -660,7 +760,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="気きづいてるけど、かけれないんですか? （他）是注意到了，但搭不上话吗？" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">00:59</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>気<rt>き</rt></ruby>づいてるけど、かけれないんですか?</div>
@@ -673,7 +773,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="間違まちがえたらどうしよう。あ、わからない。 万一说错了怎么办。啊，不知道（该怎么办）。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">01:01</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>間違<rt>まちが</rt></ruby>えたらどうしよう。あ、わからない。</div>
@@ -685,7 +785,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="情なさけない。情なさけないな。 真没出息。真没出息啊。" data-cats="goi">
       <div class="u-meta"><span class="ts">01:03</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>情<rt>なさ</rt></ruby>けない。<ruby>情<rt>なさ</rt></ruby>けないな。</div>
@@ -695,7 +795,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="そう、そう。お写真しゃしん加工かこうしてる人ひともいるじゃないですか。 对对。也有人会把照片修图的，对吧。" data-cats="goi">
       <div class="u-meta"><span class="ts">01:05</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">そう、そう。お<ruby>写真<rt>しゃしん</rt></ruby><ruby>加工<rt>かこう</rt></ruby>してる<ruby>人<rt>ひと</rt></ruby>もいるじゃないですか。</div>
@@ -707,7 +807,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="なるほど。電柱男でんちゅうおとこと加工かこう女おんながいるってことですね。 原来如此。就是说有电线杆男和修图女啊。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:07</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">なるほど。<ruby>電柱男<rt>でんちゅうおとこ</rt></ruby>と<ruby>加工<rt>かこう</rt></ruby><ruby>女<rt>おんな</rt></ruby>がいるってことですね。</div>
@@ -718,7 +818,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="そういうことです。そういうこと。そのマッチングムービー(?)の中なかでは、一応いちおうルール的てきに男性だんせいが声こえをかけましょうねって言いってるんですね。だから女性じょせいがルールで、男性だんせいが声こえをかけるんですよね。「なんで私わたしが声こえかけなきゃいけないの」っていう、こういう高飛車たかびしゃな(?)… 就是这么回事。就是这样。在那个（配对/婚活视频?）当中，规则上原则是「由男性来搭话」的。所以（等待）是女方的规矩，由男方去搭话。（于是有人会想）「凭什么得我去搭话」，就是这种趾高气扬的（态度）……" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">01:12</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">そういうことです。そういうこと。そのマッチングムービー(?)の<ruby>中<rt>なか</rt></ruby>では、<ruby>一応<rt>いちおう</rt></ruby>ルール<ruby>的<rt>てき</rt></ruby>に<ruby>男性<rt>だんせい</rt></ruby>が<ruby>声<rt>こえ</rt></ruby>をかけましょうねって<ruby>言<rt>い</rt></ruby>ってるんですね。だから<ruby>女性<rt>じょせい</rt></ruby>がルールで、<ruby>男性<rt>だんせい</rt></ruby>が<ruby>声<rt>こえ</rt></ruby>をかけるんですよね。「なんで<ruby>私<rt>わたし</rt></ruby>が<ruby>声<rt>こえ</rt></ruby>かけなきゃいけないの」っていう、こういう<ruby>高飛車<rt>たかびしゃ</rt></ruby>な(?)…</div>
@@ -732,7 +832,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="女性じょせいがいたわけです。電話でんわしてきた。 有位女性在那儿，她给我打了电话。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">01:27</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>女性<rt>じょせい</rt></ruby>がいたわけです。<ruby>電話<rt>でんわ</rt></ruby>してきた。</div>
@@ -747,7 +847,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">02</span><span class="chapter-t">待ち合わせとプロフィール<span class="chapter-c">碰面与看对方资料</span></span><span class="chapter-r">1:30–3:47</span></div>
-    <div class="u">
+    <div class="u" data-search="で、その時間じかんは、お一人ひとりしかいないはずだから、「目めの前まえにお一人ひとりいません?」って言いったら、「います」。 那个时间段应该只有一位（对方）在场，所以我问「你面前不是有一位吗?」，她说「有」。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">01:31</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">で、その<ruby>時間<rt>じかん</rt></ruby>は、お<ruby>一人<rt>ひとり</rt></ruby>しかいないはずだから、「<ruby>目<rt>め</rt></ruby>の<ruby>前<rt>まえ</rt></ruby>にお<ruby>一人<rt>ひとり</rt></ruby>いません?」って<ruby>言<rt>い</rt></ruby>ったら、「います」。</div>
@@ -760,7 +860,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="でも「私わたしに声こえかけてこないんです」って言いうから、「お願ねがい、声こえかけて。その方かただと思おもうの。」 可她说「他不来跟我搭话」，所以我说「拜托你去搭个话，我觉得那位就是（你的相亲对象）。」" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">01:38</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">でも「<ruby>私<rt>わたし</rt></ruby>に<ruby>声<rt>こえ</rt></ruby>かけてこないんです」って<ruby>言<rt>い</rt></ruby>うから、「お<ruby>願<rt>ねが</rt></ruby>い、<ruby>声<rt>こえ</rt></ruby>かけて。その<ruby>方<rt>かた</rt></ruby>だと<ruby>思<rt>おも</rt></ruby>うの。」</div>
@@ -773,7 +873,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="「声こえかけて?」「嫌いやです。」「え?」「なんで?」 「去搭话?」「不要。」「诶?」「为什么?」" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:45</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>声<rt>こえ</rt></ruby>かけて?」「<ruby>嫌<rt>いや</rt></ruby>です。」「え?」「なんで?」</div>
@@ -785,7 +885,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、しょうがない、この男性だんせいに連絡れんらくして、「目めの前まえにいますから、その方かたですから」… 没办法，我只好联系这位男士，（跟他说）「人就在你面前，就是那位啊」…" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:49</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、しょうがない、この<ruby>男性<rt>だんせい</rt></ruby>に<ruby>連絡<rt>れんらく</rt></ruby>して、「<ruby>目<rt>め</rt></ruby>の<ruby>前<rt>まえ</rt></ruby>にいますから、その<ruby>方<rt>かた</rt></ruby>ですから」…</div>
@@ -797,7 +897,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="「行いかなきゃいけない」。「誰々だれだれです」って言いって、「ご挨拶あいさつしていただけませんか」ってお願ねがいして、やっと会あいました。 （我）非得去张罗不可。让他说「我是某某」，拜托他「能不能过去打个招呼」，好不容易两人才见上面。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">01:56</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>行<rt>い</rt></ruby>かなきゃいけない」。「<ruby>誰々<rt>だれだれ</rt></ruby>です」って<ruby>言<rt>い</rt></ruby>って、「ご<ruby>挨拶<rt>あいさつ</rt></ruby>していただけませんか」ってお<ruby>願<rt>ねが</rt></ruby>いして、やっと<ruby>会<rt>あ</rt></ruby>いました。</div>
@@ -810,7 +910,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="何なにそれ? 那算什么呀?" data-cats="goi">
       <div class="u-meta"><span class="ts">02:01</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>何<rt>なに</rt></ruby>それ?</div>
@@ -821,7 +921,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、これまだいいですよ。全然ぜんぜん違ちがう人ひと同士どうしがお見合みあいしたことあるんだ。 而且这还算好的呢。（我）还遇到过完全不相干的两个人（认错人）去相亲的情况。" data-cats="goi">
       <div class="u-meta"><span class="ts">02:04</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、これまだいいですよ。<ruby>全然<rt>ぜんぜん</rt></ruby><ruby>違<rt>ちが</rt></ruby>う<ruby>人<rt>ひと</rt></ruby><ruby>同士<rt>どうし</rt></ruby>がお<ruby>見合<rt>みあ</rt></ruby>いしたことあるんだ。</div>
@@ -834,7 +934,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="「電柱でんちゅう女おんな(?)」と「電柱でんちゅう男おとこ(?)」の片割かたわれ同士どうしが、で、「電柱でんちゅうじゃない」同士どうしが… 就是「电线杆女」和「电线杆男」的另一半们，也就是「不是电线杆的那两位」之间（认错了对方）……" data-cats="goi">
       <div class="u-meta"><span class="ts">02:09</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>電柱<rt>でんちゅう</rt></ruby><ruby>女<rt>おんな</rt></ruby>(?)」と「<ruby>電柱<rt>でんちゅう</rt></ruby><ruby>男<rt>おとこ</rt></ruby>(?)」の<ruby>片割<rt>かたわ</rt></ruby>れ<ruby>同士<rt>どうし</rt></ruby>が、で、「<ruby>電柱<rt>でんちゅう</rt></ruby>じゃない」<ruby>同士<rt>どうし</rt></ruby>が…</div>
@@ -846,7 +946,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="それ、普通ふつうの人間にんげんですね、それ。 那不就是普通人嘛，那。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">02:15</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">それ、<ruby>普通<rt>ふつう</rt></ruby>の<ruby>人間<rt>にんげん</rt></ruby>ですね、それ。</div>
@@ -858,7 +958,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="「電柱でんちゅうじゃない」連中れんちゅうね。 就是那些「不是电线杆」的家伙们呗。" data-cats="goi">
       <div class="u-meta"><span class="ts">02:18</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>電柱<rt>でんちゅう</rt></ruby>じゃない」<ruby>連中<rt>れんちゅう</rt></ruby>ね。</div>
@@ -870,7 +970,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="「電柱でんちゅうじゃない男おとこ」って言いわないですね。 可没人会说「不是电线杆的男人」这种话吧。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">02:19</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>電柱<rt>でんちゅう</rt></ruby>じゃない<ruby>男<rt>おとこ</rt></ruby>」って<ruby>言<rt>い</rt></ruby>わないですね。</div>
@@ -882,7 +982,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="その二人ふたりが、全然ぜんぜん違ちがう人ひととお見合みあいして気きがつかない。 那两个人跟完全不相干的人相了亲，居然都没察觉。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">02:23</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">その<ruby>二人<rt>ふたり</rt></ruby>が、<ruby>全然<rt>ぜんぜん</rt></ruby><ruby>違<rt>ちが</rt></ruby>う<ruby>人<rt>ひと</rt></ruby>とお<ruby>見合<rt>みあ</rt></ruby>いして<ruby>気<rt>き</rt></ruby>がつかない。</div>
@@ -894,7 +994,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="それはもう、プロフィールをちゃんと読よまないんですよ。 那纯粹就是没好好看（对方的）资料嘛。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">02:27</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">それはもう、プロフィールをちゃんと<ruby>読<rt>よ</rt></ruby>まないんですよ。</div>
@@ -907,7 +1007,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="アバウトだ。ちょっと普通ふつうの「ナパ(?)」みたいな感かんじだったと思おもって、「ナパ(?)っていうか、この人ひとかな」って。 （资料看得）很笼统。大概只留下「好像是个挺普通的人」这种印象，（到场就靠）「与其说记清了，不如说『大概是这个人吧』（去认人）」。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">02:30</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">アバウトだ。ちょっと<ruby>普通<rt>ふつう</rt></ruby>の「ナパ(?)」みたいな<ruby>感<rt>かん</rt></ruby>じだったと<ruby>思<rt>おも</rt></ruby>って、「ナパ(?)っていうか、この<ruby>人<rt>ひと</rt></ruby>かな」って。</div>
@@ -920,7 +1020,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、お互たがいに自分じぶんの名前なまえを「植草うえくさです」とか、ちっちゃい声こえで言いうから…「植草うえくさです」ってちゃんと言いってくれればいいけど、「植草うえくさです」って言いったら、もう「はいっ」って言いっちゃう。 而且双方都小小声地报名字，比如「（我叫）植草」……要是能清清楚楚说「我是植草」就好了，可对方一说「植草です」，（另一个人）就「嗯!」地随口应一声（也没听清）。" data-cats="goi joshi katsu keigo">
       <div class="u-meta"><span class="ts">02:37</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、お<ruby>互<rt>たが</rt></ruby>いに<ruby>自分<rt>じぶん</rt></ruby>の<ruby>名前<rt>なまえ</rt></ruby>を「<ruby>植草<rt>うえくさ</rt></ruby>です」とか、ちっちゃい<ruby>声<rt>こえ</rt></ruby>で<ruby>言<rt>い</rt></ruby>うから…「<ruby>植草<rt>うえくさ</rt></ruby>です」ってちゃんと<ruby>言<rt>い</rt></ruby>ってくれればいいけど、「<ruby>植草<rt>うえくさ</rt></ruby>です」って<ruby>言<rt>い</rt></ruby>ったら、もう「はいっ」って<ruby>言<rt>い</rt></ruby>っちゃう。</div>
@@ -934,7 +1034,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="名前なまえも聞きき取とらずに(?)。 连名字都没听清就（应下了）。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">02:47</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>名前<rt>なまえ</rt></ruby>も<ruby>聞<rt>き</rt></ruby>き<ruby>取<rt>と</rt></ruby>らずに(?)。</div>
@@ -946,7 +1046,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あ、そうなんだ。 啊，原来如此。" data-cats="">
       <div class="u-meta"><span class="ts">02:48</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">あ、そうなんだ。</div>
@@ -954,7 +1054,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>相槌。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="はい。いろんな人ひとがいるんですけれども、例たとえばね、ちょっと遅おくれてきたら、大体だいたいブスっとするんですよ。 是啊。（相亲的人）形形色色，比如说啊，（对方）稍微来晚一点，一般就会板着脸不高兴。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">02:49</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">はい。いろんな<ruby>人<rt>ひと</rt></ruby>がいるんですけれども、<ruby>例<rt>たと</rt></ruby>えばね、ちょっと<ruby>遅<rt>おく</rt></ruby>れてきたら、<ruby>大体<rt>だいたい</rt></ruby>ブスっとするんですよ。</div>
@@ -967,7 +1067,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="なんだけど、最高(さいこう)に良(よ)かった人(ひと)は大丈夫(だいじょうぶ)です。さっきあちらでお花屋(はなや)さんがあったんで、お花(はな)を見(み)てたので、すごく幸(しあわ)せな気持(きも)ちになりました。 不过呢，那个最厉害的人是没问题的。（他说）「刚才那边有家花店，我一直在看花，所以心情特别幸福。」" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">02:55</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">なんだけど、最高(さいこう)に良(よ)かった人(ひと)は大丈夫(だいじょうぶ)です。さっきあちらでお花屋(はなや)さんがあったんで、お花(はな)を見(み)てたので、すごく幸(しあわ)せな気持(きも)ちになりました。</div>
@@ -980,14 +1080,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="え、すごい。 诶，好厉害。" data-cats="">
       <div class="u-meta"><span class="ts">03:04</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">え、すごい。</div>
         <div class="u-cn"><span class="lbl">译</span>诶，好厉害。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="そこまでです。すごいでしょ。 就到那种程度。很厉害吧。" data-cats="joshi">
       <div class="u-meta"><span class="ts">03:05</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">そこまでです。すごいでしょ。</div>
@@ -998,14 +1098,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="すごいな。 真厉害啊。" data-cats="">
       <div class="u-meta"><span class="ts">03:07</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">すごいな。</div>
         <div class="u-cn"><span class="lbl">译</span>真厉害啊。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="だって神(かみ)だから。 因为他可是神啊。" data-cats="joshi">
       <div class="u-meta"><span class="ts">03:08</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">だって神(かみ)だから。</div>
@@ -1015,7 +1115,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="神(かみ)。そこまでするんですか? 神。会做到那种地步吗？" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">03:09</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">神(かみ)。そこまでするんですか?</div>
@@ -1027,7 +1127,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="その人(ひと)はね、お見合(みあ)いを断(ことわ)られたことがございません。 那个人啊，从来没有被拒绝过相亲。" data-cats="joshi katsu keigo">
       <div class="u-meta"><span class="ts">03:11</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">その人(ひと)はね、お見合(みあ)いを断(ことわ)られたことがございません。</div>
@@ -1040,7 +1140,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あら。え、 哎呀。诶……" data-cats="">
       <div class="u-meta"><span class="ts">03:14</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">あら。え、</div>
@@ -1048,7 +1148,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>合并两句惊叹相槌。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい。30人(にん)ぐらいお見合(みあ)いしましたけどね。 是的。他大概相过30次亲呢。" data-cats="joshi">
       <div class="u-meta"><span class="ts">03:16</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">はい。30人(にん)ぐらいお見合(みあ)いしましたけどね。</div>
@@ -1059,7 +1159,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="結婚(けっこん)できてねえじゃないですか。 那不是还没结成婚吗。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">03:18</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">結婚(けっこん)できてねえじゃないですか。</div>
@@ -1071,7 +1171,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ゴッドなだけで。そうだ。 只是个神而已（却结不了婚）。对呀。" data-cats="goi">
       <div class="u-meta"><span class="ts">03:21</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">ゴッドなだけで。そうだ。</div>
@@ -1082,7 +1182,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="いやいやいや、30年(ねん)ぐらいお見合(みあ)いして、最高(さいこう)の人(ひと)と結婚(けっこん)した。 不不不，他相亲相了大概30年，和最棒的人结了婚。" data-cats="katsu">
       <div class="u-meta"><span class="ts">03:23</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">いやいやいや、30年(ねん)ぐらいお見合(みあ)いして、最高(さいこう)の人(ひと)と結婚(けっこん)した。</div>
@@ -1093,7 +1193,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ほら、ゴッドだから。 你看，因为他是神嘛。" data-cats="joshi">
       <div class="u-meta"><span class="ts">03:26</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">ほら、ゴッドだから。</div>
@@ -1103,7 +1203,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="選(えら)んでたわけですね。ゴッドだから。 原来是他在挑选（对方）啊。因为是神嘛。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">03:27</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">選(えら)んでたわけですね。ゴッドだから。</div>
@@ -1115,7 +1215,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="選(えら)ばれる側(がわ)じゃなくて、選(えら)んでる側(がわ)だったんか。 原来他不是被挑的一方，而是挑人的一方啊。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">03:29</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">選(えら)ばれる側(がわ)じゃなくて、選(えら)んでる側(がわ)だったんか。</div>
@@ -1127,7 +1227,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ではですね、実践(じっせん)、やっていただきます。 那么呢，接下来请（各位）来做实践。" data-cats="keigo">
       <div class="u-meta"><span class="ts">03:33</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ではですね、実践(じっせん)、やっていただきます。</div>
@@ -1138,7 +1238,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="じゃあ平(たいら)さんとサベさん、やりましょう。さっきほら、ヒント出(だ)したじゃないですか。 那么，平先生和佐部先生，我们来做吧。刚才不是给了提示吗。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">03:36</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">じゃあ平(たいら)さんとサベさん、やりましょう。さっきほら、ヒント出(だ)したじゃないですか。</div>
@@ -1150,7 +1250,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="あそこまではできないと思(おも)うんだけど、普通(ふつう)にやってみて。 我想（你们）没法做到那种程度，不过就照平常那样试试看吧。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">03:42</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">あそこまではできないと思(おも)うんだけど、普通(ふつう)にやってみて。</div>
@@ -1165,7 +1265,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">03</span><span class="chapter-t">実演：待ち合わせ／第一印象<span class="chapter-c">演示：碰面与第一印象</span></span><span class="chapter-r">3:47–5:05</span></div>
-    <div class="u">
+    <div class="u" data-search="というわけで、待(ま)ち合(あ)わせの実践(じっせん)。婚活中(こんかつちゅう)の二人(ふたり)はうまく対応(たいおう)できるか? 就这样，来做「碰面」的实践。相亲中的两人能否顺利应对呢？" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">03:47</span><span class="spk nare">旁白</span></div>
       <div class="u-body">
         <div class="u-jp">というわけで、待(ま)ち合(あ)わせの実践(じっせん)。婚活中(こんかつちゅう)の二人(ふたり)はうまく対応(たいおう)できるか?</div>
@@ -1177,14 +1277,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい、どうぞ。 好，请开始。" data-cats="">
       <div class="u-meta"><span class="ts">03:55</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">はい、どうぞ。</div>
         <div class="u-cn"><span class="lbl">译</span>好，请开始。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あ、いや、すいません。 啊，不，不好意思。" data-cats="goi">
       <div class="u-meta"><span class="ts">03:57</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp">あ、いや、すいません。</div>
@@ -1195,7 +1295,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="あ、サーベスです。お待(ま)ちしておりました。 啊，我是佐部（サーベス）。恭候多时了。" data-cats="keigo">
       <div class="u-meta"><span class="ts">04:03</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">あ、サーベスです。お待(ま)ちしておりました。</div>
@@ -1206,7 +1306,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="すいません、遅(おく)れちゃって。 不好意思，我来晚了。" data-cats="katsu">
       <div class="u-meta"><span class="ts">04:04</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">すいません、遅(おく)れちゃって。</div>
@@ -1216,14 +1316,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あ、いや、あ、ちょっと。 啊，不，那个，稍等。" data-cats="">
       <div class="u-meta"><span class="ts">04:05</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp">あ、いや、あ、ちょっと。</div>
         <div class="u-cn"><span class="lbl">译</span>啊，不，那个，稍等。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="なんかついて……。 好像沾了点什么……。" data-cats="">
       <div class="u-meta"><span class="ts">04:06</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp">なんかついて……。</div>
@@ -1231,7 +1331,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>连续「はい」相槌略去；「なんかついて」语义不清(?)。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="すごい。はい、なんですか? 好厉害。嗯，怎么了？" data-cats="joshi">
       <div class="u-meta"><span class="ts">04:08</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp">すごい。はい、なんですか?</div>
@@ -1242,7 +1342,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あ、ちょっと……。はい、なんですか? 啊，稍等……。嗯，怎么了？" data-cats="">
       <div class="u-meta"><span class="ts">04:09</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp">あ、ちょっと……。はい、なんですか?</div>
@@ -1250,14 +1350,14 @@
         <div class="u-asr"><span class="tag-asr">还原</span>合并被切断的「な」「んですか?」。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい、はい。怖(こわ)い、怖(こわ)い。 好、好。好可怕、好可怕。" data-cats="">
       <div class="u-meta"><span class="ts">04:11</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp">はい、はい。怖(こわ)い、怖(こわ)い。</div>
         <div class="u-cn"><span class="lbl">译</span>好、好。好可怕、好可怕。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="すいません。ごめんなさい。あ、全然(ぜんぜん)、全然(ぜんぜん)。 对不起，抱歉。啊，没事没事。" data-cats="goi">
       <div class="u-meta"><span class="ts">04:13</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">すいません。ごめんなさい。あ、全然(ぜんぜん)、全然(ぜんぜん)。</div>
@@ -1268,7 +1368,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="じゃ、行いきますか。 那,我们开始吧?" data-cats="joshi">
       <div class="u-meta"><span class="ts">04:15</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">じゃ、<ruby>行<rt>い</rt></ruby>きますか。</div>
@@ -1278,7 +1378,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい、何なに?ホテルですか、これ?先生せんせい。 好。什么?这是要去酒店吗?先生。" data-cats="joshi">
       <div class="u-meta"><span class="ts">04:17</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">はい、<ruby>何<rt>なに</rt></ruby>?ホテルですか、これ?<ruby>先生<rt>せんせい</rt></ruby>。</div>
@@ -1289,7 +1389,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="じゃあ、もうこれ破談はだんということで。ちょっと待まって。 那,这就算告吹(谈崩)了吧。等一下。" data-cats="goi">
       <div class="u-meta"><span class="ts">04:25</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">じゃあ、もうこれ<ruby>破談<rt>はだん</rt></ruby>ということで。ちょっと<ruby>待<rt>ま</rt></ruby>って。</div>
@@ -1300,7 +1400,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="もうね、前代未聞ぜんだいみもんの、お見み合あいする前まえの破談はだん。 简直是前所未闻,还没相亲就先谈崩了。" data-cats="goi">
       <div class="u-meta"><span class="ts">04:30</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">もうね、<ruby>前代未聞<rt>ぜんだいみもん</rt></ruby>の、お<ruby>見<rt>み</rt></ruby><ruby>合<rt>あ</rt></ruby>いする<ruby>前<rt>まえ</rt></ruby>の<ruby>破談<rt>はだん</rt></ruby>。</div>
@@ -1311,7 +1411,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="お互たがいにダメよ、お互たがいに。 两个人都不行啊,双方都是。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">04:35</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">お<ruby>互<rt>たが</rt></ruby>いにダメよ、お<ruby>互<rt>たが</rt></ruby>いに。</div>
@@ -1323,7 +1423,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="サーベもダメですか? (那个)也不行吗?" data-cats="">
       <div class="u-meta"><span class="ts">04:39</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">サーベもダメですか?</div>
@@ -1331,7 +1431,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「サーベ」ASR听不清,疑为人名或某词,存疑(?)。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="全然ぜんぜんダメ。 完全不行。" data-cats="goi">
       <div class="u-meta"><span class="ts">04:40</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>全然<rt>ぜんぜん</rt></ruby>ダメ。</div>
@@ -1341,7 +1441,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あのね、最初さいしょは上手じょうずだった。 你知道吗,一开始还挺好的。" data-cats="joshi">
       <div class="u-meta"><span class="ts">04:41</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">あのね、<ruby>最初<rt>さいしょ</rt></ruby>は<ruby>上手<rt>じょうず</rt></ruby>だった。</div>
@@ -1352,7 +1452,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="最初さいしょは彼女かのじょだけ乗のっかってきちゃったから、彼女かのじょに振ふり回まわされて。 一开始只有她一个人主动带节奏,所以(他)被她牵着鼻子走。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">04:43</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>最初<rt>さいしょ</rt></ruby>は<ruby>彼女<rt>かのじょ</rt></ruby>だけ<ruby>乗<rt>の</rt></ruby>っかってきちゃったから、<ruby>彼女<rt>かのじょ</rt></ruby>に<ruby>振<rt>ふ</rt></ruby>り<ruby>回<rt>まわ</rt></ruby>されて。</div>
@@ -1365,7 +1465,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="無視むししないと。自分じぶんで好すきなようにやらないと。相手あいての動うごきとかを無視むししていいんです。 得无视(她)才行,得自己按自己喜欢的方式来才行,对方的动作什么的可以不用管。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">04:48</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>無視<rt>むし</rt></ruby>しないと。<ruby>自分<rt>じぶん</rt></ruby>で<ruby>好<rt>す</rt></ruby>きなようにやらないと。<ruby>相手<rt>あいて</rt></ruby>の<ruby>動<rt>うご</rt></ruby>きとかを<ruby>無視<rt>むし</rt></ruby>していいんです。</div>
@@ -1379,7 +1479,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="コントとして怒おこられてるってことです。 就是说,像演短剧一样在被骂。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">04:54</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">コントとして<ruby>怒<rt>おこ</rt></ruby>られてるってことです。</div>
@@ -1392,7 +1492,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ダメ出だしされてんの。そのダメ出だし… 被人挑毛病、指点呢。那个挑刺…" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">04:58</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ダメ<ruby>出<rt>だ</rt></ruby>しされてんの。そのダメ<ruby>出<rt>だ</rt></ruby>し…</div>
@@ -1404,7 +1504,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="乗のりすぎちゃってるから、客きゃくが入はいってけないんだよ。 因为他太投入(得意忘形)了,别人(顾客)插不进来。" data-cats="katsu">
       <div class="u-meta"><span class="ts">05:01</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>乗<rt>の</rt></ruby>りすぎちゃってるから、<ruby>客<rt>きゃく</rt></ruby>が<ruby>入<rt>はい</rt></ruby>ってけないんだよ。</div>
@@ -1420,7 +1520,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">04</span><span class="chapter-t">相談所のダメ出し<span class="chapter-c">婚介所的犀利点评</span></span><span class="chapter-r">5:05–7:21</span></div>
-    <div class="u">
+    <div class="u" data-search="結婚けっこん相談所そうだんじょの方かたにダメ出だしされてんの、本当ほんとうに。 真的是被婚介所的人挑毛病呢。" data-cats="joshi keigo">
       <div class="u-meta"><span class="ts">05:05</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>結婚<rt>けっこん</rt></ruby><ruby>相談所<rt>そうだんじょ</rt></ruby>の<ruby>方<rt>かた</rt></ruby>にダメ<ruby>出<rt>だ</rt></ruby>しされてんの、<ruby>本当<rt>ほんとう</rt></ruby>に。</div>
@@ -1432,7 +1532,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="まずね、立たち姿すがたがダメ。 首先啊,站姿就不行。" data-cats="goi">
       <div class="u-meta"><span class="ts">05:09</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">まずね、<ruby>立<rt>た</rt></ruby>ち<ruby>姿<rt>すがた</rt></ruby>がダメ。</div>
@@ -1442,7 +1542,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="もうそこからね、こうやって、足あしをクロスして。 从那儿开始就,像这样,把腿交叉起来。" data-cats="goi">
       <div class="u-meta"><span class="ts">05:12</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">もうそこからね、こうやって、<ruby>足<rt>あし</rt></ruby>をクロスして。</div>
@@ -1454,7 +1554,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ええ、本当ほんとうですか?先生せんせい。 诶,真的吗?先生。" data-cats="">
       <div class="u-meta"><span class="ts">05:17</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">ええ、<ruby>本当<rt>ほんとう</rt></ruby>ですか?<ruby>先生<rt>せんせい</rt></ruby>。</div>
@@ -1462,7 +1562,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>合并「ええ、本」「当ですか?先生」碎片。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="そうじゃなきゃダメですよね。そう。 得那样才行,对吧。对。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">05:20</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">そうじゃなきゃダメですよね。そう。</div>
@@ -1473,7 +1573,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ちょっと横よこ、横よこからこのぐらいの感かんじで、女性じょせいらしく。ちょっとやってみて。 稍微侧一点,从侧面大概这种感觉,要有女人味。来,试一下。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">05:22</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ちょっと<ruby>横<rt>よこ</rt></ruby>、<ruby>横<rt>よこ</rt></ruby>からこのぐらいの<ruby>感<rt>かん</rt></ruby>じで、<ruby>女性<rt>じょせい</rt></ruby>らしく。ちょっとやってみて。</div>
@@ -1485,7 +1585,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="3人にん、ちょっと立たち方かただけ。 你们三个,就(练)一下站姿。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">05:27</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">3<ruby>人<rt>にん</rt></ruby>、ちょっと<ruby>立<rt>た</rt></ruby>ち<ruby>方<rt>かた</rt></ruby>だけ。</div>
@@ -1497,7 +1597,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="3人にんですか? 三个人吗?" data-cats="">
       <div class="u-meta"><span class="ts">05:31</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">3<ruby>人<rt>にん</rt></ruby>ですか?</div>
@@ -1505,7 +1605,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>合并碎片「3／人ですか?／人」。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="前まえ出でて、美うつくしい立たち姿すがた。 往前站,优美的站姿。" data-cats="katsu">
       <div class="u-meta"><span class="ts">05:32</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>前<rt>まえ</rt></ruby><ruby>出<rt>で</rt></ruby>て、<ruby>美<rt>うつく</rt></ruby>しい<ruby>立<rt>た</rt></ruby>ち<ruby>姿<rt>すがた</rt></ruby>。</div>
@@ -1515,7 +1615,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="そう、そう、そう。クロスの法則ほうそくみたいな。 对对对。就像「交叉法则」一样。" data-cats="goi">
       <div class="u-meta"><span class="ts">05:35</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">そう、そう、そう。クロスの<ruby>法則<rt>ほうそく</rt></ruby>みたいな。</div>
@@ -1525,7 +1625,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="そして、まだかな、まだかなって、こうやって。 然后,「还没来吗、还没来吗」,就这样。" data-cats="joshi">
       <div class="u-meta"><span class="ts">05:37</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">そして、まだかな、まだかなって、こうやって。</div>
@@ -1536,7 +1636,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="まだまだかな。まだかな。 还差得远吧。还没到位吧。" data-cats="joshi">
       <div class="u-meta"><span class="ts">05:41</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">まだまだかな。まだかな。</div>
@@ -1547,7 +1647,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="この2人ふたりの後うしろ姿すがた(?)なんですけど。 这两人的背影(?)嘛……" data-cats="joshi">
       <div class="u-meta"><span class="ts">05:45</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">この<ruby>2人<rt>ふたり</rt></ruby>の<ruby>後<rt>うし</rt></ruby>ろ<ruby>姿<rt>すがた</rt></ruby>(?)なんですけど。</div>
@@ -1558,7 +1658,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="これ本当ほんとうに先生せんせい、これでばっちりですか? 这个真的行吗先生，这样就完美了吗?" data-cats="goi">
       <div class="u-meta"><span class="ts">05:48</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">これ<ruby>本当<rt>ほんとう</rt></ruby>に<ruby>先生<rt>せんせい</rt></ruby>、これでばっちりですか?</div>
@@ -1569,7 +1669,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="まあ、大おおげさに言いうと、このぐらい結構けっこうね、みんなね、だらしない格好かっこうで立たってるんですよ。 夸张点说，其实很多人都是这么一副懒散的姿势站着的。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">05:50</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">まあ、<ruby>大<rt>おお</rt></ruby>げさに<ruby>言<rt>い</rt></ruby>うと、このぐらい<ruby>結構<rt>けっこう</rt></ruby>ね、みんなね、だらしない<ruby>格好<rt>かっこう</rt></ruby>で<ruby>立<rt>た</rt></ruby>ってるんですよ。</div>
@@ -1582,7 +1682,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="だからもう探さがせないんですよ。もっと綺麗きれいな姿すがたでこうやって立たってると、あの人ひとだと思おもって飛とんでくる。 所以对方就找不到你了。要是姿势更端正地这样站着，对方一看「就是那个人」，就会飞奔过来。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">05:56</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">だからもう<ruby>探<rt>さが</rt></ruby>せないんですよ。もっと<ruby>綺麗<rt>きれい</rt></ruby>な<ruby>姿<rt>すがた</rt></ruby>でこうやって<ruby>立<rt>た</rt></ruby>ってると、あの<ruby>人<rt>ひと</rt></ruby>だと<ruby>思<rt>おも</rt></ruby>って<ruby>飛<rt>と</rt></ruby>んでくる。</div>
@@ -1594,7 +1694,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、相手あいてが見みえて、サービさん(?)、こう来きてもらっていいですか? 那么，对方看见了，某某先生(?)，可以请你这样过来吗?" data-cats="keigo">
       <div class="u-meta"><span class="ts">06:03</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、<ruby>相手<rt>あいて</rt></ruby>が<ruby>見<rt>み</rt></ruby>えて、サービさん(?)、こう<ruby>来<rt>き</rt></ruby>てもらっていいですか?</div>
@@ -1605,7 +1705,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい、はい。バックしてもいい? 好，好。可以往后退一下吗?" data-cats="katsu">
       <div class="u-meta"><span class="ts">06:06</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">はい、はい。バックしてもいい?</div>
@@ -1616,7 +1716,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="頼たのむぞ。すいません。 拜托了。不好意思。" data-cats="joshi">
       <div class="u-meta"><span class="ts">06:08</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>頼<rt>たの</rt></ruby>むぞ。すいません。</div>
@@ -1627,7 +1727,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="遅おくれまして、すいません。― いや、とんでもないです。 来迟了，非常抱歉。—— 不，哪里的话。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">06:10</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>遅<rt>おく</rt></ruby>れまして、すいません。― いや、とんでもないです。</div>
@@ -1639,7 +1739,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="急いそいでいらしたんですね。 您是赶过来的吧。" data-cats="joshi keigo">
       <div class="u-meta"><span class="ts">06:13</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>急<rt>いそ</rt></ruby>いでいらしたんですね。</div>
@@ -1650,7 +1750,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="私わたしずっと待まってたんですけれども、もう遅おくれるって聞きいていたので、全然ぜんぜん気きにしてないです。 我一直在等着，不过已经听说您会迟到了，所以完全不介意。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">06:18</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>ずっと<ruby>待<rt>ま</rt></ruby>ってたんですけれども、もう<ruby>遅<rt>おく</rt></ruby>れるって<ruby>聞<rt>き</rt></ruby>いていたので、<ruby>全然<rt>ぜんぜん</rt></ruby><ruby>気<rt>き</rt></ruby>にしてないです。</div>
@@ -1663,7 +1763,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="すいません、すいません。お気遣きづかい。― とんでもないです。 抱歉，抱歉。承蒙您的关心。—— 哪里的话。" data-cats="keigo">
       <div class="u-meta"><span class="ts">06:25</span><span class="spk neta">実演</span></div>
       <div class="u-body">
         <div class="u-jp">すいません、すいません。お<ruby>気遣<rt>きづか</rt></ruby>い。― とんでもないです。</div>
@@ -1674,7 +1774,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="今日きょう、素敵すてきな時間じかんを楽たのしみにしてました。 今天我很期待能有一段美好的时光。" data-cats="goi">
       <div class="u-meta"><span class="ts">06:29</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>今日<rt>きょう</rt></ruby>、<ruby>素敵<rt>すてき</rt></ruby>な<ruby>時間<rt>じかん</rt></ruby>を<ruby>楽<rt>たの</rt></ruby>しみにしてました。</div>
@@ -1684,7 +1784,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="あ、ありがとう。こちらこそよろしくお願ねがいいたします。 啊，谢谢。我才要请您多多关照。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">06:31</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">あ、ありがとう。こちらこそよろしくお<ruby>願<rt>ねが</rt></ruby>いいたします。</div>
@@ -1696,7 +1796,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ありがとうございます。参まいりましょう。 谢谢。我们走吧。" data-cats="keigo">
       <div class="u-meta"><span class="ts">06:33</span><span class="spk neta">実演</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ありがとうございます。<ruby>参<rt>まい</rt></ruby>りましょう。</div>
@@ -1706,7 +1806,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="椅子いす(?)、出だしましょうか? (椅子?)要我拉出来吗?" data-cats="katsu">
       <div class="u-meta"><span class="ts">06:36</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>椅子<rt>いす</rt></ruby>(?)、<ruby>出<rt>だ</rt></ruby>しましょうか?</div>
@@ -1717,7 +1817,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="いい感かんじだ。いい空間くうかん。 感觉不错。好氛围。" data-cats="goi">
       <div class="u-meta"><span class="ts">06:39</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">いい<ruby>感<rt>かん</rt></ruby>じだ。いい<ruby>空間<rt>くうかん</rt></ruby>。</div>
@@ -1728,7 +1828,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="え、でも、すごい大胆だいたん。 诶，不过好大胆啊。" data-cats="goi">
       <div class="u-meta"><span class="ts">06:45</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">え、でも、すごい<ruby>大胆<rt>だいたん</rt></ruby>。</div>
@@ -1738,7 +1838,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="まあ、ここまでできる人ひとはいない。 不过，能做到这种程度的人是没有的。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">06:50</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">まあ、ここまでできる<ruby>人<rt>ひと</rt></ruby>はいない。</div>
@@ -1750,7 +1850,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="でもやっちゃっていいってことですよね。今いまぐらいのところはいらないですけど、遅刻ちこく(?)してくると焦あせってくるじゃないですか。 不过这么做也是可以的对吧。虽然到刚才那种程度倒不必，但对方一迟到，人不就会开始着急吗。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">06:54</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">でもやっちゃっていいってことですよね。<ruby>今<rt>いま</rt></ruby>ぐらいのところはいらないですけど、<ruby>遅刻<rt>ちこく</rt></ruby>(?)してくると<ruby>焦<rt>あせ</rt></ruby>ってくるじゃないですか。</div>
@@ -1763,7 +1863,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="焦あせってくるけど、「大丈夫だいじょうぶですよ」って言いってあげるといいと思おもいます。 （对方）会着急起来，不过这时跟他/她说一句「没关系哦」就好了。" data-cats="goi katsu keigo">
       <div class="u-meta"><span class="ts">06:59</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>焦<rt>あせ</rt></ruby>ってくるけど、「<ruby>大丈夫<rt>だいじょうぶ</rt></ruby>ですよ」って<ruby>言<rt>い</rt></ruby>ってあげるといいと<ruby>思<rt>おも</rt></ruby>います。</div>
@@ -1776,7 +1876,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="「何分なんぷん遅刻ちこくしたんです。また遅刻ちこくしたんです」っていう人ひとがいるんですよ。 有那种会说「你迟到了几分钟。又迟到了」的人哦。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">07:07</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>何分<rt>なんぷん</rt></ruby><ruby>遅刻<rt>ちこく</rt></ruby>したんです。また<ruby>遅刻<rt>ちこく</rt></ruby>したんです」っていう<ruby>人<rt>ひと</rt></ruby>がいるんですよ。</div>
@@ -1788,7 +1888,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="吉田よしださんとかが言いいそう。 感觉吉田小姐之类的人会这么说。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">07:09</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>吉田<rt>よしだ</rt></ruby>さんとかが<ruby>言<rt>い</rt></ruby>いそう。</div>
@@ -1800,7 +1900,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="「私わたしは厳きびしいですよ。1時間じかんしかないのに10分ぷんも遅おくれてくるなんて。6分ぶんの1を無駄むだにしましたね、あなたは」って。 「我可是很严格的哦。明明只有1个小时，你却迟到10分钟。你把六分之一的时间都浪费掉了呢」——（她会这么说）。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">07:10</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>私<rt>わたし</rt></ruby>は<ruby>厳<rt>きび</rt></ruby>しいですよ。1<ruby>時間<rt>じかん</rt></ruby>しかないのに10<ruby>分<rt>ぷん</rt></ruby>も<ruby>遅<rt>おく</rt></ruby>れてくるなんて。6<ruby>分<rt>ぶん</rt></ruby>の1を<ruby>無駄<rt>むだ</rt></ruby>にしましたね、あなたは」って。</div>
@@ -1814,7 +1914,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="「取とり返かえしてくださいよ、残のこりの50分ぷんで」って言いっちゃいます。 （她）会说「你给我补回来啊，用剩下的50分钟」。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">07:17</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>取<rt>と</rt></ruby>り<ruby>返<rt>かえ</rt></ruby>してくださいよ、<ruby>残<rt>のこ</rt></ruby>りの50<ruby>分<rt>ぷん</rt></ruby>で」って<ruby>言<rt>い</rt></ruby>っちゃいます。</div>
@@ -1830,7 +1930,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">05</span><span class="chapter-t">会話が続かない・食事マナー<span class="chapter-c">聊不下去 &amp; 用餐礼仪</span></span><span class="chapter-r">7:21–10:52</span></div>
-    <div class="u">
+    <div class="u" data-search="それはね、あの、相談所そうだんしょにいると「厄介やっかいな女おんな」ですよ。 那种啊，在婚介所里的话，就是「麻烦的女人」啦。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">07:21</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">それはね、あの、<ruby>相談所<rt>そうだんしょ</rt></ruby>にいると「<ruby>厄介<rt>やっかい</rt></ruby>な<ruby>女<rt>おんな</rt></ruby>」ですよ。</div>
@@ -1842,7 +1942,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="なんだそれ、いろんな女おんないるんですね、相談所そうだんしょに。え、厄介やっかい、一番いちばんシンプルな厄介やっかい。 那是什么啊，婚介所里真是什么样的女人都有呢。呃，麻烦…最简单直接的那种「麻烦」。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">07:28</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">なんだそれ、いろんな<ruby>女<rt>おんな</rt></ruby>いるんですね、<ruby>相談所<rt>そうだんしょ</rt></ruby>に。え、<ruby>厄介<rt>やっかい</rt></ruby>、<ruby>一番<rt>いちばん</rt></ruby>シンプルな<ruby>厄介<rt>やっかい</rt></ruby>。</div>
@@ -1854,7 +1954,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="顔合かおあわせを済すませたら、ここからがお見合おみあい本番ほんばん。しかしこのお見合おみあいにこそ、婚活こんかつでしくじるポイントが。 打过照面之后，从这里开始才是相亲的正戏。然而正是在这场相亲中，藏着婚活会搞砸的关键点。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">07:36</span><span class="spk nare">旁白</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>顔合<rt>かおあ</rt></ruby>わせを<ruby>済<rt>す</rt></ruby>ませたら、ここからが<ruby>お見合<rt>おみあ</rt></ruby>い<ruby>本番<rt>ほんばん</rt></ruby>。しかしこの<ruby>お見合<rt>おみあ</rt></ruby>いにこそ、<ruby>婚活<rt>こんかつ</rt></ruby>でしくじるポイントが。</div>
@@ -1868,7 +1968,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ここからは、先生せんせいが実際じっさいに遭遇そうぐうした人物じんぶつを教材きょうざいに、解説かいせつしてもらいましょう。 接下来，就让老师以他实际遇到过的人物为教材，来为我们讲解吧。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">07:48</span><span class="spk nare">旁白</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ここからは、<ruby>先生<rt>せんせい</rt></ruby>が<ruby>実際<rt>じっさい</rt></ruby>に<ruby>遭遇<rt>そうぐう</rt></ruby>した<ruby>人物<rt>じんぶつ</rt></ruby>を<ruby>教材<rt>きょうざい</rt></ruby>に、<ruby>解説<rt>かいせつ</rt></ruby>してもらいましょう。</div>
@@ -1881,7 +1981,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="いざ待まち合あわせで合流ごうりゅうできても、こんな困こまった人ひとが現あらわれてきます。次つぎのページ行いきましょう。 就算在约定地点顺利会合了，也会冒出这样让人头疼(?)的人。我们进入下一页吧。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">07:57</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">いざ<ruby>待<rt>ま</rt></ruby>ち<ruby>合<rt>あ</rt></ruby>わせで<ruby>合流<rt>ごうりゅう</rt></ruby>できても、こんな<ruby>困<rt>こま</rt></ruby>った<ruby>人<rt>ひと</rt></ruby>が<ruby>現<rt>あらわ</rt></ruby>れてきます。<ruby>次<rt>つぎ</rt></ruby>のページ<ruby>行<rt>い</rt></ruby>きましょう。</div>
@@ -1894,7 +1994,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ただただ沈黙ちんもくを貫つらぬく。何なにを喋しゃべっているかわからない。サイレントマン、サイレントウーマン。 只是一味地保持沉默。完全不知道对方在说什么。沉默男、沉默女。" data-cats="goi">
       <div class="u-meta"><span class="ts">08:04</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">ただただ<ruby>沈黙<rt>ちんもく</rt></ruby>を<ruby>貫<rt>つらぬ</rt></ruby>く。<ruby>何<rt>なに</rt></ruby>を<ruby>喋<rt>しゃべ</rt></ruby>っているかわからない。サイレントマン、サイレントウーマン。</div>
@@ -1907,7 +2007,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="まだいける。いろんな女おんなとね。 还能继续呢。（笑说）跟各种各样的女人啊。" data-cats="joshi">
       <div class="u-meta"><span class="ts">08:11</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">まだいける。いろんな<ruby>女<rt>おんな</rt></ruby>とね。</div>
@@ -1918,7 +2018,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="つまり、何なにも会話かいわをしないということです。 也就是说，完全不进行任何对话。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">08:14</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">つまり、<ruby>何<rt>なに</rt></ruby>も<ruby>会話<rt>かいわ</rt></ruby>をしないということです。</div>
@@ -1930,7 +2030,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="うわ、きついな。 哇，好难受啊。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">08:16</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">うわ、きついな。</div>
@@ -1942,7 +2042,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="会話かいわが一問一答いちもんいっとうになっちゃう。 对话就变成了一问一答（问一句答一句）。" data-cats="goi">
       <div class="u-meta"><span class="ts">08:17</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>会話<rt>かいわ</rt></ruby>が<ruby>一問一答<rt>いちもんいっとう</rt></ruby>になっちゃう。</div>
@@ -1954,7 +2054,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="「昨日きのう、何なにしてたんですか?」 「你昨天做了什么呀?」" data-cats="goi">
       <div class="u-meta"><span class="ts">08:20</span><span class="spk neta">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>昨日<rt>きのう</rt></ruby>、<ruby>何<rt>なに</rt></ruby>してたんですか?」</div>
@@ -1966,7 +2066,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="「特とくに何なにもしてません」 「没做什么特别的。」" data-cats="goi">
       <div class="u-meta"><span class="ts">08:22</span><span class="spk neta">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>特<rt>とく</rt></ruby>に<ruby>何<rt>なに</rt></ruby>もしてません」</div>
@@ -1978,7 +2078,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="会話かいわが続つづかないんですよ。 对话就接不下去了。" data-cats="goi">
       <div class="u-meta"><span class="ts">08:24</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>会話<rt>かいわ</rt></ruby>が<ruby>続<rt>つづ</rt></ruby>かないんですよ。</div>
@@ -1990,7 +2090,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、そうなってくると、5分ふんで終おわっちゃうわけですよね。 于是，一旦变成那样，（相亲）5分钟就结束了呢。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">08:26</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、そうなってくると、5<ruby>分<rt>ふん</rt></ruby>で<ruby>終<rt>お</rt></ruby>わっちゃうわけですよね。</div>
@@ -2004,7 +2104,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="で、5分ごふんで終おわるとこれ違反いはんなんですね。 话说，(相亲)要是5分钟就结束的话，这可是违规的哦。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">08:30</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">で、<ruby>5分<rt>ごふん</rt></ruby>で<ruby>終<rt>お</rt></ruby>わるとこれ<ruby>違反<rt>いはん</rt></ruby>なんですね。</div>
@@ -2015,14 +2115,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あ、いいです。 啊，不用了。" data-cats="">
       <div class="u-meta"><span class="ts">08:32</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">あ、いいです。</div>
         <div class="u-cn"><span class="lbl">译</span>啊，不用了。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="30分さんじゅっぷんは我慢がまんしなきゃいけない。 (至少)30分钟是必须忍耐的。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">08:33</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>30分<rt>さんじゅっぷん</rt></ruby>は<ruby>我慢<rt>がまん</rt></ruby>しなきゃいけない。</div>
@@ -2033,7 +2133,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="で、これはもう良よくない。 然后呢，(中途就走)这样可就不好了。" data-cats="goi">
       <div class="u-meta"><span class="ts">08:36</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">で、これはもう<ruby>良<rt>よ</rt></ruby>くない。</div>
@@ -2044,7 +2144,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="私わたし、その先生せんせいの今いまのこの授業じゅぎょうを受うけるまで、サイレントウーマンの方ほうが持もてると思おもってたんですよ。 我啊，在上老师现在这堂课之前，一直以为『沉默寡言型的女性(silent woman)』更吃香呢。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">08:38</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>、その<ruby>先生<rt>せんせい</rt></ruby>の<ruby>今<rt>いま</rt></ruby>のこの<ruby>授業<rt>じゅぎょう</rt></ruby>を<ruby>受<rt>う</rt></ruby>けるまで、サイレントウーマンの<ruby>方<rt>ほう</rt></ruby>が<ruby>持<rt>も</rt></ruby>てると<ruby>思<rt>おも</rt></ruby>ってたんですよ。</div>
@@ -2057,7 +2157,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="なぜならやっぱ合ごうコでもサイレントウーマンの方ほうがなんか付つき合あい出だすっていうか、喋しゃべらなかった女性じょせいの方ほうが結構けっこうこう男性だんせいが「大丈夫だいじょうぶ、楽たのしんでみたい」感かんじで付つき合あっていっちゃったりするから、私わたしは今いま、合ごうコで逆ぎゃくにサイレントウーマンをやろうと思おもってました。 因为嘛，果然在联谊上也是沉默型的女性，怎么说呢，比较容易发展成交往……不太说话的女性，男生反而会带着『没关系，想试着享受一下』的感觉就交往下去了，所以我本来打算在联谊上反过来扮演沉默型女性来着。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">08:44</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">なぜならやっぱ<ruby>合<rt>ごう</rt></ruby>コでもサイレントウーマンの<ruby>方<rt>ほう</rt></ruby>がなんか<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>い<ruby>出<rt>だ</rt></ruby>すっていうか、<ruby>喋<rt>しゃべ</rt></ruby>らなかった<ruby>女性<rt>じょせい</rt></ruby>の<ruby>方<rt>ほう</rt></ruby>が<ruby>結構<rt>けっこう</rt></ruby>こう<ruby>男性<rt>だんせい</rt></ruby>が「<ruby>大丈夫<rt>だいじょうぶ</rt></ruby>、<ruby>楽<rt>たの</rt></ruby>しんでみたい」<ruby>感<rt>かん</rt></ruby>じで<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>っていっちゃったりするから、<ruby>私<rt>わたし</rt></ruby>は<ruby>今<rt>いま</rt></ruby>、<ruby>合<rt>ごう</rt></ruby>コで<ruby>逆<rt>ぎゃく</rt></ruby>にサイレントウーマンをやろうと<ruby>思<rt>おも</rt></ruby>ってました。</div>
@@ -2072,7 +2172,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ええ、やらない方ほうがいいと思おもう。 嗯，我觉得还是别那么做比较好。" data-cats="goi">
       <div class="u-meta"><span class="ts">09:00</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ええ、やらない<ruby>方<rt>ほう</rt></ruby>がいいと<ruby>思<rt>おも</rt></ruby>う。</div>
@@ -2082,7 +2182,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="それだと(?)、絶対ぜったいにその付つき合あってくれないんですよね。 那样的话，(对方)是绝对不会愿意跟你交往的哦。" data-cats="joshi keigo">
       <div class="u-meta"><span class="ts">09:02</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">それだと(?)、<ruby>絶対<rt>ぜったい</rt></ruby>にその<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>ってくれないんですよね。</div>
@@ -2094,7 +2194,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="派手はでにやりすぎてるんじゃないの? (你是不是)搞得太张扬、太过头了吧？" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">09:05</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>派手<rt>はで</rt></ruby>にやりすぎてるんじゃないの?</div>
@@ -2105,7 +2205,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ああ。でも結構けっこう取とり分わけますよ、サラダとか。 啊。不过我还挺常帮大家分菜的哦，比如沙拉之类的。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">09:07</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ああ。でも<ruby>結構<rt>けっこう</rt></ruby><ruby>取<rt>と</rt></ruby>り<ruby>分<rt>わ</rt></ruby>けますよ、サラダとか。</div>
@@ -2116,7 +2216,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="取とり分わけしなくていいです。 不用帮忙分菜也没关系。" data-cats="goi">
       <div class="u-meta"><span class="ts">09:10</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>取<rt>と</rt></ruby>り<ruby>分<rt>わ</rt></ruby>けしなくていいです。</div>
@@ -2126,7 +2226,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="え、もうこういうね、ぶわってなったグラス(?)で、あ、汚よごれちゃうって言いってやらない。男性だんせいにやってもらう。 诶，就是这种嘛，倒得满满冒泡的杯子(?)，(说)『啊会弄脏』就不做，让男生来做。" data-cats="joshi katsu keigo">
       <div class="u-meta"><span class="ts">09:11</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">え、もうこういうね、ぶわってなったグラス(?)で、あ、<ruby>汚<rt>よご</rt></ruby>れちゃうって<ruby>言<rt>い</rt></ruby>ってやらない。<ruby>男性<rt>だんせい</rt></ruby>にやってもらう。</div>
@@ -2139,7 +2239,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="じゃあ間違まちがってたんだ、ずっと。 那我一直以来都搞错了啊。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">09:19</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">じゃあ<ruby>間違<rt>まちが</rt></ruby>ってたんだ、ずっと。</div>
@@ -2150,7 +2250,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="戦術せんじゅつミス、言いって欲ほしかった。 『战术失误』这句话，真希望(有人)早点告诉我。" data-cats="goi">
       <div class="u-meta"><span class="ts">09:23</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>戦術<rt>せんじゅつ</rt></ruby>ミス、<ruby>言<rt>い</rt></ruby>って<ruby>欲<rt>ほ</rt></ruby>しかった。</div>
@@ -2160,7 +2260,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、その一方いっぽうね、このサイレントマン・サイレントウーマンとは対照的たいしょうてきに、こんな神対応かみたいおうができる人物じんぶつがいます。 那么，另一方面呢，与这种『沉默男/沉默女』形成对照，还有能做出这种『神级应对(神対応)』的人物。" data-cats="goi">
       <div class="u-meta"><span class="ts">09:25</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、その<ruby>一方<rt>いっぽう</rt></ruby>ね、このサイレントマン・サイレントウーマンとは<ruby>対照的<rt>たいしょうてき</rt></ruby>に、こんな<ruby>神対応<rt>かみたいおう</rt></ruby>ができる<ruby>人物<rt>じんぶつ</rt></ruby>がいます。</div>
@@ -2173,7 +2273,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="次つぎのページ行いきましょうね。相手あいてのプロフィールを全すべて記憶きおくします。愛あいのメモリーマン、メモリーウーマン。 我们翻到下一页吧。会把对方的个人资料全部记下来——『爱的记忆男(memory man)』『记忆女(memory woman)』。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">09:33</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>次<rt>つぎ</rt></ruby>のページ<ruby>行<rt>い</rt></ruby>きましょうね。<ruby>相手<rt>あいて</rt></ruby>のプロフィールを<ruby>全<rt>すべ</rt></ruby>て<ruby>記憶<rt>きおく</rt></ruby>します。<ruby>愛<rt>あい</rt></ruby>のメモリーマン、メモリーウーマン。</div>
@@ -2184,7 +2284,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あ、色々いろいろ出でてくるな。 啊，各种(角色)都冒出来了呢。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">09:43</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">あ、<ruby>色々<rt>いろいろ</rt></ruby><ruby>出<rt>で</rt></ruby>てくるな。</div>
@@ -2195,7 +2295,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="すごい。いろんな人ひとが。 好厉害，各种各样的人(都有)。" data-cats="goi">
       <div class="u-meta"><span class="ts">09:45</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">すごい。いろんな<ruby>人<rt>ひと</rt></ruby>が。</div>
@@ -2205,7 +2305,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="今日きょうね、覚おぼえるの大変たいへんですね。 今天要记的东西好多，挺不容易的呢。" data-cats="goi">
       <div class="u-meta"><span class="ts">09:46</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>今日<rt>きょう</rt></ruby>ね、<ruby>覚<rt>おぼ</rt></ruby>えるの<ruby>大変<rt>たいへん</rt></ruby>ですね。</div>
@@ -2216,7 +2316,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="はい。機会きかいがあったらテストしてみたいと思おもいます。 好的。要是有机会的话，我想试着测试一下。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">09:49</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">はい。<ruby>機会<rt>きかい</rt></ruby>があったらテストしてみたいと<ruby>思<rt>おも</rt></ruby>います。</div>
@@ -2227,7 +2327,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="機会きかいがあったらですね。あったらですね。 『要是有机会的话』是吧。有的话是吧。" data-cats="katsu">
       <div class="u-meta"><span class="ts">09:52</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>機会<rt>きかい</rt></ruby>があったらですね。あったらですね。</div>
@@ -2238,7 +2338,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="なさそうだなと思おもいます。はい。婚活こんかつでは相手あいてがプロフィールを公開こうかいしてくれてますね。 (机会)大概是没有的吧。好，在婚活里，对方本来就会把个人资料公开给你看的哦。" data-cats="goi joshi keigo">
       <div class="u-meta"><span class="ts">09:54</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">なさそうだなと<ruby>思<rt>おも</rt></ruby>います。はい。<ruby>婚活<rt>こんかつ</rt></ruby>では<ruby>相手<rt>あいて</rt></ruby>がプロフィールを<ruby>公開<rt>こうかい</rt></ruby>してくれてますね。</div>
@@ -2251,7 +2351,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="全部ぜんぶ、趣味しゅみから何なにから記憶きおくしているんですね。 （对方的）兴趣爱好等等，全都记在脑子里呢。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">10:00</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>全部<rt>ぜんぶ</rt></ruby>、<ruby>趣味<rt>しゅみ</rt></ruby>から<ruby>何<rt>なに</rt></ruby>から<ruby>記憶<rt>きおく</rt></ruby>しているんですね。</div>
@@ -2262,7 +2362,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、トークの引ひき出だしを持もってます。これで盛もり上あげるんですよ。 而且他有很多聊天的「话匣子（话题储备）」。就用这些来炒热气氛。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">10:04</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、トークの<ruby>引<rt>ひ</rt></ruby>き<ruby>出<rt>だ</rt></ruby>しを<ruby>持<rt>も</rt></ruby>ってます。これで<ruby>盛<rt>も</rt></ruby>り<ruby>上<rt>あ</rt></ruby>げるんですよ。</div>
@@ -2275,7 +2375,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、すごく上手じょうずに「兵庫ひょうごでお生うまれになったんですね」。 于是很巧妙地（说）：「您是在兵库出生的吧」。" data-cats="joshi keigo">
       <div class="u-meta"><span class="ts">10:07</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、すごく<ruby>上手<rt>じょうず</rt></ruby>に「<ruby>兵庫<rt>ひょうご</rt></ruby>でお<ruby>生<rt>う</rt></ruby>まれになったんですね」。</div>
@@ -2287,7 +2387,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="僕ぼくの母ははもそうなんです。 我妈妈也是（兵库出生的）呢。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">10:12</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>僕<rt>ぼく</rt></ruby>の<ruby>母<rt>はは</rt></ruby>もそうなんです。</div>
@@ -2299,7 +2399,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="年ねんに2回かいぐらいは行いくことがあるんですよ。 一年大概会去个两次呢。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">10:14</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>年<rt>ねん</rt></ruby>に2<ruby>回<rt>かい</rt></ruby>ぐらいは<ruby>行<rt>い</rt></ruby>くことがあるんですよ。</div>
@@ -2311,7 +2411,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="プロフィールに色々いろいろ(?)書かいてるので、上うえから順番じゅんばんにやってくと、「こんなに私わたしのこと知しってくれてるんだ」っていう風ふうに思おもって、非常ひじょうに嬉うれしい気持きもちになります。 因为个人资料上写了（不少）内容，（他）从上往下逐条聊下来，（女方）就会觉得「他这么了解我啊」，心里非常高兴。" data-cats="goi joshi katsu keigo">
       <div class="u-meta"><span class="ts">10:19</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">プロフィールに<ruby>色々<rt>いろいろ</rt></ruby>(?)<ruby>書<rt>か</rt></ruby>いてるので、<ruby>上<rt>うえ</rt></ruby>から<ruby>順番<rt>じゅんばん</rt></ruby>にやってくと、「こんなに<ruby>私<rt>わたし</rt></ruby>のこと<ruby>知<rt>し</rt></ruby>ってくれてるんだ」っていう<ruby>風<rt>ふう</rt></ruby>に<ruby>思<rt>おも</rt></ruby>って、<ruby>非常<rt>ひじょう</rt></ruby>に<ruby>嬉<rt>うれ</rt></ruby>しい<ruby>気持<rt>きも</rt></ruby>ちになります。</div>
@@ -2326,7 +2426,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="細こまかに覚おぼえてる人ひとっていうのは、相手あいてにとって非常ひじょうに好感度こうかんどがいいです。 记得很仔细的人，对对方来说好感度非常高。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">10:29</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>細<rt>こま</rt></ruby>かに<ruby>覚<rt>おぼ</rt></ruby>えてる<ruby>人<rt>ひと</rt></ruby>っていうのは、<ruby>相手<rt>あいて</rt></ruby>にとって<ruby>非常<rt>ひじょう</rt></ruby>に<ruby>好感度<rt>こうかんど</rt></ruby>がいいです。</div>
@@ -2338,7 +2438,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、逆ぎゃくにあんまり読よんでこない人ひとってのは、やっぱりしくじるんですね。 反过来，那种（对资料）不怎么事先看过的人，果然就会搞砸呢。" data-cats="goi">
       <div class="u-meta"><span class="ts">10:34</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、<ruby>逆<rt>ぎゃく</rt></ruby>にあんまり<ruby>読<rt>よ</rt></ruby>んでこない<ruby>人<rt>ひと</rt></ruby>ってのは、やっぱりしくじるんですね。</div>
@@ -2351,7 +2451,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="へえ。 诶——（表惊讶）。" data-cats="">
       <div class="u-meta"><span class="ts">10:37</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">へえ。</div>
@@ -2359,7 +2459,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>相槌单列。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="「全然ぜんぜん興味きょうみがなかったみたいです」「質問しつもんがなかったみたいです」。 「（他）好像完全没兴趣」「（他）好像一个问题都没有」。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">10:39</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>全然<rt>ぜんぜん</rt></ruby><ruby>興味<rt>きょうみ</rt></ruby>がなかったみたいです」「<ruby>質問<rt>しつもん</rt></ruby>がなかったみたいです」。</div>
@@ -2372,7 +2472,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="「人ひとの話はなし聞きいてなかったです」って言いわれて、残念ざんねんながら成立せいりつにはならない。 被（对方）说「他根本没在听人讲话」，很遗憾（这门亲事）就没能成。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">10:42</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>人<rt>ひと</rt></ruby>の<ruby>話<rt>はなし</rt></ruby><ruby>聞<rt>き</rt></ruby>いてなかったです」って<ruby>言<rt>い</rt></ruby>われて、<ruby>残念<rt>ざんねん</rt></ruby>ながら<ruby>成立<rt>せいりつ</rt></ruby>にはならない。</div>
@@ -2385,7 +2485,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ただ、女性じょせいだけでなくって、男性だんせいもしくじりを犯おかします。 不过，不只是女性，男性也会犯这种搞砸的错。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">10:48</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ただ、<ruby>女性<rt>じょせい</rt></ruby>だけでなくって、<ruby>男性<rt>だんせい</rt></ruby>もしくじりを<ruby>犯<rt>おか</rt></ruby>します。</div>
@@ -2401,7 +2501,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">06</span><span class="chapter-t">コロナ禍の会話下手／締め<span class="chapter-c">疫情后不善言辞·收尾</span></span><span class="chapter-r">10:52–12:59</span></div>
-    <div class="u key">
+    <div class="u key" data-search="で、コロナ禍かでみんな会話かいわが下手へたになったことで、こんなことになってしまう男性だんせいも…。 而且因为疫情，大家都变得不太会聊天了，也有变成这样的男性…。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">10:52</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、コロナ<ruby>禍<rt>か</rt></ruby>でみんな<ruby>会話<rt>かいわ</rt></ruby>が<ruby>下手<rt>へた</rt></ruby>になったことで、こんなことになってしまう<ruby>男性<rt>だんせい</rt></ruby>も…。</div>
@@ -2414,7 +2514,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="はい、次つぎのページ行いきましょう。 好，我们进入下一页吧。" data-cats="katsu">
       <div class="u-meta"><span class="ts">10:57</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">はい、<ruby>次<rt>つぎ</rt></ruby>のページ<ruby>行<rt>い</rt></ruby>きましょう。</div>
@@ -2424,7 +2524,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="おお。あら。 哦哦。哎呀。" data-cats="">
       <div class="u-meta"><span class="ts">11:01</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">おお。あら。</div>
@@ -2432,7 +2532,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>合并相邻感叹（[笑い]音效略）。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="はい。僕ぼく、面白おもしろいでしょ。 好啦。我很有趣吧。" data-cats="joshi">
       <div class="u-meta"><span class="ts">11:03</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">はい。<ruby>僕<rt>ぼく</rt></ruby>、<ruby>面白<rt>おもしろ</rt></ruby>いでしょ。</div>
@@ -2442,7 +2542,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="受うけ狙ねらい、激げきスベり。 「刻意搞笑，却冷场到爆」（页面小标题）。" data-cats="goi">
       <div class="u-meta"><span class="ts">11:07</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>受<rt>う</rt></ruby>け<ruby>狙<rt>ねら</rt></ruby>い、<ruby>激<rt>げき</rt></ruby>スベり。</div>
@@ -2455,7 +2555,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="婚活こんかつに全力ぜんりょくを注そそいでいるけれども、それがやる気きが空回からまわりしてしまっている。 虽然在相亲结婚上倾注了全力，但那股干劲却在空转（使不到点子上）。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">11:11</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>婚活<rt>こんかつ</rt></ruby>に<ruby>全力<rt>ぜんりょく</rt></ruby>を<ruby>注<rt>そそ</rt></ruby>いでいるけれども、それがやる<ruby>気<rt>き</rt></ruby>が<ruby>空回<rt>からまわ</rt></ruby>りしてしまっている。</div>
@@ -2469,7 +2569,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="一方的いっぽうてきに自分じぶんのノリを押おし付つけて、信しんじられないくらい滑すべってしまう。 单方面地把自己的（搞笑）节奏强加于人，冷场得让人难以置信。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">11:17</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>一方的<rt>いっぽうてき</rt></ruby>に<ruby>自分<rt>じぶん</rt></ruby>のノリを<ruby>押<rt>お</rt></ruby>し<ruby>付<rt>つ</rt></ruby>けて、<ruby>信<rt>しん</rt></ruby>じられないくらい<ruby>滑<rt>すべ</rt></ruby>ってしまう。</div>
@@ -2482,7 +2582,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はあ。 唉。" data-cats="">
       <div class="u-meta"><span class="ts">11:21</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">はあ。</div>
@@ -2490,7 +2590,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>纯语气/叹气，单列。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="私わたしが実際じっさいに担当たんとうした人ひとで、女性じょせいと出会であった瞬間しゅんかんにこんなことをしてしまった人ひとがいました。 在我实际负责过的人当中，有人一见到女方的瞬间就做出了这种事。" data-cats="goi">
       <div class="u-meta"><span class="ts">11:22</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>が<ruby>実際<rt>じっさい</rt></ruby>に<ruby>担当<rt>たんとう</rt></ruby>した<ruby>人<rt>ひと</rt></ruby>で、<ruby>女性<rt>じょせい</rt></ruby>と<ruby>出会<rt>であ</rt></ruby>った<ruby>瞬間<rt>しゅんかん</rt></ruby>にこんなことをしてしまった<ruby>人<rt>ひと</rt></ruby>がいました。</div>
@@ -2502,7 +2602,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい、次つぎのページ行いきましょう。 好，我们翻到下一页吧。" data-cats="katsu">
       <div class="u-meta"><span class="ts">11:30</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">はい、<ruby>次<rt>つぎ</rt></ruby>のページ<ruby>行<rt>い</rt></ruby>きましょう。</div>
@@ -2512,7 +2612,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="いきなり自作じさくの指人形ゆびにんぎょうを出だして。 （他）一上来就掏出了自制的手指玩偶。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">11:32</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">いきなり<ruby>自作<rt>じさく</rt></ruby>の<ruby>指人形<rt>ゆびにんぎょう</rt></ruby>を<ruby>出<rt>だ</rt></ruby>して。</div>
@@ -2523,7 +2623,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="それはダメだよ。 那可不行啊。" data-cats="joshi">
       <div class="u-meta"><span class="ts">11:33</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">それはダメだよ。</div>
@@ -2533,7 +2633,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="自己紹介じこしょうかい人形にんぎょう、怖こわい怖こわい。これは怖こわい。 用来自我介绍的玩偶，好可怕好可怕。这个太吓人了。" data-cats="goi">
       <div class="u-meta"><span class="ts">11:34</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>自己紹介<rt>じこしょうかい</rt></ruby><ruby>人形<rt>にんぎょう</rt></ruby>、<ruby>怖<rt>こわ</rt></ruby>い<ruby>怖<rt>こわ</rt></ruby>い。これは<ruby>怖<rt>こわ</rt></ruby>い。</div>
@@ -2543,7 +2643,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="これ怖こわいですよね。 这个很吓人吧。" data-cats="joshi">
       <div class="u-meta"><span class="ts">11:38</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">これ<ruby>怖<rt>こわ</rt></ruby>いですよね。</div>
@@ -2553,7 +2653,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="アイテムが怖こわいもん。 这道具本身就吓人嘛。" data-cats="joshi">
       <div class="u-meta"><span class="ts">11:39</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">アイテムが<ruby>怖<rt>こわ</rt></ruby>いもん。</div>
@@ -2563,7 +2663,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい。自分じぶんで作つくってきました、この人形にんぎょうを。 对。他自己（事先）做好带来的，这个玩偶。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">11:40</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">はい。<ruby>自分<rt>じぶん</rt></ruby>で<ruby>作<rt>つく</rt></ruby>ってきました、この<ruby>人形<rt>にんぎょう</rt></ruby>を。</div>
@@ -2575,7 +2675,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="へえ。 诶——。" data-cats="">
       <div class="u-meta"><span class="ts">11:43</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">へえ。</div>
@@ -2583,7 +2683,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>纯相槌，表惊讶，单列。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="で、こう指ゆびにはめて、 然后，就这样套在手指上，" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">11:44</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">で、こう<ruby>指<rt>ゆび</rt></ruby>にはめて、</div>
@@ -2594,7 +2694,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="「先生せんせいこんにちは」とか言いってるわけです。 （让玩偶）说着「老师你好」之类的。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">11:46</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">「<ruby>先生<rt>せんせい</rt></ruby>こんにちは」とか<ruby>言<rt>い</rt></ruby>ってるわけです。</div>
@@ -2605,7 +2705,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="それは面白おもしろい。 那还挺有意思。" data-cats="">
       <div class="u-meta"><span class="ts">11:48</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">それは<ruby>面白<rt>おもしろ</rt></ruby>い。</div>
@@ -2613,14 +2713,14 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「ダ」为 ASR 杂音已删。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="それは何なに？ 那是什么？" data-cats="">
       <div class="u-meta"><span class="ts">11:49</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">それは<ruby>何<rt>なに</rt></ruby>？</div>
         <div class="u-cn"><span class="lbl">译</span>那是什么？</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="言いいました、先生せんせい。 他真说了啊，老师。" data-cats="">
       <div class="u-meta"><span class="ts">11:50</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>言<rt>い</rt></ruby>いました、<ruby>先生<rt>せんせい</rt></ruby>。</div>
@@ -2628,7 +2728,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>相槌式追问/确认。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="それはどこでいつ使つかうの？何なに？「明日あしたお見合みあいで使つかおうと思おもってます」とか言いってるから。 （我就问）那你在哪、什么时候用？啥？他还说「明天相亲时打算用」。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">11:51</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">それはどこでいつ<ruby>使<rt>つか</rt></ruby>うの？<ruby>何<rt>なに</rt></ruby>？「<ruby>明日<rt>あした</rt></ruby>お<ruby>見合<rt>みあ</rt></ruby>いで<ruby>使<rt>つか</rt></ruby>おうと<ruby>思<rt>おも</rt></ruby>ってます」とか<ruby>言<rt>い</rt></ruby>ってるから。</div>
@@ -2640,7 +2740,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="やめて。 快别弄了。" data-cats="katsu">
       <div class="u-meta"><span class="ts">11:56</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">やめて。</div>
@@ -2650,7 +2750,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="あなたね。 我说你啊。" data-cats="joshi">
       <div class="u-meta"><span class="ts">11:58</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">あなたね。</div>
@@ -2661,7 +2761,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ホテルのラウンジで、皆みなさんそれなりのスーツでワンピースで来きていただいてて。 在酒店大堂，大家都特意穿着像样的西装、连衣裙前来，" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">11:59</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ホテルのラウンジで、<ruby>皆<rt>みな</rt></ruby>さんそれなりのスーツでワンピースで<ruby>来<rt>き</rt></ruby>ていただいてて。</div>
@@ -2673,7 +2773,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="で、それ恥はずかしいし、女おんなの子こ嫌いやがるから、やめましょうねっていう風ふうに言いいましたけど、 于是我就跟他说：那样又丢人、女生也会讨厌，所以还是别弄了吧——虽然我这么说了，" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:04</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">で、それ<ruby>恥<rt>は</rt></ruby>ずかしいし、<ruby>女<rt>おんな</rt></ruby>の<ruby>子<rt>こ</rt></ruby><ruby>嫌<rt>いや</rt></ruby>がるから、やめましょうねっていう<ruby>風<rt>ふう</rt></ruby>に<ruby>言<rt>い</rt></ruby>いましたけど、</div>
@@ -2685,7 +2785,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="やめないの、実際じっさいやってしまいました。 （他）不肯罢手，实际上真就那么干了。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:09</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">やめないの、<ruby>実際<rt>じっさい</rt></ruby>やってしまいました。</div>
@@ -2696,7 +2796,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="え、 诶，" data-cats="">
       <div class="u-meta"><span class="ts">12:12</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">え、</div>
@@ -2704,7 +2804,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>纯相槌，表惊讶。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="で、当然とうぜんだから、なんて言いうんでしょうね、恥はずかしいんですよ。 于是呢，当然啦，该怎么说呢——他其实是害臊的。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:12</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">で、<ruby>当然<rt>とうぜん</rt></ruby>だから、なんて<ruby>言<rt>い</rt></ruby>うんでしょうね、<ruby>恥<rt>は</rt></ruby>ずかしいんですよ。</div>
@@ -2716,7 +2816,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="恥はずかしいから、なんとかごまかす、楽たのしませるっていうのをやってしまって。 因为害臊，就想方设法蒙混过去、逗对方开心，结果就干出了这种事。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">12:16</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>恥<rt>は</rt></ruby>ずかしいから、なんとかごまかす、<ruby>楽<rt>たの</rt></ruby>しませるっていうのをやってしまって。</div>
@@ -2728,7 +2828,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="結局けっきょく、女性じょせいから「怖こわかったです」っていう（返事へんじが）入はいる。 结果，女方那边给来的反馈就是「太吓人了」。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:22</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>結局<rt>けっきょく</rt></ruby>、<ruby>女性<rt>じょせい</rt></ruby>から「<ruby>怖<rt>こわ</rt></ruby>かったです」っていう（<ruby>返事<rt>へんじ</rt></ruby>が）<ruby>入<rt>はい</rt></ruby>る。</div>
@@ -2740,7 +2840,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="うん。怖こわかったです。 嗯。「太吓人了」。" data-cats="">
       <div class="u-meta"><span class="ts">12:24</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">うん。<ruby>怖<rt>こわ</rt></ruby>かったです。</div>
@@ -2748,7 +2848,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>复述女方反馈，[笑い] 音效忽略。</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="やっぱそうっすよね。 果然会这样吧。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:26</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">やっぱそうっすよね。</div>
@@ -2759,7 +2859,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="やっぱ最初さいしょにはね。 尤其是一开始的时候嘛。" data-cats="joshi">
       <div class="u-meta"><span class="ts">12:27</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">やっぱ<ruby>最初<rt>さいしょ</rt></ruby>にはね。</div>
@@ -2769,7 +2869,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="それはそうだ。 那是当然。" data-cats="goi">
       <div class="u-meta"><span class="ts">12:28</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">それはそうだ。</div>
@@ -2779,7 +2879,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="こういうこともありました。 也发生过这样的事。" data-cats="goi">
       <div class="u-meta"><span class="ts">12:29</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">こういうこともありました。</div>
@@ -2790,7 +2890,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="それでも、ある程度ていどやっぱりちょっとボケた方ほうがいいんですか？やっぱりこう、和なごます意味いみでも、 即便如此，是不是果然还是稍微搞笑一下比较好？就为了缓和气氛之类的，" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">12:31</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">それでも、ある<ruby>程度<rt>ていど</rt></ruby>やっぱりちょっとボケた<ruby>方<rt>ほう</rt></ruby>がいいんですか？やっぱりこう、<ruby>和<rt>なご</rt></ruby>ます<ruby>意味<rt>いみ</rt></ruby>でも、</div>
@@ -2803,7 +2903,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ちょっとジョークはやっぱ言いった方ほうがいいんすかね、そういう場ばでは。 稍微开点玩笑果然还是说出来比较好吧，在那种场合下。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:35</span><span class="spk host">司会</span></div>
       <div class="u-body">
         <div class="u-jp">ちょっとジョークはやっぱ<ruby>言<rt>い</rt></ruby>った<ruby>方<rt>ほう</rt></ruby>がいいんすかね、そういう<ruby>場<rt>ば</rt></ruby>では。</div>
@@ -2814,7 +2914,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ジョークはね、最初さいしょのお見合みあいではあんまりいらない。 玩笑呢，在第一次相亲时不太需要。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:38</span><span class="spk iwata">植草先生</span></div>
       <div class="u-body">
         <div class="u-jp">ジョークはね、<ruby>最初<rt>さいしょ</rt></ruby>のお<ruby>見合<rt>みあ</rt></ruby>いではあんまりいらない。</div>
@@ -2825,7 +2925,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="いらない。でも面白おもしろい人ひとがモテるみたいな情報じょうほうもあるじゃないですか。確たしかに。 不需要啊。可是不也有「有趣的人受欢迎」这种说法嘛。确实。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:41</span><span class="spk host">司会</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">いらない。でも<ruby>面白<rt>おもしろ</rt></ruby>い<ruby>人<rt>ひと</rt></ruby>がモテるみたいな<ruby>情報<rt>じょうほう</rt></ruby>もあるじゃないですか。<ruby>確<rt>たし</rt></ruby>かに。</div>
@@ -2837,7 +2937,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="うん。それはね、面白おもしろい人ひとっていうか、面白おもしろい人ひとを探さがしに行いくのは婚活こんかつじゃないんですよ。 嗯。那个啊，与其说是有趣的人——去寻找有趣的人，那可不是相亲（婚活）呀。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:44</span><span class="spk iwata">植草先生</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">うん。それはね、<ruby>面白<rt>おもしろ</rt></ruby>い<ruby>人<rt>ひと</rt></ruby>っていうか、<ruby>面白<rt>おもしろ</rt></ruby>い<ruby>人<rt>ひと</rt></ruby>を<ruby>探<rt>さが</rt></ruby>しに<ruby>行<rt>い</rt></ruby>くのは<ruby>婚活<rt>こんかつ</rt></ruby>じゃないんですよ。</div>
@@ -2850,7 +2950,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="この動画どうがの続つづきはアベマで、最新作さいしんさくは無料むりょう。 这个视频的后续在abema观看，最新作免费。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:50</span><span class="spk nare">旁白</span></div>
       <div class="u-body">
         <div class="u-jp">この<ruby>動画<rt>どうが</rt></ruby>の<ruby>続<rt>つづ</rt></ruby>きはアベマで、<ruby>最新作<rt>さいしんさく</rt></ruby>は<ruby>無料<rt>むりょう</rt></ruby>。</div>
@@ -2863,7 +2963,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="さらにアベマプレミアムに入はいると、過去かこの作品さくひんも見放題みほうだい。 此外，加入abema高级会员的话，过去的作品也能无限观看。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:55</span><span class="spk nare">旁白</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">さらにアベマプレミアムに<ruby>入<rt>はい</rt></ruby>ると、<ruby>過去<rt>かこ</rt></ruby>の<ruby>作品<rt>さくひん</rt></ruby>も<ruby>見放題<rt>みほうだい</rt></ruby>。</div>
@@ -2876,7 +2976,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="まずはこちらをクリック。 首先请点击这里。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">12:58</span><span class="spk nare">旁白</span></div>
       <div class="u-body">
         <div class="u-jp">まずはこちらをクリック。</div>
@@ -2962,6 +3062,30 @@
   /*<</follow-guard>>*/
   var guard = makeScrollGuard(900);
   function nowms(){ return Date.now(); }
+
+  // ---------- stable player handle for shadow.js (window.LangPlayer) ----------
+  // Unifies the two backends behind one interface so the shadow drill can seek /
+  // rate-limit the existing player without touching <video> or the IFrame API.
+  // Every LangPlayer.seek arms the scroll-guard so follow-along never self-cancels.
+  var tickCbs = [];
+  function emitTick(t){ for (var i = 0; i < tickCbs.length; i++){ try { tickCbs[i](t); } catch (e){} } }
+  function playerRates(){ return (transport && transport.rates) ? transport.rates() : [0.5, 0.75, 1]; }
+  function clampRate(r){
+    var rs = playerRates(), best = rs[0], bd = Math.abs(rs[0] - r);
+    for (var i = 1; i < rs.length; i++){ var d = Math.abs(rs[i] - r); if (d < bd){ bd = d; best = rs[i]; } }
+    return best;
+  }
+  window.LangPlayer = {
+    ready:    function(){ return !!transport; },
+    seek:     function(t){ if (transport){ guard.begin(nowms()); transport.seek(t); } },
+    getTime:  function(){ return (transport && transport.getTime) ? transport.getTime() : 0; },
+    setRate:  function(r){ if (transport && transport.setRate) transport.setRate(clampRate(r)); },
+    play:     function(){ if (transport && transport.play) transport.play(); },
+    pause:    function(){ if (transport && transport.pause) transport.pause(); },
+    onTick:   function(cb){ if (typeof cb === 'function') tickCbs.push(cb); },
+    rates:    playerRates,
+    duration: function(){ return (transport && transport.duration) ? transport.duration() : 0; }
+  };
 
   function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
   function setMin(m){
@@ -3064,12 +3188,20 @@
 
   // ---------- transport A: native <video> (offline) ----------
   function useLocal(){
-    transport = { seek: function(sec){
-      setMin(false);
-      try { video.currentTime = sec; } catch (e) {}
-      var p = video.play(); if (p && p.catch) p.catch(function(){});
-    } };
-    video.addEventListener('timeupdate', function(){ highlight(video.currentTime); });
+    transport = {
+      seek: function(sec){
+        setMin(false);
+        try { video.currentTime = sec; } catch (e) {}
+        var p = video.play(); if (p && p.catch) p.catch(function(){});
+      },
+      getTime:  function(){ return video.currentTime || 0; },
+      setRate:  function(r){ try { video.playbackRate = r; } catch (e){} },
+      play:     function(){ var p = video.play(); if (p && p.catch) p.catch(function(){}); },
+      pause:    function(){ try { video.pause(); } catch (e){} },
+      rates:    function(){ return [0.5, 0.75, 1]; },
+      duration: function(){ return video.duration || 0; }
+    };
+    video.addEventListener('timeupdate', function(){ highlight(video.currentTime); emitTick(video.currentTime); });
   }
 
   // ---------- transport B: YouTube IFrame Player API (online) ----------
@@ -3077,11 +3209,19 @@
     var slot = document.createElement('div'); slot.id = 'clip';
     if (video && video.parentNode) video.parentNode.replaceChild(slot, video);
     var player = null, isReady = false, pending = null, poll = null;
-    transport = { seek: function(sec){
-      setMin(false);
-      if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
-      else pending = sec;
-    } };
+    transport = {
+      seek: function(sec){
+        setMin(false);
+        if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
+        else pending = sec;
+      },
+      getTime:  function(){ try { return (isReady && player) ? (player.getCurrentTime() || 0) : 0; } catch (e){ return 0; } },
+      setRate:  function(r){ try { if (isReady && player) player.setPlaybackRate(r); } catch (e){} },
+      play:     function(){ try { if (isReady && player) player.playVideo(); } catch (e){} },
+      pause:    function(){ try { if (isReady && player) player.pauseVideo(); } catch (e){} },
+      rates:    function(){ try { return (isReady && player && player.getAvailablePlaybackRates) ? player.getAvailablePlaybackRates() : [0.5, 0.75, 1]; } catch (e){ return [0.5, 0.75, 1]; } },
+      duration: function(){ try { return (isReady && player && player.getDuration) ? (player.getDuration() || 0) : 0; } catch (e){ return 0; } }
+    };
     window.onYouTubeIframeAPIReady = function(){
       player = new YT.Player('clip', {
         width: '100%', height: '100%', videoId: ytid,
@@ -3090,8 +3230,8 @@
           onReady: function(){ isReady = true; if (pending != null){ var s = pending; pending = null; transport.seek(s); } },
           onStateChange: function(e){
             if (e.data === YT.PlayerState.PLAYING){
-              highlight(player.getCurrentTime());
-              if (!poll) poll = setInterval(function(){ if (player && player.getCurrentTime) highlight(player.getCurrentTime()); }, 250);
+              highlight(player.getCurrentTime()); emitTick(player.getCurrentTime());
+              if (!poll) poll = setInterval(function(){ if (player && player.getCurrentTime){ var tt = player.getCurrentTime(); highlight(tt); emitTick(tt); } }, 250);
             } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED){
               if (poll){ clearInterval(poll); poll = null; }
             }
@@ -3493,6 +3633,382 @@
     if (LF){ if (LF.onChange) LF.onChange(refresh); refresh(); return; }
     if (tries < 30) setTimeout(function(){ wait(tries + 1); }, 80);
   })(0);
+})();
+</script>
+<script>
+/* ============================================================================
+   Shadow drill (跟读) — focused per-sentence audio shadowing on auto-mode pages.
+   Talks to the player ONLY through window.LangPlayer (player_auto.html), so the
+   drill logic is a pure state machine (shadowStep) unit-tested in isolation
+   (tools/test_shadow.mjs) with no real player. Ships auto-only (needs time
+   events); hidden in embed. Design + rationale: plans/in-page-study-ux.md.
+   ========================================================================== */
+(function(){
+  /*<<shadow-pure>>*/
+  // Pure, DOM/Player-free core. Extracted verbatim by the unit test.
+  function SHADOW_PURE(){
+    var GAP_CAP = 4000;   // ms — long lines never leave more than 4s of dead air
+    // Drill state machine. One tick → one action; the DOM caller applies it.
+    //   s = { mode, curT, lineStart, lineEnd, nextStart, gapUntil, now }
+    //   mode: 'loop' (repeat this line) | 'run' (line → gap → next line)
+    //   gapUntil: null when no gap is armed, else the ms deadline of the active gap
+    // Returns { type, to?, until? }:
+    //   'seek'(to) | 'gap'(until) | 'hold' | 'advance'(to) | 'stop' | 'none'
+    function shadowStep(s){
+      if (s.mode === 'loop'){
+        if (s.curT >= s.lineEnd) return { type: 'seek', to: s.lineStart };
+        return { type: 'none' };
+      }
+      if (s.mode === 'run'){
+        if (s.gapUntil != null){                       // a gap is in progress
+          if (s.now < s.gapUntil) return { type: 'hold' };
+          return s.nextStart != null
+            ? { type: 'advance', to: s.nextStart }
+            : { type: 'stop' };
+        }
+        if (s.curT >= s.lineEnd){                       // reached line end → open the gap
+          var gapMs = Math.min((s.lineEnd - s.lineStart) * 1000, GAP_CAP);
+          return { type: 'gap', until: s.now + gapMs };
+        }
+        return { type: 'none' };
+      }
+      return { type: 'none' };
+    }
+    // Clamp a requested rate to the nearest value the backend supports.
+    function clampRate(r, rates){
+      var list = (rates && rates.length) ? rates : [1];
+      var best = list[0], bd = Math.abs(list[0] - r);
+      for (var i = 1; i < list.length; i++){
+        var d = Math.abs(list[i] - r);
+        if (d < bd){ bd = d; best = list[i]; }
+      }
+      return best;
+    }
+    return { shadowStep: shadowStep, clampRate: clampRate };
+  }
+  /*<</shadow-pure>>*/
+
+  var LP = window.LangPlayer;
+  if (!LP) return;                                     // no adapter (embed / single-mode) → no shadow
+  var toggle = document.getElementById('shadowToggle');
+  var bar    = document.getElementById('shadowBar');
+  if (!toggle || !bar) return;
+
+  var P = SHADOW_PURE();
+  function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
+  var rows = [].slice.call(document.querySelectorAll('.u')).map(function(el){
+    var t = el.querySelector('.ts'); return { el: el, sec: t ? toSec(t.textContent) : 0 };
+  }).sort(function(a, b){ return a.sec - b.sec; });
+  if (!rows.length) return;
+  var starts = rows.map(function(r){ return r.sec; });
+  function medianGap(){
+    var g = [];
+    for (var i = 1; i < starts.length; i++) g.push(starts[i] - starts[i - 1]);
+    if (!g.length) return 5;
+    g.sort(function(a, b){ return a - b; });
+    return g[Math.floor(g.length / 2)] || 5;
+  }
+  var LAST_LEN = Math.min(Math.max(medianGap(), 2), 8);   // fallback for the final line when duration()==0
+
+  var on = false, mode = 'loop', active = -1, lastTap = -1, gapUntil = null, rate = 1, ticking = false;
+
+  function lineBounds(i){
+    var lineStart = starts[i];
+    var nextStart = (i + 1 < starts.length) ? starts[i + 1] : null;
+    var dur = LP.duration ? LP.duration() : 0;
+    var lineEnd = (nextStart != null) ? nextStart
+                : (dur > lineStart ? dur : lineStart + LAST_LEN);
+    return { lineStart: lineStart, lineEnd: lineEnd, nextStart: nextStart };
+  }
+  function currentIdx(){                                   // nearest line at/just-before the playhead
+    var t = LP.getTime(), lo = 0;
+    for (var k = 0; k < starts.length; k++){ if (starts[k] <= t + 0.15) lo = k; else break; }
+    return lo;
+  }
+  function setActive(i){
+    if (i < 0 || i >= rows.length) return;
+    active = i; gapUntil = null;
+    LP.seek(starts[i]); LP.play();
+  }
+  function tick(){
+    if (!on || active < 0) return;
+    var b = lineBounds(active);
+    var act = P.shadowStep({ mode: mode, curT: LP.getTime(),
+      lineStart: b.lineStart, lineEnd: b.lineEnd, nextStart: b.nextStart,
+      gapUntil: gapUntil, now: Date.now() });
+    if (act.type === 'seek'){ LP.seek(act.to); LP.play(); }
+    else if (act.type === 'gap'){ gapUntil = act.until; LP.pause(); }
+    else if (act.type === 'hold'){ /* stay paused during the shadow gap */ }
+    else if (act.type === 'advance'){ gapUntil = null; active += 1; LP.seek(act.to); LP.play(); reflect(); }
+    else if (act.type === 'stop'){ gapUntil = null; LP.pause(); setOn(false); }
+  }
+  function reflect(){
+    toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    toggle.classList.toggle('on', on);
+    bar.hidden = !on;
+    var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
+    if (loopBtn){ loopBtn.classList.toggle('on', mode === 'loop'); loopBtn.setAttribute('aria-pressed', mode === 'loop' ? 'true' : 'false'); }
+    if (runBtn){  runBtn.classList.toggle('on', mode === 'run');   runBtn.setAttribute('aria-pressed', mode === 'run' ? 'true' : 'false'); }
+    [].slice.call(bar.querySelectorAll('.sh-rate')).forEach(function(btn){
+      var sel = parseFloat(btn.getAttribute('data-rate')) === rate;
+      btn.classList.toggle('on', sel); btn.setAttribute('aria-pressed', sel ? 'true' : 'false');
+    });
+  }
+  function setOn(v){
+    on = v;
+    if (on && active < 0) setActive(lastTap >= 0 ? lastTap : currentIdx());
+    if (on && !ticking){ ticking = true; (function loop(){ tick(); if (ticking) setTimeout(loop, 200); })(); }
+    if (!on){ ticking = false; gapUntil = null; }
+    reflect();
+  }
+  function setMode(m){ mode = m; gapUntil = null; reflect(); }
+  function setRate(r){ rate = P.clampRate(r, LP.rates()); LP.setRate(rate); reflect(); }
+  function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
+
+  toggle.addEventListener('click', function(){ setOn(!on); });
+  var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
+  if (loopBtn) loopBtn.addEventListener('click', function(){ setMode('loop'); });
+  if (runBtn)  runBtn.addEventListener('click', function(){ setMode('run'); });
+  var prevBtn = document.getElementById('shPrev'), nextBtn = document.getElementById('shNext');
+  if (prevBtn) prevBtn.addEventListener('click', function(){ step(-1); });
+  if (nextBtn) nextBtn.addEventListener('click', function(){ step(1); });
+  [].slice.call(bar.querySelectorAll('.sh-rate')).forEach(function(btn){
+    btn.addEventListener('click', function(){ setRate(parseFloat(btn.getAttribute('data-rate'))); });
+  });
+  // remember the last tapped line; while shadow is ON, re-pin the active line to it
+  rows.forEach(function(r, i){
+    var ts = r.el.querySelector('.ts');
+    if (ts) ts.addEventListener('click', function(){ lastTap = i; if (on){ active = i; gapUntil = null; reflect(); } });
+  });
+
+  // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
+  toggle.disabled = true;
+  (function wait(tries){
+    if (LP.ready && LP.ready()){ toggle.disabled = false; reflect(); return; }
+    if (tries < 40) setTimeout(function(){ wait(tries + 1); }, 100);
+    else { toggle.disabled = false; reflect(); }       // best-effort: enable anyway
+  })(0);
+})();
+</script>
+<script>
+/* ============================================================================
+   Page tools — filter/search, deep-link (#s=<id>), and text share for study
+   pages. Works on EVERY page and offline (file://): shares only favorites' PURE
+   scheme (the collision-safe id + stripFuri), never its https-gated runtime.
+   Pure core unit-tested in tools/test_page_tools.mjs. plans/in-page-study-ux.md
+   ========================================================================== */
+(function(){
+  /*<<page-tools-pure>>*/
+  // Pure, DOM-free core. Extracted verbatim by the unit test. The id scheme is a
+  // deliberate re-implementation of favorites' assignFavIds (test asserts parity):
+  // page_tools must produce the SAME <yt>#<mmss>#<n> ids OFFLINE, where favorites
+  // (https-gated) never runs.
+  function PAGE_TOOLS_PURE(){
+    function tsToSec(t){
+      var p = (String(t).match(/\d+/g) || []).map(Number);
+      var s = 0; for (var i = 0; i < p.length; i++) s = s * 60 + p[i];
+      return s;
+    }
+    function secToMmss(s){
+      s = Math.max(0, Math.floor(+s || 0));
+      var m = Math.floor(s / 60), ss = s % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (ss < 10 ? '0' : '') + ss;
+    }
+    // one row's id, given its ts + within-second ordinal
+    function sentenceId(rowData){
+      return rowData.yt + '#' + secToMmss(tsToSec(rowData.ts)) + '#' + rowData.ord;
+    }
+    // assign ids across all rows in DOM order (== favorites' assignFavIds)
+    function assignIds(yt, tsList){
+      var seen = {}, out = [];
+      for (var i = 0; i < tsList.length; i++){
+        var mmss = secToMmss(tsToSec(tsList[i]));
+        var n = (seen[mmss] == null) ? 0 : seen[mmss] + 1;
+        seen[mmss] = n;
+        out.push(sentenceId({ yt: yt, ts: tsList[i], ord: n }));
+      }
+      return out;
+    }
+    // parse #s=<encoded id> → decoded id, or null
+    function parseHash(hash){
+      var m = String(hash || '').match(/[#&]s=([^&]+)/);
+      if (!m) return null;
+      try { return decodeURIComponent(m[1]); } catch (e){ return m[1]; }
+    }
+    function stripFuri(html){
+      return String(html == null ? '' : html)
+        .replace(/<rp\b[^>]*>[\s\S]*?<\/rp>/gi, '')
+        .replace(/<rt\b[^>]*>[\s\S]*?<\/rt>/gi, '')
+        .replace(/<[^>]+>/g, '');
+    }
+    // AND-semantics filter: q is a pre-lowercased substring over rowData.search;
+    // cat matches when rowData.cats (space-separated) includes it. empty → all.
+    function matchSentence(rowData, sel){
+      var q = (sel && sel.q) || '', cat = (sel && sel.cat) || '';
+      if (cat){
+        var cats = ' ' + (rowData.cats || '') + ' ';
+        if (cats.indexOf(' ' + cat + ' ') < 0) return false;
+      }
+      if (!q) return true;
+      return String(rowData.search == null ? '' : rowData.search).indexOf(q) >= 0;
+    }
+    // plain-text share card: rt-stripped JP + reading + 译 + grammar, no stray tabs/newlines
+    function cardText(rowData){
+      function clean(s){ return String(s == null ? '' : s).replace(/[\t\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
+      var lines = [];
+      var jp = clean(stripFuri(rowData.jp_html || ''));
+      if (jp) lines.push(jp);
+      var reading = clean(rowData.reading || '');
+      if (reading) lines.push('（' + reading + '）');
+      if (rowData.cn) lines.push('译：' + clean(rowData.cn));
+      var pts = rowData.points || [];
+      for (var i = 0; i < pts.length; i++){
+        var term = clean(pts[i].term), note = clean(pts[i].note);
+        if (term || note) lines.push('・' + term + (note ? '：' + note : ''));
+      }
+      return lines.join('\n');
+    }
+    return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId,
+             assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
+             matchSentence: matchSentence, cardText: cardText };
+  }
+  /*<</page-tools-pure>>*/
+
+  var P = PAGE_TOOLS_PURE();
+  var cards = [].slice.call(document.querySelectorAll('.u'));
+  if (!cards.length) return;
+
+  function pageYt(){
+    var el = document.getElementById('clip'); if (!el) return '';
+    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id'); if (y) return y;
+    var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+  }
+  var YT = pageYt();
+  var IDS = P.assignIds(YT, cards.map(function(c){ var t = c.querySelector('.ts'); return t ? t.textContent : ''; }));
+  cards.forEach(function(c, i){ c.dataset.sid = IDS[i]; });
+
+  // ---------- filter / search ----------
+  function rowData(card){
+    return { search: (card.getAttribute('data-search') || '').toLowerCase(),
+             cats:   card.getAttribute('data-cats') || '' };
+  }
+  var input = document.getElementById('filterInput');
+  var catsBox = document.getElementById('filterCats');
+  var resetBtn = document.getElementById('filterReset');
+  var emptyEl = document.getElementById('filterEmpty');
+  var curCat = '';
+  // build category chips from the legend (swatch → var(--slot), <b> → label)
+  if (catsBox){
+    [].slice.call(document.querySelectorAll('.legend .lg')).forEach(function(lg){
+      var sw = lg.querySelector('.swatch'), b = lg.querySelector('b');
+      var mm = sw ? (sw.getAttribute('style') || '').match(/var\(--(\w+)\)/) : null;
+      if (!mm || !b) return;
+      var slot = mm[1];
+      if (['katsu','keigo','joshi','goi'].indexOf(slot) < 0) return;
+      var chip = document.createElement('button');
+      chip.type = 'button'; chip.className = 'filter-cat'; chip.setAttribute('data-cat', slot);
+      chip.setAttribute('aria-pressed', 'false'); chip.textContent = b.textContent;
+      chip.addEventListener('click', function(){
+        curCat = (curCat === slot) ? '' : slot;
+        [].slice.call(catsBox.children).forEach(function(x){
+          var sel = x.getAttribute('data-cat') === curCat;
+          x.classList.toggle('on', sel); x.setAttribute('aria-pressed', sel ? 'true' : 'false');
+        });
+        apply();
+      });
+      catsBox.appendChild(chip);
+    });
+  }
+  function apply(){
+    var q = ((input && input.value) || '').trim().toLowerCase();
+    var filtering = !!(q || curCat), shown = 0;
+    cards.forEach(function(card){
+      var on = P.matchSentence(rowData(card), { q: q, cat: curCat });
+      card.classList.toggle('nomatch', !on); if (on) shown++;
+    });
+    document.body.classList.toggle('filtering', filtering);
+    if (emptyEl) emptyEl.hidden = !(filtering && shown === 0);
+  }
+  if (input) input.addEventListener('input', apply);
+  if (resetBtn) resetBtn.addEventListener('click', function(){
+    if (input) input.value = ''; curCat = '';
+    if (catsBox) [].slice.call(catsBox.children).forEach(function(x){ x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
+    apply();
+  });
+
+  // ---------- deep-link (#s=<id>) ----------
+  function jump(){
+    var id = P.parseHash(location.hash); if (!id) return;
+    var esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id;
+    var card = document.querySelector('.u[data-sid="' + esc + '"]');
+    if (!card){ if (window.console) console.debug('deep-link id not found:', id); return; }
+    card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    card.classList.remove('s-jump'); void card.offsetWidth; card.classList.add('s-jump');
+  }
+  window.addEventListener('hashchange', jump);
+  if (/[#&]s=/.test(location.hash || '')) setTimeout(jump, 300);
+
+  // ---------- per-row share + copy-link ----------
+  var toast = null;
+  function showToast(msg){
+    if (!toast){ toast = document.createElement('div'); toast.id = 'toast'; document.body.appendChild(toast); }
+    toast.textContent = msg; toast.classList.add('show');
+    setTimeout(function(){ toast.classList.remove('show'); }, 1600);
+  }
+  function selectFallback(text){
+    var ta = document.createElement('textarea'); ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); showToast('已复制'); } catch (e){ showToast('已选中，请手动复制'); }
+    setTimeout(function(){ if (ta.parentNode) ta.parentNode.removeChild(ta); }, 1500);
+  }
+  function copyText(text){
+    if (navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText(text).then(function(){ showToast('已复制'); }, function(){ selectFallback(text); });
+    else selectFallback(text);
+  }
+  function readingOf(card){
+    return [].slice.call(card.querySelectorAll('.u-jp rt')).map(function(rt){ return rt.textContent; }).join(' ').trim();
+  }
+  function cnOf(card){
+    var el = card.querySelector('.u-cn'); if (!el) return '';
+    var c = el.cloneNode(true); var lbl = c.querySelector('.lbl'); if (lbl) lbl.remove();
+    return c.textContent.trim();
+  }
+  function pointsOf(card){
+    return [].slice.call(card.querySelectorAll('.u-points li')).map(function(li){
+      var chip = li.querySelector('.chip');
+      return { term: chip ? chip.textContent.trim() : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
+    });
+  }
+  function cardTextOf(card){
+    var jp = card.querySelector('.u-jp');
+    return P.cardText({ jp_html: jp ? jp.innerHTML : '', reading: readingOf(card), cn: cnOf(card), points: pointsOf(card) });
+  }
+  var SHARE = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v13"/><path d="M8 7l4-4 4 4"/></svg>';
+  var LINK  = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>';
+  cards.forEach(function(card){
+    var meta = card.querySelector('.u-meta') || card;
+    var wrap = document.createElement('span'); wrap.className = 'u-actions';
+    var share = document.createElement('button');
+    share.type = 'button'; share.className = 'u-act'; share.setAttribute('aria-label', '分享这句'); share.title = '分享这句';
+    share.innerHTML = SHARE;
+    share.addEventListener('click', function(){
+      var text = cardTextOf(card);
+      if (navigator.share) navigator.share({ text: text }).catch(function(){ copyText(text); });
+      else copyText(text);
+    });
+    var link = document.createElement('button');
+    link.type = 'button'; link.className = 'u-act'; link.setAttribute('aria-label', '复制本句链接'); link.title = '复制本句链接';
+    link.innerHTML = LINK;
+    link.addEventListener('click', function(){
+      var h = '#s=' + encodeURIComponent(card.dataset.sid);
+      try { history.replaceState(null, '', h); } catch (e){ location.hash = h; }
+      copyText(location.href);
+    });
+    wrap.appendChild(share); wrap.appendChild(link);
+    meta.appendChild(wrap);
+  });
 })();
 </script>
 </body>

@@ -408,6 +408,81 @@
     .fav-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
     #favFilter{min-height:44px;padding:.55rem 1.1rem;}
   }
+
+  /* ============================================================
+     IN-PAGE STUDY UX — shadow drill (跟读) · filter/search · per-row share.
+     shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
+     ============================================================ */
+  /* shadow toggle in the dock bar (sits next to 跟随) */
+  .dock-shadow-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+    color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
+    padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
+  .dock-shadow-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
+  /* control cluster, revealed under the dock bar when shadow is on */
+  .dock-shadow{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
+    padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
+  .dock-shadow[hidden]{display:none;}
+  .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{
+    font-family:var(--font-gothic);font-size:.74rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.22rem .6rem;
+    white-space:nowrap;transition:color .12s,border-color .12s,background .12s;}
+  .dock-shadow .sh-mode{display:inline-flex;gap:.3rem;}
+  .dock-shadow .sh-rates{display:inline-flex;gap:.3rem;margin-left:auto;}
+  .dock-shadow button:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow .sh-mode button.on,.dock-shadow .sh-rate.on{color:var(--paper);background:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow button:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  @media (hover:none) and (pointer:coarse){
+    .dock-shadow-toggle{min-height:44px;padding:.5rem .9rem;}
+    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{min-height:44px;padding:.5rem .8rem;}
+  }
+
+  /* filter / search bar (page_tools.js) */
+  .filter-bar{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .6rem;margin:1.6rem 0 0;
+    padding:.7rem .8rem;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--keigo);border-radius:.55rem;}
+  #filterInput{font:inherit;font-size:.9rem;color:var(--ink);background:var(--paper);
+    border:1px solid var(--line-strong);border-radius:2rem;padding:.4rem .9rem;flex:1 1 12rem;min-width:0;}
+  .filter-cats{display:flex;flex-wrap:wrap;gap:.4rem;}
+  .filter-cat{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;
+    background:transparent;border:1px solid currentColor;border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;opacity:.75;transition:opacity .12s,background .12s;}
+  .filter-cat.on{opacity:1;color:var(--paper)!important;}
+  .filter-cat[data-cat="katsu"]{color:var(--katsu);} .filter-cat[data-cat="katsu"].on{background:var(--katsu);border-color:var(--katsu);}
+  .filter-cat[data-cat="keigo"]{color:var(--keigo);} .filter-cat[data-cat="keigo"].on{background:var(--keigo);border-color:var(--keigo);}
+  .filter-cat[data-cat="joshi"]{color:var(--joshi);} .filter-cat[data-cat="joshi"].on{background:var(--joshi);border-color:var(--joshi);}
+  .filter-cat[data-cat="goi"]{color:var(--goi);}     .filter-cat[data-cat="goi"].on{background:var(--goi);border-color:var(--goi);}
+  .filter-reset{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.24rem .7rem;}
+  .filter-reset:hover{color:var(--shu);border-color:var(--shu);}
+  .filter-cat:focus-visible,.filter-reset:focus-visible,#filterInput:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  #filterEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
+    background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
+  body.filtering .u.nomatch{display:none;}
+
+  /* deep-link arrival flash (#s=<id>) — distinct from favorites' fav-jump */
+  .u.s-jump{animation:s-jump 1.5s ease;}
+  @keyframes s-jump{0%,28%{background:var(--keigo-t);box-shadow:inset 3px 0 0 var(--keigo);
+    border-radius:0 .4rem .4rem 0;}100%{background:transparent;}}
+  @media (prefers-reduced-motion:reduce){.u.s-jump{animation:none;}}
+
+  /* per-row action cluster (share / copy-link) next to ★ / bookmark; hidden until hover/focus */
+  .u-actions{display:inline-flex;gap:.25rem;margin-top:.1rem;opacity:0;transition:opacity .15s;}
+  .u:hover .u-actions,.u:focus-within .u-actions{opacity:1;}
+  .u-act{appearance:none;-webkit-appearance:none;background:transparent;border:0;color:var(--ink-faint);
+    cursor:pointer;padding:.25rem;line-height:0;border-radius:.35rem;transition:color .15s,transform .1s;}
+  .u-act:hover{color:var(--keigo);} .u-act:active{transform:scale(.9);}
+  .u-act:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;opacity:1;}
+  .u-act svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;display:block;}
+  #toast{position:fixed;left:50%;bottom:max(1.2rem,env(safe-area-inset-bottom));transform:translateX(-50%);
+    z-index:50;font-family:var(--font-gothic);font-size:.82rem;color:var(--paper);background:var(--ink);
+    border-radius:2rem;padding:.5rem 1rem;box-shadow:0 8px 22px -8px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
+  #toast.show{opacity:.96;}
+  @media (hover:none) and (pointer:coarse){
+    .u-actions{opacity:1;}                 /* no hover on touch → always visible */
+    .u-act{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
+    .filter-cat,.filter-reset{min-height:44px;}
+  }
 </style>
 </head>
 <body>
@@ -422,8 +497,24 @@
     <div class="dock-bar">
       <span class="dock-title"><span class="tri">▶</span> 憧れの先輩とサシ飲み</span>
       <button class="dock-follow on" id="dockFollow" type="button" aria-pressed="true" aria-label="切换字幕自动跟随播放">● 跟随</button>
+      <button class="dock-shadow-toggle" id="shadowToggle" type="button" aria-pressed="false" aria-controls="shadowBar" aria-label="切换跟读练习模式">跟读</button>
       <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
     </div>
+    <!--shadow-bar-->
+    <div class="dock-shadow" id="shadowBar" role="group" aria-label="跟读控制" hidden>
+      <button class="sh-step" id="shPrev" type="button" aria-label="上一句">◁ 句</button>
+      <span class="sh-mode" role="group" aria-label="跟读模式">
+        <button class="sh-loop on" id="shLoop" type="button" aria-pressed="true">循环</button>
+        <button class="sh-run" id="shRun" type="button" aria-pressed="false">通读</button>
+      </span>
+      <span class="sh-rates" role="group" aria-label="播放速度">
+        <button class="sh-rate" data-rate="0.5" type="button" aria-pressed="false">0.5×</button>
+        <button class="sh-rate" data-rate="0.75" type="button" aria-pressed="false">0.75×</button>
+        <button class="sh-rate on" data-rate="1" type="button" aria-pressed="true">1×</button>
+      </span>
+      <button class="sh-step" id="shNext" type="button" aria-label="下一句">句 ▷</button>
+    </div>
+    <!--/shadow-bar-->
     <div class="dock-video">
       <div class="video-frame">
         <video id="clip" controls playsinline preload="metadata" data-youtube-id="EP8pYHrmyig" title="憧れの先輩とサシ飲み">
@@ -461,13 +552,22 @@
 
   <hr class="rule">
 
+  <!--filter-bar-->
+  <div class="filter-bar" id="filterBar" role="search">
+    <input id="filterInput" type="search" placeholder="筛选句子：关键词 / 读音 / 译文…" aria-label="筛选句子">
+    <div class="filter-cats" id="filterCats" aria-label="语法类别筛选"></div>
+    <button class="filter-reset" id="filterReset" type="button">全部</button>
+  </div>
+  <p id="filterEmpty" hidden>无匹配 — 换个关键词或点「全部」。</p>
+  <!--/filter-bar-->
+
     <!-- ============ CARDS ============ -->
   <div class="sec">逐句精讲 · 全 38 句</div>
   <p class="lead">全片对话按时间顺序逐句还原、注音、翻译并解析文法。带 <span class="tri">★</span> 的为重点句式。点击任意 <span class="ts-demo">▸ 时间戳</span> 视频即跳到该处播放。</p>
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">01</span><span class="chapter-t">元カノと『呼び捨て』<span class="chapter-c">聊前任・脱口直呼其名</span></span><span class="chapter-r">0:00–1:00</span></div>
-    <div class="u key">
+    <div class="u key" data-search="あ、そういえばなんで別わかれちゃったんですか？岩田いわたさん、めっちゃ綺麗きれいな人ひとだったのに。 啊，说起来，你们为什么分手了呀？岩田小姐明明是那么漂亮的人。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:00</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">あ、そういえばなんで<ruby>別<rt>わか</rt></ruby>れちゃったんですか？<ruby>岩田<rt>いわた</rt></ruby>さん、めっちゃ<ruby>綺麗<rt>きれい</rt></ruby>な<ruby>人<rt>ひと</rt></ruby>だったのに。</div>
@@ -480,7 +580,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="いや、色々いろいろ我慢がまんさせちゃってたんだよ、きっと。 不…大概是我让她忍了很多委屈吧。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts">00:08</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">いや、<ruby>色々<rt>いろいろ</rt></ruby><ruby>我慢<rt>がまん</rt></ruby>させちゃってたんだよ、きっと。</div>
@@ -492,14 +592,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="そうなんだ。 这样啊。" data-cats="">
       <div class="u-meta"><span class="ts">00:15</span><span class="spk iwata">南</span></div>
       <div class="u-body">
         <div class="u-jp">そうなんだ。</div>
         <div class="u-cn"><span class="lbl">译</span>这样啊。</div>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="まあ、めっちゃいい子こだったからね。いい子こ。 嘛，毕竟是个很好的女孩子嘛。好女孩。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:17</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp">まあ、めっちゃいい<ruby>子<rt>こ</rt></ruby>だったからね。いい<ruby>子<rt>こ</rt></ruby>。</div>
@@ -510,7 +610,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="へえ。まだ好すきですか？ 诶。现在还喜欢（她）吗？" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:23</span><span class="spk iwata">南</span></div>
       <div class="u-body">
         <div class="u-jp">へえ。まだ<ruby>好<rt>す</rt></ruby>きですか？</div>
@@ -521,7 +621,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="いや、それはないかな。 不，那倒不至于吧。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:23</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">いや、それはないかな。</div>
@@ -532,7 +632,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="南みなみ。ごめん、普通ふつうに呼よび捨すてしちゃった。びっくりした？ごめんごめんごめんごめん。 南。抱歉，我很自然地就直呼你名字了。吓到你了吧？对不起对不起对不起对不起。" data-cats="goi">
       <div class="u-meta"><span class="ts">00:32</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>南<rt>みなみ</rt></ruby>。ごめん、<ruby>普通<rt>ふつう</rt></ruby>に<ruby>呼<rt>よ</rt></ruby>び<ruby>捨<rt>す</rt></ruby>てしちゃった。びっくりした？ごめんごめんごめんごめん。</div>
@@ -545,7 +645,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="上野うえの。 上野（同学）。" data-cats="keigo">
       <div class="u-meta"><span class="ts">00:45</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>上野<rt>うえの</rt></ruby>。</div>
@@ -555,7 +655,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="はい。いや、別べつに「南みなみ」でもいいですよ。 嗯。啊，其实叫我「南」也没关系啦。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:45</span><span class="spk iwata">南</span></div>
       <div class="u-body">
         <div class="u-jp">はい。いや、<ruby>別<rt>べつ</rt></ruby>に「<ruby>南<rt>みなみ</rt></ruby>」でもいいですよ。</div>
@@ -566,7 +666,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="いいから、いいから。 没关系没关系（别在意）。" data-cats="joshi">
       <div class="u-meta"><span class="ts">00:47</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">いいから、いいから。</div>
@@ -576,7 +676,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="え、最近さいきんどう？いい人ひととかいないの？ 诶，最近怎么样？有没有什么好对象啊？" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:47</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">え、<ruby>最近<rt>さいきん</rt></ruby>どう？いい<ruby>人<rt>ひと</rt></ruby>とかいないの？</div>
@@ -588,14 +688,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="私わたしですか？ 我吗？" data-cats="">
       <div class="u-meta"><span class="ts">00:51</span><span class="spk iwata">南</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>ですか？</div>
         <div class="u-cn"><span class="lbl">译</span>我吗？</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="あ、言いいたくなかったら言いわなくていいから。 啊，你要是不想说的话，不说也没关系的。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">00:51</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">あ、<ruby>言<rt>い</rt></ruby>いたくなかったら<ruby>言<rt>い</rt></ruby>わなくていいから。</div>
@@ -607,7 +707,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="いや、別べつにそんなんじゃないんですけど。 不，也不是那样的啦…" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">00:55</span><span class="spk iwata">南</span></div>
       <div class="u-body">
         <div class="u-jp">いや、<ruby>別<rt>べつ</rt></ruby>にそんなんじゃないんですけど。</div>
@@ -621,7 +721,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">02</span><span class="chapter-t">南の恋バナ<span class="chapter-c">后辈的恋爱苦恼</span></span><span class="chapter-r">1:00–1:25</span></div>
-    <div class="u key">
+    <div class="u key" data-search="なんか、恋人こいびといる人ひとばっかり好すきになっちゃうんですよ。 就是…我老是会喜欢上已经有恋人的人。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:00</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">なんか、<ruby>恋人<rt>こいびと</rt></ruby>いる<ruby>人<rt>ひと</rt></ruby>ばっかり<ruby>好<rt>す</rt></ruby>きになっちゃうんですよ。</div>
@@ -633,7 +733,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ああ、そういうことね。 啊，原来是这么回事啊。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:05</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp">ああ、そういうことね。</div>
@@ -644,7 +744,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="あ、別べつに取とったりしないですよ。 啊，我可不会去抢人家的哦。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">01:05</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">あ、<ruby>別<rt>べつ</rt></ruby>に<ruby>取<rt>と</rt></ruby>ったりしないですよ。</div>
@@ -655,7 +755,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="いやいや、それは分わかってる。 不不，那个我懂的。" data-cats="goi">
       <div class="u-meta"><span class="ts">01:09</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp">いやいや、それは<ruby>分<rt>わ</rt></ruby>かってる。</div>
@@ -665,7 +765,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="そう、だから恋愛れんあい経験けいけん少すくないっていうか。 对，所以说…该说是恋爱经验很少吧。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:11</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">そう、だから<ruby>恋愛<rt>れんあい</rt></ruby><ruby>経験<rt>けいけん</rt></ruby><ruby>少<rt>すく</rt></ruby>ないっていうか。</div>
@@ -676,7 +776,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="でも、付つき合あうとか、振ふられると… 但是，像是交往啊、被甩的时候…" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">01:16</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">でも、<ruby>付<rt>つ</rt></ruby>き<ruby>合<rt>あ</rt></ruby>うとか、<ruby>振<rt>ふ</rt></ruby>られると…</div>
@@ -692,7 +792,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">03</span><span class="chapter-t">先輩の恋愛観<span class="chapter-c">前辈的恋爱观</span></span><span class="chapter-r">1:25–2:22</span></div>
-    <div class="u key">
+    <div class="u key" data-search="そういう形かたちあるものだけが恋愛れんあいじゃないと、俺おれは思おもってるのね。 并不是只有那种「有具体形式」的东西才算恋爱，我是这么想的。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:25</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">そういう<ruby>形<rt>かたち</rt></ruby>あるものだけが<ruby>恋愛<rt>れんあい</rt></ruby>じゃないと、<ruby>俺<rt>おれ</rt></ruby>は<ruby>思<rt>おも</rt></ruby>ってるのね。</div>
@@ -705,7 +805,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="好すきとか嫉妬しっとするとか、そういう感情的かんじょうてきなものも恋愛れんあいだと思おもうんだよね、俺おれは。 喜欢啦、嫉妒啦，我觉得这种感情上的东西也算是恋爱。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">01:31</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>好<rt>す</rt></ruby>きとか<ruby>嫉妬<rt>しっと</rt></ruby>するとか、そういう<ruby>感情的<rt>かんじょうてき</rt></ruby>なものも<ruby>恋愛<rt>れんあい</rt></ruby>だと<ruby>思<rt>おも</rt></ruby>うんだよね、<ruby>俺<rt>おれ</rt></ruby>は。</div>
@@ -717,7 +817,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="難むずかしいけど、ごめんごめんごめん。俺おれね、もう酔よっ払ぱらうとめんどくさいんだよ。 有点难懂吧，抱歉抱歉抱歉。我这人啊，一喝醉就变得很难搞。" data-cats="goi katsu keigo">
       <div class="u-meta"><span class="ts">01:49</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>難<rt>むずか</rt></ruby>しいけど、ごめんごめんごめん。<ruby>俺<rt>おれ</rt></ruby>ね、もう<ruby>酔<rt>よ</rt></ruby>っ<ruby>払<rt>ぱら</rt></ruby>うとめんどくさいんだよ。</div>
@@ -730,7 +830,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="あ、そうなんですか。ちょ、ちょっとちょっと。 啊，是这样吗。等、等一下等一下。" data-cats="keigo">
       <div class="u-meta"><span class="ts">01:57</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">あ、そうなんですか。ちょ、ちょっとちょっと。</div>
@@ -740,7 +840,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="でも、いつかね、その思おもいが届とどくといいね。 不过啊，总有一天，那份心意能传达到就好了。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">02:00</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">でも、いつかね、その<ruby>思<rt>おも</rt></ruby>いが<ruby>届<rt>とど</rt></ruby>くといいね。</div>
@@ -752,7 +852,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="届とどきますか？ 会传达到吗？" data-cats="keigo">
       <div class="u-meta"><span class="ts">02:09</span><span class="spk iwata">南</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>届<rt>とど</rt></ruby>きますか？</div>
@@ -762,7 +862,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="ね、どうかな。大丈夫だいじょうぶだよ。 嗯，谁知道呢。没问题的啦。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">02:12</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp">ね、どうかな。<ruby>大丈夫<rt>だいじょうぶ</rt></ruby>だよ。</div>
@@ -776,7 +876,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">04</span><span class="chapter-t">「帰りたくない」<span class="chapter-c">『不想回家』的试探</span></span><span class="chapter-r">2:22–2:50</span></div>
-    <div class="u key">
+    <div class="u key" data-search="よし、じゃあ帰かえるか。 好了，那，回家吧？" data-cats="goi katsu">
       <div class="u-meta"><span class="ts">02:22</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">よし、じゃあ<ruby>帰<rt>かえ</rt></ruby>るか。</div>
@@ -787,7 +887,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="帰かえるよ。 走了哦。" data-cats="joshi">
       <div class="u-meta"><span class="ts">02:32</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>帰<rt>かえ</rt></ruby>るよ。</div>
@@ -797,14 +897,14 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="何なに？ 怎么了？" data-cats="">
       <div class="u-meta"><span class="ts">02:40</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>何<rt>なに</rt></ruby>？</div>
         <div class="u-cn"><span class="lbl">译</span>怎么了？</div>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="いや、もし…うん、私わたしが帰かえりたくないって言いったら、どうします？ 不…如果…嗯，我要是说「不想回家」呢，你会怎么办？" data-cats="joshi katsu keigo">
       <div class="u-meta"><span class="ts">02:41</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">いや、もし…うん、<ruby>私<rt>わたし</rt></ruby>が<ruby>帰<rt>かえ</rt></ruby>りたくないって<ruby>言<rt>い</rt></ruby>ったら、どうします？</div>
@@ -817,7 +917,7 @@
         </ul>
       </div>
     </div>
-    <div class="u">
+    <div class="u" data-search="いやいや、金曜きんようじゃないからだめだよ。 不行不行，又不是星期五，不可以啦。" data-cats="goi joshi">
       <div class="u-meta"><span class="ts">02:47</span><span class="spk host">先輩</span></div>
       <div class="u-body">
         <div class="u-jp">いやいや、<ruby>金曜<rt>きんよう</rt></ruby>じゃないからだめだよ。</div>
@@ -832,7 +932,7 @@
 
   <section class="chapter">
     <div class="chapter-h"><span class="chapter-n">05</span><span class="chapter-t">先輩後輩として<span class="chapter-c">前辈后辈的界线・结账</span></span><span class="chapter-r">2:50–4:01</span></div>
-    <div class="u">
+    <div class="u" data-search="いや、そうじゃなくて… 不，我不是那个意思…" data-cats="goi">
       <div class="u-meta"><span class="ts">02:50</span><span class="spk iwata">南</span></div>
       <div class="u-body">
         <div class="u-jp">いや、そうじゃなくて…</div>
@@ -843,7 +943,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="何なに、いや、だから、今いまこれは仕事しごとで後輩こうはいと飲のんでるっていう感かんじですか？ 什么…不，我是说，现在这个算是「因为工作、和后辈一起喝酒」这种感觉吗？" data-cats="goi joshi katsu keigo">
       <div class="u-meta"><span class="ts">02:56</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp"><ruby>何<rt>なに</rt></ruby>、いや、だから、<ruby>今<rt>いま</rt></ruby>これは<ruby>仕事<rt>しごと</rt></ruby>で<ruby>後輩<rt>こうはい</rt></ruby>と<ruby>飲<rt>の</rt></ruby>んでるっていう<ruby>感<rt>かん</rt></ruby>じですか？</div>
@@ -857,7 +957,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="うん、いや、仕事しごとじゃないけど…けど、先輩せんぱい後輩こうはいとして来きてるよ。 嗯，不，虽然不是工作…但，我是以「前辈后辈」的身份来的哦。" data-cats="joshi katsu">
       <div class="u-meta"><span class="ts">03:12</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">うん、いや、<ruby>仕事<rt>しごと</rt></ruby>じゃないけど…けど、<ruby>先輩<rt>せんぱい</rt></ruby><ruby>後輩<rt>こうはい</rt></ruby>として<ruby>来<rt>き</rt></ruby>てるよ。</div>
@@ -871,7 +971,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="はい、すいません、なんでもないです。 好的，对不起，没什么。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts">03:41</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">はい、すいません、なんでもないです。</div>
@@ -883,7 +983,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="うん、よし。じゃ、俺おれ、会計かいけいしてくるわ。すいません。 嗯，好。那，我去结一下账。（店员～）不好意思。" data-cats="goi joshi katsu keigo">
       <div class="u-meta"><span class="ts">03:56</span><span class="spk host">先輩</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">うん、よし。じゃ、<ruby>俺<rt>おれ</rt></ruby>、<ruby>会計<rt>かいけい</rt></ruby>してくるわ。すいません。</div>
@@ -897,7 +997,7 @@
         </ul>
       </div>
     </div>
-    <div class="u key">
+    <div class="u key" data-search="ごちそうさまです。 谢谢款待。" data-cats="keigo">
       <div class="u-meta"><span class="ts">04:00</span><span class="spk iwata">南</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
         <div class="u-jp">ごちそうさまです。</div>
@@ -982,6 +1082,30 @@
   /*<</follow-guard>>*/
   var guard = makeScrollGuard(900);
   function nowms(){ return Date.now(); }
+
+  // ---------- stable player handle for shadow.js (window.LangPlayer) ----------
+  // Unifies the two backends behind one interface so the shadow drill can seek /
+  // rate-limit the existing player without touching <video> or the IFrame API.
+  // Every LangPlayer.seek arms the scroll-guard so follow-along never self-cancels.
+  var tickCbs = [];
+  function emitTick(t){ for (var i = 0; i < tickCbs.length; i++){ try { tickCbs[i](t); } catch (e){} } }
+  function playerRates(){ return (transport && transport.rates) ? transport.rates() : [0.5, 0.75, 1]; }
+  function clampRate(r){
+    var rs = playerRates(), best = rs[0], bd = Math.abs(rs[0] - r);
+    for (var i = 1; i < rs.length; i++){ var d = Math.abs(rs[i] - r); if (d < bd){ bd = d; best = rs[i]; } }
+    return best;
+  }
+  window.LangPlayer = {
+    ready:    function(){ return !!transport; },
+    seek:     function(t){ if (transport){ guard.begin(nowms()); transport.seek(t); } },
+    getTime:  function(){ return (transport && transport.getTime) ? transport.getTime() : 0; },
+    setRate:  function(r){ if (transport && transport.setRate) transport.setRate(clampRate(r)); },
+    play:     function(){ if (transport && transport.play) transport.play(); },
+    pause:    function(){ if (transport && transport.pause) transport.pause(); },
+    onTick:   function(cb){ if (typeof cb === 'function') tickCbs.push(cb); },
+    rates:    playerRates,
+    duration: function(){ return (transport && transport.duration) ? transport.duration() : 0; }
+  };
 
   function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
   function setMin(m){
@@ -1084,12 +1208,20 @@
 
   // ---------- transport A: native <video> (offline) ----------
   function useLocal(){
-    transport = { seek: function(sec){
-      setMin(false);
-      try { video.currentTime = sec; } catch (e) {}
-      var p = video.play(); if (p && p.catch) p.catch(function(){});
-    } };
-    video.addEventListener('timeupdate', function(){ highlight(video.currentTime); });
+    transport = {
+      seek: function(sec){
+        setMin(false);
+        try { video.currentTime = sec; } catch (e) {}
+        var p = video.play(); if (p && p.catch) p.catch(function(){});
+      },
+      getTime:  function(){ return video.currentTime || 0; },
+      setRate:  function(r){ try { video.playbackRate = r; } catch (e){} },
+      play:     function(){ var p = video.play(); if (p && p.catch) p.catch(function(){}); },
+      pause:    function(){ try { video.pause(); } catch (e){} },
+      rates:    function(){ return [0.5, 0.75, 1]; },
+      duration: function(){ return video.duration || 0; }
+    };
+    video.addEventListener('timeupdate', function(){ highlight(video.currentTime); emitTick(video.currentTime); });
   }
 
   // ---------- transport B: YouTube IFrame Player API (online) ----------
@@ -1097,11 +1229,19 @@
     var slot = document.createElement('div'); slot.id = 'clip';
     if (video && video.parentNode) video.parentNode.replaceChild(slot, video);
     var player = null, isReady = false, pending = null, poll = null;
-    transport = { seek: function(sec){
-      setMin(false);
-      if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
-      else pending = sec;
-    } };
+    transport = {
+      seek: function(sec){
+        setMin(false);
+        if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
+        else pending = sec;
+      },
+      getTime:  function(){ try { return (isReady && player) ? (player.getCurrentTime() || 0) : 0; } catch (e){ return 0; } },
+      setRate:  function(r){ try { if (isReady && player) player.setPlaybackRate(r); } catch (e){} },
+      play:     function(){ try { if (isReady && player) player.playVideo(); } catch (e){} },
+      pause:    function(){ try { if (isReady && player) player.pauseVideo(); } catch (e){} },
+      rates:    function(){ try { return (isReady && player && player.getAvailablePlaybackRates) ? player.getAvailablePlaybackRates() : [0.5, 0.75, 1]; } catch (e){ return [0.5, 0.75, 1]; } },
+      duration: function(){ try { return (isReady && player && player.getDuration) ? (player.getDuration() || 0) : 0; } catch (e){ return 0; } }
+    };
     window.onYouTubeIframeAPIReady = function(){
       player = new YT.Player('clip', {
         width: '100%', height: '100%', videoId: ytid,
@@ -1110,8 +1250,8 @@
           onReady: function(){ isReady = true; if (pending != null){ var s = pending; pending = null; transport.seek(s); } },
           onStateChange: function(e){
             if (e.data === YT.PlayerState.PLAYING){
-              highlight(player.getCurrentTime());
-              if (!poll) poll = setInterval(function(){ if (player && player.getCurrentTime) highlight(player.getCurrentTime()); }, 250);
+              highlight(player.getCurrentTime()); emitTick(player.getCurrentTime());
+              if (!poll) poll = setInterval(function(){ if (player && player.getCurrentTime){ var tt = player.getCurrentTime(); highlight(tt); emitTick(tt); } }, 250);
             } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED){
               if (poll){ clearInterval(poll); poll = null; }
             }
@@ -1512,6 +1652,382 @@
     if (LF){ if (LF.onChange) LF.onChange(refresh); refresh(); return; }
     if (tries < 30) setTimeout(function(){ wait(tries + 1); }, 80);
   })(0);
+})();
+</script>
+<script>
+/* ============================================================================
+   Shadow drill (跟读) — focused per-sentence audio shadowing on auto-mode pages.
+   Talks to the player ONLY through window.LangPlayer (player_auto.html), so the
+   drill logic is a pure state machine (shadowStep) unit-tested in isolation
+   (tools/test_shadow.mjs) with no real player. Ships auto-only (needs time
+   events); hidden in embed. Design + rationale: plans/in-page-study-ux.md.
+   ========================================================================== */
+(function(){
+  /*<<shadow-pure>>*/
+  // Pure, DOM/Player-free core. Extracted verbatim by the unit test.
+  function SHADOW_PURE(){
+    var GAP_CAP = 4000;   // ms — long lines never leave more than 4s of dead air
+    // Drill state machine. One tick → one action; the DOM caller applies it.
+    //   s = { mode, curT, lineStart, lineEnd, nextStart, gapUntil, now }
+    //   mode: 'loop' (repeat this line) | 'run' (line → gap → next line)
+    //   gapUntil: null when no gap is armed, else the ms deadline of the active gap
+    // Returns { type, to?, until? }:
+    //   'seek'(to) | 'gap'(until) | 'hold' | 'advance'(to) | 'stop' | 'none'
+    function shadowStep(s){
+      if (s.mode === 'loop'){
+        if (s.curT >= s.lineEnd) return { type: 'seek', to: s.lineStart };
+        return { type: 'none' };
+      }
+      if (s.mode === 'run'){
+        if (s.gapUntil != null){                       // a gap is in progress
+          if (s.now < s.gapUntil) return { type: 'hold' };
+          return s.nextStart != null
+            ? { type: 'advance', to: s.nextStart }
+            : { type: 'stop' };
+        }
+        if (s.curT >= s.lineEnd){                       // reached line end → open the gap
+          var gapMs = Math.min((s.lineEnd - s.lineStart) * 1000, GAP_CAP);
+          return { type: 'gap', until: s.now + gapMs };
+        }
+        return { type: 'none' };
+      }
+      return { type: 'none' };
+    }
+    // Clamp a requested rate to the nearest value the backend supports.
+    function clampRate(r, rates){
+      var list = (rates && rates.length) ? rates : [1];
+      var best = list[0], bd = Math.abs(list[0] - r);
+      for (var i = 1; i < list.length; i++){
+        var d = Math.abs(list[i] - r);
+        if (d < bd){ bd = d; best = list[i]; }
+      }
+      return best;
+    }
+    return { shadowStep: shadowStep, clampRate: clampRate };
+  }
+  /*<</shadow-pure>>*/
+
+  var LP = window.LangPlayer;
+  if (!LP) return;                                     // no adapter (embed / single-mode) → no shadow
+  var toggle = document.getElementById('shadowToggle');
+  var bar    = document.getElementById('shadowBar');
+  if (!toggle || !bar) return;
+
+  var P = SHADOW_PURE();
+  function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
+  var rows = [].slice.call(document.querySelectorAll('.u')).map(function(el){
+    var t = el.querySelector('.ts'); return { el: el, sec: t ? toSec(t.textContent) : 0 };
+  }).sort(function(a, b){ return a.sec - b.sec; });
+  if (!rows.length) return;
+  var starts = rows.map(function(r){ return r.sec; });
+  function medianGap(){
+    var g = [];
+    for (var i = 1; i < starts.length; i++) g.push(starts[i] - starts[i - 1]);
+    if (!g.length) return 5;
+    g.sort(function(a, b){ return a - b; });
+    return g[Math.floor(g.length / 2)] || 5;
+  }
+  var LAST_LEN = Math.min(Math.max(medianGap(), 2), 8);   // fallback for the final line when duration()==0
+
+  var on = false, mode = 'loop', active = -1, lastTap = -1, gapUntil = null, rate = 1, ticking = false;
+
+  function lineBounds(i){
+    var lineStart = starts[i];
+    var nextStart = (i + 1 < starts.length) ? starts[i + 1] : null;
+    var dur = LP.duration ? LP.duration() : 0;
+    var lineEnd = (nextStart != null) ? nextStart
+                : (dur > lineStart ? dur : lineStart + LAST_LEN);
+    return { lineStart: lineStart, lineEnd: lineEnd, nextStart: nextStart };
+  }
+  function currentIdx(){                                   // nearest line at/just-before the playhead
+    var t = LP.getTime(), lo = 0;
+    for (var k = 0; k < starts.length; k++){ if (starts[k] <= t + 0.15) lo = k; else break; }
+    return lo;
+  }
+  function setActive(i){
+    if (i < 0 || i >= rows.length) return;
+    active = i; gapUntil = null;
+    LP.seek(starts[i]); LP.play();
+  }
+  function tick(){
+    if (!on || active < 0) return;
+    var b = lineBounds(active);
+    var act = P.shadowStep({ mode: mode, curT: LP.getTime(),
+      lineStart: b.lineStart, lineEnd: b.lineEnd, nextStart: b.nextStart,
+      gapUntil: gapUntil, now: Date.now() });
+    if (act.type === 'seek'){ LP.seek(act.to); LP.play(); }
+    else if (act.type === 'gap'){ gapUntil = act.until; LP.pause(); }
+    else if (act.type === 'hold'){ /* stay paused during the shadow gap */ }
+    else if (act.type === 'advance'){ gapUntil = null; active += 1; LP.seek(act.to); LP.play(); reflect(); }
+    else if (act.type === 'stop'){ gapUntil = null; LP.pause(); setOn(false); }
+  }
+  function reflect(){
+    toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    toggle.classList.toggle('on', on);
+    bar.hidden = !on;
+    var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
+    if (loopBtn){ loopBtn.classList.toggle('on', mode === 'loop'); loopBtn.setAttribute('aria-pressed', mode === 'loop' ? 'true' : 'false'); }
+    if (runBtn){  runBtn.classList.toggle('on', mode === 'run');   runBtn.setAttribute('aria-pressed', mode === 'run' ? 'true' : 'false'); }
+    [].slice.call(bar.querySelectorAll('.sh-rate')).forEach(function(btn){
+      var sel = parseFloat(btn.getAttribute('data-rate')) === rate;
+      btn.classList.toggle('on', sel); btn.setAttribute('aria-pressed', sel ? 'true' : 'false');
+    });
+  }
+  function setOn(v){
+    on = v;
+    if (on && active < 0) setActive(lastTap >= 0 ? lastTap : currentIdx());
+    if (on && !ticking){ ticking = true; (function loop(){ tick(); if (ticking) setTimeout(loop, 200); })(); }
+    if (!on){ ticking = false; gapUntil = null; }
+    reflect();
+  }
+  function setMode(m){ mode = m; gapUntil = null; reflect(); }
+  function setRate(r){ rate = P.clampRate(r, LP.rates()); LP.setRate(rate); reflect(); }
+  function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
+
+  toggle.addEventListener('click', function(){ setOn(!on); });
+  var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
+  if (loopBtn) loopBtn.addEventListener('click', function(){ setMode('loop'); });
+  if (runBtn)  runBtn.addEventListener('click', function(){ setMode('run'); });
+  var prevBtn = document.getElementById('shPrev'), nextBtn = document.getElementById('shNext');
+  if (prevBtn) prevBtn.addEventListener('click', function(){ step(-1); });
+  if (nextBtn) nextBtn.addEventListener('click', function(){ step(1); });
+  [].slice.call(bar.querySelectorAll('.sh-rate')).forEach(function(btn){
+    btn.addEventListener('click', function(){ setRate(parseFloat(btn.getAttribute('data-rate'))); });
+  });
+  // remember the last tapped line; while shadow is ON, re-pin the active line to it
+  rows.forEach(function(r, i){
+    var ts = r.el.querySelector('.ts');
+    if (ts) ts.addEventListener('click', function(){ lastTap = i; if (on){ active = i; gapUntil = null; reflect(); } });
+  });
+
+  // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
+  toggle.disabled = true;
+  (function wait(tries){
+    if (LP.ready && LP.ready()){ toggle.disabled = false; reflect(); return; }
+    if (tries < 40) setTimeout(function(){ wait(tries + 1); }, 100);
+    else { toggle.disabled = false; reflect(); }       // best-effort: enable anyway
+  })(0);
+})();
+</script>
+<script>
+/* ============================================================================
+   Page tools — filter/search, deep-link (#s=<id>), and text share for study
+   pages. Works on EVERY page and offline (file://): shares only favorites' PURE
+   scheme (the collision-safe id + stripFuri), never its https-gated runtime.
+   Pure core unit-tested in tools/test_page_tools.mjs. plans/in-page-study-ux.md
+   ========================================================================== */
+(function(){
+  /*<<page-tools-pure>>*/
+  // Pure, DOM-free core. Extracted verbatim by the unit test. The id scheme is a
+  // deliberate re-implementation of favorites' assignFavIds (test asserts parity):
+  // page_tools must produce the SAME <yt>#<mmss>#<n> ids OFFLINE, where favorites
+  // (https-gated) never runs.
+  function PAGE_TOOLS_PURE(){
+    function tsToSec(t){
+      var p = (String(t).match(/\d+/g) || []).map(Number);
+      var s = 0; for (var i = 0; i < p.length; i++) s = s * 60 + p[i];
+      return s;
+    }
+    function secToMmss(s){
+      s = Math.max(0, Math.floor(+s || 0));
+      var m = Math.floor(s / 60), ss = s % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (ss < 10 ? '0' : '') + ss;
+    }
+    // one row's id, given its ts + within-second ordinal
+    function sentenceId(rowData){
+      return rowData.yt + '#' + secToMmss(tsToSec(rowData.ts)) + '#' + rowData.ord;
+    }
+    // assign ids across all rows in DOM order (== favorites' assignFavIds)
+    function assignIds(yt, tsList){
+      var seen = {}, out = [];
+      for (var i = 0; i < tsList.length; i++){
+        var mmss = secToMmss(tsToSec(tsList[i]));
+        var n = (seen[mmss] == null) ? 0 : seen[mmss] + 1;
+        seen[mmss] = n;
+        out.push(sentenceId({ yt: yt, ts: tsList[i], ord: n }));
+      }
+      return out;
+    }
+    // parse #s=<encoded id> → decoded id, or null
+    function parseHash(hash){
+      var m = String(hash || '').match(/[#&]s=([^&]+)/);
+      if (!m) return null;
+      try { return decodeURIComponent(m[1]); } catch (e){ return m[1]; }
+    }
+    function stripFuri(html){
+      return String(html == null ? '' : html)
+        .replace(/<rp\b[^>]*>[\s\S]*?<\/rp>/gi, '')
+        .replace(/<rt\b[^>]*>[\s\S]*?<\/rt>/gi, '')
+        .replace(/<[^>]+>/g, '');
+    }
+    // AND-semantics filter: q is a pre-lowercased substring over rowData.search;
+    // cat matches when rowData.cats (space-separated) includes it. empty → all.
+    function matchSentence(rowData, sel){
+      var q = (sel && sel.q) || '', cat = (sel && sel.cat) || '';
+      if (cat){
+        var cats = ' ' + (rowData.cats || '') + ' ';
+        if (cats.indexOf(' ' + cat + ' ') < 0) return false;
+      }
+      if (!q) return true;
+      return String(rowData.search == null ? '' : rowData.search).indexOf(q) >= 0;
+    }
+    // plain-text share card: rt-stripped JP + reading + 译 + grammar, no stray tabs/newlines
+    function cardText(rowData){
+      function clean(s){ return String(s == null ? '' : s).replace(/[\t\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
+      var lines = [];
+      var jp = clean(stripFuri(rowData.jp_html || ''));
+      if (jp) lines.push(jp);
+      var reading = clean(rowData.reading || '');
+      if (reading) lines.push('（' + reading + '）');
+      if (rowData.cn) lines.push('译：' + clean(rowData.cn));
+      var pts = rowData.points || [];
+      for (var i = 0; i < pts.length; i++){
+        var term = clean(pts[i].term), note = clean(pts[i].note);
+        if (term || note) lines.push('・' + term + (note ? '：' + note : ''));
+      }
+      return lines.join('\n');
+    }
+    return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId,
+             assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
+             matchSentence: matchSentence, cardText: cardText };
+  }
+  /*<</page-tools-pure>>*/
+
+  var P = PAGE_TOOLS_PURE();
+  var cards = [].slice.call(document.querySelectorAll('.u'));
+  if (!cards.length) return;
+
+  function pageYt(){
+    var el = document.getElementById('clip'); if (!el) return '';
+    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id'); if (y) return y;
+    var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+  }
+  var YT = pageYt();
+  var IDS = P.assignIds(YT, cards.map(function(c){ var t = c.querySelector('.ts'); return t ? t.textContent : ''; }));
+  cards.forEach(function(c, i){ c.dataset.sid = IDS[i]; });
+
+  // ---------- filter / search ----------
+  function rowData(card){
+    return { search: (card.getAttribute('data-search') || '').toLowerCase(),
+             cats:   card.getAttribute('data-cats') || '' };
+  }
+  var input = document.getElementById('filterInput');
+  var catsBox = document.getElementById('filterCats');
+  var resetBtn = document.getElementById('filterReset');
+  var emptyEl = document.getElementById('filterEmpty');
+  var curCat = '';
+  // build category chips from the legend (swatch → var(--slot), <b> → label)
+  if (catsBox){
+    [].slice.call(document.querySelectorAll('.legend .lg')).forEach(function(lg){
+      var sw = lg.querySelector('.swatch'), b = lg.querySelector('b');
+      var mm = sw ? (sw.getAttribute('style') || '').match(/var\(--(\w+)\)/) : null;
+      if (!mm || !b) return;
+      var slot = mm[1];
+      if (['katsu','keigo','joshi','goi'].indexOf(slot) < 0) return;
+      var chip = document.createElement('button');
+      chip.type = 'button'; chip.className = 'filter-cat'; chip.setAttribute('data-cat', slot);
+      chip.setAttribute('aria-pressed', 'false'); chip.textContent = b.textContent;
+      chip.addEventListener('click', function(){
+        curCat = (curCat === slot) ? '' : slot;
+        [].slice.call(catsBox.children).forEach(function(x){
+          var sel = x.getAttribute('data-cat') === curCat;
+          x.classList.toggle('on', sel); x.setAttribute('aria-pressed', sel ? 'true' : 'false');
+        });
+        apply();
+      });
+      catsBox.appendChild(chip);
+    });
+  }
+  function apply(){
+    var q = ((input && input.value) || '').trim().toLowerCase();
+    var filtering = !!(q || curCat), shown = 0;
+    cards.forEach(function(card){
+      var on = P.matchSentence(rowData(card), { q: q, cat: curCat });
+      card.classList.toggle('nomatch', !on); if (on) shown++;
+    });
+    document.body.classList.toggle('filtering', filtering);
+    if (emptyEl) emptyEl.hidden = !(filtering && shown === 0);
+  }
+  if (input) input.addEventListener('input', apply);
+  if (resetBtn) resetBtn.addEventListener('click', function(){
+    if (input) input.value = ''; curCat = '';
+    if (catsBox) [].slice.call(catsBox.children).forEach(function(x){ x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
+    apply();
+  });
+
+  // ---------- deep-link (#s=<id>) ----------
+  function jump(){
+    var id = P.parseHash(location.hash); if (!id) return;
+    var esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id;
+    var card = document.querySelector('.u[data-sid="' + esc + '"]');
+    if (!card){ if (window.console) console.debug('deep-link id not found:', id); return; }
+    card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    card.classList.remove('s-jump'); void card.offsetWidth; card.classList.add('s-jump');
+  }
+  window.addEventListener('hashchange', jump);
+  if (/[#&]s=/.test(location.hash || '')) setTimeout(jump, 300);
+
+  // ---------- per-row share + copy-link ----------
+  var toast = null;
+  function showToast(msg){
+    if (!toast){ toast = document.createElement('div'); toast.id = 'toast'; document.body.appendChild(toast); }
+    toast.textContent = msg; toast.classList.add('show');
+    setTimeout(function(){ toast.classList.remove('show'); }, 1600);
+  }
+  function selectFallback(text){
+    var ta = document.createElement('textarea'); ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); showToast('已复制'); } catch (e){ showToast('已选中，请手动复制'); }
+    setTimeout(function(){ if (ta.parentNode) ta.parentNode.removeChild(ta); }, 1500);
+  }
+  function copyText(text){
+    if (navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText(text).then(function(){ showToast('已复制'); }, function(){ selectFallback(text); });
+    else selectFallback(text);
+  }
+  function readingOf(card){
+    return [].slice.call(card.querySelectorAll('.u-jp rt')).map(function(rt){ return rt.textContent; }).join(' ').trim();
+  }
+  function cnOf(card){
+    var el = card.querySelector('.u-cn'); if (!el) return '';
+    var c = el.cloneNode(true); var lbl = c.querySelector('.lbl'); if (lbl) lbl.remove();
+    return c.textContent.trim();
+  }
+  function pointsOf(card){
+    return [].slice.call(card.querySelectorAll('.u-points li')).map(function(li){
+      var chip = li.querySelector('.chip');
+      return { term: chip ? chip.textContent.trim() : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
+    });
+  }
+  function cardTextOf(card){
+    var jp = card.querySelector('.u-jp');
+    return P.cardText({ jp_html: jp ? jp.innerHTML : '', reading: readingOf(card), cn: cnOf(card), points: pointsOf(card) });
+  }
+  var SHARE = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v13"/><path d="M8 7l4-4 4 4"/></svg>';
+  var LINK  = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>';
+  cards.forEach(function(card){
+    var meta = card.querySelector('.u-meta') || card;
+    var wrap = document.createElement('span'); wrap.className = 'u-actions';
+    var share = document.createElement('button');
+    share.type = 'button'; share.className = 'u-act'; share.setAttribute('aria-label', '分享这句'); share.title = '分享这句';
+    share.innerHTML = SHARE;
+    share.addEventListener('click', function(){
+      var text = cardTextOf(card);
+      if (navigator.share) navigator.share({ text: text }).catch(function(){ copyText(text); });
+      else copyText(text);
+    });
+    var link = document.createElement('button');
+    link.type = 'button'; link.className = 'u-act'; link.setAttribute('aria-label', '复制本句链接'); link.title = '复制本句链接';
+    link.innerHTML = LINK;
+    link.addEventListener('click', function(){
+      var h = '#s=' + encodeURIComponent(card.dataset.sid);
+      try { history.replaceState(null, '', h); } catch (e){ location.hash = h; }
+      copyText(location.href);
+    });
+    wrap.appendChild(share); wrap.appendChild(link);
+    meta.appendChild(wrap);
+  });
 })();
 </script>
 </body>
