@@ -483,12 +483,37 @@
     .u-act{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
     .filter-cat,.filter-reset{min-height:44px;}
   }
+
+  /* ============================================================
+     SYNCED STUDY-STATE — per-sentence notes (notes.js). plans/synced-study-state.md
+     ============================================================ */
+  .note-btn{font-size:.9rem;line-height:1;}
+  .note-btn.has-note{color:var(--goi);}
+  .u-note{margin:.5rem 0 0;}
+  .u-note-ta{font:inherit;font-size:.9rem;width:100%;box-sizing:border-box;color:var(--ink);
+    background:var(--paper);border:1px solid var(--line-strong);border-radius:.45rem;padding:.5rem .7rem;
+    resize:vertical;line-height:1.6;}
+  .u-note-ta:focus-visible{outline:2px solid var(--goi);outline-offset:1px;}
+
+  /* resume banner (progress.js) — study pages */
+  .resume-banner{display:flex;align-items:center;gap:.6rem;margin:1.2rem 0 0;padding:.6rem .9rem;
+    background:var(--card);border:1px solid var(--line);border-left:3px solid var(--goi);border-radius:.5rem;}
+  .resume-banner[hidden]{display:none;}
+  .resume-go{font-family:var(--font-gothic);font-size:.85rem;font-weight:600;cursor:pointer;color:var(--goi);
+    background:transparent;border:1px solid var(--goi);border-radius:2rem;padding:.32rem .9rem;white-space:nowrap;}
+  .resume-go:hover{background:var(--goi);color:var(--paper);}
+  .resume-x{margin-left:auto;font:inherit;font-size:.85rem;cursor:pointer;color:var(--ink-faint);
+    background:transparent;border:0;padding:.2rem .4rem;}
+  .resume-x:hover{color:var(--shu);}
 </style>
 </head>
 <body>
 <div class="wrap">
   <nav class="lang-nav" data-kind="study"><a class="ln-brand" href="index.html"><span class="ln-mark">◂</span> lang分析</a><span class="ln-ctx">· 恋愛短剧 · 06-28</span><span class="ln-pn"><a class="ln-prev" href="sashinomi.html">‹ 上一篇</a><a class="ln-next" href="bunpou.html">下一篇 ›</a></span><a class="ln-fav" href="favorites.html"><span class="ln-star">★</span> 收藏 <b class="ln-fav-n">0</b><span class="ln-dot ln-off" title="未开启"></span></a></nav>
 
+  <!--resume-banner-->
+  <div class="resume-banner" id="resumeBanner" hidden></div>
+  <!--/resume-banner-->
   <p class="eyebrow">日本語文法分析 · 中文精讲</p>
   <h1>「付き合ったってことでOK？」<br>——恋爱短剧的逐句文法拆解</h1>
   <p class="sub">一部日语恋爱短剧：咖啡馆里，两个好友男女互相试探能否从「朋友」变成「恋人」，店员还把他们误当成情侣。面向中文母语的日语学习者，逐句还原口语（タメ口）、注音并精讲文法。</p>
@@ -1641,12 +1666,15 @@
 </script>
 <script>
 /* ============================================================================
-   Favorites (收藏) — capture on any study page, review pooled on favorites.html.
-   Store = localStorage cache; SOURCE OF TRUTH = a private GitHub Gist (opt-in
-   sync). Online-only (gated on isSecureContext) so offline file:// deliverables
-   stay self-contained. The pure core below is unit-tested (tools/test_favorites.mjs).
-   Exposes window.LangFav on EVERY page (study pages inject capture UI; favorites.html
-   renders the pooled library). Design + rationale: plans/favorites.md.
+   Study-state store (v2) — the shared synced substrate. Was single-purpose
+   favorites; now holds FOUR namespaced maps (items / srs / notes / progress) on
+   the same private-Gist backend. Store = localStorage cache; SOURCE OF TRUTH = a
+   private GitHub Gist (opt-in sync). Online-only (gated on https/localhost, NOT
+   file://) so offline file:// deliverables stay self-contained. The pure core
+   below is unit-tested (tools/test_favorites.mjs). Exposes window.LangFav on EVERY
+   page: study pages inject capture UI + notes + progress; favorites.html renders
+   the pooled library + SRS review; index renders 继续学习. srs.js / notes.js /
+   progress.js layer on top via getNS/setKey/delKey. Design: plans/synced-study-state.md.
    ========================================================================== */
 (function(){
   /*<<fav-pure>>*/
@@ -1664,7 +1692,6 @@
       return (m < 10 ? '0' : '') + m + ':' + (ss < 10 ? '0' : '') + ss;
     }
     // ---- identity: <yt>#<mmss>#<n>, n = within-second ordinal in DOM order.
-    // Fixes the v1 bug where same-second cards collided (verified 5x in sashinomi).
     function assignFavIds(yt, tsList){
       var seen = {}, out = [];
       for (var i = 0; i < tsList.length; i++){
@@ -1685,53 +1712,81 @@
     function sanitizeField(s){
       return String(s == null ? '' : s).replace(/\t/g, ' ').replace(/\r?\n/g, '<br>');
     }
-    // ---- Anki card: plain JP front, ruby+译+grammar back. Caller writes the file
-    // with a leading "#separator:tab" + "#html:true" so ruby renders and TSV holds.
+    // ---- Anki card: plain JP front, ruby+译+grammar back.
     function ankiCard(rec){
       var front = sanitizeField(stripFuri(rec.jp_html || ''));
-      var parts = [rec.jp_html || ''];                  // ruby intact → furigana on back
+      var parts = [rec.jp_html || ''];
       if (rec.cn) parts.push('【译】' + rec.cn);
       var pts = rec.points || [];
       for (var i = 0; i < pts.length; i++)
         parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
-    // ---- op-replay merge (pure; no wall-clock, no tombstones). add sets, del removes.
-    function applyOps(items, ops){
-      var out = {};
-      for (var k in items) if (Object.prototype.hasOwnProperty.call(items, k)) out[k] = items[k];
+    // ---- v2 four-map state helpers ----
+    var NS = ['items', 'srs', 'notes', 'progress'];
+    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {} }; }
+    function cloneState(state){
+      state = state || {};
+      var out = emptyState();
+      for (var n = 0; n < NS.length; n++){
+        var src = state[NS[n]] || {}, dst = out[NS[n]];
+        for (var k in src) if (Object.prototype.hasOwnProperty.call(src, k)) dst[k] = src[k];
+      }
+      return out;
+    }
+    // v1 (or version-less) doc → four-map state; no favorites lost or moved.
+    function migrate(parsed){
+      parsed = parsed || {};
+      return { items: parsed.items || {}, srs: parsed.srs || {},
+               notes: parsed.notes || {}, progress: parsed.progress || {} };
+    }
+    // v2 writer: ALWAYS serialize all four maps under {v:2, …}.
+    function serialize(state){
+      state = state || {};
+      return { v: 2, items: state.items || {}, srs: state.srs || {},
+               notes: state.notes || {}, progress: state.progress || {} };
+    }
+    // normalize a legacy favorite op into a v2 namespaced op.
+    function normalizeOp(o){
+      if (!o) return null;
+      if (o.ns) return { ns: o.ns, op: o.op, key: o.key, value: o.value };
+      if (o.op === 'add') return { ns: 'items', op: 'set', key: o.id, value: o.record };
+      if (o.op === 'del') return { ns: 'items', op: 'del', key: o.id };
+      return null;
+    }
+    // ---- op-replay merge across the four namespaces (pure; no wall-clock, no tombstones).
+    function applyOps(state, ops){
+      var out = cloneState(state);
       for (var i = 0; i < (ops || []).length; i++){
-        var o = ops[i];
-        if (o.op === 'add') out[o.id] = o.record;
-        else if (o.op === 'del') delete out[o.id];
+        var o = normalizeOp(ops[i]);
+        if (!o || NS.indexOf(o.ns) < 0) continue;
+        var map = out[o.ns];
+        if (o.op === 'set') map[o.key] = o.value;
+        else if (o.op === 'del') delete map[o.key];
       }
       return out;
     }
     // ---- sync engine: pull → apply pending ops → PATCH with If-Match(etag).
     // On 412 (another device pushed since our pull) re-pull, re-apply, retry.
-    // This is what prevents the silent lost-update the review flagged.
     function makeSync(deps){
       var request = deps.request;                        // (kind, opts) -> {ok,status,etag,body}
       async function flush(ops, pulled){
-        var base = pulled ? pulled.items : null, etag = pulled ? pulled.etag : null;
-        if (base == null){ var g = await request('GET'); base = g.body.items || {}; etag = g.etag; }
+        var base = pulled ? pulled.state : null, etag = pulled ? pulled.etag : null;
+        if (base == null){ var g = await request('GET'); base = g.body; etag = g.etag; }
         for (var attempt = 0; attempt < 5; attempt++){
           var merged = applyOps(base, ops);
-          var res = await request('PATCH', { ifMatch: etag, body: { items: merged } });
-          if (res.ok) return { items: merged, etag: res.etag };
-          if (res.status === 412){ var re = await request('GET'); base = re.body.items || {}; etag = re.etag; continue; }
+          var res = await request('PATCH', { ifMatch: etag, body: merged });
+          if (res.ok) return { state: merged, etag: res.etag };
+          if (res.status === 412){ var re = await request('GET'); base = re.body; etag = re.etag; continue; }
           var perr = new Error('sync PATCH failed: ' + res.status); perr.status = res.status; throw perr;
         }
         throw new Error('sync: too many conflicts');
       }
       return { flush: flush };
     }
-    // ---- self-heal wrapper: a cached gist id can go stale (deleted, or created
-    // under a different account during setup) and then every GET/PATCH 404s forever.
-    // On a 404, drop the id, re-resolve (force), and retry ONCE; any other failure
-    // propagates so the UI can report it honestly instead of a false "已同步".
+    // ---- self-heal wrapper: a cached gist id can go stale; on 404 drop it, re-resolve, retry ONCE.
     function makeSyncEngine(deps){
-      var resolve = deps.resolve;   // (force) -> Promise<gid>  (force=true bypasses the cache)
+      var resolve = deps.resolve;   // (force) -> Promise<gid>
       var makeReq = deps.makeReq;   // (gid) -> request(kind, opts)
       async function withHeal(run){
         var gid = await resolve(false);
@@ -1746,8 +1801,7 @@
       function pull(){ return withHeal(function(req){ return req('GET'); }); }
       return { push: push, pull: pull };
     }
-    // ---- optional client-side encryption (AES-GCM, PBKDF2). A token/URL leak then
-    // yields ciphertext, not the study profile. Uses WebCrypto (browser + Node v26).
+    // ---- optional client-side encryption (AES-GCM, PBKDF2). Unused wiring; kept as-is.
     function makeCrypto(subtle, getRandom){
       var enc = new TextEncoder(), dec = new TextDecoder();
       function b64(buf){ var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
@@ -1769,7 +1823,7 @@
       }
       return { encrypt: encrypt, decrypt: decrypt };
     }
-    // ---- sync-dot state: 'off' (no token) | 'err' (hard failure) | 'wait' (queued) | 'ok'
+    // ---- sync-dot state: 'off' | 'err' | 'wait' | 'ok'
     function syncStatus(s){
       s = s || {};
       if (!s.hasToken) return 'off';
@@ -1779,35 +1833,52 @@
     }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
-             applyOps: applyOps, makeSync: makeSync, makeSyncEngine: makeSyncEngine,
+             migrate: migrate, serialize: serialize, applyOps: applyOps,
+             makeSync: makeSync, makeSyncEngine: makeSyncEngine,
              makeCrypto: makeCrypto, syncStatus: syncStatus };
   }
   /*<</fav-pure>>*/
 
-  // ---- online-only: the published site (https) or local dev (localhost); NOT file://.
-  // (Chrome reports file:// AS a secure context, so isSecureContext is the wrong gate —
-  // this keeps the offline mp4 deliverables self-contained: no favorites/network code runs.)
+  // ---- online-only: https or localhost; NOT file:// (Chrome reports file:// AS secure).
   var loc = window.location || {};
   if (!(loc.protocol === 'https:' || loc.hostname === 'localhost' || loc.hostname === '127.0.0.1')) return;
   var P = FAV_PURE();
 
-  var K = { store: 'langfav:v1', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  var K = { store: 'langfav:v1', srs: 'langfav:srs', notes: 'langfav:notes',
+            progress: 'langfav:progress', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  var NS = ['items', 'srs', 'notes', 'progress'];
   function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
   function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 
-  var favs = readJSON(K.store, {});      // { id: record }  (cache; may be ITP-evicted)
+  var state = { items: readJSON(K.store, {}), srs: readJSON(K.srs, {}),
+                notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}) };
+  var favs = state.items;                // alias kept for the capture UI
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
-  var changeHooks = [];                  // favorites.html render + nav.js badge both subscribe
-  var lastErr = false;                   // true after a hard sync failure (401/403/404/…)
+  var changeHooks = [];
+  var lastErr = false;
 
-  function persist(){ writeJSON(K.store, favs); }
-  function queueOp(op, id, record){
-    ops.push(record ? { op: op, id: id, record: record } : { op: op, id: id });
-    writeJSON(K.ops, ops);
+  function persist(){
+    writeJSON(K.store, state.items); writeJSON(K.srs, state.srs);
+    writeJSON(K.notes, state.notes); writeJSON(K.progress, state.progress);
+  }
+  function setState(next){ state = next; favs = state.items; }
+  function queueOp(op){
+    if (op && op.ns && op.key != null){                  // coalesce same ns+key: a key's synced state = its last op (bounds a long session's queue)
+      for (var i = ops.length - 1; i >= 0; i--) if (ops[i].ns === op.ns && ops[i].key === op.key) ops.splice(i, 1);
+    }
+    ops.push(op); writeJSON(K.ops, ops);
   }
   function fireChange(){ reflect(); for (var i = 0; i < changeHooks.length; i++){ try { changeHooks[i](); } catch (e){} } }
-  function addFav(record){ favs[record.id] = record; queueOp('add', record.id, record); persist(); fireChange(); scheduleFlush(); }
-  function removeFav(id){ if (!favs[id]) return; delete favs[id]; queueOp('del', id); persist(); fireChange(); scheduleFlush(); }
+  var batching = false;
+  // batch: apply many writes, then fire ONE change + ONE flush (avoids O(N) render/flush storms, e.g. srs reconcile).
+  function batch(fn){ batching = true; try { fn(); } finally { batching = false; } fireChange(); scheduleFlush(); }
+
+  function addFav(record){ state.items[record.id] = record; queueOp({ ns: 'items', op: 'set', key: record.id, value: record }); persist(); fireChange(); scheduleFlush(); }
+  function removeFav(id){ if (!state.items[id]) return; delete state.items[id]; queueOp({ ns: 'items', op: 'del', key: id }); persist(); fireChange(); scheduleFlush(); }
+  // generic namespace API for srs.js / notes.js / progress.js
+  function getNS(ns){ return state[ns] || {}; }
+  function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
+  function delKey(ns, key, opts){ if (NS.indexOf(ns) < 0) return; if (state[ns][key] == null) return; delete state[ns][key]; queueOp({ ns: ns, op: 'del', key: key }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
 
   // ---------- sync (opt-in): localStorage cache ⇄ private Gist (source of truth) ----------
   var FILE = 'lang-favorites.json';
@@ -1826,7 +1897,7 @@
     var r = await api('GET', '/gists?per_page=100'); if (!r.ok){ var le = new Error('gist list ' + r.status); le.status = r.status; throw le; }
     var hit = (await r.json()).filter(function(g){ return g.files && g.files[FILE]; })[0];
     if (hit){ try { localStorage.setItem(K.gid, hit.id); } catch (e){} return hit.id; }
-    var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: {} }) };
+    var files = {}; files[FILE] = { content: JSON.stringify(P.serialize({})) };
     var c = await api('POST', '/gists', { description: 'lang-analysis favorites (do not delete)', public: false, files: files });
     if (!c.ok){ var ce = new Error('gist create ' + c.status); ce.status = c.status; throw ce; }
     var g = await c.json(); try { localStorage.setItem(K.gid, g.id); } catch (e){} return g.id;
@@ -1838,22 +1909,20 @@
         var etag = r.headers.get('ETag'); var g = await r.json();
         var f = g.files && g.files[FILE]; var content = f ? f.content : '';
         if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
-        var parsed; try { parsed = content ? JSON.parse(content) : { items: {} }; }
+        var parsed; try { parsed = content ? JSON.parse(content) : {}; }
         catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
-        return { ok: true, etag: etag, body: { items: parsed.items || {} } };
+        return { ok: true, etag: etag, body: P.migrate(parsed) };
       }
-      var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: opts.body.items }) };
+      var files = {}; files[FILE] = { content: JSON.stringify(P.serialize(opts.body)) };
       var r2 = await api('PATCH', '/gists/' + gid, { files: files });
       return { ok: r2.ok, status: r2.status, etag: r2.headers.get('ETag'), body: opts.body };
     };
   }
   function dropGid(){ try { localStorage.removeItem(K.gid); } catch (e){} }
-  function resolveGid(force){ if (force) dropGid(); return findGist(); }   // force=true re-discovers/creates
+  function resolveGid(force){ if (force) dropGid(); return findGist(); }
   function engine(){ return P.makeSyncEngine({ resolve: resolveGid, makeReq: makeRequest }); }
 
   var flushing = false, dirtyAgain = false, timer = null;
-  // Returns a result the panel can report honestly:
-  //   {ok:true, count, pushed}  |  {ok:false, status, error}  |  {ok:false, reason:'offline'|'no-token'|'busy'}
   async function doFlush(){
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
@@ -1862,11 +1931,11 @@
     try {
       var pending = readJSON(K.ops, []);
       if (!pending.length) return { ok: true, count: favCount(), pushed: 0 };
-      var out = await engine().push(pending);                  // self-heals a stale gid on 404
-      favs = out.items; persist(); writeJSON(K.ops, []); ops = [];
+      var out = await engine().push(pending);              // self-heals a stale gid on 404
+      setState(out.state); persist(); writeJSON(K.ops, []); ops = [];
       lastErr = false; fireChange();
       return { ok: true, count: favCount(), pushed: pending.length };
-    } catch (e){                                               // keep ops queued; retry on next trigger
+    } catch (e){                                            // keep ops queued; retry on next trigger
       if (e && e.status) lastErr = true;
       fireChange();
       return { ok: false, status: e && e.status, error: String((e && e.message) || e) };
@@ -1877,8 +1946,8 @@
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
     try {
-      var r = await engine().pull();                           // self-heals a stale gid on 404
-      favs = P.applyOps(r.body.items, readJSON(K.ops, []));    // gist truth + our un-pushed ops
+      var r = await engine().pull();                        // self-heals a stale gid on 404
+      setState(P.applyOps(r.body, readJSON(K.ops, [])));     // gist truth + our un-pushed ops
       persist(); lastErr = false; fireChange();
       if (ops.length) scheduleFlush();
       return { ok: true, count: favCount() };
@@ -1937,7 +2006,6 @@
       b.addEventListener('click', function(){ favs[id] ? removeFav(id) : addFav(recordFor(card, id)); });
       meta.appendChild(b);
     });
-    // filter "只看收藏 (N)"
     filterBtn = document.createElement('button');
     filterBtn.id = 'favFilter'; filterBtn.type = 'button'; filterBtn.setAttribute('aria-pressed', 'false');
     filterBtn.addEventListener('click', function(){
@@ -1950,7 +2018,6 @@
     var anchor = document.querySelector('.legend') || furiBar;
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(favEmpty, anchor);
     reflect();
-    // deep-link from favorites.html: #fav=<id> → scroll + flash the exact card (no autoplay)
     var gotoHash = function(){
       var m = (location.hash || '').match(/fav=([^&]+)/); if (!m) return;
       var id = decodeURIComponent(m[1]);
@@ -1969,13 +2036,14 @@
   window.addEventListener('pagehide', function(){ doFlush(); });
   pullOnLoad();
 
-  // ---------- public surface (used by favorites.html) ----------
+  // ---------- public surface ----------
   window.LangFav = {
     all: function(){ return favs; },
     count: favCount,
     status: function(){ return P.syncStatus({ hasToken: !!token(), lastErr: lastErr, pending: readJSON(K.ops, []).length }); },
     remove: removeFav,
     add: addFav,
+    getNS: getNS, setKey: setKey, delKey: delKey, batch: batch,
     setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} lastErr = false; fireChange(); },
     hasToken: function(){ return !!token(); },
     forgetGist: function(){ try { localStorage.removeItem(K.gid); } catch (e){} },
@@ -2379,6 +2447,210 @@
     wrap.appendChild(share); wrap.appendChild(link);
     meta.appendChild(wrap);
   });
+})();
+</script>
+<script>
+/* ============================================================================
+   Per-sentence notes (notes.js) — study rows + favorites.html. Store lives in the
+   synced v2 map (window.LangFav notes namespace); this module only edits + reads it.
+   Independent of favorite status. Study rows append a 📝 control to the page_tools
+   per-row cluster (.u-actions); favorites.html rows get the same editor. Readers
+   (SRS review back, Anki export) pull text straight from the store. Pure core
+   unit-tested in tools/test_notes.mjs. Design: plans/synced-study-state.md.
+   ========================================================================== */
+(function(){
+  /*<<notes-pure>>*/
+  // Pure, DOM/Store-free core. Extracted verbatim by the unit test.
+  function NOTES_PURE(){
+    function noteText(rec){ return (rec && typeof rec.text === 'string') ? rec.text : ''; }
+    function isBlank(text){ return !String(text == null ? '' : text).trim(); }
+    // TSV/HTML-safe (same rule as fav-pure sanitizeField): tabs → space, newlines → <br>.
+    function formatNoteForCard(text){
+      return String(text == null ? '' : text).replace(/\t/g, ' ').replace(/\r?\n/g, '<br>');
+    }
+    // the op the DOM should queue for an edited note: blank ⇒ del, else set {text, at}.
+    function noteOp(id, text, now){
+      if (isBlank(text)) return { ns: 'notes', op: 'del', key: id };
+      return { ns: 'notes', op: 'set', key: id, value: { text: String(text), at: now } };
+    }
+    return { noteText: noteText, isBlank: isBlank, formatNoteForCard: formatNoteForCard, noteOp: noteOp };
+  }
+  /*<</notes-pure>>*/
+
+  if (!window.LangFav) return;                         // online-only (favorites.js sets LangFav)
+  var LF = window.LangFav, NP = NOTES_PURE();
+
+  // one 📝 toggle + inline editor for a sentence id.
+  //   cluster = element the 📝 button is appended to
+  //   body    = element the editor is appended to
+  //   commitOn = 'input' (debounced; study rows never rebuild) | 'blur' (rebuild-safe; review rows)
+  function makeControl(id, cluster, body, commitOn){
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'u-act note-btn'; btn.title = '笔记'; btn.setAttribute('aria-label', '笔记');
+    btn.textContent = '📝';
+    function has(){ var n = LF.getNS('notes')[id]; return !!(n && n.text); }
+    function setDot(){ btn.classList.toggle('has-note', has()); }
+    setDot();
+
+    var editor = document.createElement('div'); editor.className = 'u-note'; editor.style.display = 'none';
+    var ta = document.createElement('textarea'); ta.className = 'u-note-ta'; ta.rows = 2;
+    ta.placeholder = '写点笔记…（跨设备同步）';
+    editor.appendChild(ta); body.appendChild(editor);
+
+    var timer = null;
+    function commit(){
+      var text = ta.value;
+      if (NP.isBlank(text)) LF.delKey('notes', id);
+      else LF.setKey('notes', id, { text: text, at: Date.now() });
+      setDot();
+    }
+    if (commitOn === 'blur') ta.addEventListener('blur', commit);
+    else ta.addEventListener('input', function(){ if (timer) clearTimeout(timer); timer = setTimeout(commit, 500); });
+
+    btn.addEventListener('click', function(){
+      var open = editor.style.display === 'none';
+      if (open) ta.value = (LF.getNS('notes')[id] || {}).text || '';
+      editor.style.display = open ? '' : 'none';
+      if (open) ta.focus();
+    });
+    cluster.appendChild(btn);
+  }
+
+  // study pages: static .u rows, page_tools cluster (.u-actions), debounced input.
+  var studyCards = [].slice.call(document.querySelectorAll('.u'));
+  if (studyCards.length){
+    studyCards.forEach(function(card){
+      var id = card.dataset.sid || card.dataset.favId; if (!id) return;
+      var cluster = card.querySelector('.u-actions'); if (!cluster) return;   // needs page_tools cluster
+      var body = card.querySelector('.u-body') || card;
+      makeControl(id, cluster, body, 'input');
+    });
+    return;
+  }
+
+  // favorites.html: rows re-render on every change → (re)decorate on load + onChange, commit on blur.
+  var listEl = document.getElementById('favList');
+  if (listEl){
+    function decorate(){
+      [].slice.call(listEl.querySelectorAll('.frow')).forEach(function(row){
+        if (row.querySelector('.note-btn')) return;      // already decorated this render
+        var btn = row.querySelector('.frow-side button[data-id]'); var id = btn ? btn.getAttribute('data-id') : '';
+        if (!id) return;
+        var side = row.querySelector('.frow-side'); var body = row.children[1] || row;
+        makeControl(id, side, body, 'blur');
+      });
+    }
+    LF.onChange(decorate);
+    decorate();
+  }
+})();
+</script>
+<script>
+/* ============================================================================
+   Progress / resume (progress.js) — study pages + index.html. On study pages:
+   throttled record of the last position + a resume banner. On index.html: renders
+   继续学习 + per-card recency. Both read/write the synced v2 progress map via
+   window.LangFav. Pure cores (relTime / mostRecent) unit-tested in
+   tools/test_progress.mjs. Design: plans/synced-study-state.md.
+   ========================================================================== */
+(function(){
+  /*<<progress-pure>>*/
+  // Pure, DOM/Store-free core. Extracted verbatim by the unit test.
+  function PROGRESS_PURE(){
+    var DAY = 86400000;                                // ms/day
+    function relTime(at, now){
+      var d = Math.floor((now - at) / DAY);
+      if (d <= 0) return '今天';
+      if (d < 7) return d + '天前';
+      return Math.floor(d / 7) + '周前';
+    }
+    // page key with the largest numeric .at; null when empty; first-seen wins on a tie.
+    function mostRecent(progress){
+      progress = progress || {};
+      var best = null, bestAt = -Infinity;
+      for (var page in progress) if (Object.prototype.hasOwnProperty.call(progress, page)){
+        var e = progress[page];
+        if (e && typeof e.at === 'number' && e.at > bestAt){ bestAt = e.at; best = page; }
+      }
+      return best;
+    }
+    return { relTime: relTime, mostRecent: mostRecent };
+  }
+  /*<</progress-pure>>*/
+
+  if (!window.LangFav) return;                         // online-only (favorites.js sets LangFav)
+  var LF = window.LangFav, PP = PROGRESS_PURE(), FP = LF.pure;
+  function pageName(){ return (location.pathname.split('/').pop() || ''); }
+  function cssEsc(s){ return (window.CSS && CSS.escape) ? CSS.escape(s) : s; }
+
+  // ---------- surface A: study pages (recorder + resume banner) ----------
+  var cards = [].slice.call(document.querySelectorAll('.u'));
+  if (cards.length){
+    var pg = pageName();
+    var lastId = null, lastWrite = 0;
+    function activeCard(){ return document.querySelector('.u.active'); }
+    function record(force){
+      var c = activeCard(); if (!c) return;
+      var id = c.dataset.sid || c.dataset.favId; if (!id) return;
+      var t = (window.LangPlayer && LangPlayer.getTime) ? Math.floor(LangPlayer.getTime()) : 0;
+      var now = Date.now();
+      if (!force && id === lastId && (now - lastWrite) < 3000) return;   // throttle steady playback
+      lastId = id; lastWrite = now;
+      LF.setKey('progress', pg, { id: id, sec: t, at: now }, { defer: true });   // never flush per-record; terminal handlers flush once (avoids the rate-limit storm)
+    }
+    if (window.LangPlayer && LangPlayer.onTick) LangPlayer.onTick(function(){ record(false); });
+    document.addEventListener('visibilitychange', function(){ if (document.hidden){ record(true); if (LF.sync) LF.sync(); } });
+    window.addEventListener('pagehide', function(){ record(true); if (LF.sync) LF.sync(); });
+
+    var prog = LF.getNS('progress')[pg], banner = document.getElementById('resumeBanner');
+    if (prog && prog.id && banner){
+      var top = cards[0], topId = top ? (top.dataset.sid || top.dataset.favId) : '';
+      if (prog.id !== topId){                          // only if not already at the top row
+        banner.innerHTML = '<button class="resume-go" type="button">↩ 回到上次 ' + FP.secToMmss(prog.sec || 0) + '</button>' +
+          '<button class="resume-x" type="button" aria-label="关闭">✕</button>';
+        banner.hidden = false;
+        banner.querySelector('.resume-go').addEventListener('click', function(){
+          location.hash = '#s=' + encodeURIComponent(prog.id);          // page_tools jump: scroll + highlight (no-ops on a missing id)
+          var sec = prog.sec || 0, tries = 0;
+          (function seek(){
+            if (window.LangPlayer && LangPlayer.ready && LangPlayer.ready()){ LangPlayer.seek(sec); return; }
+            if (++tries < 40) setTimeout(seek, 150);                     // embed mode never readies → scroll-only
+          })();
+        });
+        banner.querySelector('.resume-x').addEventListener('click', function(){ banner.hidden = true; });
+      }
+    }
+    return;
+  }
+
+  // ---------- surface B: index.html (继续学习 + per-card recency) ----------
+  var progress = LF.getNS('progress');
+  function findLink(key){
+    return document.querySelector('a.idx-card[href="' + cssEsc(key) + '"], a.idx-row[href="' + cssEsc(key) + '"]');
+  }
+  var resumeBox = document.getElementById('idxResume');
+  if (resumeBox){
+    var mr = PP.mostRecent(progress);
+    if (mr && progress[mr]){
+      var e = progress[mr], link = findLink(mr);
+      var titleEl = link ? link.querySelector('.idx-card-jp, .idx-title') : null;
+      var title = titleEl ? titleEl.textContent : mr;
+      var a = document.createElement('a');
+      a.className = 'idx-resume-link'; a.href = mr + '#s=' + encodeURIComponent(e.id || '');
+      a.textContent = '继续学习 → ' + title;
+      resumeBox.innerHTML = ''; resumeBox.appendChild(a); resumeBox.hidden = false;
+    }
+  }
+  var now = Date.now();
+  for (var key in progress) if (Object.prototype.hasOwnProperty.call(progress, key)){
+    var link2 = findLink(key); if (!link2) continue;
+    var e2 = progress[key]; if (!e2 || typeof e2.at !== 'number') continue;
+    var host = link2.querySelector('.idx-title') || link2.querySelector('.idx-card-src') || link2;
+    if (host.querySelector('.idx-recency')) continue;
+    var span = document.createElement('span'); span.className = 'idx-recency';
+    span.textContent = '上次 ' + PP.relTime(e2.at, now);
+    host.appendChild(span);
+  }
 })();
 </script>
 </body>

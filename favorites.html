@@ -483,6 +483,28 @@
     .u-act{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.4rem;}
     .filter-cat,.filter-reset{min-height:44px;}
   }
+
+  /* ============================================================
+     SYNCED STUDY-STATE — per-sentence notes (notes.js). plans/synced-study-state.md
+     ============================================================ */
+  .note-btn{font-size:.9rem;line-height:1;}
+  .note-btn.has-note{color:var(--goi);}
+  .u-note{margin:.5rem 0 0;}
+  .u-note-ta{font:inherit;font-size:.9rem;width:100%;box-sizing:border-box;color:var(--ink);
+    background:var(--paper);border:1px solid var(--line-strong);border-radius:.45rem;padding:.5rem .7rem;
+    resize:vertical;line-height:1.6;}
+  .u-note-ta:focus-visible{outline:2px solid var(--goi);outline-offset:1px;}
+
+  /* resume banner (progress.js) — study pages */
+  .resume-banner{display:flex;align-items:center;gap:.6rem;margin:1.2rem 0 0;padding:.6rem .9rem;
+    background:var(--card);border:1px solid var(--line);border-left:3px solid var(--goi);border-radius:.5rem;}
+  .resume-banner[hidden]{display:none;}
+  .resume-go{font-family:var(--font-gothic);font-size:.85rem;font-weight:600;cursor:pointer;color:var(--goi);
+    background:transparent;border:1px solid var(--goi);border-radius:2rem;padding:.32rem .9rem;white-space:nowrap;}
+  .resume-go:hover{background:var(--goi);color:var(--paper);}
+  .resume-x{margin-left:auto;font:inherit;font-size:.85rem;cursor:pointer;color:var(--ink-faint);
+    background:transparent;border:0;padding:.2rem .4rem;}
+  .resume-x:hover{color:var(--shu);}
 </style>
 <style>
   /* review page — specific chrome on top of the shared design system */
@@ -529,6 +551,34 @@
     background:transparent;border:0;padding:0;}
   .frow-side button:hover{color:var(--shu);}
   @media (max-width:520px){ .frow{grid-template-columns:1fr;} .frow-side{flex-direction:row;align-items:center;} }
+
+  /* SRS review — 开始复习 button state, in-list due badge, review overlay */
+  #srsStart[disabled]{opacity:.5;cursor:not-allowed;}
+  .srs-due{font-family:var(--font-gothic);font-size:.72rem;font-weight:600;color:var(--shu);white-space:nowrap;}
+  body.srs-open{overflow:hidden;}
+  .srs-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+    padding:1.2rem;background:rgba(0,0,0,.55);}
+  .srs-overlay[hidden]{display:none;}
+  .srs-card{position:relative;width:100%;max-width:34rem;max-height:88vh;overflow:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:.9rem;padding:2rem 1.5rem 1.5rem;
+    box-shadow:0 20px 60px -20px rgba(0,0,0,.7);}
+  .srs-close{position:absolute;top:.6rem;right:.7rem;font:inherit;font-size:1rem;cursor:pointer;
+    color:var(--ink-faint);background:transparent;border:0;line-height:1;padding:.3rem;}
+  .srs-close:hover{color:var(--shu);}
+  .srs-prog{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-faint);margin:0 0 .8rem;}
+  .srs-jp{font-family:var(--font-mincho);font-size:1.3rem;line-height:2.2;color:var(--ink);}
+  .srs-hide-furi rt{visibility:hidden;}
+  .srs-back{margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line);}
+  .srs-cn{font-size:.92rem;color:var(--ink-soft);margin-top:.5rem;}
+  .srs-cn .lbl{font-family:var(--font-latin);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-faint);margin-right:.45rem;border:1px solid var(--line-strong);border-radius:.25rem;padding:.02rem .28rem;}
+  .srs-pts{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem;}
+  .srs-note{margin-top:.7rem;font-size:.88rem;color:var(--ink-soft);background:var(--card-2);
+    border-radius:.4rem;padding:.5rem .7rem;}
+  .srs-controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.3rem;}
+  .srs-controls .srs-g{flex:1 1 5rem;}
+  .srs-summary{text-align:center;padding:1.5rem 0 .5rem;}
+  .srs-done{font-family:var(--font-mincho);font-size:1.15rem;color:var(--ink);margin:0 0 1.2rem;}
 </style>
 </head>
 <body>
@@ -578,12 +628,15 @@
 </div>
 <script>
 /* ============================================================================
-   Favorites (收藏) — capture on any study page, review pooled on favorites.html.
-   Store = localStorage cache; SOURCE OF TRUTH = a private GitHub Gist (opt-in
-   sync). Online-only (gated on isSecureContext) so offline file:// deliverables
-   stay self-contained. The pure core below is unit-tested (tools/test_favorites.mjs).
-   Exposes window.LangFav on EVERY page (study pages inject capture UI; favorites.html
-   renders the pooled library). Design + rationale: plans/favorites.md.
+   Study-state store (v2) — the shared synced substrate. Was single-purpose
+   favorites; now holds FOUR namespaced maps (items / srs / notes / progress) on
+   the same private-Gist backend. Store = localStorage cache; SOURCE OF TRUTH = a
+   private GitHub Gist (opt-in sync). Online-only (gated on https/localhost, NOT
+   file://) so offline file:// deliverables stay self-contained. The pure core
+   below is unit-tested (tools/test_favorites.mjs). Exposes window.LangFav on EVERY
+   page: study pages inject capture UI + notes + progress; favorites.html renders
+   the pooled library + SRS review; index renders 继续学习. srs.js / notes.js /
+   progress.js layer on top via getNS/setKey/delKey. Design: plans/synced-study-state.md.
    ========================================================================== */
 (function(){
   /*<<fav-pure>>*/
@@ -601,7 +654,6 @@
       return (m < 10 ? '0' : '') + m + ':' + (ss < 10 ? '0' : '') + ss;
     }
     // ---- identity: <yt>#<mmss>#<n>, n = within-second ordinal in DOM order.
-    // Fixes the v1 bug where same-second cards collided (verified 5x in sashinomi).
     function assignFavIds(yt, tsList){
       var seen = {}, out = [];
       for (var i = 0; i < tsList.length; i++){
@@ -622,53 +674,81 @@
     function sanitizeField(s){
       return String(s == null ? '' : s).replace(/\t/g, ' ').replace(/\r?\n/g, '<br>');
     }
-    // ---- Anki card: plain JP front, ruby+译+grammar back. Caller writes the file
-    // with a leading "#separator:tab" + "#html:true" so ruby renders and TSV holds.
+    // ---- Anki card: plain JP front, ruby+译+grammar back.
     function ankiCard(rec){
       var front = sanitizeField(stripFuri(rec.jp_html || ''));
-      var parts = [rec.jp_html || ''];                  // ruby intact → furigana on back
+      var parts = [rec.jp_html || ''];
       if (rec.cn) parts.push('【译】' + rec.cn);
       var pts = rec.points || [];
       for (var i = 0; i < pts.length; i++)
         parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
-    // ---- op-replay merge (pure; no wall-clock, no tombstones). add sets, del removes.
-    function applyOps(items, ops){
-      var out = {};
-      for (var k in items) if (Object.prototype.hasOwnProperty.call(items, k)) out[k] = items[k];
+    // ---- v2 four-map state helpers ----
+    var NS = ['items', 'srs', 'notes', 'progress'];
+    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {} }; }
+    function cloneState(state){
+      state = state || {};
+      var out = emptyState();
+      for (var n = 0; n < NS.length; n++){
+        var src = state[NS[n]] || {}, dst = out[NS[n]];
+        for (var k in src) if (Object.prototype.hasOwnProperty.call(src, k)) dst[k] = src[k];
+      }
+      return out;
+    }
+    // v1 (or version-less) doc → four-map state; no favorites lost or moved.
+    function migrate(parsed){
+      parsed = parsed || {};
+      return { items: parsed.items || {}, srs: parsed.srs || {},
+               notes: parsed.notes || {}, progress: parsed.progress || {} };
+    }
+    // v2 writer: ALWAYS serialize all four maps under {v:2, …}.
+    function serialize(state){
+      state = state || {};
+      return { v: 2, items: state.items || {}, srs: state.srs || {},
+               notes: state.notes || {}, progress: state.progress || {} };
+    }
+    // normalize a legacy favorite op into a v2 namespaced op.
+    function normalizeOp(o){
+      if (!o) return null;
+      if (o.ns) return { ns: o.ns, op: o.op, key: o.key, value: o.value };
+      if (o.op === 'add') return { ns: 'items', op: 'set', key: o.id, value: o.record };
+      if (o.op === 'del') return { ns: 'items', op: 'del', key: o.id };
+      return null;
+    }
+    // ---- op-replay merge across the four namespaces (pure; no wall-clock, no tombstones).
+    function applyOps(state, ops){
+      var out = cloneState(state);
       for (var i = 0; i < (ops || []).length; i++){
-        var o = ops[i];
-        if (o.op === 'add') out[o.id] = o.record;
-        else if (o.op === 'del') delete out[o.id];
+        var o = normalizeOp(ops[i]);
+        if (!o || NS.indexOf(o.ns) < 0) continue;
+        var map = out[o.ns];
+        if (o.op === 'set') map[o.key] = o.value;
+        else if (o.op === 'del') delete map[o.key];
       }
       return out;
     }
     // ---- sync engine: pull → apply pending ops → PATCH with If-Match(etag).
     // On 412 (another device pushed since our pull) re-pull, re-apply, retry.
-    // This is what prevents the silent lost-update the review flagged.
     function makeSync(deps){
       var request = deps.request;                        // (kind, opts) -> {ok,status,etag,body}
       async function flush(ops, pulled){
-        var base = pulled ? pulled.items : null, etag = pulled ? pulled.etag : null;
-        if (base == null){ var g = await request('GET'); base = g.body.items || {}; etag = g.etag; }
+        var base = pulled ? pulled.state : null, etag = pulled ? pulled.etag : null;
+        if (base == null){ var g = await request('GET'); base = g.body; etag = g.etag; }
         for (var attempt = 0; attempt < 5; attempt++){
           var merged = applyOps(base, ops);
-          var res = await request('PATCH', { ifMatch: etag, body: { items: merged } });
-          if (res.ok) return { items: merged, etag: res.etag };
-          if (res.status === 412){ var re = await request('GET'); base = re.body.items || {}; etag = re.etag; continue; }
+          var res = await request('PATCH', { ifMatch: etag, body: merged });
+          if (res.ok) return { state: merged, etag: res.etag };
+          if (res.status === 412){ var re = await request('GET'); base = re.body; etag = re.etag; continue; }
           var perr = new Error('sync PATCH failed: ' + res.status); perr.status = res.status; throw perr;
         }
         throw new Error('sync: too many conflicts');
       }
       return { flush: flush };
     }
-    // ---- self-heal wrapper: a cached gist id can go stale (deleted, or created
-    // under a different account during setup) and then every GET/PATCH 404s forever.
-    // On a 404, drop the id, re-resolve (force), and retry ONCE; any other failure
-    // propagates so the UI can report it honestly instead of a false "已同步".
+    // ---- self-heal wrapper: a cached gist id can go stale; on 404 drop it, re-resolve, retry ONCE.
     function makeSyncEngine(deps){
-      var resolve = deps.resolve;   // (force) -> Promise<gid>  (force=true bypasses the cache)
+      var resolve = deps.resolve;   // (force) -> Promise<gid>
       var makeReq = deps.makeReq;   // (gid) -> request(kind, opts)
       async function withHeal(run){
         var gid = await resolve(false);
@@ -683,8 +763,7 @@
       function pull(){ return withHeal(function(req){ return req('GET'); }); }
       return { push: push, pull: pull };
     }
-    // ---- optional client-side encryption (AES-GCM, PBKDF2). A token/URL leak then
-    // yields ciphertext, not the study profile. Uses WebCrypto (browser + Node v26).
+    // ---- optional client-side encryption (AES-GCM, PBKDF2). Unused wiring; kept as-is.
     function makeCrypto(subtle, getRandom){
       var enc = new TextEncoder(), dec = new TextDecoder();
       function b64(buf){ var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
@@ -706,7 +785,7 @@
       }
       return { encrypt: encrypt, decrypt: decrypt };
     }
-    // ---- sync-dot state: 'off' (no token) | 'err' (hard failure) | 'wait' (queued) | 'ok'
+    // ---- sync-dot state: 'off' | 'err' | 'wait' | 'ok'
     function syncStatus(s){
       s = s || {};
       if (!s.hasToken) return 'off';
@@ -716,35 +795,52 @@
     }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
-             applyOps: applyOps, makeSync: makeSync, makeSyncEngine: makeSyncEngine,
+             migrate: migrate, serialize: serialize, applyOps: applyOps,
+             makeSync: makeSync, makeSyncEngine: makeSyncEngine,
              makeCrypto: makeCrypto, syncStatus: syncStatus };
   }
   /*<</fav-pure>>*/
 
-  // ---- online-only: the published site (https) or local dev (localhost); NOT file://.
-  // (Chrome reports file:// AS a secure context, so isSecureContext is the wrong gate —
-  // this keeps the offline mp4 deliverables self-contained: no favorites/network code runs.)
+  // ---- online-only: https or localhost; NOT file:// (Chrome reports file:// AS secure).
   var loc = window.location || {};
   if (!(loc.protocol === 'https:' || loc.hostname === 'localhost' || loc.hostname === '127.0.0.1')) return;
   var P = FAV_PURE();
 
-  var K = { store: 'langfav:v1', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  var K = { store: 'langfav:v1', srs: 'langfav:srs', notes: 'langfav:notes',
+            progress: 'langfav:progress', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  var NS = ['items', 'srs', 'notes', 'progress'];
   function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
   function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 
-  var favs = readJSON(K.store, {});      // { id: record }  (cache; may be ITP-evicted)
+  var state = { items: readJSON(K.store, {}), srs: readJSON(K.srs, {}),
+                notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}) };
+  var favs = state.items;                // alias kept for the capture UI
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
-  var changeHooks = [];                  // favorites.html render + nav.js badge both subscribe
-  var lastErr = false;                   // true after a hard sync failure (401/403/404/…)
+  var changeHooks = [];
+  var lastErr = false;
 
-  function persist(){ writeJSON(K.store, favs); }
-  function queueOp(op, id, record){
-    ops.push(record ? { op: op, id: id, record: record } : { op: op, id: id });
-    writeJSON(K.ops, ops);
+  function persist(){
+    writeJSON(K.store, state.items); writeJSON(K.srs, state.srs);
+    writeJSON(K.notes, state.notes); writeJSON(K.progress, state.progress);
+  }
+  function setState(next){ state = next; favs = state.items; }
+  function queueOp(op){
+    if (op && op.ns && op.key != null){                  // coalesce same ns+key: a key's synced state = its last op (bounds a long session's queue)
+      for (var i = ops.length - 1; i >= 0; i--) if (ops[i].ns === op.ns && ops[i].key === op.key) ops.splice(i, 1);
+    }
+    ops.push(op); writeJSON(K.ops, ops);
   }
   function fireChange(){ reflect(); for (var i = 0; i < changeHooks.length; i++){ try { changeHooks[i](); } catch (e){} } }
-  function addFav(record){ favs[record.id] = record; queueOp('add', record.id, record); persist(); fireChange(); scheduleFlush(); }
-  function removeFav(id){ if (!favs[id]) return; delete favs[id]; queueOp('del', id); persist(); fireChange(); scheduleFlush(); }
+  var batching = false;
+  // batch: apply many writes, then fire ONE change + ONE flush (avoids O(N) render/flush storms, e.g. srs reconcile).
+  function batch(fn){ batching = true; try { fn(); } finally { batching = false; } fireChange(); scheduleFlush(); }
+
+  function addFav(record){ state.items[record.id] = record; queueOp({ ns: 'items', op: 'set', key: record.id, value: record }); persist(); fireChange(); scheduleFlush(); }
+  function removeFav(id){ if (!state.items[id]) return; delete state.items[id]; queueOp({ ns: 'items', op: 'del', key: id }); persist(); fireChange(); scheduleFlush(); }
+  // generic namespace API for srs.js / notes.js / progress.js
+  function getNS(ns){ return state[ns] || {}; }
+  function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
+  function delKey(ns, key, opts){ if (NS.indexOf(ns) < 0) return; if (state[ns][key] == null) return; delete state[ns][key]; queueOp({ ns: ns, op: 'del', key: key }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
 
   // ---------- sync (opt-in): localStorage cache ⇄ private Gist (source of truth) ----------
   var FILE = 'lang-favorites.json';
@@ -763,7 +859,7 @@
     var r = await api('GET', '/gists?per_page=100'); if (!r.ok){ var le = new Error('gist list ' + r.status); le.status = r.status; throw le; }
     var hit = (await r.json()).filter(function(g){ return g.files && g.files[FILE]; })[0];
     if (hit){ try { localStorage.setItem(K.gid, hit.id); } catch (e){} return hit.id; }
-    var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: {} }) };
+    var files = {}; files[FILE] = { content: JSON.stringify(P.serialize({})) };
     var c = await api('POST', '/gists', { description: 'lang-analysis favorites (do not delete)', public: false, files: files });
     if (!c.ok){ var ce = new Error('gist create ' + c.status); ce.status = c.status; throw ce; }
     var g = await c.json(); try { localStorage.setItem(K.gid, g.id); } catch (e){} return g.id;
@@ -775,22 +871,20 @@
         var etag = r.headers.get('ETag'); var g = await r.json();
         var f = g.files && g.files[FILE]; var content = f ? f.content : '';
         if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
-        var parsed; try { parsed = content ? JSON.parse(content) : { items: {} }; }
+        var parsed; try { parsed = content ? JSON.parse(content) : {}; }
         catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
-        return { ok: true, etag: etag, body: { items: parsed.items || {} } };
+        return { ok: true, etag: etag, body: P.migrate(parsed) };
       }
-      var files = {}; files[FILE] = { content: JSON.stringify({ v: 1, items: opts.body.items }) };
+      var files = {}; files[FILE] = { content: JSON.stringify(P.serialize(opts.body)) };
       var r2 = await api('PATCH', '/gists/' + gid, { files: files });
       return { ok: r2.ok, status: r2.status, etag: r2.headers.get('ETag'), body: opts.body };
     };
   }
   function dropGid(){ try { localStorage.removeItem(K.gid); } catch (e){} }
-  function resolveGid(force){ if (force) dropGid(); return findGist(); }   // force=true re-discovers/creates
+  function resolveGid(force){ if (force) dropGid(); return findGist(); }
   function engine(){ return P.makeSyncEngine({ resolve: resolveGid, makeReq: makeRequest }); }
 
   var flushing = false, dirtyAgain = false, timer = null;
-  // Returns a result the panel can report honestly:
-  //   {ok:true, count, pushed}  |  {ok:false, status, error}  |  {ok:false, reason:'offline'|'no-token'|'busy'}
   async function doFlush(){
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
@@ -799,11 +893,11 @@
     try {
       var pending = readJSON(K.ops, []);
       if (!pending.length) return { ok: true, count: favCount(), pushed: 0 };
-      var out = await engine().push(pending);                  // self-heals a stale gid on 404
-      favs = out.items; persist(); writeJSON(K.ops, []); ops = [];
+      var out = await engine().push(pending);              // self-heals a stale gid on 404
+      setState(out.state); persist(); writeJSON(K.ops, []); ops = [];
       lastErr = false; fireChange();
       return { ok: true, count: favCount(), pushed: pending.length };
-    } catch (e){                                               // keep ops queued; retry on next trigger
+    } catch (e){                                            // keep ops queued; retry on next trigger
       if (e && e.status) lastErr = true;
       fireChange();
       return { ok: false, status: e && e.status, error: String((e && e.message) || e) };
@@ -814,8 +908,8 @@
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
     try {
-      var r = await engine().pull();                           // self-heals a stale gid on 404
-      favs = P.applyOps(r.body.items, readJSON(K.ops, []));    // gist truth + our un-pushed ops
+      var r = await engine().pull();                        // self-heals a stale gid on 404
+      setState(P.applyOps(r.body, readJSON(K.ops, [])));     // gist truth + our un-pushed ops
       persist(); lastErr = false; fireChange();
       if (ops.length) scheduleFlush();
       return { ok: true, count: favCount() };
@@ -874,7 +968,6 @@
       b.addEventListener('click', function(){ favs[id] ? removeFav(id) : addFav(recordFor(card, id)); });
       meta.appendChild(b);
     });
-    // filter "只看收藏 (N)"
     filterBtn = document.createElement('button');
     filterBtn.id = 'favFilter'; filterBtn.type = 'button'; filterBtn.setAttribute('aria-pressed', 'false');
     filterBtn.addEventListener('click', function(){
@@ -887,7 +980,6 @@
     var anchor = document.querySelector('.legend') || furiBar;
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(favEmpty, anchor);
     reflect();
-    // deep-link from favorites.html: #fav=<id> → scroll + flash the exact card (no autoplay)
     var gotoHash = function(){
       var m = (location.hash || '').match(/fav=([^&]+)/); if (!m) return;
       var id = decodeURIComponent(m[1]);
@@ -906,13 +998,14 @@
   window.addEventListener('pagehide', function(){ doFlush(); });
   pullOnLoad();
 
-  // ---------- public surface (used by favorites.html) ----------
+  // ---------- public surface ----------
   window.LangFav = {
     all: function(){ return favs; },
     count: favCount,
     status: function(){ return P.syncStatus({ hasToken: !!token(), lastErr: lastErr, pending: readJSON(K.ops, []).length }); },
     remove: removeFav,
     add: addFav,
+    getNS: getNS, setKey: setKey, delKey: delKey, batch: batch,
     setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} lastErr = false; fireChange(); },
     hasToken: function(){ return !!token(); },
     forgetGist: function(){ try { localStorage.removeItem(K.gid); } catch (e){} },
@@ -1000,8 +1093,10 @@
 
     // ---- export / import ----
     document.getElementById('expAnki').addEventListener('click', function(){
+      var notes = LF.getNS('notes');
       var rows = recs().sort(function(a,b){ return (a.yt<b.yt?-1:a.yt>b.yt?1:0) || (a.sec-b.sec); })
-        .map(function(r){ var c = P.ankiCard(r); return c.front + '\t' + c.back; });
+        .map(function(r){ var c = P.ankiCard(r); var nt = P.sanitizeField(((notes[r.id] || {}).text) || '');
+          return c.front + '\t' + c.back + '\t' + nt; });
       download('lang-favorites.txt', '#separator:tab\n#html:true\n' + rows.join('\n') + '\n', 'text/plain;charset=utf-8');
     });
     document.getElementById('expJson').addEventListener('click', function(){
@@ -1054,6 +1149,290 @@
     document.getElementById('tokenClear').addEventListener('click', function(){
       LF.setToken(''); LF.forgetGist(); status.textContent = '已清除'; });
   });
+})();
+</script>
+<script>
+/* ============================================================================
+   Per-sentence notes (notes.js) — study rows + favorites.html. Store lives in the
+   synced v2 map (window.LangFav notes namespace); this module only edits + reads it.
+   Independent of favorite status. Study rows append a 📝 control to the page_tools
+   per-row cluster (.u-actions); favorites.html rows get the same editor. Readers
+   (SRS review back, Anki export) pull text straight from the store. Pure core
+   unit-tested in tools/test_notes.mjs. Design: plans/synced-study-state.md.
+   ========================================================================== */
+(function(){
+  /*<<notes-pure>>*/
+  // Pure, DOM/Store-free core. Extracted verbatim by the unit test.
+  function NOTES_PURE(){
+    function noteText(rec){ return (rec && typeof rec.text === 'string') ? rec.text : ''; }
+    function isBlank(text){ return !String(text == null ? '' : text).trim(); }
+    // TSV/HTML-safe (same rule as fav-pure sanitizeField): tabs → space, newlines → <br>.
+    function formatNoteForCard(text){
+      return String(text == null ? '' : text).replace(/\t/g, ' ').replace(/\r?\n/g, '<br>');
+    }
+    // the op the DOM should queue for an edited note: blank ⇒ del, else set {text, at}.
+    function noteOp(id, text, now){
+      if (isBlank(text)) return { ns: 'notes', op: 'del', key: id };
+      return { ns: 'notes', op: 'set', key: id, value: { text: String(text), at: now } };
+    }
+    return { noteText: noteText, isBlank: isBlank, formatNoteForCard: formatNoteForCard, noteOp: noteOp };
+  }
+  /*<</notes-pure>>*/
+
+  if (!window.LangFav) return;                         // online-only (favorites.js sets LangFav)
+  var LF = window.LangFav, NP = NOTES_PURE();
+
+  // one 📝 toggle + inline editor for a sentence id.
+  //   cluster = element the 📝 button is appended to
+  //   body    = element the editor is appended to
+  //   commitOn = 'input' (debounced; study rows never rebuild) | 'blur' (rebuild-safe; review rows)
+  function makeControl(id, cluster, body, commitOn){
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'u-act note-btn'; btn.title = '笔记'; btn.setAttribute('aria-label', '笔记');
+    btn.textContent = '📝';
+    function has(){ var n = LF.getNS('notes')[id]; return !!(n && n.text); }
+    function setDot(){ btn.classList.toggle('has-note', has()); }
+    setDot();
+
+    var editor = document.createElement('div'); editor.className = 'u-note'; editor.style.display = 'none';
+    var ta = document.createElement('textarea'); ta.className = 'u-note-ta'; ta.rows = 2;
+    ta.placeholder = '写点笔记…（跨设备同步）';
+    editor.appendChild(ta); body.appendChild(editor);
+
+    var timer = null;
+    function commit(){
+      var text = ta.value;
+      if (NP.isBlank(text)) LF.delKey('notes', id);
+      else LF.setKey('notes', id, { text: text, at: Date.now() });
+      setDot();
+    }
+    if (commitOn === 'blur') ta.addEventListener('blur', commit);
+    else ta.addEventListener('input', function(){ if (timer) clearTimeout(timer); timer = setTimeout(commit, 500); });
+
+    btn.addEventListener('click', function(){
+      var open = editor.style.display === 'none';
+      if (open) ta.value = (LF.getNS('notes')[id] || {}).text || '';
+      editor.style.display = open ? '' : 'none';
+      if (open) ta.focus();
+    });
+    cluster.appendChild(btn);
+  }
+
+  // study pages: static .u rows, page_tools cluster (.u-actions), debounced input.
+  var studyCards = [].slice.call(document.querySelectorAll('.u'));
+  if (studyCards.length){
+    studyCards.forEach(function(card){
+      var id = card.dataset.sid || card.dataset.favId; if (!id) return;
+      var cluster = card.querySelector('.u-actions'); if (!cluster) return;   // needs page_tools cluster
+      var body = card.querySelector('.u-body') || card;
+      makeControl(id, cluster, body, 'input');
+    });
+    return;
+  }
+
+  // favorites.html: rows re-render on every change → (re)decorate on load + onChange, commit on blur.
+  var listEl = document.getElementById('favList');
+  if (listEl){
+    function decorate(){
+      [].slice.call(listEl.querySelectorAll('.frow')).forEach(function(row){
+        if (row.querySelector('.note-btn')) return;      // already decorated this render
+        var btn = row.querySelector('.frow-side button[data-id]'); var id = btn ? btn.getAttribute('data-id') : '';
+        if (!id) return;
+        var side = row.querySelector('.frow-side'); var body = row.children[1] || row;
+        makeControl(id, side, body, 'blur');
+      });
+    }
+    LF.onChange(decorate);
+    decorate();
+  }
+})();
+</script>
+<script>
+/* ============================================================================
+   SRS review (间隔复习) — favorites.html only. Pure SM-2-lite scheduler
+   (schedule / dueQueue / reconcile) unit-tested in tools/test_srs.mjs; the DOM
+   review-session overlay + in-list due badges wire on top via window.LangFav
+   (getNS/setKey/delKey). A card exists iff the sentence is a favorite (lazy
+   reconcile on load). Design: plans/synced-study-state.md.
+   ========================================================================== */
+(function(){
+  /*<<srs-pure>>*/
+  // Pure, DOM/Store-free core. Extracted verbatim by the unit test.
+  function SRS_PURE(){
+    var DAY = 86400;                                  // seconds/day (day-granular scheduling)
+    function clampEase(e){ return Math.max(1.3, Math.min(3.0, e)); }
+    function newCard(now){ return { due: now, ivl: 0, ease: 2.5, reps: 0, lapses: 0 }; }
+    // schedule: card + grade + now(sec) → next card. ease is updated first, then
+    // the interval is computed from the post-delta ease (see plan Self-review 1).
+    function schedule(card, grade, now){
+      var c = card || newCard(now);
+      var ease = c.ease, ivl = c.ivl, reps = c.reps, lapses = c.lapses;
+      var first = (reps === 0);
+      if (grade === 'again'){
+        return { due: now, ivl: 0, ease: clampEase(ease - 0.20), reps: 0, lapses: lapses + 1 };
+      }
+      var nIvl;
+      if (grade === 'hard'){
+        ease = clampEase(ease - 0.15);
+        nIvl = first ? 1 : Math.max(ivl + 1, Math.round(ivl * 1.2));
+      } else if (grade === 'easy'){
+        ease = clampEase(ease + 0.15);
+        nIvl = first ? 3 : Math.round(ivl * ease * 1.3);
+      } else { // 'good'
+        ease = clampEase(ease);
+        nIvl = first ? 1 : Math.round(ivl * ease);
+      }
+      return { due: now + nIvl * DAY, ivl: nIvl, ease: ease, reps: reps + 1, lapses: lapses };
+    }
+    // ids with due<=now, ascending by due, ties in map (insertion) order.
+    function dueQueue(srs, now){
+      srs = srs || {};
+      var arr = [];
+      for (var id in srs) if (Object.prototype.hasOwnProperty.call(srs, id)){
+        var c = srs[id];
+        if (c && c.due <= now) arr.push({ id: id, due: c.due, i: arr.length });
+      }
+      arr.sort(function(a, b){ return (a.due - b.due) || (a.i - b.i); });
+      return arr.map(function(x){ return x.id; });
+    }
+    // a card exists iff the sentence is a favorite.
+    function reconcile(items, srs){
+      items = items || {}; srs = srs || {};
+      var add = [], remove = [], id;
+      for (id in items) if (Object.prototype.hasOwnProperty.call(items, id)){ if (!srs[id]) add.push(id); }
+      for (id in srs) if (Object.prototype.hasOwnProperty.call(srs, id)){ if (!items[id]) remove.push(id); }
+      return { add: add, remove: remove };
+    }
+    return { DAY: DAY, clampEase: clampEase, newCard: newCard, schedule: schedule,
+             dueQueue: dueQueue, reconcile: reconcile };
+  }
+  /*<</srs-pure>>*/
+
+  // ---------- DOM: review session overlay + in-list due badges (favorites.html) ----------
+  if (!window.LangFav) return;                        // online-only gate (favorites.js sets LangFav)
+  var listEl = document.getElementById('favList');
+  if (!listEl) return;                                // srs runs on favorites.html only
+  var LF = window.LangFav, SP = SRS_PURE();
+  function nowSec(){ return Math.floor(Date.now() / 1000); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // lazy reconcile: a card exists iff the sentence is a favorite. Safe every load.
+  (function reconcile(){
+    var r = SP.reconcile(LF.getNS('items'), LF.getNS('srs')), now = nowSec();
+    if (!r.add.length && !r.remove.length) return;
+    LF.batch(function(){                                 // one change + one flush, not N (avoids O(N²) first-load render + flush storm)
+      r.add.forEach(function(id){ LF.setKey('srs', id, SP.newCard(now)); });
+      r.remove.forEach(function(id){ LF.delKey('srs', id); });
+    });
+  })();
+
+  // toolbar button + due count
+  var startBtn = document.createElement('button');
+  startBtn.className = 'btn'; startBtn.id = 'srsStart'; startBtn.type = 'button';
+  var actions = document.querySelector('.fav-actions');
+  if (actions) actions.insertBefore(startBtn, actions.firstChild);
+
+  function dueIds(){ return SP.dueQueue(LF.getNS('srs'), nowSec()); }
+  function refreshChrome(){
+    var due = dueIds(), n = due.length;
+    startBtn.textContent = '开始复习 (' + n + ')';
+    startBtn.disabled = (n === 0);
+    startBtn.title = n === 0 ? '今天没有到期的卡片' : ('今天有 ' + n + ' 张到期');
+    var dueSet = {}; due.forEach(function(id){ dueSet[id] = 1; });
+    [].slice.call(listEl.querySelectorAll('.frow')).forEach(function(row){
+      var btn = row.querySelector('.frow-side button[data-id]');
+      var id = btn ? btn.getAttribute('data-id') : '';
+      var badge = row.querySelector('.srs-due');
+      if (id && dueSet[id]){
+        if (!badge){ badge = document.createElement('span'); badge.className = 'srs-due'; badge.textContent = '● due';
+          var side = row.querySelector('.frow-side'); if (side) side.insertBefore(badge, side.firstChild); }
+      } else if (badge){ badge.parentNode.removeChild(badge); }
+    });
+  }
+  LF.onChange(refreshChrome);                         // re-decorate after each REVIEW_SCRIPT render
+  refreshChrome();
+
+  // ---------- review session overlay ----------
+  var overlay = document.createElement('div');
+  overlay.className = 'srs-overlay'; overlay.id = 'srsOverlay'; overlay.hidden = true;
+  overlay.innerHTML =
+    '<div class="srs-card" role="dialog" aria-modal="true" aria-label="复习">' +
+      '<div class="srs-prog" id="srsProg"></div>' +
+      '<div class="srs-front" id="srsFront"></div>' +
+      '<div class="srs-back" id="srsBack" hidden></div>' +
+      '<div class="srs-controls" id="srsControls"></div>' +
+      '<div class="srs-summary" id="srsSummary" hidden></div>' +
+      '<button class="srs-close" id="srsClose" type="button" aria-label="退出复习">✕</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  var elFront = overlay.querySelector('#srsFront'), elBack = overlay.querySelector('#srsBack'),
+      elCtl = overlay.querySelector('#srsControls'), elProg = overlay.querySelector('#srsProg'),
+      elSummary = overlay.querySelector('#srsSummary');
+
+  var snapshot = [], pos = 0, reviewed = 0, forgot = 0, revealed = false;
+
+  function chip(p){ var cls = ['katsu', 'keigo', 'joshi', 'goi'].indexOf(p.cat) >= 0 ? p.cat : 'goi';
+    return '<span class="chip ' + cls + '">' + esc(p.term) + '</span>'; }
+  function backHtml(rec, id){
+    var parts = ['<div class="srs-jp">' + (rec.jp_html || '') + '</div>'];   // ruby intact → reading shows
+    if (rec.cn) parts.push('<div class="srs-cn"><span class="lbl">译</span>' + esc(rec.cn) + '</div>');
+    var pts = rec.points || [];
+    if (pts.length) parts.push('<div class="srs-pts">' + pts.map(chip).join('') + '</div>');
+    var note = LF.getNS('notes')[id];
+    if (note && note.text) parts.push('<div class="srs-note">📝 ' + esc(note.text).replace(/\r?\n/g, '<br>') + '</div>');
+    return parts.join('');
+  }
+  function showCard(){
+    revealed = false;
+    if (pos >= snapshot.length) return finish();
+    var id = snapshot[pos], items = LF.getNS('items'), rec = items[id];
+    if (!rec){ pos++; return showCard(); }              // favorite removed mid-review → skip
+    elProg.textContent = (pos + 1) + ' / ' + snapshot.length;
+    elFront.innerHTML = '<div class="srs-jp srs-hide-furi">' + (rec.jp_html || '') + '</div>';
+    elFront.hidden = false; elBack.hidden = true; elBack.innerHTML = '';
+    elCtl.innerHTML = '<button class="btn" id="srsReveal" type="button">显示答案</button>';
+    overlay.querySelector('#srsReveal').addEventListener('click', reveal);
+  }
+  function reveal(){
+    revealed = true;
+    var id = snapshot[pos], rec = LF.getNS('items')[id];
+    if (!rec){ pos++; return showCard(); }
+    elBack.innerHTML = backHtml(rec, id); elBack.hidden = false;
+    elCtl.innerHTML =
+      '<button class="btn srs-g" data-g="again" type="button">重来</button>' +
+      '<button class="btn srs-g" data-g="hard"  type="button">困难</button>' +
+      '<button class="btn srs-g" data-g="good"  type="button">良好</button>' +
+      '<button class="btn srs-g" data-g="easy"  type="button">简单</button>';
+    [].slice.call(elCtl.querySelectorAll('.srs-g')).forEach(function(b){
+      b.addEventListener('click', function(){ grade(b.getAttribute('data-g')); });
+    });
+  }
+  function grade(g){
+    var id = snapshot[pos], srs = LF.getNS('srs'), rec = LF.getNS('items')[id];
+    if (rec){ LF.setKey('srs', id, SP.schedule(srs[id] || SP.newCard(nowSec()), g, nowSec())); }
+    if (g === 'again'){ forgot++; if (rec) snapshot.push(id); }   // relearn: back of the finite snapshot
+    else if (rec){ reviewed++; }
+    pos++; showCard();
+  }
+  function finish(){
+    elFront.hidden = true; elBack.hidden = true; elCtl.innerHTML = ''; elProg.textContent = '';
+    elSummary.hidden = false;
+    elSummary.innerHTML = '<div class="srs-done">复习了 ' + reviewed + ' · 忘了 ' + forgot + '</div>' +
+      '<button class="btn" id="srsBackBtn" type="button">返回</button>';
+    overlay.querySelector('#srsBackBtn').addEventListener('click', closeSession);
+  }
+  function openSession(){
+    snapshot = dueIds(); pos = 0; reviewed = 0; forgot = 0;
+    if (!snapshot.length) return;
+    elSummary.hidden = true; elSummary.innerHTML = '';
+    overlay.hidden = false; document.body.classList.add('srs-open');
+    showCard();
+  }
+  function closeSession(){ overlay.hidden = true; document.body.classList.remove('srs-open'); refreshChrome(); }
+  startBtn.addEventListener('click', openSession);
+  overlay.querySelector('#srsClose').addEventListener('click', closeSession);
+  overlay.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSession(); });
 })();
 </script>
 <script>
