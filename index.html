@@ -261,6 +261,9 @@
     background:var(--joshi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
     white-space:nowrap;}
   .u-telop{font-size:.78rem;color:var(--ink-faint);margin-top:.35rem;line-height:1.55;}
+  /* テロップ track hide/show (page_tools.js builds the button). Hides, never swaps —
+     the chip shows spoken AND telop, and their difference is the teaching point. */
+  body.no-telop .u-telop{display:none;}
   .tag-telop{font-family:var(--font-gothic);font-size:.64rem;font-weight:600;color:var(--ink);
     background:var(--goi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
     white-space:nowrap;}
@@ -545,6 +548,14 @@
   @media (max-width:520px){ a.idx-row{grid-template-columns:3.2rem 1fr auto;} .idx-gtag,.idx-n{display:none;} }
   .idx-resume{margin:0 0 .5rem;}
   .idx-resume[hidden]{display:none;}
+  /* [hidden] is display:none at (0,1,0), but `a.idx-row{display:grid}` is (0,1,1) and BEATS it.
+     So index_filter.js set r.hidden on 10 of 11 rows and every one of them kept rendering — the
+     search box did nothing. Same for .idx-recent. .idx-resume already carried this guard, which
+     is the tell: the trap was hit once and fixed only where it was noticed. Anything that sets
+     `display` needs its own [hidden] rule, or it can never hide. Caught by tools/cdp_coverage.mjs
+     (computed display, in a real browser) — no unit test could see it. */
+  a.idx-row[hidden]{display:none;}
+  .idx-recent[hidden]{display:none;}
   .idx-resume-link{display:inline-block;font-family:var(--font-gothic);font-weight:600;font-size:.9rem;
     text-decoration:none;color:var(--shu);background:var(--card);border:1px solid var(--line);
     border-left:3px solid var(--shu);border-radius:.5rem;padding:.55rem .9rem;}
@@ -565,19 +576,20 @@
       <button class="idx-chip" data-genre="koi" type="button" style="color:#c0442c">恋愛短剧</button>
       <button class="idx-chip" data-genre="int" type="button" style="color:#2f5fa6">インタビュー</button>
       <button class="idx-chip" data-genre="kon" type="button" style="color:#8a4fa8">婚活</button>
-      <button class="idx-chip" data-genre="news" type="button" style="color:#1f7a63">ニュース</button>
       <button class="idx-chip" data-genre="var" type="button" style="color:#b8860b">バラエティ</button></div>
   </div>
 
   <div id="idxResume" class="idx-resume" hidden></div>
 
   <div class="sec idx-recent-h">最近更新</div>
-  <div class="idx-recent"><a class="idx-card" href="mushoku-sugita.html"><span class="idx-card-eb" style="color:#2f5fa6">インタビュー · 07-12</span><span class="idx-card-jp">「豪華声優陣が登壇！」</span><span class="idx-card-src">シネマトゥデイ</span><span class="idx-card-pills"><span class="idx-pill">168 句</span><span class="idx-pill">10:05</span><span class="idx-pill idx-fav-n" data-yt="DIJDQQ_7LuE" hidden></span></span></a><a class="idx-card" href="iginari-fureai.html"><span class="idx-card-eb" style="color:#b8860b">バラエティ · 07-11</span><span class="idx-card-jp">「動物ふれあいSP」</span><span class="idx-card-src">いぎなり放送中！</span><span class="idx-card-pills"><span class="idx-pill">275 句</span><span class="idx-pill">11:20</span><span class="idx-pill idx-fav-n" data-yt="H07Ga5eiYEw" hidden></span></span></a><a class="idx-card" href="oshare-takedatsu.html"><span class="idx-card-eb" style="color:#2f5fa6">インタビュー · 07-11</span><span class="idx-card-jp">「泣いて帰ってきた日」</span><span class="idx-card-src">おしゃれクリップ</span><span class="idx-card-pills"><span class="idx-pill">38 句</span><span class="idx-pill">2:59</span><span class="idx-pill idx-fav-n" data-yt="vH3D0Ob7rV8" hidden></span></span></a></div>
+  <div class="idx-recent"><a class="idx-card" href="honne-talk.html"><span class="idx-card-eb" style="color:#b8860b">バラエティ · 07-12</span><span class="idx-card-jp">「芸能界引退考えたことある？」</span><span class="idx-card-src">でしょでしょ‼（テレ朝）</span><span class="idx-card-pills"><span class="idx-pill">374 句</span><span class="idx-pill">21:09</span><span class="idx-pill idx-fav-n" data-yt="SCshAvEw964" hidden></span></span></a><a class="idx-card" href="mushoku-sugita.html"><span class="idx-card-eb" style="color:#2f5fa6">インタビュー · 07-12</span><span class="idx-card-jp">「豪華声優陣が登壇！」</span><span class="idx-card-src">シネマトゥデイ</span><span class="idx-card-pills"><span class="idx-pill">168 句</span><span class="idx-pill">10:05</span><span class="idx-pill idx-fav-n" data-yt="DIJDQQ_7LuE" hidden></span></span></a><a class="idx-card" href="shoten-date.html"><span class="idx-card-eb" style="color:#2f5fa6">インタビュー · 07-12</span><span class="idx-card-jp">「マジで私の庭！」</span><span class="idx-card-src">三宅書店（三宅香帆）</span><span class="idx-card-pills"><span class="idx-pill">1028 句</span><span class="idx-pill">56:43</span><span class="idx-pill idx-fav-n" data-yt="IydOjbD9yKA" hidden></span></span></a></div>
 
-  <div class="sec idx-all-h">全部 · 全 9 篇</div>
+  <div class="sec idx-all-h">全部 · 全 11 篇</div>
   <div class="idx-list">
     <div class="idx-month">2026 年 7 月</div>
+    <a class="idx-row" href="honne-talk.html" data-genre="var" data-search="「芸能界引退考えたことある？」 でしょでしょ‼（テレ朝） honne-talk バラエティ"><span class="idx-date">07-12</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「芸能界引退考えたことある？」</span><span class="idx-n">374 句</span><span class="idx-dur">21:09</span></a>
     <a class="idx-row" href="mushoku-sugita.html" data-genre="int" data-search="「豪華声優陣が登壇！」 シネマトゥデイ mushoku-sugita インタビュー"><span class="idx-date">07-12</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「豪華声優陣が登壇！」</span><span class="idx-n">168 句</span><span class="idx-dur">10:05</span></a>
+    <a class="idx-row" href="shoten-date.html" data-genre="int" data-search="「マジで私の庭！」 三宅書店（三宅香帆） shoten-date インタビュー"><span class="idx-date">07-12</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「マジで私の庭！」</span><span class="idx-n">1028 句</span><span class="idx-dur">56:43</span></a>
     <a class="idx-row" href="iginari-fureai.html" data-genre="var" data-search="「動物ふれあいsp」 いぎなり放送中！ iginari-fureai バラエティ"><span class="idx-date">07-11</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「動物ふれあいSP」</span><span class="idx-n">275 句</span><span class="idx-dur">11:20</span></a>
     <a class="idx-row" href="oshare-takedatsu.html" data-genre="int" data-search="「泣いて帰ってきた日」 おしゃれクリップ oshare-takedatsu インタビュー"><span class="idx-date">07-11</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「泣いて帰ってきた日」</span><span class="idx-n">38 句</span><span class="idx-dur">2:59</span></a>
     <a class="idx-row" href="sqex-pm.html" data-genre="int" data-search="「ゲームと仕事は似ている」 スクウェア・エニックス sqex-pm インタビュー"><span class="idx-date">07-11</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「ゲームと仕事は似ている」</span><span class="idx-n">191 句</span><span class="idx-dur">23:13</span></a>

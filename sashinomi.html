@@ -90,6 +90,14 @@
     border-radius:2rem;padding:.24rem .75rem;white-space:nowrap;transition:color .15s,border-color .15s;}
   .dock-min:hover{color:var(--shu);border-color:var(--shu);}
   .dock-min:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  /* play/pause — the primary transport control, built by player_auto.js into the dock bar.
+     The bar is sticky and survives minimising, so this is reachable whenever the page is. */
+  .dock-play{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--ink);background:transparent;border:1px solid var(--line-strong);border-radius:999px;
+    padding:.22rem .6rem;margin-right:.4rem;line-height:1.2;min-width:2.2rem;}
+  .dock-play:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-play:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-play[aria-pressed="true"]{color:var(--shu);border-color:var(--shu);}
   .dock-min{margin-left:0;}
   .dock-follow{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
     cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
@@ -261,6 +269,9 @@
     background:var(--joshi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
     white-space:nowrap;}
   .u-telop{font-size:.78rem;color:var(--ink-faint);margin-top:.35rem;line-height:1.55;}
+  /* テロップ track hide/show (page_tools.js builds the button). Hides, never swaps —
+     the chip shows spoken AND telop, and their difference is the teaching point. */
+  body.no-telop .u-telop{display:none;}
   .tag-telop{font-family:var(--font-gothic);font-size:.64rem;font-weight:600;color:var(--ink);
     background:var(--goi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
     white-space:nowrap;}
@@ -310,6 +321,15 @@
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
     .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
+    /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
+       that carries no information. On a touch screen the title is already redundant: the
+       page H1 sits directly above the dock. So the TITLE yields the space, not the controls.
+       The ▶ marker stays, so the bar still reads as the player. */
+    /* Hide the title OUTRIGHT, marker included. Keeping the ▶ marker while dropping the text
+       left two triangles side by side — a red decorative one and the real play button —
+       which reads as two controls, one of which does nothing. */
+    .dock-title{ display:none; }
     #furiToggle{ min-height:44px; padding:.55rem 1.1rem; }
     ruby{ padding:.12em .06em; border-radius:.2em; }
     .u-points .chip{ padding:.3rem .6rem; }
@@ -1346,6 +1366,8 @@
     setRate:  function(r){ if (transport && transport.setRate) transport.setRate(clampRate(r)); },
     play:     function(){ if (transport && transport.play) transport.play(); },
     pause:    function(){ if (transport && transport.pause) transport.pause(); },
+    paused:   function(){ return (transport && transport.paused) ? transport.paused() : true; },
+    toggle:   function(){ if (!transport) return; if (this.paused()) this.play(); else this.pause(); },
     onTick:   function(cb){ if (typeof cb === 'function') tickCbs.push(cb); },
     rates:    playerRates,
     duration: function(){ return (transport && transport.duration) ? transport.duration() : 0; }
@@ -1441,6 +1463,59 @@
   if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
   if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
 
+  // ---------- play / pause, in the dock bar ----------
+  // The most frequent action in this workflow is pause-to-read, and until now there was NO way to
+  // do it: the <video> carries native controls, but minimising the dock sets
+  // `.video-dock.min .dock-video{display:none}` — and the dock auto-minimises on scroll-down. So
+  // the moment you scroll down to READ, which is the entire point of the page, the only pause
+  // control on the page disappeared.
+  //
+  // It goes in the DOCK BAR, not in a floating button. The bar is position:sticky and SURVIVES
+  // minimising (only .dock-video is hidden), so it is already permanently on screen — "always
+  // there" for zero new chrome. A second FAB would also collide with #refollow, which already owns
+  // the thumb zone.
+  //
+  // Built here in JS rather than in template.html because propagate.py does not rewrite dock markup
+  // in already-built pages — a template-only button would never reach them. It swaps this script.
+  var bar = dock ? dock.querySelector('.dock-bar') : null;   // the strip that survives minimising
+  var playBtn = null;
+  if (bar) {
+    playBtn = document.createElement('button');
+    playBtn.className = 'dock-play';
+    playBtn.id = 'dockPlay';
+    playBtn.type = 'button';
+    bar.insertBefore(playBtn, bar.querySelector('#dockFollow') || null);
+    playBtn.addEventListener('click', function(){ if (LP()) LP().toggle(); paintPlay(); });
+  }
+  function LP(){ return window.LangPlayer && window.LangPlayer.ready() ? window.LangPlayer : null; }
+  function paintPlay(){
+    if (!playBtn) return;
+    var p = LP() ? LP().paused() : true;
+    // Icon-only: the bar already carries a title + 跟随/跟读/收起 at 390px, and a text label
+    // overflows it. The accessible name lives in aria-label, so screen readers still get words.
+    playBtn.textContent = p ? '▶' : '❚❚';
+    playBtn.setAttribute('aria-pressed', p ? 'false' : 'true');
+    playBtn.setAttribute('aria-label', p ? '播放视频' : '暂停视频');
+  }
+  paintPlay();
+  // Reflect state continuously: the user can also pause from the video's own controls, from the
+  // shadow drill, or from a timestamp — the button must not lie about what the player is doing.
+  setInterval(paintPlay, 250);
+
+  // Space toggles playback — the key people reflexively press. Never steal it from a text field,
+  // and never from a control the user is tabbed onto (Space is that control's own activation key).
+  document.addEventListener('keydown', function(e){
+    if (e.key !== ' ' && e.code !== 'Space') return;
+    var t = e.target || {};
+    var tag = (t.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' ||
+        tag === 'A' || t.isContentEditable) return;
+    if (!LP()) return;
+    e.preventDefault();
+    LP().toggle();
+    paintPlay();
+  });
+
   // floating re-follow control — reachable by thumb even when the dock has scrolled
   // off-screen; the CSS only reveals it (.show) on touch-sized screens when follow is off.
   fab = document.createElement('button');
@@ -1460,6 +1535,7 @@
       },
       getTime:  function(){ return video.currentTime || 0; },
       setRate:  function(r){ try { video.playbackRate = r; } catch (e){} },
+      paused:   function(){ return !!video.paused; },
       play:     function(){ var p = video.play(); if (p && p.catch) p.catch(function(){}); },
       pause:    function(){ try { video.pause(); } catch (e){} },
       rates:    function(){ return [0.5, 0.75, 1]; },
@@ -1481,6 +1557,10 @@
       },
       getTime:  function(){ try { return (isReady && player) ? (player.getCurrentTime() || 0) : 0; } catch (e){ return 0; } },
       setRate:  function(r){ try { if (isReady && player) player.setPlaybackRate(r); } catch (e){} },
+      // YT.PlayerState.PLAYING === 1. Anything else (paused, buffering, cued, ended) is "not playing"
+      // for the purposes of a play/pause button — buffering shows as paused, which is honest.
+      paused:   function(){ try { return !(isReady && player && player.getPlayerState() === 1); }
+                            catch (e){ return true; } },
       play:     function(){ try { if (isReady && player) player.playVideo(); } catch (e){} },
       pause:    function(){ try { if (isReady && player) player.pauseVideo(); } catch (e){} },
       rates:    function(){ try { return (isReady && player && player.getAvailablePlaybackRates) ? player.getAvailablePlaybackRates() : [0.5, 0.75, 1]; } catch (e){ return [0.5, 0.75, 1]; } },
@@ -1957,15 +2037,35 @@
   // Pure, DOM/Player-free core. Extracted verbatim by the unit test.
   function SHADOW_PURE(){
     var GAP_CAP = 4000;   // ms — long lines never leave more than 4s of dead air
+
+    // Turn around BEFORE the boundary, not after it.
+    //
+    // lineEnd IS the next line's start, so any playback past it is the NEXT SENTENCE'S AUDIO.
+    // The drill used to fire on `curT >= lineEnd` and was polled every 200ms, so a repeat
+    // audibly jumped into the next line and snapped back — up to 200ms of the wrong sentence,
+    // every single loop. Reported as: "it jumps to the next one then quickly jumps back."
+    //
+    // LOOP_LEAD turns around just early instead. What it gives up is the last ~100ms before the
+    // next line begins — which is the inter-sentence pause, i.e. usually silence. What it buys is
+    // never hearing a word you did not ask to repeat. For a shadowing drill that trade is not
+    // close. The poll is now 50ms, so detection lands inside the lead rather than past it.
+    var LOOP_LEAD = 0.10;   // seconds
+    var MIN_SPAN  = 0.05;   // seconds — a line shorter than the lead must still be loopable
     // Drill state machine. One tick → one action; the DOM caller applies it.
     //   s = { mode, curT, lineStart, lineEnd, nextStart, gapUntil, now }
     //   mode: 'loop' (repeat this line) | 'run' (line → gap → next line)
     //   gapUntil: null when no gap is armed, else the ms deadline of the active gap
     // Returns { type, to?, until? }:
     //   'seek'(to) | 'gap'(until) | 'hold' | 'advance'(to) | 'stop' | 'none'
+    // The effective turn-around point: lineEnd, pulled back by the lead, but never so far back
+    // that a very short line would flip instantly and loop forever.
+    function turnAt(s){
+      var lead = (typeof s.lead === 'number') ? s.lead : LOOP_LEAD;
+      return Math.max(s.lineStart + MIN_SPAN, s.lineEnd - lead);
+    }
     function shadowStep(s){
       if (s.mode === 'loop'){
-        if (s.curT >= s.lineEnd) return { type: 'seek', to: s.lineStart };
+        if (s.curT >= turnAt(s)) return { type: 'seek', to: s.lineStart };
         return { type: 'none' };
       }
       if (s.mode === 'run'){
@@ -1975,7 +2075,7 @@
             ? { type: 'advance', to: s.nextStart }
             : { type: 'stop' };
         }
-        if (s.curT >= s.lineEnd){                       // reached line end → open the gap
+        if (s.curT >= turnAt(s)){                       // reached line end → open the gap
           var gapMs = Math.min((s.lineEnd - s.lineStart) * 1000, GAP_CAP);
           return { type: 'gap', until: s.now + gapMs };
         }
@@ -1993,7 +2093,7 @@
       }
       return best;
     }
-    return { shadowStep: shadowStep, clampRate: clampRate };
+    return { shadowStep: shadowStep, turnAt: turnAt, LOOP_LEAD: LOOP_LEAD, clampRate: clampRate };
   }
   /*<</shadow-pure>>*/
 
@@ -2066,7 +2166,7 @@
   function setOn(v){
     on = v;
     if (on && active < 0) setActive(lastTap >= 0 ? lastTap : currentIdx());
-    if (on && !ticking){ ticking = true; (function loop(){ tick(); if (ticking) setTimeout(loop, 200); })(); }
+    if (on && !ticking){ ticking = true; (function loop(){ tick(); if (ticking) setTimeout(loop, 50); })(); }
     if (!on){ ticking = false; gapUntil = null; }
     reflect();
   }
@@ -2178,9 +2278,22 @@
       }
       return lines.join('\n');
     }
+    // --- テロップ track hide/show (backlog #35) ---------------------------------------
+    // HIDES, never SWAPS. #35 proposed swapping the source line between 原文 and テロップ,
+    // but the telop is an EDITORIAL paraphrase and the teaching point is exactly how it
+    // DIFFERS from what was said (kachikan coins 「スヌーズ人間」 where she said 「そういう人」).
+    // Show one at a time and that difference disappears. So the chip keeps showing both,
+    // and this only takes the track away when it is in the way.
+    var TELOP_KEY = 'lang:telop-hidden';
+    function telopHidden(store){                       // storage may throw (Safari private)
+      try { return !!store && store.getItem(TELOP_KEY) === '1'; } catch (e) { return false; }
+    }
+    function telopClass(hidden){ return hidden ? 'no-telop' : ''; }
+
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
-             matchSentence: matchSentence, cardText: cardText };
+             matchSentence: matchSentence, cardText: cardText,
+             TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
   }
   /*<</page-tools-pure>>*/
 
@@ -2319,6 +2432,59 @@
     wrap.appendChild(share); wrap.appendChild(link);
     meta.appendChild(wrap);
   });
+
+  /* --- テロップ track: hide/show (backlog #35) ------------------------------------------
+     Telop-regime pages carry a テロップ chip under ~1 in 3 utterances (measured: konkatsu
+     36.5%, kachikan 37.0%; honne-talk 1.9%). That is a faint extra line on a block that is
+     already dense — timestamp, speaker, 原文 with ruby, 中文, grammar points — so it wants a
+     way out.
+
+     It HIDES; it never SWAPS. #35 originally proposed swapping the source line between 原文
+     and テロップ, but the telop is an EDITORIAL paraphrase and the teaching point is exactly
+     its difference from what was said (kachikan's telop coins 「スヌーズ人間」 for a line where
+     she said 「そういう人」). Show one at a time and that difference becomes invisible. So the
+     chip keeps showing both, and this only takes the track away when it is in the way.
+
+     The button is BUILT here rather than shipped in the filter-bar markup: propagate.py only
+     inserts the bar when a page lacks one, so markup added to the template would never reach
+     the already-built pages — which are the only ones that have chips. Pages with no chips
+     never grow a button at all. */
+  function applyTelop(hidden){
+    document.body.classList.toggle('no-telop', !!hidden);
+    return !!hidden;
+  }
+  var bar = document.getElementById('filterBar');
+  if (bar && document.querySelector('.u-telop')){
+    var hidden = P.telopHidden(window.localStorage);
+    applyTelop(hidden);
+    var tb = document.createElement('button');
+    tb.type = 'button';
+    tb.className = 'filter-reset';
+    tb.id = 'telopToggle';
+    tb.textContent = 'テロップ';
+    tb.title = '画面のテロップ表示を切り替え';
+    function paint(){
+      tb.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+      tb.style.opacity = hidden ? '0.45' : '';
+    }
+    paint();
+    tb.addEventListener('click', function(){
+      hidden = !hidden;
+      // applyTelop(hidden) — ONE arg. It used to take (doc, hidden); when that changed, the init
+      // call site was updated and THIS one was not, so `hidden` received `document` — always
+      // truthy — and classList.toggle(…, true) always ADDED the class. The toggle could hide but
+      // never show. No unit test could see it: the pure core was right, the wiring was not.
+      applyTelop(hidden);
+      // P.TELOP_KEY, not a bare TELOP_KEY: the constant lives in the PURE core, so a bare
+      // reference here is a ReferenceError — and the try/catch (there for Safari private mode,
+      // where setItem throws) swallowed it silently. The toggle worked; persistence never did.
+      // Caught by tools/cdp_coverage.mjs, not by any unit test: the pure core was correct in
+      // isolation, and only a real browser could see the wiring was not.
+      try { window.localStorage.setItem(P.TELOP_KEY, hidden ? '1' : '0'); } catch (e) {}
+      paint();
+    });
+    bar.appendChild(tb);
+  }
 })();
 </script>
 

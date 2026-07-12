@@ -90,6 +90,14 @@
     border-radius:2rem;padding:.24rem .75rem;white-space:nowrap;transition:color .15s,border-color .15s;}
   .dock-min:hover{color:var(--shu);border-color:var(--shu);}
   .dock-min:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  /* play/pause — the primary transport control, built by player_auto.js into the dock bar.
+     The bar is sticky and survives minimising, so this is reachable whenever the page is. */
+  .dock-play{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--ink);background:transparent;border:1px solid var(--line-strong);border-radius:999px;
+    padding:.22rem .6rem;margin-right:.4rem;line-height:1.2;min-width:2.2rem;}
+  .dock-play:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-play:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-play[aria-pressed="true"]{color:var(--shu);border-color:var(--shu);}
   .dock-min{margin-left:0;}
   .dock-follow{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
     cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
@@ -261,6 +269,9 @@
     background:var(--joshi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
     white-space:nowrap;}
   .u-telop{font-size:.78rem;color:var(--ink-faint);margin-top:.35rem;line-height:1.55;}
+  /* テロップ track hide/show (page_tools.js builds the button). Hides, never swaps —
+     the chip shows spoken AND telop, and their difference is the teaching point. */
+  body.no-telop .u-telop{display:none;}
   .tag-telop{font-family:var(--font-gothic);font-size:.64rem;font-weight:600;color:var(--ink);
     background:var(--goi-t);border-radius:.25rem;padding:.05rem .35rem;margin-right:.4rem;
     white-space:nowrap;}
@@ -310,6 +321,15 @@
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
     .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
+    /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
+       that carries no information. On a touch screen the title is already redundant: the
+       page H1 sits directly above the dock. So the TITLE yields the space, not the controls.
+       The ▶ marker stays, so the bar still reads as the player. */
+    /* Hide the title OUTRIGHT, marker included. Keeping the ▶ marker while dropping the text
+       left two triangles side by side — a red decorative one and the real play button —
+       which reads as two controls, one of which does nothing. */
+    .dock-title{ display:none; }
     #furiToggle{ min-height:44px; padding:.55rem 1.1rem; }
     ruby{ padding:.12em .06em; border-radius:.2em; }
     .u-points .chip{ padding:.3rem .6rem; }
