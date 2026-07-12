@@ -90,6 +90,14 @@
     border-radius:2rem;padding:.24rem .75rem;white-space:nowrap;transition:color .15s,border-color .15s;}
   .dock-min:hover{color:var(--shu);border-color:var(--shu);}
   .dock-min:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  /* play/pause — the primary transport control, built by player_auto.js into the dock bar.
+     The bar is sticky and survives minimising, so this is reachable whenever the page is. */
+  .dock-play{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;
+    color:var(--ink);background:transparent;border:1px solid var(--line-strong);border-radius:999px;
+    padding:.22rem .6rem;margin-right:.4rem;line-height:1.2;min-width:2.2rem;}
+  .dock-play:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-play:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-play[aria-pressed="true"]{color:var(--shu);border-color:var(--shu);}
   .dock-min{margin-left:0;}
   .dock-follow{margin-left:auto;font-family:var(--font-gothic);font-size:.75rem;font-weight:600;
     cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);
@@ -98,8 +106,15 @@
   .dock-follow:hover{color:var(--shu);border-color:var(--shu);}
   .dock-follow.on{color:var(--shu);border-color:var(--shu);background:var(--joshi-t);}
   .dock-follow:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
-  .dock-video{max-width:32rem;margin:0 auto;}
-  .video-frame{position:relative;aspect-ratio:16/9;background:#000;}
+  /* The sticky video must never crowd out the sentence it exists to explain. The frame is an
+     aspect-ratio box, so its HEIGHT follows its WIDTH — bounding the height therefore means bounding
+     the width by the height budget (h*16/9), not slapping a max-height on a 16:9 box and letterboxing
+     it. --dock-max is that budget. This cap used to live inside @media (max-width:560px), i.e. it was
+     keyed on the screen being NARROW when the problem is the screen being SHORT: a landscape phone is
+     844px wide and 390px tall, sailed straight past it, and gave the video 335px — 86% of the
+     viewport, leaving a 31px sliver of the sentence you are supposed to be reading. */
+  .dock-video{max-width:min(32rem, calc(var(--dock-max) * 16 / 9));margin:0 auto;}
+  .video-frame{position:relative;aspect-ratio:16/9;background:#000;max-height:var(--dock-max);}
   .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
     border:0;display:block;background:#000;object-fit:contain;}
   .video-dock.min .dock-video{display:none;}
@@ -302,9 +317,15 @@
     .tag{ white-space:normal; }                /* long 名台词 pills wrap instead of overflowing */
     .sec{ margin-top:2.4rem; }
   }
-  /* landscape phone: give the video the width, lift the height cap */
+  /* Landscape phone: the video earns a slightly bigger share than portrait — but 82vh (what this used
+     to grant) left 55px for the transcript. 45dvh is the largest video that still leaves a WHOLE
+     sentence card readable beneath it; at 50dvh the grammar points get clipped, and the points are the
+     content. Measured, not guessed: at 45dvh the room below the dock is 168px for a 164px card. */
   @media (orientation:landscape) and (max-height:480px){
-    .video-frame{ max-height:82vh; }
+    :root{ --dock-max:45vh; }
+  }
+  @supports (height:100dvh){
+    @media (orientation:landscape) and (max-height:480px){ :root{ --dock-max:45dvh; } }
   }
 
   /* touch devices (no hover): >=44px hit targets. hover-peek can't fire on touch,
@@ -313,6 +334,15 @@
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
     .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
+    /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
+       that carries no information. On a touch screen the title is already redundant: the
+       page H1 sits directly above the dock. So the TITLE yields the space, not the controls.
+       The ▶ marker stays, so the bar still reads as the player. */
+    /* Hide the title OUTRIGHT, marker included. Keeping the ▶ marker while dropping the text
+       left two triangles side by side — a red decorative one and the real play button —
+       which reads as two controls, one of which does nothing. */
+    .dock-title{ display:none; }
     #furiToggle{ min-height:44px; padding:.55rem 1.1rem; }
     ruby{ padding:.12em .06em; border-radius:.2em; }
     .u-points .chip{ padding:.3rem .6rem; }
@@ -707,18 +737,50 @@
       }
       return out;
     }
-    // ---- sync engine: pull → apply pending ops → PATCH with If-Match(etag).
-    // On 412 (another device pushed since our pull) re-pull, re-apply, retry.
+    // ---- sync engine: pull → apply pending ops → PATCH. On a CONFLICT, re-pull, re-apply, retry.
+    //
+    // This used to say "PATCH with If-Match(etag) … on 412 re-pull". Both halves were wrong, and
+    // verified wrong against the live API:
+    //
+    //   * GitHub's gist API does not support If-Match. Sending one is not ignored — it is a 400.
+    //     So the compare-and-swap this design was built around was never possible, and the only
+    //     reason sync worked at all is that the request adapter quietly dropped the header.
+    //   * GitHub signals "you based this write on a stale version" with 409 Conflict, not 412. So
+    //     this retry — the entire point of the engine — NEVER FIRED. A concurrent edit surfaced to
+    //     the user as 同步失败：409 with their stars stranded in the queue, when the code was fully
+    //     equipped to re-pull, replay the ops, and win on the next attempt.
+    //
+    // The good news, also verified: because GitHub rejects the stale write, no update is ever lost.
+    // The conflict is real, it is detected server-side, and it is recoverable. Recover from it.
     function makeSync(deps){
       var request = deps.request;                        // (kind, opts) -> {ok,status,etag,body}
-      async function flush(ops, pulled){
-        var base = pulled ? pulled.state : null, etag = pulled ? pulled.etag : null;
-        if (base == null){ var g = await request('GET'); base = g.body; etag = g.etag; }
+      async function flush(ops){
+        // Always read immediately before writing. A `pulled` state handed in from page-load could be
+        // minutes stale, and with last-write-wins that is a licence to destroy everything another
+        // device did in the meantime.
+        var g = await request('GET');
+        var base = g.body, baseVersion = g.version, etag = g.etag;
         for (var attempt = 0; attempt < 5; attempt++){
           var merged = applyOps(base, ops);
-          var res = await request('PATCH', { ifMatch: etag, body: merged });
-          if (res.ok) return { state: merged, etag: res.etag };
-          if (res.status === 412){ var re = await request('GET'); base = re.body; etag = re.etag; continue; }
+          var res = await request('PATCH', { body: merged });     // no If-Match — GitHub 400s on one
+          if (res.ok){
+            // LAST-WRITE-WINS DAMAGE CONTROL. GitHub accepted the write unconditionally. If the commit
+            // we just made does not sit on top of the revision we read, another device wrote into that
+            // window and we have just silently overwritten them. git still has their commit: fetch the
+            // revision we landed on (our parent), replay our ops on top of THAT, and write again.
+            if (baseVersion && res.parent && res.parent !== baseVersion){
+              var lost = await request('GET_REV', { version: res.parent });   // what we just destroyed
+              base = lost.body;                                               // rebuild on top of it
+              baseVersion = res.version;                                      // we are now the head
+              continue;
+            }
+            return { state: merged, etag: res.etag };
+          }
+          // 409 = two writes hitting the gist's git lock at once. Transient, not a version check —
+          // never rely on it to prevent a lost update. 412 is kept for a backend that does real CAS.
+          if (res.status === 409 || res.status === 412){
+            var re = await request('GET'); base = re.body; baseVersion = re.version; etag = re.etag; continue;
+          }
           var perr = new Error('sync PATCH failed: ' + res.status); perr.status = res.status; throw perr;
         }
         throw new Error('sync: too many conflicts');
@@ -844,19 +906,33 @@
     var g = await c.json(); try { localStorage.setItem(K.gid, g.id); } catch (e){} return g.id;
   }
   function makeRequest(gid){
+    // A gist is a git repo, and that is the only concurrency primitive this API gives us. There is no
+    // If-Match (sending one is a 400) and no version precondition on PATCH — writes are LAST-WRITE-WINS.
+    // But every revision is a commit, and `history[0].version` is the head. So a write's PARENT tells us
+    // which revision we actually landed on top of. If that is not the revision we read, another device
+    // wrote in between and we just destroyed it — and we can fetch exactly what we destroyed, because
+    // git kept it. See makeSync.flush.
+    async function readAt(path){
+      var r = await api('GET', path); if (!r.ok){ var ge = new Error('gist get ' + r.status); ge.status = r.status; throw ge; }
+      var etag = r.headers.get('ETag'); var g = await r.json();
+      var f = g.files && g.files[FILE]; var content = f ? f.content : '';
+      if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
+      var parsed; try { parsed = content ? JSON.parse(content) : {}; }
+      catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
+      var h = g.history || [];
+      return { ok: true, etag: etag, version: h[0] && h[0].version, body: P.migrate(parsed) };
+    }
     return async function(kind, opts){
-      if (kind === 'GET'){
-        var r = await api('GET', '/gists/' + gid); if (!r.ok){ var ge = new Error('gist get ' + r.status); ge.status = r.status; throw ge; }
-        var etag = r.headers.get('ETag'); var g = await r.json();
-        var f = g.files && g.files[FILE]; var content = f ? f.content : '';
-        if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
-        var parsed; try { parsed = content ? JSON.parse(content) : {}; }
-        catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
-        return { ok: true, etag: etag, body: P.migrate(parsed) };
-      }
+      if (kind === 'GET') return readAt('/gists/' + gid);
+      if (kind === 'GET_REV') return readAt('/gists/' + gid + '/' + opts.version);   // a past revision
       var files = {}; files[FILE] = { content: JSON.stringify(P.serialize(opts.body)) };
       var r2 = await api('PATCH', '/gists/' + gid, { files: files });
-      return { ok: r2.ok, status: r2.status, etag: r2.headers.get('ETag'), body: opts.body };
+      if (!r2.ok) return { ok: false, status: r2.status };
+      var g2 = await r2.json(); var h2 = g2.history || [];
+      return { ok: true, status: r2.status, etag: r2.headers.get('ETag'),
+               version: h2[0] && h2[0].version,      // the commit we just made
+               parent:  h2[1] && h2[1].version,      // ...and what it landed on top of
+               body: opts.body };
     };
   }
   function dropGid(){ try { localStorage.removeItem(K.gid); } catch (e){} }

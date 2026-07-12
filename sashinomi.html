@@ -106,8 +106,15 @@
   .dock-follow:hover{color:var(--shu);border-color:var(--shu);}
   .dock-follow.on{color:var(--shu);border-color:var(--shu);background:var(--joshi-t);}
   .dock-follow:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
-  .dock-video{max-width:32rem;margin:0 auto;}
-  .video-frame{position:relative;aspect-ratio:16/9;background:#000;}
+  /* The sticky video must never crowd out the sentence it exists to explain. The frame is an
+     aspect-ratio box, so its HEIGHT follows its WIDTH — bounding the height therefore means bounding
+     the width by the height budget (h*16/9), not slapping a max-height on a 16:9 box and letterboxing
+     it. --dock-max is that budget. This cap used to live inside @media (max-width:560px), i.e. it was
+     keyed on the screen being NARROW when the problem is the screen being SHORT: a landscape phone is
+     844px wide and 390px tall, sailed straight past it, and gave the video 335px — 86% of the
+     viewport, leaving a 31px sliver of the sentence you are supposed to be reading. */
+  .dock-video{max-width:min(32rem, calc(var(--dock-max) * 16 / 9));margin:0 auto;}
+  .video-frame{position:relative;aspect-ratio:16/9;background:#000;max-height:var(--dock-max);}
   .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
     border:0;display:block;background:#000;object-fit:contain;}
   .video-dock.min .dock-video{display:none;}
@@ -310,9 +317,15 @@
     .tag{ white-space:normal; }                /* long 名台词 pills wrap instead of overflowing */
     .sec{ margin-top:2.4rem; }
   }
-  /* landscape phone: give the video the width, lift the height cap */
+  /* Landscape phone: the video earns a slightly bigger share than portrait — but 82vh (what this used
+     to grant) left 55px for the transcript. 45dvh is the largest video that still leaves a WHOLE
+     sentence card readable beneath it; at 50dvh the grammar points get clipped, and the points are the
+     content. Measured, not guessed: at 45dvh the room below the dock is 168px for a 164px card. */
   @media (orientation:landscape) and (max-height:480px){
-    .video-frame{ max-height:82vh; }
+    :root{ --dock-max:45vh; }
+  }
+  @supports (height:100dvh){
+    @media (orientation:landscape) and (max-height:480px){ :root{ --dock-max:45dvh; } }
   }
 
   /* touch devices (no hover): >=44px hit targets. hover-peek can't fire on touch,
@@ -1369,6 +1382,14 @@
     paused:   function(){ return (transport && transport.paused) ? transport.paused() : true; },
     toggle:   function(){ if (!transport) return; if (this.paused()) this.play(); else this.pause(); },
     onTick:   function(cb){ if (typeof cb === 'function') tickCbs.push(cb); },
+    // Freeze the highlight on ONE line, by its start time. The 跟读 drill uses this while looping:
+    // a line being repeated has no "next line", so the look-ahead must not run off the end of it.
+    pin:      function(sec){
+                for (var i = 0; i < units.length; i++){
+                  if (Math.abs(units[i].sec - sec) < 0.05){ pinnedIdx = i; setActive(i); return; }
+                }
+              },
+    unpin:    function(){ pinnedIdx = -1; },
     rates:    playerRates,
     duration: function(){ return (transport && transport.duration) ? transport.duration() : 0; }
   };
@@ -1411,20 +1432,34 @@
     if (fab) fab.classList.toggle('show', !on && activeIdx >= 0);
     if (on && !silent) scrollToActive(true);
   }
+  // LOOK_AHEAD lights the next line slightly BEFORE its audio starts, so the highlight feels in sync
+  // rather than a beat behind. It must stay smaller than shadow.js's LOOP_LEAD, or a looping drill
+  // will light the next line in the gap between the two — see pinnedIdx below.
+  var LOOK_AHEAD = 0.15;
   function indexAt(tt){
     var lo = -1;
-    for (var k = 0; k < units.length; k++){ if (units[k].sec <= tt + 0.15) lo = k; else break; }
+    for (var k = 0; k < units.length; k++){ if (units[k].sec <= tt + LOOK_AHEAD) lo = k; else break; }
     return lo;
   }
-  function highlight(tt){
-    if (!units.length) return;
-    var idx = indexAt(tt);
+  // While the 跟读 drill loops ONE line, there is no "next line" to look ahead to. Without this pin
+  // the highlight jumped to the next sentence and snapped back on every single repeat — the exact
+  // thing the user reported. The audio was innocent (the drill turns around at lineEnd - LOOP_LEAD,
+  // so playback never reaches the next line); it was LOOK_AHEAD (0.15s) reaching further forward than
+  // LOOP_LEAD (0.10s) pulls back, so for 50ms every loop the highlighter believed we had moved on.
+  // Widening LOOP_LEAD past LOOK_AHEAD would fix it too, but at the cost of clipping the tail of every
+  // repeated line — and the tail is exactly what a shadowing learner needs to hear.
+  var pinnedIdx = -1;
+  function setActive(idx){
     if (idx === activeIdx) return;
     if (units[activeIdx]) units[activeIdx].el.classList.remove('active');
     activeIdx = idx;
     if (units[activeIdx]) units[activeIdx].el.classList.add('active');
     if (following) scrollToActive(false);
     else if (fab) fab.classList.toggle('show', activeIdx >= 0);
+  }
+  function highlight(tt){
+    if (!units.length) return;
+    setActive(pinnedIdx >= 0 ? pinnedIdx : indexAt(tt));
   }
 
   // one scroll listener drives BOTH follow-suspend and mobile auto-minimize.
@@ -1438,7 +1473,11 @@
       suspend();
       // on phones, scrolling down into the transcript collapses the video to reclaim space;
       // tapping any timestamp seeks and re-expands it (transport.seek calls setMin(false)).
-      if (window.innerWidth <= 560 && y > lastY + 6 && y > 200 &&
+      // Collapse on scroll-down when the screen is SHORT as well as when it is NARROW. A landscape
+      // phone (844 wide, 390 tall) is not narrow, so it never qualified — and it is precisely the
+      // geometry where the docked video leaves too little room to read a sentence. Scrolling into the
+      // transcript is exactly the moment the reader is done looking at the video.
+      if ((window.innerWidth <= 560 || window.innerHeight <= 480) && y > lastY + 6 && y > 200 &&
           dock && !dock.classList.contains('min')) setMin(true);
     }
     lastY = y;
@@ -1715,18 +1754,50 @@
       }
       return out;
     }
-    // ---- sync engine: pull → apply pending ops → PATCH with If-Match(etag).
-    // On 412 (another device pushed since our pull) re-pull, re-apply, retry.
+    // ---- sync engine: pull → apply pending ops → PATCH. On a CONFLICT, re-pull, re-apply, retry.
+    //
+    // This used to say "PATCH with If-Match(etag) … on 412 re-pull". Both halves were wrong, and
+    // verified wrong against the live API:
+    //
+    //   * GitHub's gist API does not support If-Match. Sending one is not ignored — it is a 400.
+    //     So the compare-and-swap this design was built around was never possible, and the only
+    //     reason sync worked at all is that the request adapter quietly dropped the header.
+    //   * GitHub signals "you based this write on a stale version" with 409 Conflict, not 412. So
+    //     this retry — the entire point of the engine — NEVER FIRED. A concurrent edit surfaced to
+    //     the user as 同步失败：409 with their stars stranded in the queue, when the code was fully
+    //     equipped to re-pull, replay the ops, and win on the next attempt.
+    //
+    // The good news, also verified: because GitHub rejects the stale write, no update is ever lost.
+    // The conflict is real, it is detected server-side, and it is recoverable. Recover from it.
     function makeSync(deps){
       var request = deps.request;                        // (kind, opts) -> {ok,status,etag,body}
-      async function flush(ops, pulled){
-        var base = pulled ? pulled.state : null, etag = pulled ? pulled.etag : null;
-        if (base == null){ var g = await request('GET'); base = g.body; etag = g.etag; }
+      async function flush(ops){
+        // Always read immediately before writing. A `pulled` state handed in from page-load could be
+        // minutes stale, and with last-write-wins that is a licence to destroy everything another
+        // device did in the meantime.
+        var g = await request('GET');
+        var base = g.body, baseVersion = g.version, etag = g.etag;
         for (var attempt = 0; attempt < 5; attempt++){
           var merged = applyOps(base, ops);
-          var res = await request('PATCH', { ifMatch: etag, body: merged });
-          if (res.ok) return { state: merged, etag: res.etag };
-          if (res.status === 412){ var re = await request('GET'); base = re.body; etag = re.etag; continue; }
+          var res = await request('PATCH', { body: merged });     // no If-Match — GitHub 400s on one
+          if (res.ok){
+            // LAST-WRITE-WINS DAMAGE CONTROL. GitHub accepted the write unconditionally. If the commit
+            // we just made does not sit on top of the revision we read, another device wrote into that
+            // window and we have just silently overwritten them. git still has their commit: fetch the
+            // revision we landed on (our parent), replay our ops on top of THAT, and write again.
+            if (baseVersion && res.parent && res.parent !== baseVersion){
+              var lost = await request('GET_REV', { version: res.parent });   // what we just destroyed
+              base = lost.body;                                               // rebuild on top of it
+              baseVersion = res.version;                                      // we are now the head
+              continue;
+            }
+            return { state: merged, etag: res.etag };
+          }
+          // 409 = two writes hitting the gist's git lock at once. Transient, not a version check —
+          // never rely on it to prevent a lost update. 412 is kept for a backend that does real CAS.
+          if (res.status === 409 || res.status === 412){
+            var re = await request('GET'); base = re.body; baseVersion = re.version; etag = re.etag; continue;
+          }
           var perr = new Error('sync PATCH failed: ' + res.status); perr.status = res.status; throw perr;
         }
         throw new Error('sync: too many conflicts');
@@ -1852,19 +1923,33 @@
     var g = await c.json(); try { localStorage.setItem(K.gid, g.id); } catch (e){} return g.id;
   }
   function makeRequest(gid){
+    // A gist is a git repo, and that is the only concurrency primitive this API gives us. There is no
+    // If-Match (sending one is a 400) and no version precondition on PATCH — writes are LAST-WRITE-WINS.
+    // But every revision is a commit, and `history[0].version` is the head. So a write's PARENT tells us
+    // which revision we actually landed on top of. If that is not the revision we read, another device
+    // wrote in between and we just destroyed it — and we can fetch exactly what we destroyed, because
+    // git kept it. See makeSync.flush.
+    async function readAt(path){
+      var r = await api('GET', path); if (!r.ok){ var ge = new Error('gist get ' + r.status); ge.status = r.status; throw ge; }
+      var etag = r.headers.get('ETag'); var g = await r.json();
+      var f = g.files && g.files[FILE]; var content = f ? f.content : '';
+      if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
+      var parsed; try { parsed = content ? JSON.parse(content) : {}; }
+      catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
+      var h = g.history || [];
+      return { ok: true, etag: etag, version: h[0] && h[0].version, body: P.migrate(parsed) };
+    }
     return async function(kind, opts){
-      if (kind === 'GET'){
-        var r = await api('GET', '/gists/' + gid); if (!r.ok){ var ge = new Error('gist get ' + r.status); ge.status = r.status; throw ge; }
-        var etag = r.headers.get('ETag'); var g = await r.json();
-        var f = g.files && g.files[FILE]; var content = f ? f.content : '';
-        if (f && f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
-        var parsed; try { parsed = content ? JSON.parse(content) : {}; }
-        catch (e){ throw new Error('refusing to overwrite: gist parse failed'); }  // never treat as empty
-        return { ok: true, etag: etag, body: P.migrate(parsed) };
-      }
+      if (kind === 'GET') return readAt('/gists/' + gid);
+      if (kind === 'GET_REV') return readAt('/gists/' + gid + '/' + opts.version);   // a past revision
       var files = {}; files[FILE] = { content: JSON.stringify(P.serialize(opts.body)) };
       var r2 = await api('PATCH', '/gists/' + gid, { files: files });
-      return { ok: r2.ok, status: r2.status, etag: r2.headers.get('ETag'), body: opts.body };
+      if (!r2.ok) return { ok: false, status: r2.status };
+      var g2 = await r2.json(); var h2 = g2.history || [];
+      return { ok: true, status: r2.status, etag: r2.headers.get('ETag'),
+               version: h2[0] && h2[0].version,      // the commit we just made
+               parent:  h2[1] && h2[1].version,      // ...and what it landed on top of
+               body: opts.body };
     };
   }
   function dropGid(){ try { localStorage.removeItem(K.gid); } catch (e){} }
@@ -2138,6 +2223,16 @@
     if (i < 0 || i >= rows.length) return;
     active = i; gapUntil = null;
     LP.seek(starts[i]); LP.play();
+    syncPin();
+  }
+  // While LOOPING one line, the highlight must follow the DRILL, not the clock. The highlighter looks
+  // 0.15s ahead; the drill only turns around 0.10s early — so for ~50ms on every repeat it lit the
+  // NEXT sentence and snapped back. That flicker is what the user saw and reported. Pin it.
+  // In 'run' mode the highlight SHOULD advance line to line, so there is nothing to pin.
+  function syncPin(){
+    if (!LP.pin || !LP.unpin) return;                      // older player variants: no pin, no drill flicker
+    if (on && mode === 'loop' && active >= 0) LP.pin(starts[active]);
+    else LP.unpin();
   }
   function tick(){
     if (!on || active < 0) return;
@@ -2148,7 +2243,7 @@
     if (act.type === 'seek'){ LP.seek(act.to); LP.play(); }
     else if (act.type === 'gap'){ gapUntil = act.until; LP.pause(); }
     else if (act.type === 'hold'){ /* stay paused during the shadow gap */ }
-    else if (act.type === 'advance'){ gapUntil = null; active += 1; LP.seek(act.to); LP.play(); reflect(); }
+    else if (act.type === 'advance'){ gapUntil = null; active += 1; LP.seek(act.to); LP.play(); syncPin(); reflect(); }
     else if (act.type === 'stop'){ gapUntil = null; LP.pause(); setOn(false); }
   }
   function reflect(){
@@ -2168,9 +2263,10 @@
     if (on && active < 0) setActive(lastTap >= 0 ? lastTap : currentIdx());
     if (on && !ticking){ ticking = true; (function loop(){ tick(); if (ticking) setTimeout(loop, 50); })(); }
     if (!on){ ticking = false; gapUntil = null; }
+    syncPin();                                             // drill off -> the highlight is the clock's again
     reflect();
   }
-  function setMode(m){ mode = m; gapUntil = null; reflect(); }
+  function setMode(m){ mode = m; gapUntil = null; syncPin(); reflect(); }
   function setRate(r){ rate = P.clampRate(r, LP.rates()); LP.setRate(rate); reflect(); }
   function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
 
@@ -2187,7 +2283,12 @@
   // remember the last tapped line; while shadow is ON, re-pin the active line to it
   rows.forEach(function(r, i){
     var ts = r.el.querySelector('.ts');
-    if (ts) ts.addEventListener('click', function(){ lastTap = i; if (on){ active = i; gapUntil = null; reflect(); } });
+    // This sets `active` directly rather than via setActive(), because the page's own .ts handler has
+    // already seeked — calling setActive here would seek a second time. But it is the SECOND place the
+    // drilled line changes, so it must re-pin too: without syncPin() the drill moved to the tapped
+    // line while the highlight stayed pinned to whichever line was under the playhead when 跟读 was
+    // switched on.
+    if (ts) ts.addEventListener('click', function(){ lastTap = i; if (on){ active = i; gapUntil = null; syncPin(); reflect(); } });
   });
 
   // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
