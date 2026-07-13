@@ -4507,7 +4507,20 @@
     duration: function(){ return (transport && transport.duration) ? transport.duration() : 0; }
   };
 
-  function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
+  // Base-60 fold over EVERY digit group. Backlog #39; keep identical to favorites.js tsToSec.
+  //
+  // segment.py mints OVERFLOWING MINUTES — a line at 1h02m33s is labelled `62:33`, never `1:02:33`.
+  // That looks like a bug and is not. But the old parser was /(\d+):(\d+)/, which takes the first two
+  // groups and stops, so an `HH:MM:SS` label read `1:02:33` as 1*60+2 = 62 SECONDS. Anyone "fixing"
+  // the odd-looking label would have silently halved every seek past the hour — and favourites would
+  // have kept working (they always base-60 folded), so nothing would have screamed. Folding here means
+  // BOTH formats parse, and the trap is gone whatever anyone later does to the label.
+  // Enforced by tools/test_tosec.mjs.
+  function toSec(txt){
+    var p = (String(txt).match(/\d+/g) || []).map(Number);
+    var s = 0; for (var i = 0; i < p.length; i++) s = s * 60 + p[i];
+    return s;
+  }
   // A line's TRUE onset. data-sec carries the real sub-second start; the MM:SS label is a FLOORED
   // second and is only a fallback.
   //
@@ -5319,7 +5332,14 @@
   if (!toggle || !bar) return;
 
   var P = SHADOW_PURE();
-  function toSec(txt){ var m = String(txt).match(/(\d+):(\d+)/); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
+  // Base-60 fold over every digit group, so `62:33` (what segment.py mints past the hour) AND
+  // `1:02:33` both parse. The old two-group regex read `1:02:33` as 62s. Backlog #39; must stay
+  // identical to player_auto's toSec and favorites.js tsToSec — tools/test_tosec.mjs enforces it.
+  function toSec(txt){
+    var p = (String(txt).match(/\d+/g) || []).map(Number);
+    var s = 0; for (var i = 0; i < p.length; i++) s = s * 60 + p[i];
+    return s;
+  }
   // MUST match player_auto.html's startOf() EXACTLY, and must change with it in the same commit.
   // The pin handshake compares shadow's start against the player's units[i].sec with a 0.05s
   // tolerance; if one side reads data-sec and the other reads the floored label they can differ by
