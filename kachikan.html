@@ -1629,6 +1629,10 @@
                 }
               },
     unpin:    function(){ pinnedIdx = -1; },
+    // The engine's OWN view of every line's start, after the monotonic clamp. Exposed so a test can
+    // assert the invariant the follow-along scan depends on: this sequence must never DECREASE.
+    // An invariant nothing can observe is an invariant nothing can defend.
+    starts:   function(){ var o = []; for (var i = 0; i < units.length; i++) o.push(units[i].sec); return o; },
     rates:    playerRates,
     duration: function(){ return (transport && transport.duration) ? transport.duration() : 0; }
   };
@@ -1674,7 +1678,22 @@
     var t = uEls[i].querySelector('.ts');
     if (t) units.push({ el: uEls[i], sec: startOf(t) });
   }
-  units.sort(function(a, b){ return a.sec - b.sec; });
+  // CLAMP, DO NOT SORT. Backlog: the retrofit left 27 places across 7 pages where the clock runs
+  // BACKWARDS — a recovered line (data-sec 32.04) followed by an unrecovered twin in the same second
+  // whose FLOORED label (32.00) is earlier than its own predecessor. Sorting made this list monotonic
+  // but REORDERED it against the DOM, so the highlight jumped DOWN to the later card and back UP to
+  // the earlier one, and shadow.js index i stopped naming the same line as index i here (the pin
+  // handshake matches on sec within 0.05s and could bind the wrong twin). DOM order is the reading
+  // order and is authoritative. Clamp the values; never move a line. Identical to shadow.js
+  // clampStarts() — the two MUST agree exactly.
+  for (var ci = 1; ci < units.length; ci++)
+    if (units[ci].sec < units[ci - 1].sec) units[ci].sec = units[ci - 1].sec;
+  // Publish the CLAMPED start back onto the .ts, so click-to-seek uses the same clock as the
+  // highlight. Seeking to the raw startOf() would land a floored twin BEFORE its own clamped start.
+  for (var cj = 0; cj < units.length; cj++){
+    var tsEl = units[cj].el.querySelector(".ts");
+    if (tsEl) tsEl.__sec = units[cj].sec;
+  }
 
   var following = true, activeIdx = -1;
   function dockH(){
@@ -1756,7 +1775,7 @@
     (function(el){
       // The EXACT onset, not the floored label — clicking a timestamp used to seek up to 1s early,
       // landing you in the tail of the PREVIOUS sentence.
-      var sec = startOf(el);
+      var sec = (el.__sec != null) ? el.__sec : startOf(el);   // the CLAMPED start
       el.setAttribute('role','button'); el.tabIndex = 0;
       el.title = '跳到 ' + el.textContent.trim() + ' 播放';
       function go(){
@@ -2447,7 +2466,42 @@
       }
       return best;
     }
-    return { shadowStep: shadowStep, turnAt: turnAt, LOOP_LEAD: LOOP_LEAD, clampRate: clampRate };
+    // ---- the page's clock must never run backwards -------------------------------------------
+    // A line's start is data-sec when the audio vouched for it, and the FLOORED MM:SS label when it
+    // did not (~8% of lines: one-word 相槌 no ASR transcribed). Those two live on different grids,
+    // and where a recovered line and an unrecovered one SHARE A SECOND the floored one lands EARLIER
+    // than its own predecessor:
+    //
+    //     [22] 00:32  data-sec 32.04     <- recovered
+    //     [23] 00:32  (none)   32.00     <- floored: BEFORE card 22. The clock goes backwards.
+    //
+    // 27 such steps shipped across 7 of the 11 pages. The retrofit's monotonic guard compared
+    // data-sec values only TO EACH OTHER and never against the floored fallbacks — that was the hole.
+    //
+    // Clamp, do NOT sort. shadow.js used to sort by sec, which made its own list monotonic but
+    // REORDERED it against the DOM — so shadow's index i stopped meaning the same line as the
+    // player's index i, and the pin handshake (which matches on sec within 0.05s) could match the
+    // wrong twin. DOM order is the reading order and is authoritative; the clamp fixes the values
+    // without touching the order. The players apply the identical clamp — they must agree exactly.
+    function clampStarts(secs){
+      var out = secs.slice();
+      for (var i = 1; i < out.length; i++) if (out[i] < out[i - 1]) out[i] = out[i - 1];
+      return out;
+    }
+
+    // The end of line i is the next start that is genuinely LATER — not merely the next index.
+    // Same-second twins (a 相槌 and the reply that lands in the same second) sit at the same instant,
+    // so `starts[i+1]` as the end yields a zero- or negative-length loop and the drill freezes on a
+    // sliver of audio. That predates the retrofit; the inversion above only made it negative. A
+    // learner cannot shadow a 0.04s clip — loop to the next line that actually starts later.
+    function nextDistinct(secs, i, minSpan){
+      var span = (typeof minSpan === 'number') ? minSpan : MIN_SPAN;
+      for (var k = i + 1; k < secs.length; k++) if (secs[k] > secs[i] + span) return secs[k];
+      return null;
+    }
+
+    return { shadowStep: shadowStep, turnAt: turnAt, LOOP_LEAD: LOOP_LEAD, clampRate: clampRate,
+             clampStarts: clampStarts, nextDistinct: nextDistinct, MIN_SPAN: MIN_SPAN };
   }
   /*<</shadow-pure>>*/
 
@@ -2483,9 +2537,12 @@
   }
   var rows = [].slice.call(document.querySelectorAll('.u')).map(function(el){
     var t = el.querySelector('.ts'); return { el: el, sec: t ? startOf(t) : 0 };
-  }).sort(function(a, b){ return a.sec - b.sec; });
+  });
   if (!rows.length) return;
-  var starts = rows.map(function(r){ return r.sec; });
+  // CLAMP, don't sort — see clampStarts() in the pure core. The old .sort() reordered shadow's rows
+  // against the DOM, so its index i no longer named the same line as the player's index i.
+  var starts = P.clampStarts(rows.map(function(r){ return r.sec; }));
+  for (var ci = 0; ci < rows.length; ci++) rows[ci].sec = starts[ci];
   function medianGap(){
     var g = [];
     for (var i = 1; i < starts.length; i++) g.push(starts[i] - starts[i - 1]);
@@ -2499,7 +2556,9 @@
 
   function lineBounds(i){
     var lineStart = starts[i];
-    var nextStart = (i + 1 < starts.length) ? starts[i + 1] : null;
+    // The next start that is genuinely LATER, not merely the next index — a same-second twin would
+    // otherwise end this line at its own start and the drill would loop a sliver of audio.
+    var nextStart = P.nextDistinct(starts, i);
     var dur = LP.duration ? LP.duration() : 0;
     var lineEnd = (nextStart != null) ? nextStart
                 : (dur > lineStart ? dur : lineStart + LAST_LEN);
