@@ -333,7 +333,7 @@
   @media (hover:none) and (pointer:coarse){
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
-    .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle{ min-height:44px; padding:.5rem .95rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -451,13 +451,15 @@
      shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
      ============================================================ */
   /* shadow toggle in the dock bar (sits next to 跟随) */
-  .dock-shadow-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+  .dock-shadow-toggle, .dock-hl-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
     color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
     padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
-  .dock-shadow-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
-  .dock-shadow-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
-  .dock-shadow-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle:hover, .dock-hl-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on, .dock-hl-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
+  /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
+  body.highlights-only .u:not(.key){ display:none; }
   /* control cluster, revealed under the dock bar when shadow is on */
   .dock-shadow{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
     padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
@@ -474,6 +476,16 @@
   @media (hover:none) and (pointer:coarse){
     .dock-shadow-toggle{min-height:44px;padding:.5rem .9rem;}
     .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{min-height:44px;padding:.5rem .8rem;}
+  }
+
+  /* Four dock buttons + the injected play button no longer fit at the 320px reflow floor.
+     Reclaim width by tightening gap + horizontal padding; the 44px min-HEIGHT tap target stays.
+     Placed after the .dock-shadow-toggle touch-padding rule above (same specificity, later wins
+     the cascade) so this narrow override is not itself overridden back to the wider padding. */
+  @media (max-width:360px){
+    .dock-bar{ gap:.3rem; padding-left:.5rem; }
+    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; }
+    .dock-play{ padding-left:.4rem; padding-right:.4rem; }
   }
 
   /* filter / search bar (page_tools.js) */

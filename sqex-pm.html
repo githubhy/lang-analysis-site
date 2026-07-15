@@ -333,7 +333,7 @@
   @media (hover:none) and (pointer:coarse){
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
-    .dock-min,.dock-follow{ min-height:44px; padding:.5rem .95rem; }
+    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle{ min-height:44px; padding:.5rem .95rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -451,13 +451,15 @@
      shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
      ============================================================ */
   /* shadow toggle in the dock bar (sits next to 跟随) */
-  .dock-shadow-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+  .dock-shadow-toggle, .dock-hl-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
     color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
     padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
-  .dock-shadow-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
-  .dock-shadow-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
-  .dock-shadow-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle:hover, .dock-hl-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on, .dock-hl-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
+  /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
+  body.highlights-only .u:not(.key){ display:none; }
   /* control cluster, revealed under the dock bar when shadow is on */
   .dock-shadow{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
     padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
@@ -474,6 +476,16 @@
   @media (hover:none) and (pointer:coarse){
     .dock-shadow-toggle{min-height:44px;padding:.5rem .9rem;}
     .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{min-height:44px;padding:.5rem .8rem;}
+  }
+
+  /* Four dock buttons + the injected play button no longer fit at the 320px reflow floor.
+     Reclaim width by tightening gap + horizontal padding; the 44px min-HEIGHT tap target stays.
+     Placed after the .dock-shadow-toggle touch-padding rule above (same specificity, later wins
+     the cascade) so this narrow override is not itself overridden back to the wider padding. */
+  @media (max-width:360px){
+    .dock-bar{ gap:.3rem; padding-left:.5rem; }
+    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; }
+    .dock-play{ padding-left:.4rem; padding-right:.4rem; }
   }
 
   /* filter / search bar (page_tools.js) */
@@ -560,6 +572,7 @@
       <span class="dock-title"><span class="tri">▶</span> スクエニPM 1日密着</span>
       <button class="dock-follow on" id="dockFollow" type="button" aria-pressed="true" aria-label="切换字幕自动跟随播放">● 跟随</button>
       <button class="dock-shadow-toggle" id="shadowToggle" type="button" aria-pressed="false" aria-controls="shadowBar" aria-label="切换跟读练习模式">跟读</button>
+      <button class="dock-hl-toggle" id="highlightsToggle" type="button" aria-pressed="false" aria-label="只看并播放重点句式">重点</button>
       <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
     </div>
     <!--shadow-bar-->
@@ -3750,6 +3763,16 @@
       }
       return { type: 'none' };
     }
+    // 重点 (highlights) step — run-mode with the gap removed and the target redirected from the next
+    // DOM line to the next KEY line. Reuses turnAt, so it turns around LOOP_LEAD before the boundary
+    // and never plays a snippet of the non-key line being skipped (the same trade the drill makes).
+    //   s = { curT, lineStart, lineEnd, nextKeyStart, lead? }
+    function highlightStep(s){
+      if (s.curT >= turnAt(s))
+        return s.nextKeyStart != null ? { type: 'advance', to: s.nextKeyStart }
+                                      : { type: 'stop' };
+      return { type: 'none' };
+    }
     // Clamp a requested rate to the nearest value the backend supports.
     function clampRate(r, rates){
       var list = (rates && rates.length) ? rates : [1];
@@ -3794,8 +3817,8 @@
       return null;
     }
 
-    return { shadowStep: shadowStep, turnAt: turnAt, LOOP_LEAD: LOOP_LEAD, clampRate: clampRate,
-             clampStarts: clampStarts, nextDistinct: nextDistinct, MIN_SPAN: MIN_SPAN };
+    return { shadowStep: shadowStep, highlightStep: highlightStep, turnAt: turnAt, LOOP_LEAD: LOOP_LEAD,
+             clampRate: clampRate, clampStarts: clampStarts, nextDistinct: nextDistinct, MIN_SPAN: MIN_SPAN };
   }
   /*<</shadow-pure>>*/
 
@@ -3846,7 +3869,21 @@
   }
   var LAST_LEN = Math.min(Math.max(medianGap(), 2), 8);   // fallback for the final line when duration()==0
 
-  var on = false, mode = 'loop', active = -1, lastTap = -1, gapUntil = null, rate = 1, ticking = false;
+  var on = false, mode = 'loop', active = -1, lastTap = -1, gapUntil = null, rate = 1;
+
+  // One self-terminating tick loop, guarded by a generation token: each pump() supersedes any prior
+  // loop, so a drill<->重点 swap (teardown + restart in one stack) can never leave two loops running.
+  var loopGen = 0, liveLoops = 0;
+  function pump(){
+    var g = ++loopGen;
+    liveLoops++;
+    (function loop(){
+      if (g !== loopGen || (!on && !hlOn)){ liveLoops--; return; }
+      tickAny();
+      setTimeout(loop, 50);
+    })();
+  }
+  window.__shadowLoops = function(){ return liveLoops; };   // test-only diagnostic (cf. __seekProbe)
 
   function lineBounds(i){
     var lineStart = starts[i];
@@ -3905,8 +3942,8 @@
   function setOn(v){
     on = v;
     if (on && active < 0) setActive(lastTap >= 0 ? lastTap : currentIdx());
-    if (on && !ticking){ ticking = true; (function loop(){ tick(); if (ticking) setTimeout(loop, 50); })(); }
-    if (!on){ ticking = false; gapUntil = null; }
+    if (on) pump();
+    if (!on){ gapUntil = null; }
     syncPin();                                             // drill off -> the highlight is the clock's again
     reflect();
   }
@@ -3914,7 +3951,53 @@
   function setRate(r){ rate = P.clampRate(r, LP.rates()); LP.setRate(rate); reflect(); }
   function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
 
-  toggle.addEventListener('click', function(){ setOn(!on); });
+  // ── 重点 (highlights) — mutually exclusive with the drill; one tick loop dispatches by hlOn. ──
+  var hlOn = false;
+  var hlToggle = document.getElementById('highlightsToggle');
+  var keyIdx = [];
+  for (var ki = 0; ki < rows.length; ki++) if (rows[ki].el.classList.contains('key')) keyIdx.push(ki);
+
+  function firstKeyIdx(){ return keyIdx.length ? keyIdx[0] : -1; }
+  function nextKeyIdxFrom(i){ for (var k = 0; k < keyIdx.length; k++) if (keyIdx[k] > i) return keyIdx[k]; return -1; }
+  function currentKeyIdx(){                          // nearest key line at/just-before the playhead
+    var t = LP.getTime(), lo = firstKeyIdx();
+    for (var k = 0; k < keyIdx.length; k++){ if (starts[keyIdx[k]] <= t + 0.15) lo = keyIdx[k]; else break; }
+    return lo;
+  }
+  function hlTick(){
+    if (!hlOn || active < 0) return;
+    // Resync if the user scrubbed out of the active key line. Normal advance seeks away BEFORE
+    // lineEnd, so this fires only on a real manual seek (margin tolerates 50ms poll overshoot).
+    var cb = lineBounds(active), t0 = LP.getTime();
+    if (t0 < cb.lineStart - 0.25 || t0 > cb.lineEnd + 0.5) active = currentKeyIdx();
+    var b = lineBounds(active);
+    var nki = nextKeyIdxFrom(active);
+    var nks = (nki >= 0) ? starts[nki] : null;
+    var act = P.highlightStep({ curT: LP.getTime(), lineStart: b.lineStart, lineEnd: b.lineEnd, nextKeyStart: nks });
+    if (act.type === 'advance'){ active = nki; LP.seek(act.to); LP.play(); reflectHl(); }
+    else if (act.type === 'stop'){ LP.pause(); setHl(false); }
+  }
+  function reflectHl(){
+    if (!hlToggle) return;
+    hlToggle.setAttribute('aria-pressed', hlOn ? 'true' : 'false');
+    hlToggle.classList.toggle('on', hlOn);
+  }
+  function tickAny(){ if (hlOn) hlTick(); else if (on) tick(); }
+  function setHl(v){
+    hlOn = v;
+    if (hlOn){
+      if (on) setOn(false);                          // mutual exclusion: drill off first
+      document.body.classList.add('highlights-only');
+      active = (active >= 0 && rows[active].el.classList.contains('key')) ? active : firstKeyIdx();
+      if (active >= 0){ LP.seek(starts[active]); LP.play(); }
+      pump();
+    } else {
+      document.body.classList.remove('highlights-only');
+    }
+    reflectHl();
+  }
+
+  toggle.addEventListener('click', function(){ if (!on && hlOn) setHl(false); setOn(!on); });
   var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
   if (loopBtn) loopBtn.addEventListener('click', function(){ setMode('loop'); });
   if (runBtn)  runBtn.addEventListener('click', function(){ setMode('run'); });
@@ -3924,6 +4007,11 @@
   [].slice.call(bar.querySelectorAll('.sh-rate')).forEach(function(btn){
     btn.addEventListener('click', function(){ setRate(parseFloat(btn.getAttribute('data-rate'))); });
   });
+  if (hlToggle){
+    if (!keyIdx.length) hlToggle.hidden = true;
+    else hlToggle.addEventListener('click', function(){ setHl(!hlOn); });
+    reflectHl();
+  }
   // remember the last tapped line; while shadow is ON, re-pin the active line to it
   rows.forEach(function(r, i){
     var ts = r.el.querySelector('.ts');
