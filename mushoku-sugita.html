@@ -333,7 +333,7 @@
   @media (hover:none) and (pointer:coarse){
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
-    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle{ min-height:44px; padding:.5rem .95rem; }
+    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -451,41 +451,59 @@
      shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
      ============================================================ */
   /* shadow toggle in the dock bar (sits next to 跟随) */
-  .dock-shadow-toggle, .dock-hl-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+  .dock-shadow-toggle, .dock-hl-toggle, .dock-dict-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
     color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
     padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
-  .dock-shadow-toggle:hover, .dock-hl-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
-  .dock-shadow-toggle.on, .dock-hl-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
-  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle:hover, .dock-hl-toggle:hover, .dock-dict-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on, .dock-hl-toggle.on, .dock-dict-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible, .dock-dict-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
   /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
   body.highlights-only .u:not(.key){ display:none; }
+  /* 听写 (dictation) lens: mask the answer body; the active revealed row shows. visibility, not
+     display, so the layout does not jump; the sibling .u-meta timestamp stays visible + tappable. */
+  body.dictation .u .u-body{ visibility:hidden; }
+  body.dictation .u.revealed .u-body{ visibility:visible; }
+  /* dictation control bar — mirrors .dock-shadow; buttons share styling via the grouped selectors below */
+  .dock-dict{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
+    padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
+  .dock-dict[hidden]{display:none;}
+  .dict-grade{display:inline-flex;gap:.3rem;}
+  .dict-grade[hidden]{display:none;}
+  .dict-tally{margin-left:auto;font-size:.75rem;color:var(--ink-soft);white-space:nowrap;}
+  .dock-dict .d-got.on,.dock-dict .d-got:hover{color:var(--paper);background:var(--joshi);border-color:var(--joshi);}
+  .dock-dict .d-miss:hover{color:var(--paper);background:var(--shu);border-color:var(--shu);}
   /* control cluster, revealed under the dock bar when shadow is on */
   .dock-shadow{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
     padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
   .dock-shadow[hidden]{display:none;}
-  .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{
+  .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate,.dock-dict .d-step{
     font-family:var(--font-gothic);font-size:.74rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
     background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.22rem .6rem;
     white-space:nowrap;transition:color .12s,border-color .12s,background .12s;}
   .dock-shadow .sh-mode{display:inline-flex;gap:.3rem;}
   .dock-shadow .sh-rates{display:inline-flex;gap:.3rem;margin-left:auto;}
-  .dock-shadow button:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow button:hover,.dock-dict button:hover{color:var(--keigo);border-color:var(--keigo);}
   .dock-shadow .sh-mode button.on,.dock-shadow .sh-rate.on{color:var(--paper);background:var(--keigo);border-color:var(--keigo);}
-  .dock-shadow button:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow button:focus-visible,.dock-dict button:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   @media (hover:none) and (pointer:coarse){
     .dock-shadow-toggle{min-height:44px;padding:.5rem .9rem;}
-    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate{min-height:44px;padding:.5rem .8rem;}
+    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate,.dock-dict .d-step{min-height:44px;padding:.5rem .8rem;}
   }
 
   /* Four dock buttons + the injected play button no longer fit at the 320px reflow floor.
      Reclaim width by tightening gap + horizontal padding; the 44px min-HEIGHT tap target stays.
      Placed after the .dock-shadow-toggle touch-padding rule above (same specificity, later wins
      the cascade) so this narrow override is not itself overridden back to the wider padding. */
-  @media (max-width:360px){
-    .dock-bar{ gap:.3rem; padding-left:.5rem; }
-    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; }
-    .dock-play{ padding-left:.4rem; padding-right:.4rem; }
+  @media (max-width:440px){
+    /* Five dock buttons + play do not fit on a phone (even the 390px iPhone), so tighten padding AND
+       make the bar SCROLL horizontally. overflow-x:auto is ADAPTIVE — it shows no scrollbar where the
+       tightened buttons already fit and only scrolls where they don't; flex:0 0 auto keeps each button
+       full-size and un-clipped either way. Covers 320/375/390/430 phones; tablets/desktop are untouched. */
+    .dock-bar{ gap:.3rem; padding-left:.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .dock-bar::-webkit-scrollbar{ display:none; }
+    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
+    .dock-play{ padding-left:.4rem; padding-right:.4rem; flex:0 0 auto; }
   }
 
   /* filter / search bar (page_tools.js) */
@@ -573,6 +591,7 @@
       <button class="dock-follow on" id="dockFollow" type="button" aria-pressed="true" aria-label="切换字幕自动跟随播放">● 跟随</button>
       <button class="dock-shadow-toggle" id="shadowToggle" type="button" aria-pressed="false" aria-controls="shadowBar" aria-label="切换跟读练习模式">跟读</button>
       <button class="dock-hl-toggle" id="highlightsToggle" type="button" aria-pressed="false" aria-label="只看并播放重点句式">重点</button>
+      <button class="dock-dict-toggle" id="dictToggle" type="button" aria-pressed="false" aria-controls="dictBar" aria-label="切换听写练习模式">听写</button>
       <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
     </div>
     <!--shadow-bar-->
@@ -590,6 +609,17 @@
       <button class="sh-step" id="shNext" type="button" aria-label="下一句">句 ▷</button>
     </div>
     <!--/shadow-bar-->
+    <!--dict-bar-->
+    <div class="dock-dict" id="dictBar" role="group" aria-label="听写控制" hidden>
+      <button class="d-step" id="dictReplay" type="button" aria-label="再听一次">↺ 再听</button>
+      <button class="d-step" id="dictReveal" type="button">显示答案</button>
+      <span class="dict-grade" id="dictGrade" role="group" aria-label="自评" hidden>
+        <button class="d-step d-miss" id="dictMiss" type="button">✗ 没听出</button>
+        <button class="d-step d-got" id="dictGot" type="button">✓ 听懂了</button>
+      </span>
+      <span class="dict-tally" id="dictTally" aria-live="polite"></span>
+    </div>
+    <!--/dict-bar-->
     <div class="dock-video">
       <div class="video-frame">
         <video id="clip" controls playsinline preload="metadata" data-youtube-id="DIJDQQ_7LuE" title="無職転生Ⅲ 先行上映イベント">
@@ -3386,6 +3416,15 @@
                                       : { type: 'stop' };
       return { type: 'none' };
     }
+    // 听写 (dictation) step — play the line once, then pause at its end and WAIT for the learner to
+    // reveal + grade. Reuses turnAt so it stops LOOP_LEAD before the boundary (no next-line bleed),
+    // the same trade 跟读/重点 make. The controller tracks `awaiting` and parks the loop meanwhile.
+    //   s = { curT, lineStart, lineEnd, awaiting, lead? }
+    function dictationStep(s){
+      if (s.awaiting) return { type: 'none' };
+      if (s.curT >= turnAt(s)) return { type: 'await' };
+      return { type: 'none' };
+    }
     // Clamp a requested rate to the nearest value the backend supports.
     function clampRate(r, rates){
       var list = (rates && rates.length) ? rates : [1];
@@ -3430,7 +3469,8 @@
       return null;
     }
 
-    return { shadowStep: shadowStep, highlightStep: highlightStep, turnAt: turnAt, LOOP_LEAD: LOOP_LEAD,
+    return { shadowStep: shadowStep, highlightStep: highlightStep, dictationStep: dictationStep,
+             turnAt: turnAt, LOOP_LEAD: LOOP_LEAD,
              clampRate: clampRate, clampStarts: clampStarts, nextDistinct: nextDistinct, MIN_SPAN: MIN_SPAN };
   }
   /*<</shadow-pure>>*/
@@ -3485,18 +3525,24 @@
   var on = false, mode = 'loop', active = -1, lastTap = -1, gapUntil = null, rate = 1;
 
   // One self-terminating tick loop, guarded by a generation token: each pump() supersedes any prior
-  // loop, so a drill<->重点 swap (teardown + restart in one stack) can never leave two loops running.
+  // loop, so a drill<->重点<->听写 swap (teardown + restart in one stack) can never leave two loops
+  // running. The loop also ends when 重点 has PARKED (its last key line) or 听写 is AWAITING input
+  // (paused, waiting for reveal+grade): the lens stays, but the poll must not spin doing nothing —
+  // a tap / 再听 / advance un-parks and re-pumps.
   var loopGen = 0, liveLoops = 0;
   function pump(){
     var g = ++loopGen;
     liveLoops++;
     (function loop(){
-      if (g !== loopGen || (!on && !hlOn)){ liveLoops--; return; }
+      if (g !== loopGen || (!on && (!hlOn || hlParked) && (!dOn || dAwait))){ liveLoops--; return; }
       tickAny();
       setTimeout(loop, 50);
     })();
   }
-  window.__shadowLoops = function(){ return liveLoops; };   // test-only diagnostic (cf. __seekProbe)
+  // Test-only diagnostic for the swap-leak regression (tools/cdp_offline.mjs). Exposed on file:// and
+  // localhost only — never on the published site (the inverse of favorites.js's online-only gate).
+  if (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    window.__shadowLoops = function(){ return liveLoops; };
 
   function lineBounds(i){
     var lineStart = starts[i];
@@ -3554,6 +3600,7 @@
   }
   function setOn(v){
     on = v;
+    if (on){ if (hlOn) setHl(false); if (dOn) setDict(false); }   // mutual exclusion: 重点/听写 off
     if (on && active < 0) setActive(lastTap >= 0 ? lastTap : currentIdx());
     if (on) pump();
     if (!on){ gapUntil = null; }
@@ -3565,7 +3612,7 @@
   function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
 
   // ── 重点 (highlights) — mutually exclusive with the drill; one tick loop dispatches by hlOn. ──
-  var hlOn = false;
+  var hlOn = false, hlParked = false;   // hlParked: sequence ran to the last key line — lens stays, loop stops
   var hlToggle = document.getElementById('highlightsToggle');
   var keyIdx = [];
   for (var ki = 0; ki < rows.length; ki++) if (rows[ki].el.classList.contains('key')) keyIdx.push(ki);
@@ -3587,19 +3634,23 @@
     var nki = nextKeyIdxFrom(active);
     var nks = (nki >= 0) ? starts[nki] : null;
     var act = P.highlightStep({ curT: LP.getTime(), lineStart: b.lineStart, lineEnd: b.lineEnd, nextKeyStart: nks });
-    if (act.type === 'advance'){ active = nki; LP.seek(act.to); LP.play(); reflectHl(); }
-    else if (act.type === 'stop'){ LP.pause(); setHl(false); }
+    if (act.type === 'advance'){ active = nki; LP.seek(act.to); LP.play(); }   // hlOn unchanged → no reflectHl
+    // Reached the last key line: pause and PARK. Keep the lens (the curated view is the point) and keep
+    // the toggle pressed; do NOT setHl(false), which would clear the filter and snap every row back.
+    else if (act.type === 'stop'){ LP.pause(); hlParked = true; }
   }
   function reflectHl(){
     if (!hlToggle) return;
     hlToggle.setAttribute('aria-pressed', hlOn ? 'true' : 'false');
     hlToggle.classList.toggle('on', hlOn);
   }
-  function tickAny(){ if (hlOn) hlTick(); else if (on) tick(); }
+  function tickAny(){ if (hlOn) hlTick(); else if (dOn) dTick(); else if (on) tick(); }
   function setHl(v){
     hlOn = v;
     if (hlOn){
+      hlParked = false;                              // fresh entry (or re-entry after a parked end)
       if (on) setOn(false);                          // mutual exclusion: drill off first
+      if (dOn) setDict(false);                        // ...and 听写
       document.body.classList.add('highlights-only');
       active = (active >= 0 && rows[active].el.classList.contains('key')) ? active : firstKeyIdx();
       if (active >= 0){ LP.seek(starts[active]); LP.play(); }
@@ -3610,7 +3661,97 @@
     reflectHl();
   }
 
-  toggle.addEventListener('click', function(){ if (!on && hlOn) setHl(false); setOn(!on); });
+  // ── 听写 (dictation) — mutually exclusive with the drill & 重点; dispatched by dOn in tickAny. ──
+  var dOn = false, dAwait = false, dReveal = false, dDone = false, dQueue = [];
+  var dSeekTo = null, dSeekBy = 0;   // a programmatic seek in flight — suppress scrub-detection until it lands
+  var dPassed = 0, dMissed = 0, dSaved = 0;
+  var dToggle = document.getElementById('dictToggle');
+  var dBar = document.getElementById('dictBar');
+  var dReplayBtn = document.getElementById('dictReplay'), dRevealBtn = document.getElementById('dictReveal');
+  var dGrade = document.getElementById('dictGrade'), dMissBtn = document.getElementById('dictMiss'), dGotBtn = document.getElementById('dictGot');
+  var dTally = document.getElementById('dictTally');
+
+  function visibleRowIdx(){                               // in-set = currently-visible .u (respects every filter)
+    var out = [];
+    for (var i = 0; i < rows.length; i++) if (rows[i].el.offsetParent !== null) out.push(i);
+    return out;
+  }
+  function dSeek(x){ LP.seek(x); dSeekTo = x; dSeekBy = Date.now() + 500; }   // arm the settle guard (see dTick)
+  function dReflect(){
+    if (dToggle){ dToggle.setAttribute('aria-pressed', dOn ? 'true' : 'false'); dToggle.classList.toggle('on', dOn); }
+    if (dBar) dBar.hidden = !dOn;
+    if (dRevealBtn) dRevealBtn.hidden = !(dOn && !dReveal && !dDone);
+    if (dGrade) dGrade.hidden = !(dOn && dReveal && !dDone);   // no dangling grade buttons at completion
+    if (dTally) dTally.textContent = dOn
+      ? ((dDone ? '听写完成 · ' : '') + '听懂 ' + dPassed + ' · 重听 ' + dMissed + (dSaved ? ' · 收藏 ' + dSaved : ''))
+      : '';
+  }
+  function dPlayActive(){                                 // test the active line: masked, from its start
+    if (active < 0) return;
+    dAwait = false; dReveal = false; dDone = false;
+    rows[active].el.classList.remove('revealed');
+    dSeek(starts[active]); LP.play();
+    dReflect(); pump();
+  }
+  function dResyncIfScrubbed(){                           // a manual seek out of the active line → re-aim
+    var b = lineBounds(active), t0 = LP.getTime();
+    if (t0 < b.lineStart - 0.25 || t0 > b.lineEnd + 0.5){
+      var vis = visibleRowIdx(), pick = vis.length ? vis[0] : active;
+      for (var k = 0; k < vis.length; k++){ if (starts[vis[k]] <= t0 + 0.15) pick = vis[k]; else break; }
+      active = pick; dReveal = false; rows[active].el.classList.remove('revealed');
+    }
+  }
+  function dTick(){
+    if (!dOn || active < 0 || dAwait) return;
+    // A programmatic seek can LAG on the IFrame transport: getCurrentTime keeps returning the pre-seek
+    // playhead for up to a poll. pump()'s first loop body runs synchronously, so without this guard the
+    // very first dTick after a seek would scrub-detect against a stale time and jump `active` to the
+    // wrong line. Ignore the tick until the seek lands (getTime near target) or a short deadline passes.
+    if (dSeekTo != null){
+      if (Math.abs(LP.getTime() - dSeekTo) <= 0.4 || Date.now() >= dSeekBy) dSeekTo = null;
+      else return;
+    }
+    dResyncIfScrubbed();
+    var b = lineBounds(active);
+    var act = P.dictationStep({ curT: LP.getTime(), lineStart: b.lineStart, lineEnd: b.lineEnd, awaiting: dAwait });
+    if (act.type === 'await'){ dAwait = true; LP.pause(); dReflect(); }   // loop parks on the next guard check
+  }
+  function dAdvance(){
+    if (dQueue.length){ active = dQueue.shift(); dPlayActive(); }
+    else { LP.pause(); dAwait = true; dDone = true; dReveal = false; dReflect(); }   // finished: park, hide grade
+  }
+  function dReplay(){ if (!dOn || active < 0 || dDone) return; dAwait = false; dSeek(starts[active]); LP.play(); dReflect(); pump(); }
+  function dDoReveal(){ if (!dOn || active < 0 || dDone) return; dReveal = true; rows[active].el.classList.add('revealed'); dReflect(); }
+  function dGradeGot(){ if (!dOn || dDone) return; dPassed++; dAdvance(); }   // ✓: keep revealed, dequeue, advance
+  function dGradeMiss(){                                  // ✗: requeue tail, auto-favorite (online), advance
+    if (!dOn || dDone) return; dMissed++;
+    if (active >= 0){
+      dQueue.push(active);
+      var row = rows[active].el, fb = row.querySelector('.fav-btn');
+      if (fb && !row.classList.contains('faved')){ fb.click(); dSaved++; }   // fb absent offline → skipped
+    }
+    dAdvance();
+  }
+  function setDict(v){
+    dOn = v;
+    if (dOn){
+      if (on) setOn(false);
+      if (hlOn) setHl(false);                            // mutual exclusion: drill & 重点 off first (lens removed
+      var vis = visibleRowIdx();                         // BEFORE this, so vis reflects the filter, not 重点)
+      if (!vis.length){ dOn = false; dReflect(); return; }   // nothing visible to dictate → no-op
+      dPassed = dMissed = dSaved = 0; dAwait = false; dReveal = false; dDone = false;
+      document.body.classList.add('dictation');
+      active = vis[0]; dQueue = vis.slice(1);            // the whole visible set, top to bottom
+      dPlayActive();
+    } else {
+      document.body.classList.remove('dictation');
+      for (var i = 0; i < rows.length; i++) rows[i].el.classList.remove('revealed');
+      dAwait = false; dDone = false;                      // no forced pause — return to normal playback
+    }
+    dReflect();
+  }
+
+  toggle.addEventListener('click', function(){ setOn(!on); });
   var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
   if (loopBtn) loopBtn.addEventListener('click', function(){ setMode('loop'); });
   if (runBtn)  runBtn.addEventListener('click', function(){ setMode('run'); });
@@ -3625,6 +3766,12 @@
     else hlToggle.addEventListener('click', function(){ setHl(!hlOn); });
     reflectHl();
   }
+  if (dToggle) dToggle.addEventListener('click', function(){ setDict(!dOn); });
+  if (dReplayBtn) dReplayBtn.addEventListener('click', dReplay);
+  if (dRevealBtn) dRevealBtn.addEventListener('click', dDoReveal);
+  if (dMissBtn) dMissBtn.addEventListener('click', dGradeMiss);
+  if (dGotBtn) dGotBtn.addEventListener('click', dGradeGot);
+  dReflect();
   // remember the last tapped line; while shadow is ON, re-pin the active line to it
   rows.forEach(function(r, i){
     var ts = r.el.querySelector('.ts');
@@ -3633,7 +3780,15 @@
     // drilled line changes, so it must re-pin too: without syncPin() the drill moved to the tapped
     // line while the highlight stayed pinned to whichever line was under the playhead when 跟读 was
     // switched on.
-    if (ts) ts.addEventListener('click', function(){ lastTap = i; if (on){ active = i; gapUntil = null; syncPin(); reflect(); } });
+    if (ts) ts.addEventListener('click', function(){
+      lastTap = i;
+      if (on){ active = i; gapUntil = null; syncPin(); reflect(); }
+      // In 重点, a tap always lands on a key row (non-key rows are hidden). Re-aim the sequence there;
+      // if it had parked at the last line, un-park and re-pump so it resumes skipping forward.
+      else if (hlOn && rows[i].el.classList.contains('key')){ active = i; if (hlParked){ hlParked = false; pump(); } }
+      // In 听写, the .ts stays tappable through the mask; a tap re-aims the test line and plays it.
+      else if (dOn && rows[i].el.offsetParent !== null){ var qi = dQueue.indexOf(i); if (qi >= 0) dQueue.splice(qi, 1); active = i; dPlayActive(); }
+    });
   });
 
   // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
