@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.github.com https://gist.githubusercontent.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
-<title>我的收藏 · 文法分析</title>
+<title>今日学习 · 文法分析</title>
 <style>
   :root{
     --paper:#f5f4f0; --card:#fbfaf7; --card-2:#f0eee7;
@@ -577,153 +577,46 @@
   .resume-x:hover{color:var(--shu);}
 </style>
 <style>
-  /* review page — specific chrome on top of the shared design system */
-  .fav-toolbar{display:flex;flex-wrap:wrap;gap:.6rem .7rem;align-items:center;margin:1.6rem 0 0;}
-  .fav-toolbar input[type=search]{flex:1 1 12rem;min-width:0;font:inherit;font-size:.9rem;
-    color:var(--ink);background:var(--card);border:1px solid var(--line-strong);border-radius:2rem;
-    padding:.5rem 1rem;}
-  .fav-toolbar select{font:inherit;font-size:.85rem;color:var(--ink-soft);background:var(--card);
-    border:1px solid var(--line-strong);border-radius:2rem;padding:.5rem .9rem;}
-  .fav-count{font-family:var(--font-latin);font-size:.78rem;letter-spacing:.06em;color:var(--ink-faint);}
-  .btn{font-family:var(--font-gothic);font-size:.8rem;font-weight:600;cursor:pointer;color:var(--goi);
-    background:transparent;border:1px solid var(--goi);border-radius:2rem;padding:.4rem 1rem;white-space:nowrap;}
-  .btn:hover{background:var(--goi);color:var(--paper);}
-  .btn.ghost{color:var(--ink-soft);border-color:var(--line-strong);}
-  .btn.ghost:hover{color:var(--shu);border-color:var(--shu);background:transparent;}
-  .fav-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.4rem 0 0;}
-  details.sync{margin:1.3rem 0 0;background:var(--card);border:1px solid var(--line);
-    border-left:3px solid var(--katsu);border-radius:.55rem;padding:.2rem .2rem;}
-  details.sync summary{cursor:pointer;font-family:var(--font-gothic);font-weight:600;font-size:.85rem;
-    color:var(--ink);padding:.6rem .9rem;list-style:none;}
-  details.sync summary::-webkit-details-marker{display:none;}
-  .sync-body{padding:.2rem .9rem 1rem;font-size:.85rem;color:var(--ink-soft);}
-  .sync-body input{font:inherit;width:100%;box-sizing:border-box;margin:.5rem 0;padding:.5rem .8rem;
-    border:1px solid var(--line-strong);border-radius:.45rem;background:var(--paper);color:var(--ink);}
-  .sync-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;}
-  .sync-note{font-size:.78rem;color:var(--ink-faint);line-height:1.6;margin:.7rem 0 0;}
-  /* Touch: every control on this page must clear the 44px tap target — the study pages have honoured
-     this for ages, and nothing ever checked the review page, so its buttons shipped at 34px. The PAT
-     controls are the worst place to have a fiddly target: a mis-tap on 清除令牌 wipes your token. */
-  @media (hover:none) and (pointer:coarse){
-    .btn{min-height:44px;padding-top:.55rem;padding-bottom:.55rem;}
-    .sync-body input{min-height:44px;}
-    #favSearch{min-height:44px;}
-  }
-  #syncStatus{font-size:.78rem;color:var(--katsu);}
-  .fgroup{margin:2rem 0 0;}
-  .fgroup-h{font-family:var(--font-gothic);font-weight:600;font-size:.95rem;color:var(--ink);
-    display:flex;align-items:baseline;gap:.6rem;margin:0 0 .3rem;}
-  .fgroup-h .n{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);}
-  .frow{display:grid;grid-template-columns:4.2rem 1fr auto;gap:.2rem .8rem;align-items:start;
-    padding:.85rem 0;border-top:1px solid var(--line);}
-  .frow .fts{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-soft);
-    font-variant-numeric:tabular-nums;padding-top:.15rem;}
-  .fjp{font-family:var(--font-mincho);font-size:1.1rem;line-height:1.9;color:var(--ink);}
-  .fcn{font-size:.86rem;color:var(--ink-soft);margin-top:.15rem;}
-  .fpts{margin:.4rem 0 0;display:flex;flex-wrap:wrap;gap:.35rem;}
-  .frow .chip{margin:0;}
-  .frow-side{display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;white-space:nowrap;}
-  .frow-side a{font-family:var(--font-gothic);font-size:.76rem;text-decoration:none;color:var(--goi);}
-  .frow-side a:hover{text-decoration:underline;}
-  .frow-side button{font:inherit;font-size:.76rem;cursor:pointer;color:var(--ink-faint);
-    background:transparent;border:0;padding:0;}
-  .frow-side button:hover{color:var(--shu);}
-  @media (max-width:520px){ .frow{grid-template-columns:1fr;} .frow-side{flex-direction:row;align-items:center;} }
-
-  /* SRS review — 开始复习 button state, in-list due badge, review overlay */
-  #srsStart[disabled]{opacity:.5;cursor:not-allowed;}
-  .srs-due{font-family:var(--font-gothic);font-size:.72rem;font-weight:600;color:var(--shu);white-space:nowrap;}
-  body.srs-open{overflow:hidden;}
-  .srs-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
-    padding:1.2rem;background:rgba(0,0,0,.55);}
-  .srs-overlay[hidden]{display:none;}
-  .srs-card{position:relative;width:100%;max-width:34rem;max-height:88vh;overflow:auto;
-    background:var(--card);border:1px solid var(--line);border-radius:.9rem;padding:2rem 1.5rem 1.5rem;
-    box-shadow:0 20px 60px -20px rgba(0,0,0,.7);}
-  .srs-close{position:absolute;top:.6rem;right:.7rem;font:inherit;font-size:1rem;cursor:pointer;
-    color:var(--ink-faint);background:transparent;border:0;line-height:1;padding:.3rem;}
-  .srs-close:hover{color:var(--shu);}
-  .srs-prog{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-faint);margin:0 0 .8rem;}
-  .srs-jp{font-family:var(--font-mincho);font-size:1.3rem;line-height:2.2;color:var(--ink);}
-  .srs-hide-furi rt{visibility:hidden;}
-  .srs-badge{display:inline-block;font-family:var(--font-gothic);font-size:.68rem;font-weight:700;
-    border-radius:1rem;padding:.12rem .55rem;margin:0 0 .7rem;border:1px solid currentColor;}
-  .srs-b-rec{color:var(--goi);}
-  .srs-b-prod{color:var(--shu);}
-  .srs-b-cloze{color:var(--shu);}
-  .srs-cloze{font-family:var(--font-mincho);font-size:1.3rem;line-height:2.0;color:var(--ink);}
-  .srs-blank{color:var(--shu);font-weight:700;letter-spacing:.05em;}
-  .srs-prompt{font-family:var(--font-gothic);font-size:.85rem;color:var(--ink-soft);margin-top:.5rem;}
-  /* 词汇 (saved-terms) deck */
-  .vocab-deck{margin:2.2rem 0 0;}
-  .vocab-deck[hidden]{display:none;}
-  .vocab-head{display:flex;align-items:center;gap:.8rem;margin:0 0 .8rem;}
-  .vocab-head h2{font-family:var(--font-gothic);font-size:1.05rem;margin:0;}
-  .vocab-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem;}
-  .vrow{display:grid;grid-template-columns:auto 1fr auto auto;gap:.6rem;align-items:center;
-    padding:.5rem .7rem;background:var(--card);border:1px solid var(--line);border-radius:.6rem;}
-  .vgloss{font-size:.85rem;color:var(--ink-soft);}
-  .vsrc{font-family:var(--font-mono);font-size:.72rem;color:var(--goi);text-decoration:none;white-space:nowrap;}
-  .vdel{background:transparent;border:0;color:var(--ink-faint);cursor:pointer;font-size:1rem;line-height:1;}
-  .vdel:hover{color:var(--shu);}
-  .vterm{font-family:var(--font-mincho);font-size:1.6rem;color:var(--ink);}
-  .srs-back{margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line);}
-  .srs-cn{font-size:.92rem;color:var(--ink-soft);margin-top:.5rem;}
-  .srs-cn .lbl{font-family:var(--font-latin);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--ink-faint);margin-right:.45rem;border:1px solid var(--line-strong);border-radius:.25rem;padding:.02rem .28rem;}
-  .srs-pts{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem;}
-  .srs-note{margin-top:.7rem;font-size:.88rem;color:var(--ink-soft);background:var(--card-2);
-    border-radius:.4rem;padding:.5rem .7rem;}
-  .srs-controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.3rem;}
-  .srs-controls .srs-g{flex:1 1 5rem;}
-  .srs-summary{text-align:center;padding:1.5rem 0 .5rem;}
-  .srs-done{font-family:var(--font-mincho);font-size:1.15rem;color:var(--ink);margin:0 0 1.2rem;}
+  .hm-wrap{max-width:52rem;margin:0 auto;padding:1rem 1.2rem 4rem;}
+  #homeDash .note{color:var(--ink-soft);background:var(--card);border:1px dashed var(--line-strong);
+    border-radius:.6rem;padding:1rem 1.2rem;}
+  .hm-streak{font-family:var(--font-gothic);font-size:1.05rem;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-left:3px solid var(--shu);
+    border-radius:.6rem;padding:.8rem 1.1rem;margin:.4rem 0 0;}
+  .hm-streak.hm-cold{border-left-color:var(--line-strong);color:var(--ink-soft);font-size:.92rem;}
+  .hm-fire{font-size:1.2rem;margin-right:.2rem;}
+  .hm-n{font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:var(--shu);}
+  .hm-ok{color:var(--katsu);} .hm-todo{color:var(--shu);}
+  .hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.8rem;margin:1.2rem 0 0;}
+  a.hm-card{display:flex;flex-direction:column;gap:.2rem;text-decoration:none;color:inherit;
+    background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.1rem;
+    transition:border-color .18s,transform .18s;}
+  a.hm-card:hover{transform:translateY(-2px);border-color:var(--goi);}
+  .hm-k{font-family:var(--font-gothic);font-size:.82rem;color:var(--ink-soft);}
+  .hm-v{font-family:var(--font-mono);font-size:2rem;font-weight:700;color:var(--ink-faint);line-height:1.1;}
+  .hm-v.hot{color:var(--shu);}
+  .hm-sub{font-size:.74rem;color:var(--ink-faint);}
+  .hm-sec{font-family:var(--font-gothic);font-weight:600;font-size:.95rem;color:var(--ink);margin:1.8rem 0 .5rem;}
+  .hm-resume{display:flex;flex-direction:column;gap:.35rem;}
+  a.hm-rz{display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:inherit;
+    background:var(--card);border:1px solid var(--line);border-radius:.55rem;padding:.6rem .9rem;}
+  a.hm-rz:hover{border-color:var(--goi);}
+  .hm-rz-pg{font-family:var(--font-gothic);font-size:.9rem;color:var(--ink);}
+  .hm-rz-at{font-family:var(--font-mono);font-size:.75rem;color:var(--goi);}
+  .hm-links{display:flex;flex-direction:column;gap:.4rem;}
+  a.hm-link{text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);
+    border-radius:.55rem;padding:.65rem .9rem;font-family:var(--font-gothic);font-size:.9rem;}
+  a.hm-link:hover{border-color:var(--goi);color:var(--goi);}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="hm-wrap">
   <nav class="lang-nav" data-kind="review"><a class="ln-brand" href="index.html"><span class="ln-mark">◂</span> lang分析</a><span class="ln-fav ln-current"><span class="ln-star">★</span> 收藏 <b class="ln-fav-n">0</b><span class="ln-dot ln-off" title="未开启"></span></span></nav>
-  <p class="eyebrow">收藏 · FAVORITES</p>
-  <h1>我的收藏</h1>
-  <p class="sub">你在各个视频里标记的句子，集中在这里复习、导出到 Anki。数据存在本机；开启云同步后可跨设备。</p>
-
-  <details class="sync">
-    <summary>⚙ 云同步（可选 · 跨设备）</summary>
-    <div class="sync-body">
-      用一个 GitHub <b>个人访问令牌（classic，仅勾选 <code>gist</code>）</b>把收藏同步到一个私密 gist；手机标记、电脑复习。
-      <input id="tokenInput" type="password" autocomplete="off" placeholder="ghp_… （粘贴一次，保存在本机）">
-      <div class="sync-row">
-        <button class="btn" id="tokenSave">保存并同步</button>
-        <button class="btn ghost" id="syncNow">立即同步</button>
-        <button class="btn ghost" id="tokenClear">清除令牌</button>
-        <span id="syncStatus"></span>
-      </div>
-      <p class="sync-note">令牌只存在这台设备的浏览器里，永不进入公开仓库。<b>classic <code>gist</code> 权限覆盖你账号下的所有 gist</b>，
-        建议用一个<b>专用/小号 GitHub 账号</b>，并给令牌设置较短有效期（7–30 天）。“secret gist”只是不公开列出、并非加密——
-        任何拿到链接的人都能看。</p>
-    </div>
-  </details>
-
-  <div class="fav-toolbar">
-    <input id="favSearch" type="search" placeholder="搜索 日文 / 译文 / 文法…" aria-label="搜索收藏">
-    <select id="favVideo" aria-label="按视频筛选"><option value="">全部视频</option></select>
-    <span class="fav-count" id="favCount"></span>
-  </div>
-
-  <div class="fav-actions">
-    <button class="btn" id="expAnki">导出 Anki（TSV）</button>
-    <button class="btn ghost" id="expJson">导出备份（JSON）</button>
-    <button class="btn ghost" id="impBtn">导入备份（JSON）</button>
-    <input id="impFile" type="file" accept="application/json,.json" hidden>
-  </div>
-
-  <div id="favList"></div>
-  <p id="favEmptyReview" class="note" hidden>还没有收藏。打开任意讲解页，点句子的<b>书签图标</b>即可收藏。</p>
-
-  <footer>
-    收藏保存在本机浏览器（localStorage）。iOS Safari 会在约 7 天无访问后清理本机存储，
-    所以请开启云同步或定期导出备份。 · <a href="index.html">← 返回目录</a>
-  </footer>
+  <p class="eyebrow">今日学习 · TODAY</p>
+  <h1>今天该复习什么</h1>
+  <p class="sub">把到期的语法卡、词汇、以及上次没看完的视频集中在这里 —— 数据存在本机，开启云同步后跨设备。</p>
+  <div id="homeDash"><p class="note">请通过线上站点（https）或 localhost 打开本页，学习数据才会加载。</p></div>
+  <footer><a href="index.html">← 返回目录</a></footer>
 </div>
 <script>
 /* ============================================================================
@@ -1170,239 +1063,6 @@
 })();
 </script>
 <script>
-(function(){
-  function ready(fn){ if (window.LangFav) return fn(window.LangFav); if (!window.isSecureContext){
-    document.getElementById('favList').innerHTML =
-      '<p class="note">请通过 https（线上站点）或 localhost 打开本页，收藏功能才会启用。</p>'; return; }
-    setTimeout(function(){ ready(fn); }, 60); }
-  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-  function download(name, text, type){
-    var b = new Blob([text], { type: type || 'text/plain;charset=utf-8' });
-    var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
-  }
-  ready(function(LF){
-    var P = LF.pure;
-    var listEl = document.getElementById('favList');
-    var searchEl = document.getElementById('favSearch');
-    var videoEl = document.getElementById('favVideo');
-    var countEl = document.getElementById('favCount');
-    var emptyEl = document.getElementById('favEmptyReview');
-
-    function recs(){ var m = LF.all(); return Object.keys(m).map(function(k){ return m[k]; }); }
-    function chip(p){ var cls = ['katsu','keigo','joshi','goi'].indexOf(p.cat) >= 0 ? p.cat : 'goi';
-      return '<span class="chip '+cls+'">'+esc(p.term)+'</span>'; }
-
-    function render(){
-      var all = recs();
-      // (re)populate the video filter
-      var vids = {}; all.forEach(function(r){ vids[r.yt] = r.page_title || r.yt; });
-      var cur = videoEl.value;
-      videoEl.innerHTML = '<option value="">全部视频</option>' + Object.keys(vids).map(function(y){
-        return '<option value="'+esc(y)+'">'+esc(vids[y])+'</option>'; }).join('');
-      videoEl.value = vids[cur] ? cur : '';
-
-      var q = searchEl.value.trim().toLowerCase();
-      var vf = videoEl.value;
-      var shown = all.filter(function(r){
-        if (vf && r.yt !== vf) return false;
-        if (!q) return true;
-        var hay = (P.stripFuri(r.jp_html)+' '+(r.cn||'')+' '+(r.points||[]).map(function(p){return p.term+' '+p.note;}).join(' ')).toLowerCase();
-        return hay.indexOf(q) >= 0;
-      });
-      shown.sort(function(a,b){ return (a.yt<b.yt?-1:a.yt>b.yt?1:0) || (a.sec-b.sec); });
-
-      countEl.textContent = shown.length + ' / ' + all.length + ' 句';
-      emptyEl.hidden = all.length !== 0;
-      listEl.innerHTML = '';
-      if (!all.length) return;
-
-      var groups = [], byYt = {};
-      shown.forEach(function(r){ if (!byYt[r.yt]){ byYt[r.yt] = { title: r.page_title||r.yt, page: r.page, items: [] }; groups.push(r.yt); } byYt[r.yt].items.push(r); });
-      groups.forEach(function(y){
-        var g = byYt[y];
-        var wrap = document.createElement('div'); wrap.className = 'fgroup';
-        var h = '<div class="fgroup-h">'+esc(g.title)+'<span class="n">'+g.items.length+'</span></div>';
-        var rows = g.items.map(function(r){
-          var pts = (r.points||[]).map(chip).join('');
-          var link = r.page ? esc(r.page)+'#fav='+encodeURIComponent(r.id) : '#';
-          return '<div class="frow"><div class="fts">'+esc(r.mmss)+'</div>'
-            + '<div><div class="fjp">'+P.stripFuri(r.jp_html)+'</div>'
-            + (r.cn?'<div class="fcn">'+esc(r.cn)+'</div>':'')
-            + (pts?'<div class="fpts">'+pts+'</div>':'') + '</div>'
-            + '<div class="frow-side"><a href="'+link+'">去原句 ↗</a>'
-            + '<button data-id="'+esc(r.id)+'">✕ 取消</button></div></div>';
-        }).join('');
-        wrap.innerHTML = h + rows;
-        listEl.appendChild(wrap);
-      });
-      [].slice.call(listEl.querySelectorAll('.frow-side button')).forEach(function(btn){
-        btn.addEventListener('click', function(){ LF.remove(btn.getAttribute('data-id')); });
-      });
-    }
-    LF.onChange(render);
-    searchEl.addEventListener('input', render);
-    videoEl.addEventListener('change', render);
-    render();
-
-    // ---- export / import ----
-    document.getElementById('expAnki').addEventListener('click', function(){
-      var notes = LF.getNS('notes');
-      var rows = recs().sort(function(a,b){ return (a.yt<b.yt?-1:a.yt>b.yt?1:0) || (a.sec-b.sec); })
-        .map(function(r){ var c = P.ankiCard(r); var nt = P.sanitizeField(((notes[r.id] || {}).text) || '');
-          return c.front + '\t' + c.back + '\t' + nt; });
-      download('lang-favorites.txt', '#separator:tab\n#html:true\n' + rows.join('\n') + '\n', 'text/plain;charset=utf-8');
-    });
-    document.getElementById('expJson').addEventListener('click', function(){
-      download('lang-favorites.json', JSON.stringify({ v: 1, items: LF.all() }, null, 2), 'application/json');
-    });
-    document.getElementById('impBtn').addEventListener('click', function(){ document.getElementById('impFile').click(); });
-    document.getElementById('impFile').addEventListener('change', function(e){
-      var f = e.target.files[0]; if (!f) return;
-      var rd = new FileReader();
-      rd.onload = function(){ try {
-        var data = JSON.parse(rd.result); var items = data.items || data;
-        Object.keys(items).forEach(function(k){ var r = items[k]; if (r && r.id) LF.add(r); });
-        render();
-      } catch (err){ alert('导入失败：不是有效的备份 JSON'); } };
-      rd.readAsText(f); e.target.value = '';
-    });
-
-    // ---- sync panel ----
-    var status = document.getElementById('syncStatus');
-    document.getElementById('tokenInput').value = '';
-    if (LF.hasToken()) status.textContent = '已配置令牌';
-    // Report the REAL outcome of pull+push — never a blanket "已同步" that hides a
-    // failed upload (a stale-gist 404, an expired token, a missing gist scope…).
-    function syncMsg(pr, sr){
-      var bad = (sr && !sr.ok) ? sr : ((pr && !pr.ok) ? pr : null);
-      if (!bad) return '已同步（' + ((sr && sr.count) || 0) + ' 句）';
-      if (bad.reason === 'offline') return '离线，稍后自动重试';
-      if (bad.reason === 'no-token') return '请先保存令牌';
-      var s = bad.status;
-      if (s === 401) return '同步失败：令牌无效或已过期（401）';
-      if (s === 403) return '同步失败：令牌缺少 gist 权限（403）';
-      if (s === 404) return '同步失败：找不到云端 gist（404）';
-      return '同步失败：' + (s || String(bad.error || '').slice(0, 60));
-    }
-    function runSync(){
-      status.textContent = '同步中…';
-      return LF.pull().then(function(pr){
-        return LF.sync().then(function(sr){ status.textContent = syncMsg(pr, sr); render(); });
-      });
-    }
-    document.getElementById('tokenSave').addEventListener('click', function(){
-      var v = document.getElementById('tokenInput').value.trim();
-      if (!v){ status.textContent = '请粘贴令牌'; return; }
-      LF.setToken(v); document.getElementById('tokenInput').value = ''; runSync();
-    });
-    document.getElementById('syncNow').addEventListener('click', function(){
-      if (!LF.hasToken()){ status.textContent = '请先保存令牌'; return; }
-      runSync();
-    });
-    document.getElementById('tokenClear').addEventListener('click', function(){
-      LF.setToken(''); LF.forgetGist(); status.textContent = '已清除'; });
-  });
-})();
-</script>
-<script>
-/* ============================================================================
-   Per-sentence notes (notes.js) — study rows + favorites.html. Store lives in the
-   synced v2 map (window.LangFav notes namespace); this module only edits + reads it.
-   Independent of favorite status. Study rows append a 📝 control to the page_tools
-   per-row cluster (.u-actions); favorites.html rows get the same editor. Readers
-   (SRS review back, Anki export) pull text straight from the store. Pure core
-   unit-tested in tools/test_notes.mjs. Design: plans/synced-study-state.md.
-   ========================================================================== */
-(function(){
-  /*<<notes-pure>>*/
-  // Pure, DOM/Store-free core. Extracted verbatim by the unit test.
-  function NOTES_PURE(){
-    function noteText(rec){ return (rec && typeof rec.text === 'string') ? rec.text : ''; }
-    function isBlank(text){ return !String(text == null ? '' : text).trim(); }
-    // TSV/HTML-safe (same rule as fav-pure sanitizeField): tabs → space, newlines → <br>.
-    function formatNoteForCard(text){
-      return String(text == null ? '' : text).replace(/\t/g, ' ').replace(/\r?\n/g, '<br>');
-    }
-    // the op the DOM should queue for an edited note: blank ⇒ del, else set {text, at}.
-    function noteOp(id, text, now){
-      if (isBlank(text)) return { ns: 'notes', op: 'del', key: id };
-      return { ns: 'notes', op: 'set', key: id, value: { text: String(text), at: now } };
-    }
-    return { noteText: noteText, isBlank: isBlank, formatNoteForCard: formatNoteForCard, noteOp: noteOp };
-  }
-  /*<</notes-pure>>*/
-
-  if (!window.LangFav) return;                         // online-only (favorites.js sets LangFav)
-  var LF = window.LangFav, NP = NOTES_PURE();
-
-  // one 📝 toggle + inline editor for a sentence id.
-  //   cluster = element the 📝 button is appended to
-  //   body    = element the editor is appended to
-  //   commitOn = 'input' (debounced; study rows never rebuild) | 'blur' (rebuild-safe; review rows)
-  function makeControl(id, cluster, body, commitOn){
-    var btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'u-act note-btn'; btn.title = '笔记'; btn.setAttribute('aria-label', '笔记');
-    btn.textContent = '📝';
-    function has(){ var n = LF.getNS('notes')[id]; return !!(n && n.text); }
-    function setDot(){ btn.classList.toggle('has-note', has()); }
-    setDot();
-
-    var editor = document.createElement('div'); editor.className = 'u-note'; editor.style.display = 'none';
-    var ta = document.createElement('textarea'); ta.className = 'u-note-ta'; ta.rows = 2;
-    ta.placeholder = '写点笔记…（跨设备同步）';
-    editor.appendChild(ta); body.appendChild(editor);
-
-    var timer = null;
-    function commit(){
-      var text = ta.value;
-      if (NP.isBlank(text)) LF.delKey('notes', id);
-      else LF.setKey('notes', id, { text: text, at: Date.now() });
-      setDot();
-    }
-    if (commitOn === 'blur') ta.addEventListener('blur', commit);
-    else ta.addEventListener('input', function(){ if (timer) clearTimeout(timer); timer = setTimeout(commit, 500); });
-
-    btn.addEventListener('click', function(){
-      var open = editor.style.display === 'none';
-      if (open) ta.value = (LF.getNS('notes')[id] || {}).text || '';
-      editor.style.display = open ? '' : 'none';
-      if (open) ta.focus();
-    });
-    cluster.appendChild(btn);
-  }
-
-  // study pages: static .u rows, page_tools cluster (.u-actions), debounced input.
-  var studyCards = [].slice.call(document.querySelectorAll('.u'));
-  if (studyCards.length){
-    studyCards.forEach(function(card){
-      var id = card.dataset.sid || card.dataset.favId; if (!id) return;
-      var cluster = card.querySelector('.u-actions'); if (!cluster) return;   // needs page_tools cluster
-      var body = card.querySelector('.u-body') || card;
-      makeControl(id, cluster, body, 'input');
-    });
-    return;
-  }
-
-  // favorites.html: rows re-render on every change → (re)decorate on load + onChange, commit on blur.
-  var listEl = document.getElementById('favList');
-  if (listEl){
-    function decorate(){
-      [].slice.call(listEl.querySelectorAll('.frow')).forEach(function(row){
-        if (row.querySelector('.note-btn')) return;      // already decorated this render
-        var btn = row.querySelector('.frow-side button[data-id]'); var id = btn ? btn.getAttribute('data-id') : '';
-        if (!id) return;
-        var side = row.querySelector('.frow-side'); var body = row.children[1] || row;
-        makeControl(id, side, body, 'blur');
-      });
-    }
-    LF.onChange(decorate);
-    decorate();
-  }
-})();
-</script>
-<script>
 /* ============================================================================
    SRS review (间隔复习) — favorites.html only. Pure SM-2-lite scheduler
    (schedule / dueQueue / reconcile) unit-tested in tools/test_srs.mjs; the DOM
@@ -1780,6 +1440,107 @@
   }
   vStart.addEventListener('click', function(){ snap = vdue(); pos = 0; if (!snap.length) return; ov.hidden = false; document.body.classList.add('srs-open'); show(); });
   ov.querySelector('#vClose').addEventListener('click', function(){ ov.hidden = true; document.body.classList.remove('srs-open'); renderList(); });
+})();
+</script>
+<script>
+/* ============================================================================
+   今日学习 (study home) — home.html only. One surface that aggregates what the
+   three review systems each track separately: 到期的语法卡 (srs.js), 到期的词汇
+   (vocab.js), 继续学习 (progress), and a 连续天数 streak (the activity namespace,
+   stamped by every review). Reads the pure scheduler cores exposed on window by
+   srs.js (LangSRS) and vocab.js (LangVocab) — no fourth copy. Online-only
+   (window.LangFav). Pure streak core unit-tested in tools/test_home.mjs.
+   ========================================================================== */
+(function(){
+  /*<<home-pure>>*/
+  // Pure, DOM/Store/clock-free core. Extracted verbatim by the unit test.
+  function HOME_PURE(){
+    function pad(n){ return (n < 10 ? '0' : '') + n; }
+    // one day earlier, as YYYY-MM-DD. Date.UTC/new Date(ms) are pure (no "now").
+    function prevDay(s){
+      var p = String(s).split('-').map(Number);
+      var d = new Date(Date.UTC(p[0], p[1] - 1, p[2]) - 86400000);
+      return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+    }
+    // Consecutive days with activity ending TODAY (if present) or YESTERDAY (if today isn't done
+    // yet) — so an unfinished today never reads as a broken streak. dates: a presence map.
+    function streak(dates, today){
+      dates = dates || {};
+      var has = function(d){ return Object.prototype.hasOwnProperty.call(dates, d); };
+      var cur = has(today) ? today : prevDay(today), n = 0;
+      while (has(cur)){ n++; cur = prevDay(cur); }
+      return n;
+    }
+    return { prevDay: prevDay, streak: streak };
+  }
+  /*<</home-pure>>*/
+
+  // ---------- DOM: render the dashboard (home.html) ----------
+  var LF = window.LangFav;
+  if (!LF) return;                                     // online-only gate (no LangFav on file://)
+  var host = document.getElementById('homeDash');
+  if (!host) return;                                   // home.html only
+  var HP = HOME_PURE();
+  function nowSec(){ return Math.floor(Date.now() / 1000); }
+  function todayStr(){ var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function render(){
+    var now = nowSec(), today = todayStr();
+    var SP = window.LangSRS, VP = window.LangVocab;
+    var srsDue  = SP ? SP.dueQueue(LF.getNS('srs'), now).length : 0;
+    var vocabDue = VP ? VP.vdueQueue(LF.getNS('vocab'), now).length : 0;
+    var favN = Object.keys(LF.getNS('items')).length;
+    var vocabN = Object.keys(LF.getNS('vocab')).length;
+    var activity = LF.getNS('activity');
+    var st = HP.streak(activity, today);
+    var doneToday = Object.prototype.hasOwnProperty.call(activity, today);
+
+    // ── resume: most-recently-touched pages first, deep-linked to the line ──
+    var prog = LF.getNS('progress'), resume = [];
+    for (var pg in prog) if (Object.prototype.hasOwnProperty.call(prog, pg)){
+      var e = prog[pg]; if (e) resume.push({ pg: pg, at: e.at || 0, id: e.id || '', mmss: e.mmss || '' });
+    }
+    resume.sort(function(a, b){ return b.at - a.at; });
+    resume = resume.slice(0, 3);
+
+    var streakLine = st > 0
+      ? '<div class="hm-streak"><span class="hm-fire">🔥</span><span class="hm-n">' + st + '</span> 天连续' +
+        (doneToday ? ' · <span class="hm-ok">今天已复习</span>' : ' · <span class="hm-todo">今天还没复习</span>') + '</div>'
+      : '<div class="hm-streak hm-cold">还没有连续记录 — 今天复习一张卡就开始了</div>';
+
+    var dueCards =
+      '<a class="hm-card hm-due" href="favorites.html">' +
+        '<div class="hm-k">语法卡到期</div><div class="hm-v' + (srsDue ? ' hot' : '') + '">' + srsDue + '</div>' +
+        '<div class="hm-sub">识别 · 产出 · 填空</div></a>' +
+      '<a class="hm-card hm-due" href="favorites.html">' +
+        '<div class="hm-k">词汇到期</div><div class="hm-v' + (vocabDue ? ' hot' : '') + '">' + vocabDue + '</div>' +
+        '<div class="hm-sub">共收藏 ' + vocabN + ' 个词</div></a>' +
+      '<a class="hm-card" href="favorites.html">' +
+        '<div class="hm-k">收藏句子</div><div class="hm-v">' + favN + '</div>' +
+        '<div class="hm-sub">去复习页 →</div></a>';
+
+    var resumeHtml = resume.length
+      ? '<div class="hm-sec">继续学习</div><div class="hm-resume">' + resume.map(function(r){
+          var href = esc(r.pg) + (r.id ? '#s=' + encodeURIComponent(r.id) : '');
+          return '<a class="hm-rz" href="' + href + '"><span class="hm-rz-pg">' + esc(r.pg.replace(/\.html$/, '')) +
+            '</span><span class="hm-rz-at">' + (r.mmss ? esc(r.mmss) : '↗') + '</span></a>';
+        }).join('') + '</div>'
+      : '';
+
+    var explore =
+      '<div class="hm-sec">探索</div><div class="hm-links">' +
+        '<a class="hm-link" href="search.html">🔎 全文检索 · 按词搜全部对白</a>' +
+        '<a class="hm-link" href="concordance.html">📚 文法索引 · 跨视频 · 语法练习</a>' +
+        '<a class="hm-link" href="index.html">🎬 全部课程</a></div>';
+
+    host.innerHTML = streakLine + '<div class="hm-grid">' + dueCards + '</div>' + resumeHtml + explore;
+  }
+
+  LF.onChange(render);
+  render();
 })();
 </script>
 <script>

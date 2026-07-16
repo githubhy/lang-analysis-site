@@ -201,6 +201,9 @@
   .chip.keigo{color:var(--keigo);background:var(--keigo-t);border-color:var(--keigo);}
   .chip.joshi{color:var(--joshi);background:var(--joshi-t);border-color:var(--joshi);}
   .chip.goi{color:var(--goi);background:var(--goi-t);border-color:var(--goi);}
+  .u-points .chip{cursor:pointer;}                       /* tap to save the term to the 词汇 deck (online) */
+  .chip.saved{box-shadow:inset 0 0 0 2px currentColor;}
+  .chip.saved::after{content:'✓';margin-left:.25em;font-weight:700;}
   .points b{color:var(--ink);font-weight:600;}
   .points .jt{font-family:var(--font-gothic);}
   .points em{font-style:normal;color:var(--ink-faint);}
@@ -333,7 +336,7 @@
   @media (hover:none) and (pointer:coarse){
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
-    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle{ min-height:44px; padding:.5rem .95rem; }
+    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -639,6 +642,10 @@
       <button class="idx-chip" data-genre="var" type="button" style="color:#b8860b">バラエティ</button></div>
   </div>
 
+  <p><a class="cc-link home-link" href="home.html">今日学习 · 到期的语法卡 / 词汇 / 继续学习，集中在一处 →</a></p>
+  <p><a class="cc-link" href="concordance.html">文法索引 · 跨视频看同一个词条在所有视频里的用例 →</a></p>
+  <p><a class="cc-link" href="search.html">全文检索 · 在全部对白里按词搜索，跳到出处那一句 →</a></p>
+
   <div id="idxResume" class="idx-resume" hidden></div>
 
   <div class="sec idx-recent-h">最近更新</div>
@@ -723,9 +730,9 @@
         parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
-    // ---- v2 four-map state helpers ----
-    var NS = ['items', 'srs', 'notes', 'progress'];
-    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {} }; }
+    // ---- v2 map-state helpers (one map per namespace) ----
+    var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
+    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {}, vocab: {}, activity: {} }; }
     function cloneState(state){
       state = state || {};
       var out = emptyState();
@@ -735,17 +742,18 @@
       }
       return out;
     }
-    // v1 (or version-less) doc → four-map state; no favorites lost or moved.
+    // v1 (or version-less) doc → map state; no favorites lost or moved. A doc from before a
+    // namespace existed simply has no key for it → {} (activity is the newest such key).
     function migrate(parsed){
       parsed = parsed || {};
-      return { items: parsed.items || {}, srs: parsed.srs || {},
-               notes: parsed.notes || {}, progress: parsed.progress || {} };
+      return { items: parsed.items || {}, srs: parsed.srs || {}, notes: parsed.notes || {},
+               progress: parsed.progress || {}, vocab: parsed.vocab || {}, activity: parsed.activity || {} };
     }
-    // v2 writer: ALWAYS serialize all four maps under {v:2, …}.
+    // v2 writer: ALWAYS serialize every namespace map under {v:2, …}.
     function serialize(state){
       state = state || {};
-      return { v: 2, items: state.items || {}, srs: state.srs || {},
-               notes: state.notes || {}, progress: state.progress || {} };
+      return { v: 2, items: state.items || {}, srs: state.srs || {}, notes: state.notes || {},
+               progress: state.progress || {}, vocab: state.vocab || {}, activity: state.activity || {} };
     }
     // normalize a legacy favorite op into a v2 namespaced op.
     function normalizeOp(o){
@@ -878,13 +886,15 @@
   var P = FAV_PURE();
 
   var K = { store: 'langfav:v1', srs: 'langfav:srs', notes: 'langfav:notes',
-            progress: 'langfav:progress', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
-  var NS = ['items', 'srs', 'notes', 'progress'];
+            progress: 'langfav:progress', vocab: 'langfav:vocab', activity: 'langfav:activity',
+            ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
   function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
   function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 
   var state = { items: readJSON(K.store, {}), srs: readJSON(K.srs, {}),
-                notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}) };
+                notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}),
+                vocab: readJSON(K.vocab, {}), activity: readJSON(K.activity, {}) };
   var favs = state.items;                // alias kept for the capture UI
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
   var changeHooks = [];
@@ -893,6 +903,7 @@
   function persist(){
     writeJSON(K.store, state.items); writeJSON(K.srs, state.srs);
     writeJSON(K.notes, state.notes); writeJSON(K.progress, state.progress);
+    writeJSON(K.vocab, state.vocab); writeJSON(K.activity, state.activity);
   }
   function setState(next){ state = next; favs = state.items; }
   function queueOp(op){
@@ -910,6 +921,12 @@
   function removeFav(id){ if (!state.items[id]) return; delete state.items[id]; queueOp({ ns: 'items', op: 'del', key: id }); persist(); fireChange(); scheduleFlush(); }
   // generic namespace API for srs.js / notes.js / progress.js
   function getNS(ns){ return state[ns] || {}; }
+  // record that the user reviewed TODAY (local date) — the streak signal for the 今日学习 home.
+  // Op-replay is last-write-wins per key, but the streak only reads a day's PRESENCE, so a
+  // same-day write from another device can never break the streak (the key still exists).
+  function todayStr(){ var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function stampToday(){ var s = todayStr(); setKey('activity', s, (getNS('activity')[s] || 0) + 1); }
   function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
   function delKey(ns, key, opts){ if (NS.indexOf(ns) < 0) return; if (state[ns][key] == null) return; delete state[ns][key]; queueOp({ ns: ns, op: 'del', key: key }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
 
@@ -1090,7 +1107,7 @@
     status: function(){ return P.syncStatus({ hasToken: !!token(), lastErr: lastErr, pending: readJSON(K.ops, []).length }); },
     remove: removeFav,
     add: addFav,
-    getNS: getNS, setKey: setKey, delKey: delKey, batch: batch,
+    getNS: getNS, setKey: setKey, delKey: delKey, batch: batch, stampToday: stampToday,
     setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} lastErr = false; fireChange(); },
     hasToken: function(){ return !!token(); },
     forgetGist: function(){ try { localStorage.removeItem(K.gid); } catch (e){} },

@@ -201,6 +201,9 @@
   .chip.keigo{color:var(--keigo);background:var(--keigo-t);border-color:var(--keigo);}
   .chip.joshi{color:var(--joshi);background:var(--joshi-t);border-color:var(--joshi);}
   .chip.goi{color:var(--goi);background:var(--goi-t);border-color:var(--goi);}
+  .u-points .chip{cursor:pointer;}                       /* tap to save the term to the 词汇 deck (online) */
+  .chip.saved{box-shadow:inset 0 0 0 2px currentColor;}
+  .chip.saved::after{content:'✓';margin-left:.25em;font-weight:700;}
   .points b{color:var(--ink);font-weight:600;}
   .points .jt{font-family:var(--font-gothic);}
   .points em{font-style:normal;color:var(--ink-faint);}
@@ -3335,9 +3338,9 @@
         parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
-    // ---- v2 four-map state helpers ----
-    var NS = ['items', 'srs', 'notes', 'progress'];
-    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {} }; }
+    // ---- v2 map-state helpers (one map per namespace) ----
+    var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
+    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {}, vocab: {}, activity: {} }; }
     function cloneState(state){
       state = state || {};
       var out = emptyState();
@@ -3347,17 +3350,18 @@
       }
       return out;
     }
-    // v1 (or version-less) doc → four-map state; no favorites lost or moved.
+    // v1 (or version-less) doc → map state; no favorites lost or moved. A doc from before a
+    // namespace existed simply has no key for it → {} (activity is the newest such key).
     function migrate(parsed){
       parsed = parsed || {};
-      return { items: parsed.items || {}, srs: parsed.srs || {},
-               notes: parsed.notes || {}, progress: parsed.progress || {} };
+      return { items: parsed.items || {}, srs: parsed.srs || {}, notes: parsed.notes || {},
+               progress: parsed.progress || {}, vocab: parsed.vocab || {}, activity: parsed.activity || {} };
     }
-    // v2 writer: ALWAYS serialize all four maps under {v:2, …}.
+    // v2 writer: ALWAYS serialize every namespace map under {v:2, …}.
     function serialize(state){
       state = state || {};
-      return { v: 2, items: state.items || {}, srs: state.srs || {},
-               notes: state.notes || {}, progress: state.progress || {} };
+      return { v: 2, items: state.items || {}, srs: state.srs || {}, notes: state.notes || {},
+               progress: state.progress || {}, vocab: state.vocab || {}, activity: state.activity || {} };
     }
     // normalize a legacy favorite op into a v2 namespaced op.
     function normalizeOp(o){
@@ -3490,13 +3494,15 @@
   var P = FAV_PURE();
 
   var K = { store: 'langfav:v1', srs: 'langfav:srs', notes: 'langfav:notes',
-            progress: 'langfav:progress', ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
-  var NS = ['items', 'srs', 'notes', 'progress'];
+            progress: 'langfav:progress', vocab: 'langfav:vocab', activity: 'langfav:activity',
+            ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
+  var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
   function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
   function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 
   var state = { items: readJSON(K.store, {}), srs: readJSON(K.srs, {}),
-                notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}) };
+                notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}),
+                vocab: readJSON(K.vocab, {}), activity: readJSON(K.activity, {}) };
   var favs = state.items;                // alias kept for the capture UI
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
   var changeHooks = [];
@@ -3505,6 +3511,7 @@
   function persist(){
     writeJSON(K.store, state.items); writeJSON(K.srs, state.srs);
     writeJSON(K.notes, state.notes); writeJSON(K.progress, state.progress);
+    writeJSON(K.vocab, state.vocab); writeJSON(K.activity, state.activity);
   }
   function setState(next){ state = next; favs = state.items; }
   function queueOp(op){
@@ -3522,6 +3529,12 @@
   function removeFav(id){ if (!state.items[id]) return; delete state.items[id]; queueOp({ ns: 'items', op: 'del', key: id }); persist(); fireChange(); scheduleFlush(); }
   // generic namespace API for srs.js / notes.js / progress.js
   function getNS(ns){ return state[ns] || {}; }
+  // record that the user reviewed TODAY (local date) — the streak signal for the 今日学习 home.
+  // Op-replay is last-write-wins per key, but the streak only reads a day's PRESENCE, so a
+  // same-day write from another device can never break the streak (the key still exists).
+  function todayStr(){ var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function stampToday(){ var s = todayStr(); setKey('activity', s, (getNS('activity')[s] || 0) + 1); }
   function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
   function delKey(ns, key, opts){ if (NS.indexOf(ns) < 0) return; if (state[ns][key] == null) return; delete state[ns][key]; queueOp({ ns: ns, op: 'del', key: key }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
 
@@ -3702,7 +3715,7 @@
     status: function(){ return P.syncStatus({ hasToken: !!token(), lastErr: lastErr, pending: readJSON(K.ops, []).length }); },
     remove: removeFav,
     add: addFav,
-    getNS: getNS, setKey: setKey, delKey: delKey, batch: batch,
+    getNS: getNS, setKey: setKey, delKey: delKey, batch: batch, stampToday: stampToday,
     setToken: function(t){ try { t ? localStorage.setItem(K.tok, t) : localStorage.removeItem(K.tok); } catch (e){} lastErr = false; fireChange(); },
     hasToken: function(){ return !!token(); },
     forgetGist: function(){ try { localStorage.removeItem(K.gid); } catch (e){} },
@@ -4679,6 +4692,140 @@
     span.textContent = '上次 ' + PP.relTime(e2.at, now);
     host.appendChild(span);
   }
+})();
+</script>
+<script>
+/* ============================================================================
+   词汇 (saved-terms deck) — tap any analysis chip on a study page to save it as
+   its own SM-2-lite card; the review page (favorites.html) grows a 词汇 deck +
+   review. Online-only (window.LangFav). Reuses the scheduler via window.LangSRS
+   (set by srs.js) — no second scheduler core. Design: plans/…-vocab-deck-design.md
+   ========================================================================== */
+(function(){
+  /*<<vocab-pure>>*/
+  function VOCAB_PURE(){
+    // Stable id from the term text — deduped globally (one card per unique term).
+    function termId(term){ return 'v:' + String(term == null ? '' : term).replace(/^★\s*/, '').trim(); }
+    // Vocab ids with .srs.due <= now, ascending by due, ties in insertion order.
+    function vdueQueue(vocab, now){
+      vocab = vocab || {}; var arr = [];
+      for (var id in vocab) if (Object.prototype.hasOwnProperty.call(vocab, id)){
+        var c = vocab[id], s = c && c.srs;
+        if (s && s.due <= now) arr.push({ id: id, due: s.due, i: arr.length });
+      }
+      arr.sort(function(a, b){ return (a.due - b.due) || (a.i - b.i); });
+      return arr.map(function(x){ return x.id; });
+    }
+    return { termId: termId, vdueQueue: vdueQueue };
+  }
+  /*<</vocab-pure>>*/
+
+  var LF = window.LangFav;
+  if (!LF) return;                                     // online-only gate (no LangFav on file://)
+  var VP = VOCAB_PURE();
+  window.LangVocab = VP;                               // expose the vocab core to the 今日学习 home (due count) — before the page-specific gates
+  function nowSec(){ return Math.floor(Date.now() / 1000); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function newSrs(){ return window.LangSRS ? window.LangSRS.newCard(nowSec()) : { due: nowSec(), ivl: 0, ease: 2.5, reps: 0, lapses: 0 }; }
+  var CATS = ['katsu', 'keigo', 'joshi', 'goi'];
+  function catOf(chip){ for (var i = 0; i < CATS.length; i++) if (chip.classList.contains(CATS[i])) return CATS[i]; return 'goi'; }
+
+  // ---------- STUDY PAGE: tap a .u-points chip to save/unsave the term ----------
+  var chips = [].slice.call(document.querySelectorAll('.u-points .chip'));
+  if (chips.length){
+    chips.forEach(function(chip){
+      var term = (chip.textContent || '').replace(/^★\s*/, '').trim();
+      if (!term) return;
+      var id = VP.termId(term);
+      chip.setAttribute('role', 'button'); chip.setAttribute('tabindex', '0'); chip.title = '收藏该词条';
+      chip.classList.toggle('saved', !!LF.getNS('vocab')[id]);
+      function toggle(){
+        var cur = LF.getNS('vocab');
+        if (cur[id]){ LF.delKey('vocab', id); chip.classList.remove('saved'); return; }
+        var li = chip.closest('li'), gloss = (li && li.children[1]) ? (li.children[1].textContent || '').trim() : '';
+        var row = chip.closest('.u'), ts = row ? row.querySelector('.ts') : null;
+        LF.setKey('vocab', id, { term: term, cat: catOf(chip), gloss: gloss,
+          page: (location.pathname.split('/').pop() || ''), mmss: ts ? (ts.textContent || '').trim() : '',
+          srs: newSrs() });
+        chip.classList.add('saved');
+      }
+      chip.addEventListener('click', toggle);
+      chip.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } });
+    });
+  }
+
+  // ---------- REVIEW PAGE (favorites.html): 词汇 deck + review ----------
+  var listEl = document.getElementById('favList');
+  if (!listEl) return;
+
+  var section = document.createElement('section');
+  section.className = 'vocab-deck'; section.id = 'vocabDeck';
+  section.innerHTML = '<div class="vocab-head"><h2>词汇</h2>' +
+    '<button class="btn" id="vocabStart" type="button"></button></div><ul class="vocab-list" id="vocabList"></ul>';
+  (document.querySelector('main') || document.body).appendChild(section);
+  var vList = section.querySelector('#vocabList'), vStart = section.querySelector('#vocabStart');
+
+  function vdue(){ return VP.vdueQueue(LF.getNS('vocab'), nowSec()); }
+  function renderList(){
+    var vocab = LF.getNS('vocab'), ids = Object.keys(vocab), due = vdue().length;
+    section.hidden = ids.length === 0;
+    vStart.textContent = '词汇复习 (' + due + ')'; vStart.disabled = due === 0;
+    vList.innerHTML = ids.map(function(id){
+      var r = vocab[id];
+      return '<li class="vrow"><span class="chip ' + esc(r.cat || 'goi') + '">' + esc(r.term) + '</span>' +
+        '<span class="vgloss">' + esc(r.gloss || '') + '</span>' +
+        '<a class="vsrc" href="' + esc(r.page || '#') + '">' + esc(r.mmss || '↗') + '</a>' +
+        '<button class="vdel" type="button" data-id="' + esc(id) + '" aria-label="移除">✕</button></li>';
+    }).join('');
+    [].slice.call(vList.querySelectorAll('.vdel')).forEach(function(b){
+      b.addEventListener('click', function(){ LF.delKey('vocab', b.getAttribute('data-id')); });
+    });
+  }
+  LF.onChange(renderList); renderList();
+
+  // review overlay
+  var ov = document.createElement('div');
+  ov.className = 'srs-overlay'; ov.id = 'vocabOverlay'; ov.hidden = true;
+  ov.innerHTML = '<div class="srs-card" role="dialog" aria-modal="true" aria-label="词汇复习">' +
+    '<div class="srs-prog" id="vProg"></div><div class="srs-front" id="vFront"></div>' +
+    '<div class="srs-back" id="vBack" hidden></div><div class="srs-controls" id="vCtl"></div>' +
+    '<button class="srs-close" id="vClose" type="button" aria-label="退出">✕</button></div>';
+  document.body.appendChild(ov);
+  var vFront = ov.querySelector('#vFront'), vBack = ov.querySelector('#vBack'),
+      vCtl = ov.querySelector('#vCtl'), vProg = ov.querySelector('#vProg');
+  var snap = [], pos = 0;
+
+  function show(){
+    if (pos >= snap.length){ ov.hidden = true; document.body.classList.remove('srs-open'); renderList(); return; }
+    var id = snap[pos], r = LF.getNS('vocab')[id];
+    if (!r){ pos++; return show(); }
+    vProg.textContent = (pos + 1) + ' / ' + snap.length;
+    vFront.innerHTML = '<span class="srs-badge srs-b-cloze">词汇</span><div class="vterm">' + esc(r.term) + '</div>';
+    vFront.hidden = false; vBack.hidden = true; vBack.innerHTML = '';
+    vCtl.innerHTML = '<button class="btn" id="vReveal" type="button">显示答案</button>';
+    ov.querySelector('#vReveal').addEventListener('click', reveal);
+  }
+  function reveal(){
+    var id = snap[pos], r = LF.getNS('vocab')[id]; if (!r){ pos++; return show(); }
+    vBack.innerHTML = '<div class="srs-cn">' + esc(r.gloss || '（无释义）') + '</div>' +
+      (r.page ? '<a class="vsrc" href="' + esc(r.page) + '">' + esc(r.mmss || '↗ 原句') + '</a>' : '');
+    vBack.hidden = false;
+    vCtl.innerHTML = '<button class="btn srs-g" data-g="again">重来</button><button class="btn srs-g" data-g="hard">困难</button>' +
+      '<button class="btn srs-g" data-g="good">良好</button><button class="btn srs-g" data-g="easy">简单</button>';
+    [].slice.call(vCtl.querySelectorAll('.srs-g')).forEach(function(b){
+      b.addEventListener('click', function(){ grade(b.getAttribute('data-g')); });
+    });
+  }
+  function grade(g){
+    var id = snap[pos], vocab = LF.getNS('vocab'), r = vocab[id];
+    if (r && window.LangSRS){ r.srs = window.LangSRS.schedule(r.srs || newSrs(), g, nowSec()); LF.setKey('vocab', id, r); }
+    if (r) LF.stampToday();                             // log today's activity (streak)
+    if (g === 'again' && r) snap.push(id);
+    pos++; show();
+  }
+  vStart.addEventListener('click', function(){ snap = vdue(); pos = 0; if (!snap.length) return; ov.hidden = false; document.body.classList.add('srs-open'); show(); });
+  ov.querySelector('#vClose').addEventListener('click', function(){ ov.hidden = true; document.body.classList.remove('srs-open'); renderList(); });
 })();
 </script>
 </body>
