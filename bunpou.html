@@ -2359,9 +2359,19 @@
     playBtn.addEventListener('click', function(){ if (LP()) LP().toggle(); paintPlay(); });
   }
   function LP(){ return window.LangPlayer && window.LangPlayer.ready() ? window.LangPlayer : null; }
+  var painted = null;                                  // what the button currently SHOWS (null = never painted)
   function paintPlay(){
     if (!playBtn) return;
     var p = LP() ? LP().paused() : true;
+    // A POLL MUST NOT CHURN THE DOM. This runs 4x/sec forever (see setInterval below); writing
+    // unconditionally replaced the text node and rewrote both attributes on every tick, dirtying
+    // layout for the next frame for the life of the page — and rewriting the SAME glyph. That is
+    // backlog #41 exactly, the bug already fixed on the follow-along poll and guarded by the
+    // `poll-churn` row: while the state is unchanged, touch nothing. Costs ~0 startup ms (the
+    // page's layout time is the engine's, not ours); it kills the forever-4Hz write, which is
+    // what actually matters on a phone. Guarded by `dock-paint-churn` + the offline check.
+    if (p === painted) return;
+    painted = p;
     // Icon-only: the bar already carries a title + 跟随/跟读/收起 at 390px, and a text label
     // overflows it. The accessible name lives in aria-label, so screen readers still get words.
     playBtn.textContent = p ? '▶' : '❚❚';
