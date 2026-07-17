@@ -293,10 +293,26 @@
 
   @media (max-width:520px){
     .u{grid-template-columns:1fr;gap:.45rem;}
-    .u-meta{flex-direction:row;align-items:center;gap:.5rem;}
+    /* flex-wrap is NOT optional here. This rule lays the metadata out as a ROW on the narrowest
+       screens, and the row's content is un-shrinkable: the ts, the 44px touch tap targets (fav +
+       3 .u-act, forced by the (hover:none)+(pointer:coarse) block below), and a .spk whose width is
+       set by the speaker's NAME — 36px for 「先輩」, 129px for 「スタッフ(フクロウ担当)」. Left at the
+       default nowrap the row cannot fit a phone, and the overflow does not clip: the browser widens
+       the LAYOUT VIEWPORT to swallow it (320 -> 387 on konkatsu, 459 on iginari-fureai), so the whole
+       page slides sideways under the thumb. Wrapping .u-actions alone is NOT enough — it still left
+       the widest page 43px over. Guarded by ux.sh section A, which measures against the DEVICE width. */
+    .u-meta{flex-direction:row;align-items:center;gap:.5rem;flex-wrap:wrap;}
     .u-meta .ts{width:auto;}
     .u.key{background:none;}
     .u-points li{grid-template-columns:1fr;gap:.2rem;}
+    /* .chip is white-space:nowrap so a grammar term never breaks mid-word — right on a desktop,
+       ruinous on a phone. A chip's min-content is then its ENTIRE label, and these labels are as
+       long as the grammar needs: 「～ていなきゃいけない」（～ていなければいけない の口語省略）★ measures
+       357px against a ~273px column. `1fr` is minmax(AUTO,1fr), and that auto floor is min-content,
+       so the column cannot shrink under the chip — it drags the row, and the page, off-screen
+       (oshare-takedatsu: 386px on a 320px phone). Wrapping a long chip costs one line; not wrapping
+       it costs the whole page. Short chips are unaffected — they only wrap when they cannot fit. */
+    .chip{white-space:normal;}
   }
 
   /* ============================================================
