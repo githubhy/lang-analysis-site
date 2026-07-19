@@ -608,8 +608,37 @@
     <div class="dock-bar">
       <span class="dock-title"><span class="tri">▶</span> 畑芽育とFUN Time #059</span>
       <button class="dock-follow on" id="dockFollow" type="button" aria-pressed="true" aria-label="切换字幕自动跟随播放">● 跟随</button>
+      <button class="dock-shadow-toggle" id="shadowToggle" type="button" aria-pressed="false" aria-controls="shadowBar" aria-label="切换跟读练习模式">跟读</button>
+      <button class="dock-hl-toggle" id="highlightsToggle" type="button" aria-pressed="false" aria-label="只看并播放重点句式">重点</button>
+      <button class="dock-dict-toggle" id="dictToggle" type="button" aria-pressed="false" aria-controls="dictBar" aria-label="切换听写练习模式">听写</button>
       <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
     </div>
+    <!--shadow-bar-->
+    <div class="dock-shadow" id="shadowBar" role="group" aria-label="跟读控制" hidden>
+      <button class="sh-step" id="shPrev" type="button" aria-label="上一句">◁ 句</button>
+      <span class="sh-mode" role="group" aria-label="跟读模式">
+        <button class="sh-loop on" id="shLoop" type="button" aria-pressed="true">循环</button>
+        <button class="sh-run" id="shRun" type="button" aria-pressed="false">通读</button>
+      </span>
+      <span class="sh-rates" role="group" aria-label="播放速度">
+        <button class="sh-rate" data-rate="0.5" type="button" aria-pressed="false">0.5×</button>
+        <button class="sh-rate" data-rate="0.75" type="button" aria-pressed="false">0.75×</button>
+        <button class="sh-rate on" data-rate="1" type="button" aria-pressed="true">1×</button>
+      </span>
+      <button class="sh-step" id="shNext" type="button" aria-label="下一句">句 ▷</button>
+    </div>
+    <!--/shadow-bar-->
+    <!--dict-bar-->
+    <div class="dock-dict" id="dictBar" role="group" aria-label="听写控制" hidden>
+      <button class="d-step" id="dictReplay" type="button" aria-label="再听一次">↺ 再听</button>
+      <button class="d-step" id="dictReveal" type="button">显示答案</button>
+      <span class="dict-grade" id="dictGrade" role="group" aria-label="自评" hidden>
+        <button class="d-step d-miss" id="dictMiss" type="button">✗ 没听出</button>
+        <button class="d-step d-got" id="dictGot" type="button">✓ 听懂了</button>
+      </span>
+      <span class="dict-tally" id="dictTally" aria-live="polite"></span>
+    </div>
+    <!--/dict-bar-->
     <div class="dock-video">
       <div class="video-frame">
         <video id="clip" controls playsinline preload="none" data-podcast-id="1806592878" data-episode-id="1000776697656" data-apple-url="https://podcasts.apple.com/us/podcast/tmeic-presents/id1806592878?i=1000776697656" title="畑芽育とFUN Time #059">
@@ -4126,7 +4155,7 @@
   }
 
   // ---- follow-along state ----
-  var following = true, activeIdx = -1;
+  var following = true, activeIdx = -1, pinnedIdx = -1;
 
   function dockH(){
     if (!dock) return 0;
@@ -4155,16 +4184,50 @@
     for (var k = 0; k < units.length; k++){ if (units[k].sec <= tt + 0.15) lo = k; else break; }
     return lo;
   }
-  function onTime(){
-    if (!units.length) return;
-    var idx = indexAt(video.currentTime);
+  function setActiveIdx(idx){
     if (idx === activeIdx) return;
     if (units[activeIdx]) units[activeIdx].el.classList.remove('active');
     activeIdx = idx;
     if (units[activeIdx]) units[activeIdx].el.classList.add('active');
     if (following) scrollToActive(false);
   }
+  function onTime(){
+    if (!units.length || pinnedIdx >= 0) return;   // pinned → highlight frozen (the 跟读 loop)
+    setActiveIdx(indexAt(video.currentTime));
+  }
   if (video) video.addEventListener('timeupdate', onTime);
+
+  // ---- stable player handle for shadow.js (window.LangPlayer) ----------------------------------
+  // The 跟读 drill, 全部读音 highlight walk, and 查词 dict ALL live in shadow.js, which bails at
+  // `if (!window.LangPlayer) return;`. Exposing the same shape player_auto.html exposes — over this
+  // page's native audio element — is what lights those three features up on an audio page. Audio is
+  // the ideal medium for shadowing, so it should not be the one mode that lacks it.
+  function rawSeek(t){
+    if (!video) return;
+    var set = function(){ try { video.currentTime = t; } catch (e) {} };
+    if (video.readyState >= 1) set();
+    else video.addEventListener('loadedmetadata', set, { once: true });
+  }
+  var AUDIO_RATES = [0.5, 0.75, 1];   // native <audio>: no IFrame rate constraints
+  window.LangPlayer = {
+    ready:    function(){ return !!(video && video.parentNode); },   // false once resolveFailed swaps it out
+    seek:     function(t){ rawSeek(t); },
+    getTime:  function(){ return video ? (video.currentTime || 0) : 0; },
+    play:     function(){ if (video){ var p = video.play(); if (p && p.catch) p.catch(function(){}); } },
+    pause:    function(){ if (video) video.pause(); },
+    paused:   function(){ return video ? video.paused : true; },
+    setRate:  function(r){ if (video){ try { video.playbackRate = r; } catch (e) {} } },
+    rates:    function(){ return AUDIO_RATES.slice(); },
+    duration: function(){ return (video && video.duration) ? video.duration : 0; },
+    // Freeze the highlight on ONE line while the drill loops it (a looped line has no "next line",
+    // so the look-ahead must not run off its end). Mirrors player_auto.html's pin/unpin.
+    pin:      function(sec){
+                for (var i = 0; i < units.length; i++){
+                  if (Math.abs(units[i].sec - sec) < 0.05){ pinnedIdx = i; setActiveIdx(i); return; }
+                }
+              },
+    unpin:    function(){ pinnedIdx = -1; }
+  };
 
   // ---- manually scrolling / navigating suspends auto-follow ----
   function suspend(){ if (following) setFollow(false, true); }
@@ -4667,7 +4730,459 @@
 })();
 </script>
 
+<script>
+/* ============================================================================
+   Shadow drill (跟读) — focused per-sentence audio shadowing on auto-mode pages.
+   Talks to the player ONLY through window.LangPlayer (player_auto.html), so the
+   drill logic is a pure state machine (shadowStep) unit-tested in isolation
+   (tools/test_shadow.mjs) with no real player. Ships auto-only (needs time
+   events); hidden in embed. Design + rationale: plans/in-page-study-ux.md.
+   ========================================================================== */
+(function(){
+  /*<<shadow-pure>>*/
+  // Pure, DOM/Player-free core. Extracted verbatim by the unit test.
+  function SHADOW_PURE(){
+    var GAP_CAP = 4000;   // ms — long lines never leave more than 4s of dead air
 
+    // Turn around BEFORE the boundary, not after it.
+    //
+    // lineEnd IS the next line's start, so any playback past it is the NEXT SENTENCE'S AUDIO.
+    // The drill used to fire on `curT >= lineEnd` and was polled every 200ms, so a repeat
+    // audibly jumped into the next line and snapped back — up to 200ms of the wrong sentence,
+    // every single loop. Reported as: "it jumps to the next one then quickly jumps back."
+    //
+    // LOOP_LEAD turns around just early instead. What it gives up is the last ~100ms before the
+    // next line begins — which is the inter-sentence pause, i.e. usually silence. What it buys is
+    // never hearing a word you did not ask to repeat. For a shadowing drill that trade is not
+    // close. The poll is now 50ms, so detection lands inside the lead rather than past it.
+    var LOOP_LEAD = 0.10;   // seconds
+    var MIN_SPAN  = 0.05;   // seconds — a line shorter than the lead must still be loopable
+    // Drill state machine. One tick → one action; the DOM caller applies it.
+    //   s = { mode, curT, lineStart, lineEnd, nextStart, gapUntil, now }
+    //   mode: 'loop' (repeat this line) | 'run' (line → gap → next line)
+    //   gapUntil: null when no gap is armed, else the ms deadline of the active gap
+    // Returns { type, to?, until? }:
+    //   'seek'(to) | 'gap'(until) | 'hold' | 'advance'(to) | 'stop' | 'none'
+    // The effective turn-around point: lineEnd, pulled back by the lead, but never so far back
+    // that a very short line would flip instantly and loop forever.
+    function turnAt(s){
+      var lead = (typeof s.lead === 'number') ? s.lead : LOOP_LEAD;
+      return Math.max(s.lineStart + MIN_SPAN, s.lineEnd - lead);
+    }
+    function shadowStep(s){
+      if (s.mode === 'loop'){
+        if (s.curT >= turnAt(s)) return { type: 'seek', to: s.lineStart };
+        return { type: 'none' };
+      }
+      if (s.mode === 'run'){
+        if (s.gapUntil != null){                       // a gap is in progress
+          if (s.now < s.gapUntil) return { type: 'hold' };
+          return s.nextStart != null
+            ? { type: 'advance', to: s.nextStart }
+            : { type: 'stop' };
+        }
+        if (s.curT >= turnAt(s)){                       // reached line end → open the gap
+          var gapMs = Math.min((s.lineEnd - s.lineStart) * 1000, GAP_CAP);
+          return { type: 'gap', until: s.now + gapMs };
+        }
+        return { type: 'none' };
+      }
+      return { type: 'none' };
+    }
+    // 重点 (highlights) step — run-mode with the gap removed and the target redirected from the next
+    // DOM line to the next KEY line. Reuses turnAt, so it turns around LOOP_LEAD before the boundary
+    // and never plays a snippet of the non-key line being skipped (the same trade the drill makes).
+    //   s = { curT, lineStart, lineEnd, nextKeyStart, lead? }
+    function highlightStep(s){
+      if (s.curT >= turnAt(s))
+        return s.nextKeyStart != null ? { type: 'advance', to: s.nextKeyStart }
+                                      : { type: 'stop' };
+      return { type: 'none' };
+    }
+    // 听写 (dictation) step — play the line once, then pause at its end and WAIT for the learner to
+    // reveal + grade. Reuses turnAt so it stops LOOP_LEAD before the boundary (no next-line bleed),
+    // the same trade 跟读/重点 make. The controller tracks `awaiting` and parks the loop meanwhile.
+    //   s = { curT, lineStart, lineEnd, awaiting, lead? }
+    function dictationStep(s){
+      if (s.awaiting) return { type: 'none' };
+      if (s.curT >= turnAt(s)) return { type: 'await' };
+      return { type: 'none' };
+    }
+    // Clamp a requested rate to the nearest value the backend supports.
+    function clampRate(r, rates){
+      var list = (rates && rates.length) ? rates : [1];
+      var best = list[0], bd = Math.abs(list[0] - r);
+      for (var i = 1; i < list.length; i++){
+        var d = Math.abs(list[i] - r);
+        if (d < bd){ bd = d; best = list[i]; }
+      }
+      return best;
+    }
+    // ---- the page's clock must never run backwards -------------------------------------------
+    // A line's start is data-sec when the audio vouched for it, and the FLOORED MM:SS label when it
+    // did not (~8% of lines: one-word 相槌 no ASR transcribed). Those two live on different grids,
+    // and where a recovered line and an unrecovered one SHARE A SECOND the floored one lands EARLIER
+    // than its own predecessor:
+    //
+    //     [22] 00:32  data-sec 32.04     <- recovered
+    //     [23] 00:32  (none)   32.00     <- floored: BEFORE card 22. The clock goes backwards.
+    //
+    // 27 such steps shipped across 7 of the 11 pages. The retrofit's monotonic guard compared
+    // data-sec values only TO EACH OTHER and never against the floored fallbacks — that was the hole.
+    //
+    // Clamp, do NOT sort. shadow.js used to sort by sec, which made its own list monotonic but
+    // REORDERED it against the DOM — so shadow's index i stopped meaning the same line as the
+    // player's index i, and the pin handshake (which matches on sec within 0.05s) could match the
+    // wrong twin. DOM order is the reading order and is authoritative; the clamp fixes the values
+    // without touching the order. The players apply the identical clamp — they must agree exactly.
+    function clampStarts(secs){
+      var out = secs.slice();
+      for (var i = 1; i < out.length; i++) if (out[i] < out[i - 1]) out[i] = out[i - 1];
+      return out;
+    }
+
+    // The end of line i is the next start that is genuinely LATER — not merely the next index.
+    // Same-second twins (a 相槌 and the reply that lands in the same second) sit at the same instant,
+    // so `starts[i+1]` as the end yields a zero- or negative-length loop and the drill freezes on a
+    // sliver of audio. That predates the retrofit; the inversion above only made it negative. A
+    // learner cannot shadow a 0.04s clip — loop to the next line that actually starts later.
+    function nextDistinct(secs, i, minSpan){
+      var span = (typeof minSpan === 'number') ? minSpan : MIN_SPAN;
+      for (var k = i + 1; k < secs.length; k++) if (secs[k] > secs[i] + span) return secs[k];
+      return null;
+    }
+
+    return { shadowStep: shadowStep, highlightStep: highlightStep, dictationStep: dictationStep,
+             turnAt: turnAt, LOOP_LEAD: LOOP_LEAD,
+             clampRate: clampRate, clampStarts: clampStarts, nextDistinct: nextDistinct, MIN_SPAN: MIN_SPAN };
+  }
+  /*<</shadow-pure>>*/
+
+  var LP = window.LangPlayer;
+  if (!LP) return;                                     // no adapter (embed / single-mode) → no shadow
+  var toggle = document.getElementById('shadowToggle');
+  var bar    = document.getElementById('shadowBar');
+  if (!toggle || !bar) return;
+
+  var P = SHADOW_PURE();
+  // Base-60 fold over every digit group, so `62:33` (what segment.py mints past the hour) AND
+  // `1:02:33` both parse. The old two-group regex read `1:02:33` as 62s. Backlog #39; must stay
+  // identical to player_auto's toSec and favorites.js tsToSec — tools/test_tosec.mjs enforces it.
+  function toSec(txt){
+    var p = (String(txt).match(/\d+/g) || []).map(Number);
+    var s = 0; for (var i = 0; i < p.length; i++) s = s * 60 + p[i];
+    return s;
+  }
+  // MUST match player_auto.html's startOf() EXACTLY, and must change with it in the same commit.
+  // The pin handshake compares shadow's start against the player's units[i].sec with a 0.05s
+  // tolerance; if one side reads data-sec and the other reads the floored label they can differ by
+  // up to 1s, the pin silently never matches, and the highlight-flicker bug that pinnedIdx exists
+  // to kill comes straight back.
+  //
+  // The floor also ate the drill itself: a line's END is the next line's start, so turning around
+  // at (lineEnd - LOOP_LEAD) against a floored grid clipped up to ~1s off the tail of every
+  // repeated line — the tail being, per player_auto.html's own comment, exactly what a shadowing
+  // learner needs to hear.
+  function startOf(ts){
+    if (!ts) return 0;
+    var d = parseFloat(ts.getAttribute('data-sec'));
+    return isNaN(d) ? toSec(ts.textContent) : d;
+  }
+  var rows = [].slice.call(document.querySelectorAll('.u')).map(function(el){
+    var t = el.querySelector('.ts'); return { el: el, sec: t ? startOf(t) : 0 };
+  });
+  if (!rows.length) return;
+  // CLAMP, don't sort — see clampStarts() in the pure core. The old .sort() reordered shadow's rows
+  // against the DOM, so its index i no longer named the same line as the player's index i.
+  var starts = P.clampStarts(rows.map(function(r){ return r.sec; }));
+  for (var ci = 0; ci < rows.length; ci++) rows[ci].sec = starts[ci];
+  function medianGap(){
+    var g = [];
+    for (var i = 1; i < starts.length; i++) g.push(starts[i] - starts[i - 1]);
+    if (!g.length) return 5;
+    g.sort(function(a, b){ return a - b; });
+    return g[Math.floor(g.length / 2)] || 5;
+  }
+  var LAST_LEN = Math.min(Math.max(medianGap(), 2), 8);   // fallback for the final line when duration()==0
+
+  var on = false, mode = 'loop', active = -1, lastTap = -1, gapUntil = null, rate = 1;
+
+  // One self-terminating tick loop, guarded by a generation token: each pump() supersedes any prior
+  // loop, so a drill<->重点<->听写 swap (teardown + restart in one stack) can never leave two loops
+  // running. The loop also ends when 重点 has PARKED (its last key line) or 听写 is AWAITING input
+  // (paused, waiting for reveal+grade): the lens stays, but the poll must not spin doing nothing —
+  // a tap / 再听 / advance un-parks and re-pumps.
+  var loopGen = 0, liveLoops = 0;
+  function pump(){
+    var g = ++loopGen;
+    liveLoops++;
+    (function loop(){
+      if (g !== loopGen || (!on && (!hlOn || hlParked) && (!dOn || dAwait))){ liveLoops--; return; }
+      tickAny();
+      setTimeout(loop, 50);
+    })();
+  }
+  // Test-only diagnostic for the swap-leak regression (tools/cdp_offline.mjs). Exposed on file:// and
+  // localhost only — never on the published site (the inverse of favorites.js's online-only gate).
+  if (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    window.__shadowLoops = function(){ return liveLoops; };
+
+  function lineBounds(i){
+    var lineStart = starts[i];
+    // The next start that is genuinely LATER, not merely the next index — a same-second twin would
+    // otherwise end this line at its own start and the drill would loop a sliver of audio.
+    var nextStart = P.nextDistinct(starts, i);
+    var dur = LP.duration ? LP.duration() : 0;
+    var lineEnd = (nextStart != null) ? nextStart
+                : (dur > lineStart ? dur : lineStart + LAST_LEN);
+    return { lineStart: lineStart, lineEnd: lineEnd, nextStart: nextStart };
+  }
+  function currentIdx(){                                   // nearest line at/just-before the playhead
+    var t = LP.getTime(), lo = 0;
+    for (var k = 0; k < starts.length; k++){ if (starts[k] <= t + 0.15) lo = k; else break; }
+    return lo;
+  }
+  function setActive(i){
+    if (i < 0 || i >= rows.length) return;
+    active = i; gapUntil = null;
+    LP.seek(starts[i]); LP.play();
+    syncPin();
+  }
+  // While LOOPING one line, the highlight must follow the DRILL, not the clock. The highlighter looks
+  // 0.15s ahead; the drill only turns around 0.10s early — so for ~50ms on every repeat it lit the
+  // NEXT sentence and snapped back. That flicker is what the user saw and reported. Pin it.
+  // In 'run' mode the highlight SHOULD advance line to line, so there is nothing to pin.
+  function syncPin(){
+    if (!LP.pin || !LP.unpin) return;                      // older player variants: no pin, no drill flicker
+    if (on && mode === 'loop' && active >= 0) LP.pin(starts[active]);
+    else LP.unpin();
+  }
+  function tick(){
+    if (!on || active < 0) return;
+    var b = lineBounds(active);
+    var act = P.shadowStep({ mode: mode, curT: LP.getTime(),
+      lineStart: b.lineStart, lineEnd: b.lineEnd, nextStart: b.nextStart,
+      gapUntil: gapUntil, now: Date.now() });
+    if (act.type === 'seek'){ LP.seek(act.to); LP.play(); }
+    else if (act.type === 'gap'){ gapUntil = act.until; LP.pause(); }
+    else if (act.type === 'hold'){ /* stay paused during the shadow gap */ }
+    else if (act.type === 'advance'){ gapUntil = null; active += 1; LP.seek(act.to); LP.play(); syncPin(); reflect(); }
+    else if (act.type === 'stop'){ gapUntil = null; LP.pause(); setOn(false); }
+  }
+  function reflect(){
+    toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    toggle.classList.toggle('on', on);
+    bar.hidden = !on;
+    var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
+    if (loopBtn){ loopBtn.classList.toggle('on', mode === 'loop'); loopBtn.setAttribute('aria-pressed', mode === 'loop' ? 'true' : 'false'); }
+    if (runBtn){  runBtn.classList.toggle('on', mode === 'run');   runBtn.setAttribute('aria-pressed', mode === 'run' ? 'true' : 'false'); }
+    [].slice.call(bar.querySelectorAll('.sh-rate')).forEach(function(btn){
+      var sel = parseFloat(btn.getAttribute('data-rate')) === rate;
+      btn.classList.toggle('on', sel); btn.setAttribute('aria-pressed', sel ? 'true' : 'false');
+    });
+  }
+  function setOn(v){
+    on = v;
+    if (on){ if (hlOn) setHl(false); if (dOn) setDict(false); }   // mutual exclusion: 重点/听写 off
+    if (on && active < 0) setActive(lastTap >= 0 ? lastTap : currentIdx());
+    if (on) pump();
+    if (!on){ gapUntil = null; }
+    syncPin();                                             // drill off -> the highlight is the clock's again
+    reflect();
+  }
+  function setMode(m){ mode = m; gapUntil = null; syncPin(); reflect(); }
+  function setRate(r){ rate = P.clampRate(r, LP.rates()); LP.setRate(rate); reflect(); }
+  function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
+
+  // ── 重点 (highlights) — mutually exclusive with the drill; one tick loop dispatches by hlOn. ──
+  var hlOn = false, hlParked = false;   // hlParked: sequence ran to the last key line — lens stays, loop stops
+  var hlToggle = document.getElementById('highlightsToggle');
+  var keyIdx = [];
+  for (var ki = 0; ki < rows.length; ki++) if (rows[ki].el.classList.contains('key')) keyIdx.push(ki);
+
+  function firstKeyIdx(){ return keyIdx.length ? keyIdx[0] : -1; }
+  function nextKeyIdxFrom(i){ for (var k = 0; k < keyIdx.length; k++) if (keyIdx[k] > i) return keyIdx[k]; return -1; }
+  function currentKeyIdx(){                          // nearest key line at/just-before the playhead
+    var t = LP.getTime(), lo = firstKeyIdx();
+    for (var k = 0; k < keyIdx.length; k++){ if (starts[keyIdx[k]] <= t + 0.15) lo = keyIdx[k]; else break; }
+    return lo;
+  }
+  function hlTick(){
+    if (!hlOn || active < 0) return;
+    // Resync if the user scrubbed out of the active key line. Normal advance seeks away BEFORE
+    // lineEnd, so this fires only on a real manual seek (margin tolerates 50ms poll overshoot).
+    var cb = lineBounds(active), t0 = LP.getTime();
+    if (t0 < cb.lineStart - 0.25 || t0 > cb.lineEnd + 0.5) active = currentKeyIdx();
+    var b = lineBounds(active);
+    var nki = nextKeyIdxFrom(active);
+    var nks = (nki >= 0) ? starts[nki] : null;
+    var act = P.highlightStep({ curT: LP.getTime(), lineStart: b.lineStart, lineEnd: b.lineEnd, nextKeyStart: nks });
+    if (act.type === 'advance'){ active = nki; LP.seek(act.to); LP.play(); }   // hlOn unchanged → no reflectHl
+    // Reached the last key line: pause and PARK. Keep the lens (the curated view is the point) and keep
+    // the toggle pressed; do NOT setHl(false), which would clear the filter and snap every row back.
+    else if (act.type === 'stop'){ LP.pause(); hlParked = true; }
+  }
+  function reflectHl(){
+    if (!hlToggle) return;
+    hlToggle.setAttribute('aria-pressed', hlOn ? 'true' : 'false');
+    hlToggle.classList.toggle('on', hlOn);
+  }
+  function tickAny(){ if (hlOn) hlTick(); else if (dOn) dTick(); else if (on) tick(); }
+  function setHl(v){
+    hlOn = v;
+    if (hlOn){
+      hlParked = false;                              // fresh entry (or re-entry after a parked end)
+      if (on) setOn(false);                          // mutual exclusion: drill off first
+      if (dOn) setDict(false);                        // ...and 听写
+      document.body.classList.add('highlights-only');
+      active = (active >= 0 && rows[active].el.classList.contains('key')) ? active : firstKeyIdx();
+      if (active >= 0){ LP.seek(starts[active]); LP.play(); }
+      pump();
+    } else {
+      document.body.classList.remove('highlights-only');
+    }
+    reflectHl();
+  }
+
+  // ── 听写 (dictation) — mutually exclusive with the drill & 重点; dispatched by dOn in tickAny. ──
+  var dOn = false, dAwait = false, dReveal = false, dDone = false, dQueue = [];
+  var dSeekTo = null, dSeekBy = 0;   // a programmatic seek in flight — suppress scrub-detection until it lands
+  var dPassed = 0, dMissed = 0, dSaved = 0;
+  var dToggle = document.getElementById('dictToggle');
+  var dBar = document.getElementById('dictBar');
+  var dReplayBtn = document.getElementById('dictReplay'), dRevealBtn = document.getElementById('dictReveal');
+  var dGrade = document.getElementById('dictGrade'), dMissBtn = document.getElementById('dictMiss'), dGotBtn = document.getElementById('dictGot');
+  var dTally = document.getElementById('dictTally');
+
+  function visibleRowIdx(){                               // in-set = currently-visible .u (respects every filter)
+    var out = [];
+    for (var i = 0; i < rows.length; i++) if (rows[i].el.offsetParent !== null) out.push(i);
+    return out;
+  }
+  function dSeek(x){ LP.seek(x); dSeekTo = x; dSeekBy = Date.now() + 500; }   // arm the settle guard (see dTick)
+  function dReflect(){
+    if (dToggle){ dToggle.setAttribute('aria-pressed', dOn ? 'true' : 'false'); dToggle.classList.toggle('on', dOn); }
+    if (dBar) dBar.hidden = !dOn;
+    if (dRevealBtn) dRevealBtn.hidden = !(dOn && !dReveal && !dDone);
+    if (dGrade) dGrade.hidden = !(dOn && dReveal && !dDone);   // no dangling grade buttons at completion
+    if (dTally) dTally.textContent = dOn
+      ? ((dDone ? '听写完成 · ' : '') + '听懂 ' + dPassed + ' · 重听 ' + dMissed + (dSaved ? ' · 收藏 ' + dSaved : ''))
+      : '';
+  }
+  function dPlayActive(){                                 // test the active line: masked, from its start
+    if (active < 0) return;
+    dAwait = false; dReveal = false; dDone = false;
+    rows[active].el.classList.remove('revealed');
+    dSeek(starts[active]); LP.play();
+    dReflect(); pump();
+  }
+  function dResyncIfScrubbed(){                           // a manual seek out of the active line → re-aim
+    var b = lineBounds(active), t0 = LP.getTime();
+    if (t0 < b.lineStart - 0.25 || t0 > b.lineEnd + 0.5){
+      var vis = visibleRowIdx(), pick = vis.length ? vis[0] : active;
+      for (var k = 0; k < vis.length; k++){ if (starts[vis[k]] <= t0 + 0.15) pick = vis[k]; else break; }
+      active = pick; dReveal = false; rows[active].el.classList.remove('revealed');
+    }
+  }
+  function dTick(){
+    if (!dOn || active < 0 || dAwait) return;
+    // A programmatic seek can LAG on the IFrame transport: getCurrentTime keeps returning the pre-seek
+    // playhead for up to a poll. pump()'s first loop body runs synchronously, so without this guard the
+    // very first dTick after a seek would scrub-detect against a stale time and jump `active` to the
+    // wrong line. Ignore the tick until the seek lands (getTime near target) or a short deadline passes.
+    if (dSeekTo != null){
+      if (Math.abs(LP.getTime() - dSeekTo) <= 0.4 || Date.now() >= dSeekBy) dSeekTo = null;
+      else return;
+    }
+    dResyncIfScrubbed();
+    var b = lineBounds(active);
+    var act = P.dictationStep({ curT: LP.getTime(), lineStart: b.lineStart, lineEnd: b.lineEnd, awaiting: dAwait });
+    if (act.type === 'await'){ dAwait = true; LP.pause(); dReflect(); }   // loop parks on the next guard check
+  }
+  function dAdvance(){
+    if (dQueue.length){ active = dQueue.shift(); dPlayActive(); }
+    else { LP.pause(); dAwait = true; dDone = true; dReveal = false; dReflect(); }   // finished: park, hide grade
+  }
+  function dReplay(){ if (!dOn || active < 0 || dDone) return; dAwait = false; dSeek(starts[active]); LP.play(); dReflect(); pump(); }
+  function dDoReveal(){ if (!dOn || active < 0 || dDone) return; dReveal = true; rows[active].el.classList.add('revealed'); dReflect(); }
+  function dGradeGot(){ if (!dOn || dDone) return; dPassed++; dAdvance(); }   // ✓: keep revealed, dequeue, advance
+  function dGradeMiss(){                                  // ✗: requeue tail, auto-favorite (online), advance
+    if (!dOn || dDone) return; dMissed++;
+    if (active >= 0){
+      dQueue.push(active);
+      var row = rows[active].el, fb = row.querySelector('.fav-btn');
+      if (fb && !row.classList.contains('faved')){ fb.click(); dSaved++; }   // fb absent offline → skipped
+    }
+    dAdvance();
+  }
+  function setDict(v){
+    dOn = v;
+    if (dOn){
+      if (on) setOn(false);
+      if (hlOn) setHl(false);                            // mutual exclusion: drill & 重点 off first (lens removed
+      var vis = visibleRowIdx();                         // BEFORE this, so vis reflects the filter, not 重点)
+      if (!vis.length){ dOn = false; dReflect(); return; }   // nothing visible to dictate → no-op
+      dPassed = dMissed = dSaved = 0; dAwait = false; dReveal = false; dDone = false;
+      document.body.classList.add('dictation');
+      active = vis[0]; dQueue = vis.slice(1);            // the whole visible set, top to bottom
+      dPlayActive();
+    } else {
+      document.body.classList.remove('dictation');
+      for (var i = 0; i < rows.length; i++) rows[i].el.classList.remove('revealed');
+      dAwait = false; dDone = false;                      // no forced pause — return to normal playback
+    }
+    dReflect();
+  }
+
+  toggle.addEventListener('click', function(){ setOn(!on); });
+  var loopBtn = document.getElementById('shLoop'), runBtn = document.getElementById('shRun');
+  if (loopBtn) loopBtn.addEventListener('click', function(){ setMode('loop'); });
+  if (runBtn)  runBtn.addEventListener('click', function(){ setMode('run'); });
+  var prevBtn = document.getElementById('shPrev'), nextBtn = document.getElementById('shNext');
+  if (prevBtn) prevBtn.addEventListener('click', function(){ step(-1); });
+  if (nextBtn) nextBtn.addEventListener('click', function(){ step(1); });
+  [].slice.call(bar.querySelectorAll('.sh-rate')).forEach(function(btn){
+    btn.addEventListener('click', function(){ setRate(parseFloat(btn.getAttribute('data-rate'))); });
+  });
+  if (hlToggle){
+    if (!keyIdx.length) hlToggle.hidden = true;
+    else hlToggle.addEventListener('click', function(){ setHl(!hlOn); });
+    reflectHl();
+  }
+  if (dToggle) dToggle.addEventListener('click', function(){ setDict(!dOn); });
+  if (dReplayBtn) dReplayBtn.addEventListener('click', dReplay);
+  if (dRevealBtn) dRevealBtn.addEventListener('click', dDoReveal);
+  if (dMissBtn) dMissBtn.addEventListener('click', dGradeMiss);
+  if (dGotBtn) dGotBtn.addEventListener('click', dGradeGot);
+  dReflect();
+  // remember the last tapped line; while shadow is ON, re-pin the active line to it
+  rows.forEach(function(r, i){
+    var ts = r.el.querySelector('.ts');
+    // This sets `active` directly rather than via setActive(), because the page's own .ts handler has
+    // already seeked — calling setActive here would seek a second time. But it is the SECOND place the
+    // drilled line changes, so it must re-pin too: without syncPin() the drill moved to the tapped
+    // line while the highlight stayed pinned to whichever line was under the playhead when 跟读 was
+    // switched on.
+    if (ts) ts.addEventListener('click', function(){
+      lastTap = i;
+      if (on){ active = i; gapUntil = null; syncPin(); reflect(); }
+      // In 重点, a tap always lands on a key row (non-key rows are hidden). Re-aim the sequence there;
+      // if it had parked at the last line, un-park and re-pump so it resumes skipping forward.
+      else if (hlOn && rows[i].el.classList.contains('key')){ active = i; if (hlParked){ hlParked = false; pump(); } }
+      // In 听写, the .ts stays tappable through the mask; a tap re-aims the test line and plays it.
+      else if (dOn && rows[i].el.offsetParent !== null){ var qi = dQueue.indexOf(i); if (qi >= 0) dQueue.splice(qi, 1); active = i; dPlayActive(); }
+    });
+  });
+
+  // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
+  toggle.disabled = true;
+  (function wait(tries){
+    if (LP.ready && LP.ready()){ toggle.disabled = false; reflect(); return; }
+    if (tries < 40) setTimeout(function(){ wait(tries + 1); }, 100);
+    else { toggle.disabled = false; reflect(); }       // best-effort: enable anyway
+  })(0);
+})();
+</script>
 
 <script>
 /* ============================================================================
