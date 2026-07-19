@@ -4219,6 +4219,7 @@
     play:     function(){ if (video){ var p = video.play(); if (p && p.catch) p.catch(function(){}); } },
     pause:    function(){ if (video) video.pause(); },
     paused:   function(){ return video ? video.paused : true; },
+    toggle:   function(){ if (!this.ready()) return; if (this.paused()) this.play(); else this.pause(); },
     setRate:  function(r){ if (video){ try { video.playbackRate = r; } catch (e) {} } },
     rates:    function(){ return AUDIO_RATES.slice(); },
     duration: function(){ return (video && video.duration) ? video.duration : 0; },
@@ -4231,6 +4232,46 @@
               },
     unpin:    function(){ pinnedIdx = -1; }
   };
+
+  // ---- play / pause button in the dock bar ----------------------------------------------------
+  // The audio dock DEFAULTS FOLDED (nothing to watch), which hides the native <video> controls — so
+  // without this there is NO visible way to start or pause playback; the only transport was a
+  // timestamp click. The video dock solved the same problem with a dock-play button; audio needs it
+  // more, since it is folded from the start. It lives in the .dock-bar (which survives folding) for
+  // parity with player_auto.html, and is built in JS because propagate.py swaps the player script
+  // but not the dock markup of already-built pages.
+  function LP(){ return (window.LangPlayer && window.LangPlayer.ready()) ? window.LangPlayer : null; }
+  var bar = dock ? dock.querySelector('.dock-bar') : null;
+  var playBtn = null;
+  if (bar){
+    playBtn = document.createElement('button');
+    playBtn.className = 'dock-play';
+    playBtn.id = 'dockPlay';
+    playBtn.type = 'button';
+    bar.insertBefore(playBtn, bar.querySelector('#dockFollow') || null);
+    playBtn.addEventListener('click', function(){ if (LP()) LP().toggle(); paintPlay(); });
+  }
+  var painted = null;                                  // what the button SHOWS (null = never painted)
+  function paintPlay(){
+    if (!playBtn) return;
+    var p = LP() ? LP().paused() : true;               // still resolving / resolve-failed → show ▶
+    if (p === painted) return;                         // a 4Hz poll must not churn the DOM (dock-paint-churn)
+    painted = p;
+    playBtn.textContent = p ? '▶' : '❚❚';
+    playBtn.setAttribute('aria-pressed', p ? 'false' : 'true');
+    playBtn.setAttribute('aria-label', p ? '播放音频' : '暂停音频');
+  }
+  paintPlay();
+  setInterval(paintPlay, 250);                         // the user can also pause from the native/drill/timestamp
+  // Space toggles playback — the reflex key. Never steal it from a text field or a focused control.
+  document.addEventListener('keydown', function(e){
+    if (e.key !== ' ' && e.code !== 'Space') return;
+    var t = e.target || {}, tag = (t.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' ||
+        tag === 'A' || t.isContentEditable) return;
+    if (!LP()) return;
+    e.preventDefault(); LP().toggle(); paintPlay();
+  });
 
   // ---- manually scrolling / navigating suspends auto-follow ----
   function suspend(){ if (following) setFollow(false, true); }
