@@ -4128,7 +4128,9 @@
     }
   }
   function seek(sec){
-    setMin(false);
+    // AUDIO NEVER auto-unfolds — there is nothing to watch, so a seek keeps the dock a compact bar
+    // (unlike the video player, whose seek re-expands to show the frame). The manual 展开 toggle is
+    // the ONLY thing that unfolds an audio dock.
     if (!video) return;
     var play = function(){
       try { video.currentTime = sec; } catch (e) {}
@@ -4258,6 +4260,12 @@
 
   if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
   if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
+
+  // AUDIO ALWAYS FOLDS by default — no video to watch, so the dock loads as a compact control bar
+  // (transcript + follow-along + the 跟读 drill drive study; the shadow/dict bars show independent of
+  // fold). The manual 展开 toggle still reveals the native scrubber for anyone who wants it. (Video
+  // is the opposite: it defaults UNFOLDED, and from there only the fold/unfold toggle changes it.)
+  setMin(true);
 })();
 </script>
 
