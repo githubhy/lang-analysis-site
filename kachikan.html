@@ -1784,8 +1784,11 @@
 
   var following = true, activeIdx = -1;
   function dockH(){
-    if (!dock) return 0;
-    return dock.classList.contains('min') ? (dock.querySelector('.dock-bar') || dock).offsetHeight : dock.offsetHeight;
+    // dock.offsetHeight is the true sticky footprint in every state: minimized it
+    // already excludes the display:none .dock-video and still INCLUDES a visible
+    // #shadowBar/#dictBar. Returning just the .dock-bar height undercounts by the
+    // armed bar and scrolls lines under the 跟读 menu.
+    return dock ? dock.offsetHeight : 0;
   }
   function scrollToActive(force){
     var u = units[activeIdx]; if (!u) return;
