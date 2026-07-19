@@ -352,7 +352,7 @@
   @media (hover:none) and (pointer:coarse){
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
-    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
+    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -477,6 +477,24 @@
   .dock-shadow-toggle.on, .dock-hl-toggle.on, .dock-dict-toggle.on, .dock-pin-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
   .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible, .dock-dict-toggle:focus-visible, .dock-pin-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
+  /* 目录 jump menu (回到开头 + chapters) — button matches the dock toggles; page_tools.js builds it. */
+  .dock-bar{position:relative;}
+  .dock-toc-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+    color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
+    padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
+  .dock-toc-toggle:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-toc-toggle.on{color:var(--shu);border-color:var(--shu);background:var(--card-2);}
+  .dock-toc-toggle:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-toc{position:absolute;top:calc(100% + .35rem);right:.5rem;z-index:40;
+    background:var(--card);border:1px solid var(--line-strong);border-radius:.6rem;
+    box-shadow:0 8px 28px rgba(0,0,0,.22);padding:.3rem;
+    min-width:12rem;max-width:min(88vw,24rem);max-height:min(62vh,26rem);overflow-y:auto;}
+  .dock-toc[hidden]{display:none;}
+  .dock-toc-item{display:block;width:100%;text-align:left;font-family:var(--font-gothic);font-size:.82rem;
+    color:var(--ink);background:transparent;border:0;border-radius:.4rem;padding:.5rem .6rem;cursor:pointer;line-height:1.35;}
+  .dock-toc-item:hover{background:var(--card-2);color:var(--shu);}
+  .dock-toc-item:focus-visible{outline:2px solid var(--shu);outline-offset:-2px;}
+  .dock-toc-item.is-top{font-weight:600;border-bottom:1px solid var(--line);margin-bottom:.2rem;padding-bottom:.5rem;}
   /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
   body.highlights-only .u:not(.key){ display:none; }
   /* 听写 (dictation) lens: mask the answer body; the active revealed row shows. visibility, not
@@ -521,7 +539,7 @@
        full-size and un-clipped either way. Covers 320/375/390/430 phones; tablets/desktop are untouched. */
     .dock-bar{ gap:.3rem; padding-left:.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .dock-bar::-webkit-scrollbar{ display:none; }
-    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
+    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
     .dock-play{ padding-left:.4rem; padding-right:.4rem; flex:0 0 auto; }
   }
 
@@ -689,6 +707,9 @@
     <!-- ============ CARDS ============ -->
   <div class="sec">逐句精讲 · 全 362 句</div>
   <p class="lead">整期闲聊按时间顺序逐句还原、注音、翻译并解析文法。带 <span class="tri">★</span> 的为重点句式；点击任意 <span class="ts-demo">▸ 时间戳</span> 视频即跳到该处播放。</p>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">01</span><span class="chapter-t">オープニング：この夏の暑さ<span class="chapter-c">开场：今年夏天的酷暑闲聊</span></span><span class="chapter-r">0:00–1:42</span></div>
     <div class="u key" data-search="5月がつの真まん中なかぐらいからドンって暑あつくなる日ひが突発的とっぱつてきに来きて、そのあと5月がつの下旬げじゅんにはもうムシムシ始はじまって、梅雨つゆがあって、いやなんとか10月がつぐらいまでは暑あついと思おもうんで。 从5月中旬左右开始，会突然一下子变热，然后到了5月下旬就已经开始闷热，接着梅雨来了，唉，反正一直热到10月左右吧。" data-cats="goi joshi katsu">
       <div class="u-meta"><span class="ts" data-sec="12.200">00:12</span><span class="spk iwata">サクちゃん</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
@@ -821,6 +842,9 @@
         </ul>
       </div>
     </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">02</span><span class="chapter-t">お便り①　誘う人・誘われる人<span class="chapter-c">来信①　主动约人与被约的人</span></span><span class="chapter-r">1:42–11:15</span></div>
     <div class="u key" data-search="たくさんは読よめないんだけど、目めを通とおさせていただいて、いくつかご紹介しょうかいしたいと思おもいます。 虽然不能全部都读完，但是我会先过目一下，介绍其中几篇给大家。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts" data-sec="102.960">01:42</span><span class="spk host">サクちゃん</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
@@ -2011,6 +2035,9 @@
         </ul>
       </div>
     </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">03</span><span class="chapter-t">お便り②　怒りと嫌み、境界線<span class="chapter-c">来信②　愤怒、讽刺与界线</span></span><span class="chapter-r">11:15–18:18</span></div>
     <div class="u key" data-search="話はなしは変かわりますが、お聞ききしたいことがあります。 换个话题，我有件事想请教一下。" data-cats="joshi keigo">
       <div class="u-meta"><span class="ts" data-sec="675.080">11:15</span><span class="spk nare">サクちゃん（お便り読み上げ）</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
@@ -2813,6 +2840,9 @@
         </ul>
       </div>
     </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">04</span><span class="chapter-t">お便り③　ストレス耐性と心地よさ<span class="chapter-c">来信③　压力耐受与舒适感</span></span><span class="chapter-r">18:18–23:00</span></div>
     <div class="u key" data-search="自分じぶんで選えらべるようになってからですが、少しずつ自分じぶんの周まわりを心地ここちよいもので固かためていった結果けっか、ちょっとのストレスに過敏かびんに反応はんのうしてしまうようになりました。 大概是从能自己做选择开始，渐渐把周围都布置成让自己感到舒适的环境，结果变得对一点点压力都过敏地做出反应。" data-cats="goi katsu">
       <div class="u-meta"><span class="ts" data-sec="1098.600">18:18</span><span class="spk nare">お便り</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
@@ -3220,6 +3250,9 @@
         </ul>
       </div>
     </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">05</span><span class="chapter-t">お便り④　結婚式とお金の価値観<span class="chapter-c">来信④　婚礼与金钱观</span></span><span class="chapter-r">23:00–29:12</span></div>
     <div class="u key" data-search="それに耐たえきれなくて、その場ばで泣ないてしまっても、夫おっとから謝罪しゃざいはなく、 きいろさん受不了，当场就哭了出来，可丈夫却没有道歉，" data-cats="katsu">
       <div class="u-meta"><span class="ts" data-sec="1380.000">23:00</span><span class="spk host">スーさん</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
@@ -3847,6 +3880,9 @@
         </ul>
       </div>
     </div>
+
+  <section class="chapter">
+    <div class="chapter-h"><span class="chapter-n">06</span><span class="chapter-t">アフタートーク（スカルプDボーテ）<span class="chapter-c">幕后闲聊（ScalpD Beauté 赞助）</span></span><span class="chapter-r">29:12–38:34</span></div>
     <div class="u key" data-search="このあとはスカルプdボーテ提供ていきょうのアフタートークをお楽たのしみください。 接下来请欣赏由スカルプdボーテ冠名播出的加场闲聊。" data-cats="goi keigo">
       <div class="u-meta"><span class="ts" data-sec="1752.400">29:12</span><span class="spk nare">旁白</span><span class="key-star" title="重点句式">★</span></div>
       <div class="u-body">
@@ -4760,6 +4796,7 @@
         </ul>
       </div>
     </div>
+  </section>
 
 
     <div class="sec">系统速查表</div>
@@ -6426,6 +6463,57 @@
     });
     bar.appendChild(tb);
   }
+
+  // ---- 目录 jump menu: 回到开头 + chapters (scroll + seek) --------------------------------------
+  // Mid-page there was no way back to the top or to another chapter. Built in JS (not template
+  // markup) so propagate.py delivers it to already-built pages, the way the dock-play button ships.
+  // Chapters are read straight from the rendered <section class="chapter"> heads, so any page with
+  // chapters gets a jump list and a chapterless page still gets 回到开头. Each entry scrolls the
+  // target row under the sticky dock and fires that row's .ts click (seek + follow + flash).
+  (function(){
+    var dockEl = document.getElementById('dock');
+    var bar = dockEl && dockEl.querySelector('.dock-bar');
+    var rows = [].slice.call(document.querySelectorAll('.u'));
+    if (!bar || !rows.length) return;
+    function dockH(){ return dockEl ? dockEl.offsetHeight : 0; }
+    function close(){ panel.hidden = true; btn.classList.remove('on'); btn.setAttribute('aria-expanded', 'false'); }
+    function open(){ panel.hidden = false; btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true'); }
+    function jumpTo(row, toTop){
+      // INSTANT, not smooth: a jump is a teleport, and on a full-episode page the target can be tens
+      // of thousands of px away — a smooth scroll there is a multi-second animation nobody wants.
+      if (toTop) { window.scrollTo(0, 0); }
+      else {
+        var r = row.getBoundingClientRect();
+        window.scrollTo(0, Math.max(0, window.pageYOffset + r.top - dockH() - 24));
+      }
+      var ts = row.querySelector('.ts'); if (ts) ts.click();   // seek + arm follow + flash (player handler)
+      close();
+    }
+    var entries = [{ label: '↑ 回到开头', row: rows[0], top: true }];
+    [].slice.call(document.querySelectorAll('.chapter')).forEach(function(ch){
+      var first = ch.querySelector('.u'); if (!first) return;
+      var n = ((ch.querySelector('.chapter-n') || {}).textContent || '').trim();
+      var t = ((ch.querySelector('.chapter-t') || {}).textContent || '').trim();
+      entries.push({ label: (n ? n + '　' : '') + t, row: first });
+    });
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'dock-toc-toggle'; btn.id = 'tocToggle';
+    btn.textContent = '目录'; btn.title = '跳转到开头或某一章'; btn.setAttribute('aria-expanded', 'false');
+    bar.insertBefore(btn, bar.querySelector('#dockFollow') || null);
+    var panel = document.createElement('div');
+    panel.className = 'dock-toc'; panel.id = 'tocPanel'; panel.hidden = true; panel.setAttribute('role', 'menu');
+    entries.forEach(function(e){
+      var a = document.createElement('button');
+      a.type = 'button'; a.className = 'dock-toc-item' + (e.top ? ' is-top' : '');
+      a.textContent = e.label; a.setAttribute('role', 'menuitem');
+      a.addEventListener('click', function(){ jumpTo(e.row, e.top); });
+      panel.appendChild(a);
+    });
+    bar.appendChild(panel);
+    btn.addEventListener('click', function(e){ e.stopPropagation(); panel.hidden ? open() : close(); });
+    document.addEventListener('click', function(e){ if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) close(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+  })();
 })();
 </script>
 

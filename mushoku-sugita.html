@@ -352,7 +352,7 @@
   @media (hover:none) and (pointer:coarse){
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
-    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
+    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -477,6 +477,24 @@
   .dock-shadow-toggle.on, .dock-hl-toggle.on, .dock-dict-toggle.on, .dock-pin-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
   .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible, .dock-dict-toggle:focus-visible, .dock-pin-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
+  /* 目录 jump menu (回到开头 + chapters) — button matches the dock toggles; page_tools.js builds it. */
+  .dock-bar{position:relative;}
+  .dock-toc-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+    color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
+    padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
+  .dock-toc-toggle:hover{color:var(--shu);border-color:var(--shu);}
+  .dock-toc-toggle.on{color:var(--shu);border-color:var(--shu);background:var(--card-2);}
+  .dock-toc-toggle:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .dock-toc{position:absolute;top:calc(100% + .35rem);right:.5rem;z-index:40;
+    background:var(--card);border:1px solid var(--line-strong);border-radius:.6rem;
+    box-shadow:0 8px 28px rgba(0,0,0,.22);padding:.3rem;
+    min-width:12rem;max-width:min(88vw,24rem);max-height:min(62vh,26rem);overflow-y:auto;}
+  .dock-toc[hidden]{display:none;}
+  .dock-toc-item{display:block;width:100%;text-align:left;font-family:var(--font-gothic);font-size:.82rem;
+    color:var(--ink);background:transparent;border:0;border-radius:.4rem;padding:.5rem .6rem;cursor:pointer;line-height:1.35;}
+  .dock-toc-item:hover{background:var(--card-2);color:var(--shu);}
+  .dock-toc-item:focus-visible{outline:2px solid var(--shu);outline-offset:-2px;}
+  .dock-toc-item.is-top{font-weight:600;border-bottom:1px solid var(--line);margin-bottom:.2rem;padding-bottom:.5rem;}
   /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
   body.highlights-only .u:not(.key){ display:none; }
   /* 听写 (dictation) lens: mask the answer body; the active revealed row shows. visibility, not
@@ -521,7 +539,7 @@
        full-size and un-clipped either way. Covers 320/375/390/430 phones; tablets/desktop are untouched. */
     .dock-bar{ gap:.3rem; padding-left:.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .dock-bar::-webkit-scrollbar{ display:none; }
-    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
+    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
     .dock-play{ padding-left:.4rem; padding-right:.4rem; flex:0 0 auto; }
   }
 
@@ -4161,6 +4179,57 @@
     });
     bar.appendChild(tb);
   }
+
+  // ---- 目录 jump menu: 回到开头 + chapters (scroll + seek) --------------------------------------
+  // Mid-page there was no way back to the top or to another chapter. Built in JS (not template
+  // markup) so propagate.py delivers it to already-built pages, the way the dock-play button ships.
+  // Chapters are read straight from the rendered <section class="chapter"> heads, so any page with
+  // chapters gets a jump list and a chapterless page still gets 回到开头. Each entry scrolls the
+  // target row under the sticky dock and fires that row's .ts click (seek + follow + flash).
+  (function(){
+    var dockEl = document.getElementById('dock');
+    var bar = dockEl && dockEl.querySelector('.dock-bar');
+    var rows = [].slice.call(document.querySelectorAll('.u'));
+    if (!bar || !rows.length) return;
+    function dockH(){ return dockEl ? dockEl.offsetHeight : 0; }
+    function close(){ panel.hidden = true; btn.classList.remove('on'); btn.setAttribute('aria-expanded', 'false'); }
+    function open(){ panel.hidden = false; btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true'); }
+    function jumpTo(row, toTop){
+      // INSTANT, not smooth: a jump is a teleport, and on a full-episode page the target can be tens
+      // of thousands of px away — a smooth scroll there is a multi-second animation nobody wants.
+      if (toTop) { window.scrollTo(0, 0); }
+      else {
+        var r = row.getBoundingClientRect();
+        window.scrollTo(0, Math.max(0, window.pageYOffset + r.top - dockH() - 24));
+      }
+      var ts = row.querySelector('.ts'); if (ts) ts.click();   // seek + arm follow + flash (player handler)
+      close();
+    }
+    var entries = [{ label: '↑ 回到开头', row: rows[0], top: true }];
+    [].slice.call(document.querySelectorAll('.chapter')).forEach(function(ch){
+      var first = ch.querySelector('.u'); if (!first) return;
+      var n = ((ch.querySelector('.chapter-n') || {}).textContent || '').trim();
+      var t = ((ch.querySelector('.chapter-t') || {}).textContent || '').trim();
+      entries.push({ label: (n ? n + '　' : '') + t, row: first });
+    });
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'dock-toc-toggle'; btn.id = 'tocToggle';
+    btn.textContent = '目录'; btn.title = '跳转到开头或某一章'; btn.setAttribute('aria-expanded', 'false');
+    bar.insertBefore(btn, bar.querySelector('#dockFollow') || null);
+    var panel = document.createElement('div');
+    panel.className = 'dock-toc'; panel.id = 'tocPanel'; panel.hidden = true; panel.setAttribute('role', 'menu');
+    entries.forEach(function(e){
+      var a = document.createElement('button');
+      a.type = 'button'; a.className = 'dock-toc-item' + (e.top ? ' is-top' : '');
+      a.textContent = e.label; a.setAttribute('role', 'menuitem');
+      a.addEventListener('click', function(){ jumpTo(e.row, e.top); });
+      panel.appendChild(a);
+    });
+    bar.appendChild(panel);
+    btn.addEventListener('click', function(e){ e.stopPropagation(); panel.hidden ? open() : close(); });
+    document.addEventListener('click', function(e){ if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) close(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+  })();
 })();
 </script>
 
