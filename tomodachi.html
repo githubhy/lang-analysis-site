@@ -352,7 +352,7 @@
   @media (hover:none) and (pointer:coarse){
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
-    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
+    .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -470,12 +470,12 @@
      shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
      ============================================================ */
   /* shadow toggle in the dock bar (sits next to 跟随) */
-  .dock-shadow-toggle, .dock-hl-toggle, .dock-dict-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+  .dock-shadow-toggle, .dock-hl-toggle, .dock-dict-toggle, .dock-pin-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
     color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
     padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
-  .dock-shadow-toggle:hover, .dock-hl-toggle:hover, .dock-dict-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
-  .dock-shadow-toggle.on, .dock-hl-toggle.on, .dock-dict-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
-  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible, .dock-dict-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle:hover, .dock-hl-toggle:hover, .dock-dict-toggle:hover, .dock-pin-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on, .dock-hl-toggle.on, .dock-dict-toggle.on, .dock-pin-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible, .dock-dict-toggle:focus-visible, .dock-pin-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
   /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
   body.highlights-only .u:not(.key){ display:none; }
@@ -521,7 +521,7 @@
        full-size and un-clipped either way. Covers 320/375/390/430 phones; tablets/desktop are untouched. */
     .dock-bar{ gap:.3rem; padding-left:.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .dock-bar::-webkit-scrollbar{ display:none; }
-    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
+    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
     .dock-play{ padding-left:.4rem; padding-right:.4rem; flex:0 0 auto; }
   }
 
@@ -611,6 +611,7 @@
       <button class="dock-shadow-toggle" id="shadowToggle" type="button" aria-pressed="false" aria-controls="shadowBar" aria-label="切换跟读练习模式">跟读</button>
       <button class="dock-hl-toggle" id="highlightsToggle" type="button" aria-pressed="false" aria-label="只看并播放重点句式">重点</button>
       <button class="dock-dict-toggle" id="dictToggle" type="button" aria-pressed="false" aria-controls="dictBar" aria-label="切换听写练习模式">听写</button>
+      <button class="dock-pin-toggle" id="pinToggle" type="button" aria-pressed="false" aria-label="固定视频：滚动时不自动收起（再点恢复自动）">📌</button>
       <button class="dock-min" id="dockMin" type="button" aria-expanded="true" aria-label="收起或展开视频">收起 ▾</button>
     </div>
     <!--shadow-bar-->
@@ -1728,6 +1729,20 @@
   var dock      = document.getElementById('dock');
   var minBtn    = document.getElementById('dockMin');
   var followBtn = document.getElementById('dockFollow');
+  var pinBtn    = document.getElementById('pinToggle');
+
+  // 📌 AUTO-MINIMIZE OVERRIDE — a SEPARATE control from 收起/展开. Pinned = the scroll-down
+  // auto-minimize is OFF (the video the user chose to watch is never yanked away as they scroll);
+  // unpinned = it's back on. Remembered across pages/reloads (localStorage, device-local, not synced;
+  // wrapped so a file:// or storage-blocked browser just falls back to session default). The fold
+  // TOGGLE is untouched — this only governs whether *scrolling* is allowed to fold.
+  var AUTOMIN_KEY = 'langNoAutoMin', autoMinOverride = false;
+  try { autoMinOverride = localStorage.getItem(AUTOMIN_KEY) === '1'; } catch (e) {}
+  function setAutoMinOverride(on){
+    autoMinOverride = on;
+    if (pinBtn){ pinBtn.classList.toggle('on', on); pinBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+    try { localStorage.setItem(AUTOMIN_KEY, on ? '1' : '0'); } catch (e) {}
+  }
   var video     = document.getElementById('clip');            // <video> + <source> + data-youtube-id
   var ytid      = video ? (video.getAttribute('data-youtube-id') || '') : '';
   var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
@@ -1914,7 +1929,8 @@
       // phone (844 wide, 390 tall) is not narrow, so it never qualified — and it is precisely the
       // geometry where the docked video leaves too little room to read a sentence. Scrolling into the
       // transcript is exactly the moment the reader is done looking at the video.
-      if ((window.innerWidth <= 560 || window.innerHeight <= 480) && y > lastY + 6 && y > 200 &&
+      if (!autoMinOverride &&
+          (window.innerWidth <= 560 || window.innerHeight <= 480) && y > lastY + 6 && y > 200 &&
           dock && !dock.classList.contains('min')) setMin(true);
     }
     lastY = y;
@@ -1940,6 +1956,8 @@
   }
   if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
   if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
+  if (pinBtn)    pinBtn.addEventListener('click', function(){ setAutoMinOverride(!autoMinOverride); });
+  setAutoMinOverride(autoMinOverride);   // reflect the remembered preference on load
 
   // ---------- play / pause, in the dock bar ----------
   // The most frequent action in this workflow is pause-to-read, and until now there was NO way to
