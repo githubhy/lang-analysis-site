@@ -3969,7 +3969,9 @@
   var IDS = [], filterBtn = null, favEmpty = null;
   function pageYt(){
     var el = document.getElementById('clip'); if (!el) return '';
-    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id'); if (y) return y;
+    // data-episode-id keys favourites on an AUDIO (podcast) page — its stable per-episode id, the
+    // <key> in <key>#<mmss>#<n>. Additive: video pages carry data-youtube-id and never reach it.
+    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id') || el.getAttribute('data-episode-id'); if (y) return y;
     var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
   }
   function cnText(card){
