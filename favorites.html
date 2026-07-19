@@ -485,10 +485,16 @@
   .dock-toc-toggle:hover{color:var(--shu);border-color:var(--shu);}
   .dock-toc-toggle.on{color:var(--shu);border-color:var(--shu);background:var(--card-2);}
   .dock-toc-toggle:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
-  .dock-toc{position:absolute;top:calc(100% + .35rem);right:.5rem;z-index:40;
+  /* position:FIXED + appended to <body> (not the bar): the dock clips its overflow — .video-dock is
+     overflow:hidden and on phones .dock-bar is overflow-x:auto — so an absolutely-positioned popover
+     nested inside was clipped away the moment the video folded (dock box shrinks to the bar) or the
+     page hit ≤440px (bar clips + its horizontal scroll ate the panel's vertical scroll). Fixed to the
+     viewport escapes both; JS sets top/right from the button's rect on open. */
+  .dock-toc{position:fixed;z-index:60;
     background:var(--card);border:1px solid var(--line-strong);border-radius:.6rem;
     box-shadow:0 8px 28px rgba(0,0,0,.22);padding:.3rem;
-    min-width:12rem;max-width:min(88vw,24rem);max-height:min(62vh,26rem);overflow-y:auto;}
+    min-width:12rem;max-width:min(88vw,24rem);max-height:min(62vh,26rem);
+    overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .dock-toc[hidden]{display:none;}
   .dock-toc-item{display:block;width:100%;text-align:left;font-family:var(--font-gothic);font-size:.82rem;
     color:var(--ink);background:transparent;border:0;border-radius:.4rem;padding:.5rem .6rem;cursor:pointer;line-height:1.35;}

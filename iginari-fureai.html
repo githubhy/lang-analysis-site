@@ -485,10 +485,16 @@
   .dock-toc-toggle:hover{color:var(--shu);border-color:var(--shu);}
   .dock-toc-toggle.on{color:var(--shu);border-color:var(--shu);background:var(--card-2);}
   .dock-toc-toggle:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
-  .dock-toc{position:absolute;top:calc(100% + .35rem);right:.5rem;z-index:40;
+  /* position:FIXED + appended to <body> (not the bar): the dock clips its overflow — .video-dock is
+     overflow:hidden and on phones .dock-bar is overflow-x:auto — so an absolutely-positioned popover
+     nested inside was clipped away the moment the video folded (dock box shrinks to the bar) or the
+     page hit ≤440px (bar clips + its horizontal scroll ate the panel's vertical scroll). Fixed to the
+     viewport escapes both; JS sets top/right from the button's rect on open. */
+  .dock-toc{position:fixed;z-index:60;
     background:var(--card);border:1px solid var(--line-strong);border-radius:.6rem;
     box-shadow:0 8px 28px rgba(0,0,0,.22);padding:.3rem;
-    min-width:12rem;max-width:min(88vw,24rem);max-height:min(62vh,26rem);overflow-y:auto;}
+    min-width:12rem;max-width:min(88vw,24rem);max-height:min(62vh,26rem);
+    overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .dock-toc[hidden]{display:none;}
   .dock-toc-item{display:block;width:100%;text-align:left;font-family:var(--font-gothic);font-size:.82rem;
     color:var(--ink);background:transparent;border:0;border-radius:.4rem;padding:.5rem .6rem;cursor:pointer;line-height:1.35;}
@@ -4892,7 +4898,21 @@
     if (!bar || !rows.length) return;
     function dockH(){ return dockEl ? dockEl.offsetHeight : 0; }
     function close(){ panel.hidden = true; btn.classList.remove('on'); btn.setAttribute('aria-expanded', 'false'); }
-    function open(){ panel.hidden = false; btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true'); }
+    function place(){
+      // The panel lives on <body> as position:fixed (so no dock overflow can clip it); anchor it just
+      // under the toggle and CLAMP it fully into the viewport. Right-align to the button by default,
+      // but the 目录 button sits mid-left on a phone's dock bar, so a naive right-align runs the panel
+      // off the left edge — hence the min/max clamp on both axes. The dock is sticky at top:0, so the
+      // button stays put as the page scrolls and the panel stays aligned.
+      var r = btn.getBoundingClientRect();
+      var pw = panel.offsetWidth, ph = panel.offsetHeight;    // real size (panel is already un-hidden)
+      var left = Math.min(r.right - pw, window.innerWidth - pw - 8);
+      panel.style.left = Math.max(8, left) + 'px';
+      panel.style.right = 'auto';
+      var top = r.bottom + 6;
+      panel.style.top = Math.max(8, Math.min(top, window.innerHeight - ph - 8)) + 'px';
+    }
+    function open(){ panel.hidden = false; place(); btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true'); }
     function jumpTo(row, toTop){
       // INSTANT, not smooth: a jump is a teleport, and on a full-episode page the target can be tens
       // of thousands of px away — a smooth scroll there is a multi-second animation nobody wants.
@@ -4924,10 +4944,11 @@
       a.addEventListener('click', function(){ jumpTo(e.row, e.top); });
       panel.appendChild(a);
     });
-    bar.appendChild(panel);
+    document.body.appendChild(panel);   // NOT the bar: the dock clips overflow (see the .dock-toc CSS note)
     btn.addEventListener('click', function(e){ e.stopPropagation(); panel.hidden ? open() : close(); });
     document.addEventListener('click', function(e){ if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) close(); });
     document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+    window.addEventListener('resize', function(){ if (!panel.hidden) place(); });
   })();
 })();
 </script>
