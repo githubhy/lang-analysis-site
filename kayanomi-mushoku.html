@@ -5330,13 +5330,18 @@
   var followBtn = document.getElementById('dockFollow');
   var pinBtn    = document.getElementById('pinToggle');
 
-  // 📌 AUTO-MINIMIZE OVERRIDE — a SEPARATE control from 收起/展开. Pinned = the scroll-down
-  // auto-minimize is OFF (the video the user chose to watch is never yanked away as they scroll);
-  // unpinned = it's back on. Remembered across pages/reloads (localStorage, device-local, not synced;
-  // wrapped so a file:// or storage-blocked browser just falls back to session default). The fold
-  // TOGGLE is untouched — this only governs whether *scrolling* is allowed to fold.
-  var AUTOMIN_KEY = 'langNoAutoMin', autoMinOverride = false;
+  // 📌 FOLD-STATE LOCK — a SEPARATE control from 收起/展开. Pinned = FREEZE the dock wherever you put
+  // it: no automatic fold change of EITHER kind. Scroll won't auto-minimize a video you're watching,
+  // AND a seek won't auto-expand one you folded — the latter is what lets you shadow a FOLDED video
+  // for screen space (tapping lines / drill loops seek without popping the frame open). Unpinned =
+  // both automatics resume. Only the manual 收起/展开 toggle moves a locked dock. Remembered across
+  // pages/reloads (localStorage, device-local, not synced; try/catch so file:// falls back to session).
+  var AUTOMIN_KEY = 'langNoAutoMin', FOLD_KEY = 'langDockFold', autoMinOverride = false;
   try { autoMinOverride = localStorage.getItem(AUTOMIN_KEY) === '1'; } catch (e) {}
+  // While locked, the dock's POSITION is remembered too, so a folded+locked video reloads folded
+  // ("lock the dock where I put it"). Only snapshot on an explicit lock/fold action — never during the
+  // load-time reflection, or it would overwrite the saved position with the default before restoring it.
+  function rememberFold(){ if (autoMinOverride && dock){ try { localStorage.setItem(FOLD_KEY, dock.classList.contains('min') ? '1' : '0'); } catch (e) {} } }
   function setAutoMinOverride(on){
     autoMinOverride = on;
     if (pinBtn){ pinBtn.classList.toggle('on', on); pinBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
@@ -5436,6 +5441,11 @@
     dock.classList.toggle('min', m);
     if (minBtn){ minBtn.setAttribute('aria-expanded', m ? 'false' : 'true'); minBtn.textContent = m ? '展开 ▸' : '收起 ▾'; }
   }
+  // AUTOMATIC fold changes go through this; the 📌 pin FREEZES them (a fold-state lock). So scroll
+  // never auto-minimizes AND a seek never auto-expands — critical for shadowing a FOLDED video, where
+  // every line you tap (and every drill loop) would otherwise pop the frame back open. Only the manual
+  // 收起/展开 toggle (setMin direct) still moves a locked dock.
+  function autoSetMin(m){ if (!autoMinOverride) setMin(m); }
 
   // ---------- shared follow-along engine (transport-agnostic) ----------
   var units = [], uEls = document.querySelectorAll('.u');
@@ -5523,14 +5533,14 @@
     if (guard.action(nowms()) === 'suspend'){          // a genuine user scroll
       suspend();
       // on phones, scrolling down into the transcript collapses the video to reclaim space;
-      // tapping any timestamp seeks and re-expands it (transport.seek calls setMin(false)).
+      // tapping any timestamp seeks and re-expands it (transport.seek → autoSetMin(false)), UNLESS
+      // the 📌 lock is on, in which case a folded video stays folded (shadowing keeps its space).
       // Collapse on scroll-down when the screen is SHORT as well as when it is NARROW. A landscape
       // phone (844 wide, 390 tall) is not narrow, so it never qualified — and it is precisely the
       // geometry where the docked video leaves too little room to read a sentence. Scrolling into the
       // transcript is exactly the moment the reader is done looking at the video.
-      if (!autoMinOverride &&
-          (window.innerWidth <= 560 || window.innerHeight <= 480) && y > lastY + 6 && y > 200 &&
-          dock && !dock.classList.contains('min')) setMin(true);
+      if ((window.innerWidth <= 560 || window.innerHeight <= 480) && y > lastY + 6 && y > 200 &&
+          dock && !dock.classList.contains('min')) autoSetMin(true);
     }
     lastY = y;
   }, { passive: true });
@@ -5553,10 +5563,13 @@
       el.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
     })(stamps[j]);
   }
-  if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); });
+  if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); rememberFold(); });
   if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
-  if (pinBtn)    pinBtn.addEventListener('click', function(){ setAutoMinOverride(!autoMinOverride); });
-  setAutoMinOverride(autoMinOverride);   // reflect the remembered preference on load
+  if (pinBtn)    pinBtn.addEventListener('click', function(){ setAutoMinOverride(!autoMinOverride); rememberFold(); });
+  setAutoMinOverride(autoMinOverride);   // reflect the remembered lock (no snapshot — see rememberFold)
+  if (autoMinOverride){                  // a locked dock also restores WHERE it was locked
+    try { var _f = localStorage.getItem(FOLD_KEY); if (_f === '1') setMin(true); else if (_f === '0') setMin(false); } catch (e) {}
+  }
 
   // ---------- play / pause, in the dock bar ----------
   // The most frequent action in this workflow is pause-to-read, and until now there was NO way to
@@ -5628,13 +5641,13 @@
   fab.setAttribute('aria-label', '恢复字幕自动跟随播放');
   fab.textContent = '● 跟随';
   document.body.appendChild(fab);
-  fab.addEventListener('click', function(){ setMin(false); setFollow(true); });
+  fab.addEventListener('click', function(){ autoSetMin(false); setFollow(true); });
 
   // ---------- transport A: native <video> (offline) ----------
   function useLocal(){
     transport = {
       seek: function(sec){
-        setMin(false);
+        autoSetMin(false);
         try { video.currentTime = sec; } catch (e) {}
         var p = video.play(); if (p && p.catch) p.catch(function(){});
       },
@@ -5656,7 +5669,7 @@
     var player = null, isReady = false, pending = null, poll = null;
     transport = {
       seek: function(sec){
-        setMin(false);
+        autoSetMin(false);
         if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
         else pending = sec;
       },
