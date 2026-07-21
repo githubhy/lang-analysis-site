@@ -520,18 +520,20 @@
   .dock-shadow{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .6rem;
     padding:.5rem .85rem;background:var(--card-2);border-bottom:1px solid var(--line);}
   .dock-shadow[hidden]{display:none;}
-  .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate,.dock-dict .d-step{
+  .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate-cycle,.dock-dict .d-step{
     font-family:var(--font-gothic);font-size:.74rem;font-weight:600;cursor:pointer;color:var(--ink-soft);
     background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.22rem .6rem;
     white-space:nowrap;transition:color .12s,border-color .12s,background .12s;}
   .dock-shadow .sh-mode{display:inline-flex;gap:.3rem;}
-  .dock-shadow .sh-rates{display:inline-flex;gap:.3rem;margin-left:auto;}
+  /* speed is ONE tap-to-cycle button (0.5→0.75→1→…): a segmented 0.5/0.75/1× control wrapped to a
+     second row on a phone, stealing ~30px of transcript. .on = playing at a non-1× (drill) speed. */
+  .dock-shadow .sh-rate-cycle{margin-left:auto;min-width:2.6rem;text-align:center;}
   .dock-shadow button:hover,.dock-dict button:hover{color:var(--keigo);border-color:var(--keigo);}
-  .dock-shadow .sh-mode button.on,.dock-shadow .sh-rate.on{color:var(--paper);background:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow .sh-mode button.on,.dock-shadow .sh-rate-cycle.on{color:var(--paper);background:var(--keigo);border-color:var(--keigo);}
   .dock-shadow button:focus-visible,.dock-dict button:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   @media (hover:none) and (pointer:coarse){
     .dock-shadow-toggle{min-height:44px;padding:.5rem .9rem;}
-    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate,.dock-dict .d-step{min-height:44px;padding:.5rem .8rem;}
+    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate-cycle,.dock-dict .d-step{min-height:44px;padding:.5rem .8rem;}
   }
 
   /* Four dock buttons + the injected play button no longer fit at the 320px reflow floor.
@@ -547,6 +549,13 @@
     .dock-bar::-webkit-scrollbar{ display:none; }
     .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
     .dock-play{ padding-left:.4rem; padding-right:.4rem; flex:0 0 auto; }
+    /* The 跟读 / 听写 control bars must stay ONE row on a phone — a wrapped 2nd row steals ~30px of
+       transcript under a sticky dock. Same adaptive-scroll trick as .dock-bar: nowrap + overflow-x
+       shows no scrollbar where the tightened controls already fit (the rate cycle button frees the
+       width that the old 0.5/0.75/1× segment ate) and scrolls only where they don't. */
+    .dock-shadow,.dock-dict{ flex-wrap:nowrap; gap:.3rem; padding-left:.55rem; padding-right:.55rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .dock-shadow::-webkit-scrollbar,.dock-dict::-webkit-scrollbar{ display:none; }
+    .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate-cycle,.dock-dict .d-step{ flex:0 0 auto; }
   }
 
   /* filter / search bar (page_tools.js) */
