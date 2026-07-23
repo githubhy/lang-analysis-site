@@ -503,6 +503,32 @@
   .dock-toc-item.is-top{font-weight:600;border-bottom:1px solid var(--line);margin-bottom:.2rem;padding-bottom:.5rem;}
   /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
   body.highlights-only .u:not(.key){ display:none; }
+  /* overlapped speech (#5): audio-derived, from diarize.py — NOT inferred from the text, which
+     cannot carry simultaneity (two people at once produce one transcript line). A left rule rather
+     than a badge: it marks a property of the AUDIO at that moment, not of the sentence's grammar,
+     so it should read as a margin annotation and not compete with the grammar chips. */
+  .u[data-overlap]{position:relative;}
+  .u[data-overlap]::before{content:"";position:absolute;left:-.55rem;top:.35rem;bottom:.35rem;
+    width:2px;border-radius:2px;background:repeating-linear-gradient(180deg,
+      var(--ink-faint) 0 4px, transparent 4px 8px);}
+  .u[data-overlap] .spk::after{content:"⇄";margin-left:.3rem;color:var(--ink-faint);
+    font-size:.78em;} /* on the SPEAKER, since "who is audible here" is the thing in question */
+  body.overlap-only .u:not([data-overlap]){ display:none; }
+  /* 方言 → 标准语 (Bonus): the standard-Japanese form of a dialect point, for learners who only
+     know textbook Japanese. Quiet, next to the chip; the arrow carries the meaning. */
+  .dialect{font-family:var(--font-gothic);font-size:.74rem;color:var(--keigo);
+    background:var(--keigo-t);border-radius:.9rem;padding:.05rem .45rem;margin-right:.35rem;white-space:nowrap;}
+  body.dialect-only .u:not([data-dialect]){ display:none; }
+  /* cross-page grammar badge (#4): "seen on N videos" — deliberately quiet. It sits beside a
+     grammar chip and must never out-shout the chip itself or the note it precedes. */
+  .xref{font-family:var(--font-mono);font-size:.62rem;line-height:1;white-space:nowrap;
+    color:var(--ink-soft);background:var(--card-2);border:1px solid var(--line);border-radius:1rem;
+    padding:.15rem .4rem;margin-left:.35rem;text-decoration:none;vertical-align:.06rem;}
+  .xref:hover,.xref:focus-visible{color:var(--shu);border-color:var(--shu);}
+  /* 存疑 (uncertain) marker: the pipeline's own (?) flag, made visible. Always dimmed + dotted so a
+     learner can SEE which restorations are doubtful; the lens below hides those rows entirely. */
+  .unsure{ opacity:.62; border-bottom:1px dotted currentColor; cursor:help; }
+  body.hide-unsure .u[data-unsure]{ display:none; }
   /* 听写 (dictation) lens: mask the answer body; the active revealed row shows. visibility, not
      display, so the layout does not jump; the sibling .u-meta timestamp stays visible + tappable. */
   body.dictation .u .u-body{ visibility:hidden; }
@@ -709,6 +735,12 @@
   <div class="filter-bar" id="filterBar" role="search">
     <input id="filterInput" type="search" placeholder="筛选句子：关键词 / 读音 / 译文…" aria-label="筛选句子">
     <div class="filter-cats" id="filterCats" aria-label="语法类别筛选"></div>
+    <button class="filter-cat" id="unsureToggle" type="button" aria-pressed="false" hidden
+            title="隐藏含 (?) 的存疑还原句">存疑</button>
+    <button class="filter-cat" id="overlapToggle" type="button" aria-pressed="false" hidden
+            title="只看被插话/同时说话盖住的句子（音频判定）">被插话</button>
+    <button class="filter-cat" id="dialectToggle" type="button" aria-pressed="false" hidden
+            title="只看含方言→标准语对照的句子">方言</button>
     <button class="filter-reset" id="filterReset" type="button">全部</button>
   </div>
   <p id="filterEmpty" hidden>无匹配 — 换个关键词或点「全部」。</p>
@@ -747,16 +779,16 @@
         <div class="u-cn"><span class="lbl">译</span>（他）对着女儿耍宝的样子啦，还有故意逗她玩的样子，真的很可爱呢。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>竹達彩奈在评价丈夫梶裕貴带女儿时的样子（第三人称，描述对象是梶）。「かけてる」为「かけている」的口语约音（ている→てる）。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">～てる</span><span>「～ている」的口语约音形式，表示正在进行或持续的状态，如「かけてる」＝「かけている」。</span></li>
-          <li><span class="chip joshi">～だったりとか<span class="star">★</span></span><span>口语中用于举例列举的句式，相当于「～だったり、～だったり」的简化说法，语气随意自然。</span></li>
+          <li><span class="chip katsu">～てる</span><a class="xref" href="concordance.html#q=～てる" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「～ている」的口语约音形式，表示正在进行或持续的状态，如「かけてる」＝「かけている」。</span></li>
+          <li><span class="chip joshi">～だったりとか<span class="star">★</span></span><a class="xref" href="concordance.html#q=～だったりとか" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>口语中用于举例列举的句式，相当于「～だったり、～だったり」的简化说法，语气随意自然。</span></li>
           <li><span class="chip goi">ちょっかいをかける</span><span>惯用语，意为「逗弄、招惹（他人）」，常用于形容对小孩或亲近的人开玩笑式的挑逗。</span></li>
         </ul>
       </div>
     </div>
-    <div class="u" data-search="まあ、多分たぶん、時期じきなんでしょうね。今いま、『ママ』ってなってて(?)。 唉，大概是个阶段吧。现在啊，（女儿）正黏着妈妈呢。" data-cats="joshi katsu">
+    <div class="u" data-search="まあ、多分たぶん、時期じきなんでしょうね。今いま、『ママ』ってなってて(?)。 唉，大概是个阶段吧。现在啊，（女儿）正黏着妈妈呢。" data-cats="joshi katsu" data-unsure="1">
       <div class="u-meta"><span class="ts" data-sec="26.320">00:26</span><span class="spk iwata">竹達彩奈</span></div>
       <div class="u-body">
-        <div class="u-jp">まあ、<ruby>多分<rt>たぶん</rt></ruby>、<ruby>時期<rt>じき</rt></ruby>なんでしょうね。<ruby>今<rt>いま</rt></ruby>、『ママ』ってなってて(?)。</div>
+        <div class="u-jp">まあ、<ruby>多分<rt>たぶん</rt></ruby>、<ruby>時期<rt>じき</rt></ruby>なんでしょうね。<ruby>今<rt>いま</rt></ruby>、『ママ』ってなってて<span class="unsure">(?)</span>。</div>
         <div class="u-cn"><span class="lbl">译</span>唉，大概是个阶段吧。现在啊，（女儿）正黏着妈妈呢。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「今ままってなってて」推测还原为「今、『ママ』ってなってて」，指女儿目前处于黏妈妈、什么都要妈妈的阶段；具体还原不完全确定，标(?)。</div>
         <ul class="u-points">
@@ -800,7 +832,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「あんま」为「あんまり」的口语省略形。</div>
         <ul class="u-points">
           <li><span class="chip keigo">～てくれる<span class="star">★</span></span><span>授受动词，表示「（对方）为我做…」，此处为否定形「見てくれない」，暗含「没能为我这样做」的遗憾语气。</span></li>
-          <li><span class="chip katsu">買って</span><span>「買う」的て形，用于连接后续内容，表动作先后。</span></li>
+          <li><span class="chip katsu">買って</span><a class="xref" href="concordance.html#q=買って" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「買う」的て形，用于连接后续内容，表动作先后。</span></li>
         </ul>
       </div>
     </div>
@@ -811,7 +843,7 @@
         <div class="u-cn"><span class="lbl">译</span>（我就跟她说）「诶，你看，这个就是光之美少女哦」。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>梶转述自己对女儿说过的话；句末「って」引出该直接引语。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">～って<span class="star">★</span></span><span>口语引用助词，相当于「～と（言って）」，此处引出（说话人自己）对女儿说的直接引语「プリキュアだよ」。</span></li>
+          <li><span class="chip joshi">～って<span class="star">★</span></span><a class="xref" href="concordance.html#q=～って" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>口语引用助词，相当于「～と（言って）」，此处引出（说话人自己）对女儿说的直接引语「プリキュアだよ」。</span></li>
         </ul>
       </div>
     </div>
@@ -832,7 +864,7 @@
         <div class="u-cn"><span class="lbl">译</span>（我）在她3岁半时就用光之美少女把她「团团包围」了，可她也没有太大反应。</div>
         <ul class="u-points">
           <li><span class="chip goi">～まみれ</span><span>表示「满是…、沾满…」，此处引申为「被…重重包围/塞满」。</span></li>
-          <li><span class="chip joshi">～んですけど</span><span>「～のですけど」的口语形式，用于说明情况，并带有转折、留有余地的语气。</span></li>
+          <li><span class="chip joshi">～んですけど</span><a class="xref" href="concordance.html#q=～んですけど" title="这个语法点在 4 个视频中共出现 5 次 — 点击查看全部用例">4视频</a><span>「～のですけど」的口语形式，用于说明情况，并带有转折、留有余地的语气。</span></li>
         </ul>
       </div>
     </div>
@@ -843,7 +875,7 @@
         <div class="u-cn"><span class="lbl">译</span>不过呢，还有一整年呢，现在这场「较量」才刚刚开始。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>该句字幕重复出现两次（00:59 为完整一句，01:00＋01:04 又再次分段出现），判断为同一句，仅保留一条。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">～んで</span><span>「～ので」的口语形式，表原因，语气比「ので」更随意。</span></li>
+          <li><span class="chip joshi">～んで</span><a class="xref" href="concordance.html#q=～んで" title="这个语法点在 4 个视频中共出现 5 次 — 点击查看全部用例">4视频</a><span>「～ので」的口语形式，表原因，语气比「ので」更随意。</span></li>
           <li><span class="chip katsu">始まったばかり</span><span>「動詞た形＋ばかり」表示动作刚刚完成不久，如「始まったばかり」＝「才刚刚开始」。</span></li>
         </ul>
       </div>
@@ -903,7 +935,7 @@
         <div class="u-jp"><ruby>声優<rt>せいゆう</rt></ruby>としてのスケジュールもあるじゃないですか。</div>
         <div class="u-cn"><span class="lbl">译</span>作为声优也是有行程安排的吧？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">～じゃないですか<span class="star">★</span></span><span>口语终助词，表「不是…吗／…对吧」，带有寻求认同、或提醒对方已知事实的语气，日常口语中非常高频。</span></li>
+          <li><span class="chip joshi">～じゃないですか<span class="star">★</span></span><a class="xref" href="concordance.html#q=～じゃないですか" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>口语终助词，表「不是…吗／…对吧」，带有寻求认同、或提醒对方已知事实的语气，日常口语中非常高频。</span></li>
           <li><span class="chip goi">～としての</span><span>「として」+「の」修饰后面的名词，意为「作为…的」，如「声優としてのスケジュール」（作为声优的行程）。</span></li>
         </ul>
       </div>
@@ -964,7 +996,7 @@
         <div class="u-cn"><span class="lbl">译</span>看起来相当辛苦，或者说是很难受的样子，</div>
         <ul class="u-points">
           <li><span class="chip katsu">様態の「～そう」<span class="star">★</span></span><span>形容词/形容动词词干+「そう」表示『看起来…、似乎…』的样态推测，这里「大変そう」「辛そう」都是根据外观做的判断。</span></li>
-          <li><span class="chip joshi">「というか」</span><span>用于修正/换一种更贴切的说法，『或者说是…、说是…也不为过』，常见于口语转折说明。</span></li>
+          <li><span class="chip joshi">「というか」</span><a class="xref" href="concordance.html#q=「というか」" title="这个语法点在 2 个视频中共出现 4 次 — 点击查看全部用例">2视频</a><span>用于修正/换一种更贴切的说法，『或者说是…、说是…也不为过』，常见于口语转折说明。</span></li>
           <li><span class="chip katsu">「そうにしている」（そう+に+している）</span><span>样态形容词转副词「そうに」+「している」，表示『表现出…的样子（持续状态）』，为后文的「泣いて帰ってきた」做铺垫，用て形连接下文。</span></li>
         </ul>
       </div>
@@ -1002,7 +1034,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>此句紧接上文语气，暂定仍是嘉宾在回顾丈夫当时的样子（也可能是插入的相槌/感想，语境无法完全确认说话人）。</div>
         <ul class="u-points">
           <li><span class="chip goi">「すごい」修飾動詞・形容詞（口語用法）</span><span>标准语应使用副词「すごく」，但口语中常直接用形容词原形「すごい」来修饰后面的「辛そう」，是较随意的口语表达。</span></li>
-          <li><span class="chip joshi">終助詞「ね」</span><span>句尾「ね」表示感慨、寻求共鸣，语气比单纯陈述更柔和。</span></li>
+          <li><span class="chip joshi">終助詞「ね」</span><a class="xref" href="concordance.html#q=終助詞「ね」" title="这个语法点在 3 个视频中共出现 6 次 — 点击查看全部用例">3视频</a><span>句尾「ね」表示感慨、寻求共鸣，语气比单纯陈述更柔和。</span></li>
         </ul>
       </div>
     </div>
@@ -1025,7 +1057,7 @@
         <div class="u-cn"><span class="lbl">译</span>自己到底有没有支撑到他，直到现在都还是个谜，或者说没什么自信……</div>
         <ul class="u-points">
           <li><span class="chip joshi">「～のか」（埋め込み疑問）</span><span>「のか」将疑问句嵌入句子中作为话题，『是否…』，这里『是否支撑到了』作为后面「謎」「自信はない」的主语内容。</span></li>
-          <li><span class="chip goi">「というか」</span><span>与前面同样用于修正说法，『说是…也好、或者说』。</span></li>
+          <li><span class="chip goi">「というか」</span><a class="xref" href="concordance.html#q=「というか」" title="这个语法点在 2 个视频中共出现 4 次 — 点击查看全部用例">2视频</a><span>与前面同样用于修正说法，『说是…也好、或者说』。</span></li>
           <li><span class="chip joshi">「んですけど」</span><span>陈述加转折留白的口语句尾，为下文留有余地。</span></li>
         </ul>
       </div>
@@ -1054,11 +1086,11 @@
         </ul>
       </div>
     </div>
-    <div class="u" data-search="ダメじゃないっちゃう 才没有不合格呢(?)（意为『你做得很好，没什么不称职的』）" data-cats="goi">
+    <div class="u" data-search="ダメじゃないっちゃう 才没有不合格呢(?)（意为『你做得很好，没什么不称职的』）" data-cats="goi" data-unsure="1">
       <div class="u-meta"><span class="ts" data-sec="137.880">02:18</span><span class="spk neta">梶裕貴(?)</span></div>
       <div class="u-body">
         <div class="u-jp">ダメじゃないっちゃう</div>
-        <div class="u-cn"><span class="lbl">译</span>才没有不合格呢(?)（意为『你做得很好，没什么不称职的』）</div>
+        <div class="u-cn"><span class="lbl">译</span>才没有不合格呢<span class="unsure" title="ASR 不确定：此处为存疑还原">(?)</span>（意为『你做得很好，没什么不称职的』）</div>
         <div class="u-asr"><span class="tag-asr">还原</span>这句 ASR 听录存疑：「ダメじゃないっちゃう」语法上不完整，推测原话可能是「ダメじゃないってば」或方言化的「ダメじゃないっちゃ」，是对前一句嘉宾『自信はない』的回应与安慰；具体措辞及说话人身份均无法完全确定，仅根据前后文（随后一方称『奥さんね』）推测为丈夫梶裕貴的插话，标注(?)。</div>
         <ul class="u-points">
           <li><span class="chip goi">口語否定の強調（推測）(?)</span><span>若还原为「ダメじゃないってば」，「ってば」是加强语气的终助词，用于『我都说了…啊』的强调重复，这里表示『真的不是不称职』，但因听录不确定，仅供参考。</span></li>
@@ -1123,7 +1155,7 @@
           <li><span class="chip keigo">授受表現「～てくれる」<span class="star">★</span></span><span>「聞いてくれる」＝『（她）愿意听、为我听』，「てくれる」表示对方为说话人做某事，带有感恩、受益的语气，属于授受表达。</span></li>
           <li><span class="chip goi">形式名詞「の」</span><span>「聞いてくれるっていうのが」中的「の」把前面的动词句名词化，作为后面「すごく…」的主语，『（她）愿意听这件事』。</span></li>
           <li><span class="chip katsu">「でいられる」（で+いる+可能形）</span><span>与前面 [02:10] 相同结构，「楽でいる」（保持轻松状态）+可能形「いられる」＝『能够一直保持轻松』。</span></li>
-          <li><span class="chip joshi">「というか」</span><span>句末再次出现，表示『不太好精准定义，姑且这么说』的收尾语气，呼应整段发言的口语随性感。</span></li>
+          <li><span class="chip joshi">「というか」</span><a class="xref" href="concordance.html#q=「というか」" title="这个语法点在 2 个视频中共出现 4 次 — 点击查看全部用例">2视频</a><span>句末再次出现，表示『不太好精准定义，姑且这么说』的收尾语气，呼应整段发言的口语随性感。</span></li>
         </ul>
       </div>
     </div>
@@ -1135,7 +1167,7 @@
         <ul class="u-points">
           <li><span class="chip katsu">動詞受身形「～られる」<span class="star">★</span></span><span>「助ける」的受身（被动）过去式「助けられた」，表示『被帮助/得到了帮助』，用被动态自谦地讲述自己因他人扶持而走到今天。</span></li>
           <li><span class="chip goi">「すごく」+動詞（程度副詞修饰）</span><span>「すごく」本是形容动词「すごい」的连用形，口语中常直接修饰動詞（这里是「あります」）表示程度之高，相当于『真的很…』。</span></li>
-          <li><span class="chip joshi">終助詞「ね」</span><span>句尾语气词，带有感慨、寻求认同的语气，缓和陈述的直接感。</span></li>
+          <li><span class="chip joshi">終助詞「ね」</span><a class="xref" href="concordance.html#q=終助詞「ね」" title="这个语法点在 3 个视频中共出现 6 次 — 点击查看全部用例">3视频</a><span>句尾语气词，带有感慨、寻求认同的语气，缓和陈述的直接感。</span></li>
         </ul>
       </div>
     </div>
@@ -1674,6 +1706,12 @@
       var pts = rec.points || [];
       for (var i = 0; i < pts.length; i++)
         parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
+      // The pipeline's (?) means "this restoration may be a mishearing". The card is NOT dropped —
+      // the user deliberately saved this line, and silently omitting it from their deck would be a
+      // worse surprise than a caveat. But an unmarked card becomes a memorised fact, so the doubt
+      // travels with it.
+      if (/\(\?\)/.test(String(rec.jp_html || '') + String(rec.cn || '')))
+        parts.push('⚠ 含 (?) 存疑还原 — 该句可能为 ASR 误听，请以原音为准');
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
     // ---- v2 map-state helpers (one map per namespace) ----
@@ -2704,9 +2742,42 @@
     if (emptyEl) emptyEl.hidden = !(filtering && shown === 0);
   }
   if (input) input.addEventListener('input', apply);
+
+  // ---------- data-attribute lenses (存疑 / 被插话 / 方言) ----------
+  // Each is a CSS lens (a body class), NOT part of apply()'s match logic, so it composes with the
+  // search box and category chips instead of fighting them for the same `nomatch` flag. Factored to
+  // one helper because three near-identical copies is where the fourth quietly drifts. Two polarities:
+  //   hide=true  -> body class HIDES the flagged rows   (存疑: get the doubtful lines out of the way)
+  //   hide=false -> body class KEEPS ONLY the flagged rows (被插话/方言: study exactly these lines)
+  // Each button is revealed only when the page actually has such rows — a dead control is worse.
+  var lenses = [];
+  function wireLens(btnId, attr, bodyClass, label, offTitle){
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    var n = document.querySelectorAll('.u[' + attr + ']').length;
+    if (!n) return;
+    btn.hidden = false;
+    btn.textContent = label + ' ' + n;
+    btn.addEventListener('click', function(){
+      var on = !document.body.classList.contains(bodyClass);
+      document.body.classList.toggle(bodyClass, on);
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.title = on ? '显示全部句子' : offTitle;
+    });
+    lenses.push({ btn: btn, cls: bodyClass });
+  }
+  wireLens('unsureToggle',  'data-unsure',  'hide-unsure',   '存疑',  '隐藏含 (?) 的存疑还原句');
+  wireLens('overlapToggle', 'data-overlap', 'overlap-only',  '被插话', '只看被插话/同时说话盖住的句子（音频判定）');
+  wireLens('dialectToggle', 'data-dialect', 'dialect-only',  '方言',  '只看含方言→标准语对照的句子');
+
   if (resetBtn) resetBtn.addEventListener('click', function(){
     if (input) input.value = ''; curCat = '';
     if (catsBox) [].slice.call(catsBox.children).forEach(function(x){ x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
+    lenses.forEach(function(l){
+      document.body.classList.remove(l.cls);
+      l.btn.classList.remove('on'); l.btn.setAttribute('aria-pressed', 'false');
+    });
     apply();
   });
 

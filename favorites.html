@@ -503,6 +503,32 @@
   .dock-toc-item.is-top{font-weight:600;border-bottom:1px solid var(--line);margin-bottom:.2rem;padding-bottom:.5rem;}
   /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
   body.highlights-only .u:not(.key){ display:none; }
+  /* overlapped speech (#5): audio-derived, from diarize.py — NOT inferred from the text, which
+     cannot carry simultaneity (two people at once produce one transcript line). A left rule rather
+     than a badge: it marks a property of the AUDIO at that moment, not of the sentence's grammar,
+     so it should read as a margin annotation and not compete with the grammar chips. */
+  .u[data-overlap]{position:relative;}
+  .u[data-overlap]::before{content:"";position:absolute;left:-.55rem;top:.35rem;bottom:.35rem;
+    width:2px;border-radius:2px;background:repeating-linear-gradient(180deg,
+      var(--ink-faint) 0 4px, transparent 4px 8px);}
+  .u[data-overlap] .spk::after{content:"⇄";margin-left:.3rem;color:var(--ink-faint);
+    font-size:.78em;} /* on the SPEAKER, since "who is audible here" is the thing in question */
+  body.overlap-only .u:not([data-overlap]){ display:none; }
+  /* 方言 → 标准语 (Bonus): the standard-Japanese form of a dialect point, for learners who only
+     know textbook Japanese. Quiet, next to the chip; the arrow carries the meaning. */
+  .dialect{font-family:var(--font-gothic);font-size:.74rem;color:var(--keigo);
+    background:var(--keigo-t);border-radius:.9rem;padding:.05rem .45rem;margin-right:.35rem;white-space:nowrap;}
+  body.dialect-only .u:not([data-dialect]){ display:none; }
+  /* cross-page grammar badge (#4): "seen on N videos" — deliberately quiet. It sits beside a
+     grammar chip and must never out-shout the chip itself or the note it precedes. */
+  .xref{font-family:var(--font-mono);font-size:.62rem;line-height:1;white-space:nowrap;
+    color:var(--ink-soft);background:var(--card-2);border:1px solid var(--line);border-radius:1rem;
+    padding:.15rem .4rem;margin-left:.35rem;text-decoration:none;vertical-align:.06rem;}
+  .xref:hover,.xref:focus-visible{color:var(--shu);border-color:var(--shu);}
+  /* 存疑 (uncertain) marker: the pipeline's own (?) flag, made visible. Always dimmed + dotted so a
+     learner can SEE which restorations are doubtful; the lens below hides those rows entirely. */
+  .unsure{ opacity:.62; border-bottom:1px dotted currentColor; cursor:help; }
+  body.hide-unsure .u[data-unsure]{ display:none; }
   /* 听写 (dictation) lens: mask the answer body; the active revealed row shows. visibility, not
      display, so the layout does not jump; the sibling .u-meta timestamp stays visible + tappable. */
   body.dictation .u .u-body{ visibility:hidden; }
@@ -830,6 +856,12 @@
       var pts = rec.points || [];
       for (var i = 0; i < pts.length; i++)
         parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
+      // The pipeline's (?) means "this restoration may be a mishearing". The card is NOT dropped —
+      // the user deliberately saved this line, and silently omitting it from their deck would be a
+      // worse surprise than a caveat. But an unmarked card becomes a memorised fact, so the doubt
+      // travels with it.
+      if (/\(\?\)/.test(String(rec.jp_html || '') + String(rec.cn || '')))
+        parts.push('⚠ 含 (?) 存疑还原 — 该句可能为 ASR 误听，请以原音为准');
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
     // ---- v2 map-state helpers (one map per namespace) ----

@@ -503,6 +503,32 @@
   .dock-toc-item.is-top{font-weight:600;border-bottom:1px solid var(--line);margin-bottom:.2rem;padding-bottom:.5rem;}
   /* 重点 (highlights) lens: hide non-key rows when active. body-scoped, container-agnostic. */
   body.highlights-only .u:not(.key){ display:none; }
+  /* overlapped speech (#5): audio-derived, from diarize.py — NOT inferred from the text, which
+     cannot carry simultaneity (two people at once produce one transcript line). A left rule rather
+     than a badge: it marks a property of the AUDIO at that moment, not of the sentence's grammar,
+     so it should read as a margin annotation and not compete with the grammar chips. */
+  .u[data-overlap]{position:relative;}
+  .u[data-overlap]::before{content:"";position:absolute;left:-.55rem;top:.35rem;bottom:.35rem;
+    width:2px;border-radius:2px;background:repeating-linear-gradient(180deg,
+      var(--ink-faint) 0 4px, transparent 4px 8px);}
+  .u[data-overlap] .spk::after{content:"⇄";margin-left:.3rem;color:var(--ink-faint);
+    font-size:.78em;} /* on the SPEAKER, since "who is audible here" is the thing in question */
+  body.overlap-only .u:not([data-overlap]){ display:none; }
+  /* 方言 → 标准语 (Bonus): the standard-Japanese form of a dialect point, for learners who only
+     know textbook Japanese. Quiet, next to the chip; the arrow carries the meaning. */
+  .dialect{font-family:var(--font-gothic);font-size:.74rem;color:var(--keigo);
+    background:var(--keigo-t);border-radius:.9rem;padding:.05rem .45rem;margin-right:.35rem;white-space:nowrap;}
+  body.dialect-only .u:not([data-dialect]){ display:none; }
+  /* cross-page grammar badge (#4): "seen on N videos" — deliberately quiet. It sits beside a
+     grammar chip and must never out-shout the chip itself or the note it precedes. */
+  .xref{font-family:var(--font-mono);font-size:.62rem;line-height:1;white-space:nowrap;
+    color:var(--ink-soft);background:var(--card-2);border:1px solid var(--line);border-radius:1rem;
+    padding:.15rem .4rem;margin-left:.35rem;text-decoration:none;vertical-align:.06rem;}
+  .xref:hover,.xref:focus-visible{color:var(--shu);border-color:var(--shu);}
+  /* 存疑 (uncertain) marker: the pipeline's own (?) flag, made visible. Always dimmed + dotted so a
+     learner can SEE which restorations are doubtful; the lens below hides those rows entirely. */
+  .unsure{ opacity:.62; border-bottom:1px dotted currentColor; cursor:help; }
+  body.hide-unsure .u[data-unsure]{ display:none; }
   /* 听写 (dictation) lens: mask the answer body; the active revealed row shows. visibility, not
      display, so the layout does not jump; the sibling .u-meta timestamp stays visible + tappable. */
   body.dictation .u .u-body{ visibility:hidden; }
@@ -710,6 +736,12 @@
   <div class="filter-bar" id="filterBar" role="search">
     <input id="filterInput" type="search" placeholder="筛选句子：关键词 / 读音 / 译文…" aria-label="筛选句子">
     <div class="filter-cats" id="filterCats" aria-label="语法类别筛选"></div>
+    <button class="filter-cat" id="unsureToggle" type="button" aria-pressed="false" hidden
+            title="隐藏含 (?) 的存疑还原句">存疑</button>
+    <button class="filter-cat" id="overlapToggle" type="button" aria-pressed="false" hidden
+            title="只看被插话/同时说话盖住的句子（音频判定）">被插话</button>
+    <button class="filter-cat" id="dialectToggle" type="button" aria-pressed="false" hidden
+            title="只看含方言→标准语对照的句子">方言</button>
     <button class="filter-reset" id="filterReset" type="button">全部</button>
   </div>
   <p id="filterEmpty" hidden>无匹配 — 换个关键词或点「全部」。</p>
@@ -726,9 +758,9 @@
         <div class="u-telop"><span class="tag-telop">テロップ</span>睡眠妨げられるの一番嫌!!</div>
         <ul class="u-points">
           <li><span class="chip katsu">妨げられる</span><span>「妨げる」的被动态，表示「被打扰」。</span></li>
-          <li><span class="chip joshi">〜んで<span class="star">★</span></span><span>口语中表示原因、理由，等同于「ので」。</span></li>
+          <li><span class="chip joshi">〜んで<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んで" title="这个语法点在 5 个视频中共出现 9 次 — 点击查看全部用例">5视频</a><span>口语中表示原因、理由，等同于「ので」。</span></li>
           <li><span class="chip goi">大事にする</span><span>珍惜、重视。</span></li>
-          <li><span class="chip joshi">〜のが</span><span>「の」将动词短语名词化，再加主格「が」。</span></li>
+          <li><span class="chip joshi">〜のが</span><a class="xref" href="concordance.html#q=〜のが" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「の」将动词短语名词化，再加主格「が」。</span></li>
         </ul>
       </div>
     </div>
@@ -740,7 +772,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「寝る時間もバラバラも」→「寝る時間もバラバラだと」还原 (?)。</div>
         <ul class="u-points">
           <li><span class="chip goi">バラバラ</span><span>零散、不一致（这里指作息不规律）。</span></li>
-          <li><span class="chip goi">きつい</span><span>吃力、难受。</span></li>
+          <li><span class="chip goi">きつい</span><a class="xref" href="concordance.html#q=きつい" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>吃力、难受。</span></li>
         </ul>
       </div>
     </div>
@@ -751,7 +783,7 @@
         <div class="u-cn"><span class="lbl">译</span>就是刚才说的那个，比如（对方晚上）做点事之类的。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「さっきのあって」→「さっきのがあって」补助词；「作業ね」为自我修正的填充。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜とか</span><span>举例，「…之类的」。</span></li>
+          <li><span class="chip joshi">〜とか</span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 10 个视频中共出现 19 次 — 点击查看全部用例">10视频</a><span>举例，「…之类的」。</span></li>
         </ul>
       </div>
     </div>
@@ -762,7 +794,7 @@
         <div class="u-cn"><span class="lbl">译</span>为了不被察觉，真的就像忍者那样（悄无声息）。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「忍びのもの」→「忍びの者」（＝忍者）。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜ないように<span class="star">★</span></span><span>表目的，「为了不…」。</span></li>
+          <li><span class="chip katsu">〜ないように<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ないように" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>表目的，「为了不…」。</span></li>
           <li><span class="chip goi">忍びの者</span><span>即忍者、暗行者。</span></li>
         </ul>
       </div>
@@ -774,7 +806,7 @@
         <div class="u-cn"><span class="lbl">译</span>那只能和忍者交往了。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>忍びの者くらいの感じ / 忍者と付き合うしかない/忍びの者くらいの感じ</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜しかない<span class="star">★</span></span><span>「只能…、除此之外别无选择」。</span></li>
+          <li><span class="chip katsu">〜しかない<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜しかない" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「只能…、除此之外别无选择」。</span></li>
           <li><span class="chip joshi">〜と（付き合う）</span><span>表示交往、相处的对象。</span></li>
         </ul>
       </div>
@@ -786,7 +818,7 @@
         <div class="u-cn"><span class="lbl">译</span>可是，生活的声响总会发出来的嘛。</div>
         <ul class="u-points">
           <li><span class="chip katsu">鳴っちゃう</span><span>「鳴ってしまう」的口语缩约，含「不由得、难免」语气。</span></li>
-          <li><span class="chip joshi">〜じゃないですか<span class="star">★</span></span><span>寻求对方认同，「…不是吗」。</span></li>
+          <li><span class="chip joshi">〜じゃないですか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜じゃないですか" title="这个语法点在 6 个视频中共出现 15 次 — 点击查看全部用例">6视频</a><span>寻求对方认同，「…不是吗」。</span></li>
         </ul>
       </div>
     </div>
@@ -797,7 +829,7 @@
         <div class="u-cn"><span class="lbl">译</span>你敲回车键敲得超用力的嘛，那个电脑（键盘）的。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「エンター強いしてる」日语不自然，结合上下文（电脑打字声）还原为「エンターを強く押してる」(?)。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜じゃん</span><span>「…じゃない」的随意口语形，表确认。</span></li>
+          <li><span class="chip joshi">〜じゃん</span><a class="xref" href="concordance.html#q=〜じゃん" title="这个语法点在 5 个视频中共出现 8 次 — 点击查看全部用例">5视频</a><span>「…じゃない」的随意口语形，表确认。</span></li>
           <li><span class="chip goi">エンター</span><span>外来语，回车键（Enter）。</span></li>
         </ul>
       </div>
@@ -840,7 +872,7 @@
         <ul class="u-points">
           <li><span class="chip goi">ガチャン</span><span>拟声词，哐当（开门／金属碰撞声）。</span></li>
           <li><span class="chip joshi">〜のがダメ</span><span>「の」名词化＋「がダメ」，「…这件事不行」。</span></li>
-          <li><span class="chip joshi">〜んだけど</span><span>缓和语气的「不过、但是」。</span></li>
+          <li><span class="chip joshi">〜んだけど</span><a class="xref" href="concordance.html#q=〜んだけど" title="这个语法点在 4 个视频中共出现 6 次 — 点击查看全部用例">4视频</a><span>缓和语气的「不过、但是」。</span></li>
         </ul>
       </div>
     </div>
@@ -851,8 +883,8 @@
         <div class="u-cn"><span class="lbl">译</span>（对方）真的是个会替我保持安静的人，我自己也会那样做。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>（相手が）本当に静かにしてくれる人だったし/私もそうする</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜してくれる<span class="star">★</span></span><span>授受表现，对方为「我」做某事。</span></li>
-          <li><span class="chip joshi">〜し</span><span>并列理由，「又…又…」。</span></li>
+          <li><span class="chip katsu">〜してくれる<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜してくれる" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>授受表现，对方为「我」做某事。</span></li>
+          <li><span class="chip joshi">〜し</span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 6 个视频中共出现 10 次 — 点击查看全部用例">6视频</a><span>并列理由，「又…又…」。</span></li>
         </ul>
       </div>
     </div>
@@ -862,7 +894,7 @@
         <div class="u-jp">いや、<ruby>厳<rt>きび</rt></ruby>しいな。</div>
         <div class="u-cn"><span class="lbl">译</span>哎，要求真高啊。</div>
         <ul class="u-points">
-          <li><span class="chip goi">厳しい</span><span>这里指（对对方）要求严格、苛刻。</span></li>
+          <li><span class="chip goi">厳しい</span><a class="xref" href="concordance.html#q=厳しい" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>这里指（对对方）要求严格、苛刻。</span></li>
         </ul>
       </div>
     </div>
@@ -875,8 +907,8 @@
         <div class="u-telop"><span class="tag-telop">テロップ</span>たまたま良い人に出会えてた!!</div>
         <ul class="u-points">
           <li><span class="chip katsu">出会えてた</span><span>「出会える」（可能形）＋「ていた」，「（当时）能遇到」。</span></li>
-          <li><span class="chip joshi">〜だけ<span class="star">★</span></span><span>「只是…而已」。</span></li>
-          <li><span class="chip goi">たまたま</span><span>碰巧、偶然。</span></li>
+          <li><span class="chip joshi">〜だけ<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜だけ" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a><span>「只是…而已」。</span></li>
+          <li><span class="chip goi">たまたま</span><a class="xref" href="concordance.html#q=たまたま" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>碰巧、偶然。</span></li>
         </ul>
       </div>
     </div>
@@ -897,8 +929,8 @@
         <div class="u-cn"><span class="lbl">译</span>那样的人可不多见吧？</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>なかなかいない!!</div>
         <ul class="u-points">
-          <li><span class="chip goi">なかなか〜ない<span class="star">★</span></span><span>「不太…、很少…」。</span></li>
-          <li><span class="chip joshi">〜んじゃない?</span><span>表推测、征询，「不是…吗」。</span></li>
+          <li><span class="chip goi">なかなか〜ない<span class="star">★</span></span><a class="xref" href="concordance.html#q=なかなか〜ない" title="这个语法点在 5 个视频中共出现 6 次 — 点击查看全部用例">5视频</a><span>「不太…、很少…」。</span></li>
+          <li><span class="chip joshi">〜んじゃない?</span><a class="xref" href="concordance.html#q=〜んじゃない?" title="这个语法点在 2 个视频中共出现 3 次 — 点击查看全部用例">2视频</a><span>表推测、征询，「不是…吗」。</span></li>
         </ul>
       </div>
     </div>
@@ -951,7 +983,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「職業忍び」＝职业是忍者的人，玩笑造语。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>怖くて恋愛できない</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜以外<span class="star">★</span></span><span>「除…之外」。</span></li>
+          <li><span class="chip joshi">〜以外<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜以外" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「除…之外」。</span></li>
           <li><span class="chip goi">職業忍び</span><span>职业忍者（诙谐造语）。</span></li>
         </ul>
       </div>
@@ -963,7 +995,7 @@
         <div class="u-cn"><span class="lbl">译</span>一直这样（悄悄地）过来。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>職業 / 職業「忍」以外無理</div>
         <ul class="u-points">
-          <li><span class="chip goi">こうやって</span><span>「就这样地」。</span></li>
+          <li><span class="chip goi">こうやって</span><a class="xref" href="concordance.html#q=こうやって" title="这个语法点在 2 个视频中共出现 3 次 — 点击查看全部用例">2视频</a><span>「就这样地」。</span></li>
         </ul>
       </div>
     </div>
@@ -980,7 +1012,7 @@
         <div class="u-jp">いいんじゃん。</div>
         <div class="u-cn"><span class="lbl">译</span>挺好的嘛。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜んじゃん</span><span>「…じゃない」的随意肯定，「不是挺…的嘛」。</span></li>
+          <li><span class="chip joshi">〜んじゃん</span><a class="xref" href="concordance.html#q=〜んじゃん" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「…じゃない」的随意肯定，「不是挺…的嘛」。</span></li>
         </ul>
       </div>
     </div>
@@ -993,7 +1025,7 @@
         <div class="u-telop"><span class="tag-telop">テロップ</span>気を遣う</div>
         <ul class="u-points">
           <li><span class="chip goi">気を使う</span><span>顾及、费心照顾（对方感受）。</span></li>
-          <li><span class="chip joshi">〜けど</span><span>转折、缓和语气。</span></li>
+          <li><span class="chip joshi">〜けど</span><a class="xref" href="concordance.html#q=〜けど" title="这个语法点在 5 个视频中共出现 10 次 — 点击查看全部用例">5视频</a><span>转折、缓和语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1006,7 +1038,7 @@
         <ul class="u-points">
           <li><span class="chip katsu">許せない</span><span>「許す」的可能否定形，「无法原谅／容忍」。</span></li>
           <li><span class="chip katsu">思っちゃう</span><span>「思ってしまう」的口语形。</span></li>
-          <li><span class="chip goi">〜っていうか<span class="star">★</span></span><span>「该怎么说呢／或者说」。</span></li>
+          <li><span class="chip goi">〜っていうか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜っていうか" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>「该怎么说呢／或者说」。</span></li>
         </ul>
       </div>
     </div>
@@ -1024,7 +1056,7 @@
         <div class="u-cn"><span class="lbl">译</span>就是啊，特别累的时候什么的，一年有那么几次还挺可爱的，可一旦变成日常就真的受不了。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「その年に」→「年に」(?)。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜とか</span><span>举例、模糊列举，「…之类的」。</span></li>
+          <li><span class="chip joshi">〜とか</span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 10 个视频中共出现 19 次 — 点击查看全部用例">10视频</a><span>举例、模糊列举，「…之类的」。</span></li>
           <li><span class="chip katsu">なっちゃうと<span class="star">★</span></span><span>「なってしまうと」，「一旦变成…就」。</span></li>
           <li><span class="chip goi">日常</span><span>日常、家常便饭。</span></li>
         </ul>
@@ -1037,8 +1069,8 @@
         <div class="u-cn"><span class="lbl">译</span>一旦结婚之类的，那种问题就会冒出来哦。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>結婚したら出てくるよ!!</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜たら</span><span>假定条件，「如果…就」。</span></li>
-          <li><span class="chip katsu">出てくる</span><span>出现、冒出来。</span></li>
+          <li><span class="chip katsu">〜たら</span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 10 个视频中共出现 14 次 — 点击查看全部用例">10视频</a><span>假定条件，「如果…就」。</span></li>
+          <li><span class="chip katsu">出てくる</span><a class="xref" href="concordance.html#q=出てくる" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>出现、冒出来。</span></li>
         </ul>
       </div>
     </div>
@@ -1048,7 +1080,7 @@
         <div class="u-jp">えっと、どうですか?</div>
         <div class="u-cn"><span class="lbl">译</span>那个，怎么样呢？</div>
         <ul class="u-points">
-          <li><span class="chip goi">どうですか</span><span>征询意见，「怎么样」。</span></li>
+          <li><span class="chip goi">どうですか</span><a class="xref" href="concordance.html#q=どうですか" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>征询意见，「怎么样」。</span></li>
         </ul>
       </div>
     </div>
@@ -1066,7 +1098,7 @@
         <div class="u-cn"><span class="lbl">译</span>山ちゃん闹钟很早不是吗，（跟别人）生活作息完全不一样嘛。</div>
         <ul class="u-points">
           <li><span class="chip goi">全然〜違う</span><span>口语中「全然」＋肯定，表「完全不同」。</span></li>
-          <li><span class="chip joshi">〜から</span><span>表示原因、理由。</span></li>
+          <li><span class="chip joshi">〜から</span><a class="xref" href="concordance.html#q=〜から" title="这个语法点在 4 个视频中共出现 5 次 — 点击查看全部用例">4视频</a><span>表示原因、理由。</span></li>
         </ul>
       </div>
     </div>
@@ -1084,7 +1116,7 @@
         <div class="u-jp"><ruby>朝<rt>あさ</rt></ruby><ruby>早<rt>はや</rt></ruby>いですもんね。</div>
         <div class="u-cn"><span class="lbl">译</span>早上（起得）很早对吧。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜もんね</span><span>「…嘛／对吧」，带认同、说明语气。</span></li>
+          <li><span class="chip joshi">〜もんね</span><a class="xref" href="concordance.html#q=〜もんね" title="这个语法点在 5 个视频中共出现 7 次 — 点击查看全部用例">5视频</a><span>「…嘛／对吧」，带认同、说明语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1094,8 +1126,8 @@
         <div class="u-jp"><ruby>朝<rt>あさ</rt></ruby>、<ruby>俺<rt>おれ</rt></ruby><ruby>早<rt>はや</rt></ruby>いし。</div>
         <div class="u-cn"><span class="lbl">译</span>我早上（起得）早嘛。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜し</span><span>列举理由，句尾余韵。</span></li>
-          <li><span class="chip goi">俺</span><span>男性自称，随意。</span></li>
+          <li><span class="chip joshi">〜し</span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 6 个视频中共出现 10 次 — 点击查看全部用例">6视频</a><span>列举理由，句尾余韵。</span></li>
+          <li><span class="chip goi">俺</span><a class="xref" href="concordance.html#q=俺" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>男性自称，随意。</span></li>
         </ul>
       </div>
     </div>
@@ -1134,7 +1166,7 @@
         <div class="u-jp"><ruby>携帯<rt>けいたい</rt></ruby>のアラーム？</div>
         <div class="u-cn"><span class="lbl">译</span>手机的闹钟？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">の</span><span>连接名词表所属「手机的（闹钟）」。</span></li>
+          <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a><span>连接名词表所属「手机的（闹钟）」。</span></li>
         </ul>
       </div>
     </div>
@@ -1151,7 +1183,7 @@
         <div class="u-jp"><ruby>言<rt>い</rt></ruby>われないですか。</div>
         <div class="u-cn"><span class="lbl">译</span>不会被人说吗？</div>
         <ul class="u-points">
-          <li><span class="chip katsu">言われる</span><span>「言う」的受身（被动）形「被说」，此处指被同住的人抱怨。</span></li>
+          <li><span class="chip katsu">言われる</span><a class="xref" href="concordance.html#q=言われる" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「言う」的受身（被动）形「被说」，此处指被同住的人抱怨。</span></li>
           <li><span class="chip keigo">〜ないですか</span><span>口语否定疑问，相当于「〜ませんか」。</span></li>
         </ul>
       </div>
@@ -1163,7 +1195,7 @@
         <div class="u-cn"><span class="lbl">译</span>大概响到第几次才起床？</div>
         <ul class="u-points">
           <li><span class="chip goi">〜目</span><span>序数后缀「第～次」，何回目＝第几次。</span></li>
-          <li><span class="chip joshi">で</span><span>表示时间点/契机「在第几次时」。</span></li>
+          <li><span class="chip joshi">で</span><a class="xref" href="concordance.html#q=で" title="这个语法点在 5 个视频中共出现 16 次 — 点击查看全部用例">5视频</a><span>表示时间点/契机「在第几次时」。</span></li>
         </ul>
       </div>
     </div>
@@ -1173,7 +1205,7 @@
         <div class="u-jp"><ruby>俺<rt>おれ</rt></ruby>はでも、<ruby>何回<rt>なんかい</rt></ruby>か<ruby>目<rt>め</rt></ruby>で<ruby>起<rt>お</rt></ruby>こしてもらってます。</div>
         <div class="u-cn"><span class="lbl">译</span>不过我啊，是响了好几次之后才被叫醒的。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てもらう<span class="star">★</span></span><span>受益表达「（请/让别人）为我做…」；「起こしてもらってます」指靠闹钟/别人把自己叫醒。</span></li>
+          <li><span class="chip katsu">〜てもらう<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てもらう" title="这个语法点在 5 个视频中共出现 7 次 — 点击查看全部用例">5视频</a><span>受益表达「（请/让别人）为我做…」；「起こしてもらってます」指靠闹钟/别人把自己叫醒。</span></li>
           <li><span class="chip goi">何回か目</span><span>「第好几次」，「か」表示不确定的数目。</span></li>
         </ul>
       </div>
@@ -1184,7 +1216,7 @@
         <div class="u-jp">『<ruby>何回<rt>なんかい</rt></ruby>か<ruby>目<rt>め</rt></ruby>』ってどれぐらいですか。</div>
         <div class="u-cn"><span class="lbl">译</span>你说的『好几次』大概是几次？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">って</span><span>提示/引用话题，相当于「というのは」，口语「所谓的…」。</span></li>
+          <li><span class="chip joshi">って</span><a class="xref" href="concordance.html#q=って" title="这个语法点在 10 个视频中共出现 33 次 — 点击查看全部用例">10视频</a><span>提示/引用话题，相当于「というのは」，口语「所谓的…」。</span></li>
         </ul>
       </div>
     </div>
@@ -1207,7 +1239,7 @@
         <div class="u-cn"><span class="lbl">译</span>这很正常吧，大概。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>4〜5回目 / 普通よ!!</div>
         <ul class="u-points">
-          <li><span class="chip joshi">よ</span><span>终助词，向对方主张、强调自己的看法。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 7 个视频中共出现 17 次 — 点击查看全部用例">7视频</a><span>终助词，向对方主张、强调自己的看法。</span></li>
         </ul>
       </div>
     </div>
@@ -1218,8 +1250,8 @@
         <div class="u-cn"><span class="lbl">译</span>跟人一起住这件事……要是一起住的话啊。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>开头 ASR「一緒人と」不自然，还原为「人と」。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">と</span><span>表示共同动作的对象「和（人）一起」。</span></li>
-          <li><span class="chip katsu">〜なら<span class="star">★</span></span><span>条件/假定「如果…的话」，用于提出话题前提。</span></li>
+          <li><span class="chip joshi">と</span><a class="xref" href="concordance.html#q=と" title="这个语法点在 2 个视频中共出现 4 次 — 点击查看全部用例">2视频</a><span>表示共同动作的对象「和（人）一起」。</span></li>
+          <li><span class="chip katsu">〜なら<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜なら" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>条件/假定「如果…的话」，用于提出话题前提。</span></li>
         </ul>
       </div>
     </div>
@@ -1229,9 +1261,9 @@
         <div class="u-jp">そう、なんか、<ruby>二人<rt>ふたり</rt></ruby>の<ruby>人間性<rt>にんげんせい</rt></ruby>がグッと<ruby>出<rt>で</rt></ruby>てるよね。</div>
         <div class="u-cn"><span class="lbl">译</span>对，怎么说呢，两个人的本性会一下子显露出来呢。</div>
         <ul class="u-points">
-          <li><span class="chip goi">グッと<span class="star">★</span></span><span>拟态副词「一下子、猛地」，强调程度或变化之大。</span></li>
+          <li><span class="chip goi">グッと<span class="star">★</span></span><a class="xref" href="concordance.html#q=グッと" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>拟态副词「一下子、猛地」，强调程度或变化之大。</span></li>
           <li><span class="chip goi">人間性が出る</span><span>惯用表达「（真实的）人品、本性显露出来」。</span></li>
-          <li><span class="chip joshi">よね</span><span>终助词组合，向对方寻求共鸣、确认。</span></li>
+          <li><span class="chip joshi">よね</span><a class="xref" href="concordance.html#q=よね" title="这个语法点在 10 个视频中共出现 26 次 — 点击查看全部用例">10视频</a><span>终助词组合，向对方寻求共鸣、确认。</span></li>
         </ul>
       </div>
     </div>
@@ -1255,7 +1287,7 @@
         <div class="u-telop"><span class="tag-telop">テロップ</span>「スヌーズ人間」と出会ったことがなかった / スヌーズ人間と出会ったことがなかった</div>
         <ul class="u-points">
           <li><span class="chip goi">幸いにして</span><span>「所幸、幸运的是」，较郑重的副词表达。</span></li>
-          <li><span class="chip katsu">〜たことがない<span class="star">★</span></span><span>经验句型「（过去）不曾…」。</span></li>
+          <li><span class="chip katsu">〜たことがない<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜たことがない" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>经验句型「（过去）不曾…」。</span></li>
         </ul>
       </div>
     </div>
@@ -1288,7 +1320,7 @@
         <div class="u-telop"><span class="tag-telop">テロップ</span>自分が好きになった人が/スヌーズ人間だったらどうしよう…</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜たらどうしよう<span class="star">★</span></span><span>「如果…该怎么办」，表担忧的假定。</span></li>
-          <li><span class="chip katsu">〜てくる</span><span>「芽生えてくる」表示（情绪）逐渐产生、涌上来。</span></li>
+          <li><span class="chip katsu">〜てくる</span><a class="xref" href="concordance.html#q=〜てくる" title="这个语法点在 5 个视频中共出现 8 次 — 点击查看全部用例">5视频</a><span>「芽生えてくる」表示（情绪）逐渐产生、涌上来。</span></li>
           <li><span class="chip goi">芽生える</span><span>「萌生、萌芽（情感等）」。</span></li>
         </ul>
       </div>
@@ -1312,7 +1344,7 @@
         <div class="u-telop"><span class="tag-telop">テロップ</span>俺たちそんな悪くない!!</div>
         <ul class="u-points">
           <li><span class="chip goi">そんな〜ない</span><span>「没那么…」，程度否定。</span></li>
-          <li><span class="chip joshi">って</span><span>句末引用/主张的口语用法。</span></li>
+          <li><span class="chip joshi">って</span><a class="xref" href="concordance.html#q=って" title="这个语法点在 10 个视频中共出现 33 次 — 点击查看全部用例">10视频</a><span>句末引用/主张的口语用法。</span></li>
         </ul>
       </div>
     </div>
@@ -1323,7 +1355,7 @@
         <div class="u-cn"><span class="lbl">译</span>跟朋友旅行的时候也是这样。我现在才想起来。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>口语倒装，原意为「今思い出したけど」。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜た時</span><span>「…的时候」，时间从句。</span></li>
+          <li><span class="chip katsu">〜た時</span><a class="xref" href="concordance.html#q=〜た時" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「…的时候」，时间从句。</span></li>
           <li><span class="chip goi">思い出す</span><span>「想起、回忆起来」。</span></li>
         </ul>
       </div>
@@ -1354,8 +1386,8 @@
         <div class="u-cn"><span class="lbl">译</span>那个女生每次都按贪睡键，怎么都起不来。</div>
         <ul class="u-points">
           <li><span class="chip goi">スヌーズ</span><span>外来语「snooze，贪睡（闹钟再响）」。</span></li>
-          <li><span class="chip joshi">で</span><span>表示手段/原因「靠贪睡（键）」。</span></li>
-          <li><span class="chip joshi">んですよ</span><span>「んです」＋「よ」，说明情况并加强语气。</span></li>
+          <li><span class="chip joshi">で</span><a class="xref" href="concordance.html#q=で" title="这个语法点在 5 个视频中共出现 16 次 — 点击查看全部用例">5视频</a><span>表示手段/原因「靠贪睡（键）」。</span></li>
+          <li><span class="chip joshi">んですよ</span><a class="xref" href="concordance.html#q=んですよ" title="这个语法点在 8 个视频中共出现 22 次 — 点击查看全部用例">8视频</a><span>「んです」＋「よ」，说明情况并加强语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1366,10 +1398,10 @@
         <div class="u-cn"><span class="lbl">译</span>所以说，反正是在旅途中，闹钟设不设都无所谓嘛。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「かけてても」＝「かけていても」的口语缩约（指设闹钟）。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜し</span><span>列举理由「又…（而且）」。</span></li>
-          <li><span class="chip katsu">〜ても<span class="star">★</span></span><span>逆接假定「即使…也」。</span></li>
+          <li><span class="chip joshi">〜し</span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 6 个视频中共出现 10 次 — 点击查看全部用例">6视频</a><span>列举理由「又…（而且）」。</span></li>
+          <li><span class="chip katsu">〜ても<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ても" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a><span>逆接假定「即使…也」。</span></li>
           <li><span class="chip goi">どっちでもいい</span><span>「怎样都行、无所谓」。</span></li>
-          <li><span class="chip joshi">じゃん</span><span>口语「…嘛/不是吗」，寻求认同。</span></li>
+          <li><span class="chip joshi">じゃん</span><a class="xref" href="concordance.html#q=じゃん" title="这个语法点在 5 个视频中共出现 9 次 — 点击查看全部用例">5视频</a><span>口语「…嘛/不是吗」，寻求认同。</span></li>
         </ul>
       </div>
     </div>
@@ -1381,7 +1413,7 @@
         <ul class="u-points">
           <li><span class="chip katsu">〜なくても</span><span>「即使不…也」，否定的逆接假定。</span></li>
           <li><span class="chip katsu">食べられない<span class="star">★</span></span><span>「食べる」的可能形否定「吃不到、不能吃」。</span></li>
-          <li><span class="chip goi">〜だけ</span><span>「只是…而已」，限定。</span></li>
+          <li><span class="chip goi">〜だけ</span><a class="xref" href="concordance.html#q=〜だけ" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a><span>「只是…而已」，限定。</span></li>
         </ul>
       </div>
     </div>
@@ -1392,7 +1424,7 @@
         <div class="u-cn"><span class="lbl">译</span>我就干脆不管她了。</div>
         <ul class="u-points">
           <li><span class="chip goi">放置する</span><span>「放着不管、置之不理」。</span></li>
-          <li><span class="chip goi">もう</span><span>副词「（干脆）就…、已经」，表决断语气。</span></li>
+          <li><span class="chip goi">もう</span><a class="xref" href="concordance.html#q=もう" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>副词「（干脆）就…、已经」，表决断语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1403,7 +1435,7 @@
         <div class="u-cn"><span class="lbl">译</span>那么、那么狠啊。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>放置します</div>
         <ul class="u-points">
-          <li><span class="chip joshi">んだ</span><span>「のだ」的口语，表感叹/发现「原来…啊」。</span></li>
+          <li><span class="chip joshi">んだ</span><a class="xref" href="concordance.html#q=んだ" title="这个语法点在 7 个视频中共出现 9 次 — 点击查看全部用例">7视频</a><span>「のだ」的口语，表感叹/发现「原来…啊」。</span></li>
         </ul>
       </div>
     </div>
@@ -1414,8 +1446,8 @@
         <div class="u-cn"><span class="lbl">译</span>朋友……接下来那段（能播吗），没问题吧。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>そんな厳しいんだ？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">かな</span><span>终助词，表自问、担心「…吧/…吗」。</span></li>
-          <li><span class="chip goi">やつ</span><span>口语「东西/家伙」，这里指后面那段内容。</span></li>
+          <li><span class="chip joshi">かな</span><a class="xref" href="concordance.html#q=かな" title="这个语法点在 6 个视频中共出现 7 次 — 点击查看全部用例">6视频</a><span>终助词，表自问、担心「…吧/…吗」。</span></li>
+          <li><span class="chip goi">やつ</span><a class="xref" href="concordance.html#q=やつ" title="这个语法点在 5 个视频中共出现 10 次 — 点击查看全部用例">5视频</a><span>口语「东西/家伙」，这里指后面那段内容。</span></li>
         </ul>
       </div>
     </div>
@@ -1425,7 +1457,7 @@
         <div class="u-jp">いや、これ<ruby>今<rt>いま</rt></ruby>、<ruby>怖<rt>こわ</rt></ruby>いこと<ruby>言<rt>い</rt></ruby>おうとしてなかった？</div>
         <div class="u-cn"><span class="lbl">译</span>不是，你刚才是不是想说什么可怕的话？</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜(よ)うとする<span class="star">★</span></span><span>「正要/打算做…」，表意志的临近。</span></li>
+          <li><span class="chip katsu">〜(よ)うとする<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜(よ)うとする" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「正要/打算做…」，表意志的临近。</span></li>
           <li><span class="chip katsu">〜てなかった(ていなかった)</span><span>口语缩约的过去否定。</span></li>
         </ul>
       </div>
@@ -1444,8 +1476,8 @@
         <div class="u-cn"><span class="lbl">译</span>不不，（我是说）你会没朋友的哦。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>「怖いこと言おうとしてなかった?」 / 友達いなくなっちゃいますよ</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜なくなる</span><span>「变得没有/不再…」，状态变化。</span></li>
-          <li><span class="chip katsu">〜ちゃう</span><span>「〜てしまう」口语，表遗憾的结果。</span></li>
+          <li><span class="chip katsu">〜なくなる</span><a class="xref" href="concordance.html#q=〜なくなる" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「变得没有/不再…」，状态变化。</span></li>
+          <li><span class="chip katsu">〜ちゃう</span><a class="xref" href="concordance.html#q=〜ちゃう" title="这个语法点在 7 个视频中共出现 12 次 — 点击查看全部用例">7视频</a><span>「〜てしまう」口语，表遗憾的结果。</span></li>
         </ul>
       </div>
     </div>
@@ -1474,8 +1506,8 @@
         <div class="u-cn"><span class="lbl">译</span>那女生没事的。因为我们这边早就认定『她就是个起不来的人』了。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>友達っている? / 起きない子だって思ってる</div>
         <ul class="u-points">
-          <li><span class="chip joshi">だって</span><span>口语「因为、可是」，用来陈述理由。</span></li>
-          <li><span class="chip joshi">って</span><span>引用助词，标示所想/所说的内容。</span></li>
+          <li><span class="chip joshi">だって</span><a class="xref" href="concordance.html#q=だって" title="这个语法点在 7 个视频中共出现 11 次 — 点击查看全部用例">7视频</a><span>口语「因为、可是」，用来陈述理由。</span></li>
+          <li><span class="chip joshi">って</span><a class="xref" href="concordance.html#q=って" title="这个语法点在 10 个视频中共出现 33 次 — 点击查看全部用例">10视频</a><span>引用助词，标示所想/所说的内容。</span></li>
           <li><span class="chip goi">こっち</span><span>口语「我方、这边（指我们）」。</span></li>
         </ul>
       </div>
@@ -1487,8 +1519,8 @@
         <div class="u-cn"><span class="lbl">译</span>那有男朋友也没问题嘛，反正她本来就是个起不来的人。</div>
         <div class="u-telop"><span class="tag-telop">テロップ</span>彼氏もいけるじゃない？</div>
         <ul class="u-points">
-          <li><span class="chip goi">いける<span class="star">★</span></span><span>口语「行得通、没问题、可以」。</span></li>
-          <li><span class="chip joshi">じゃない</span><span>反问式确认「不是…吗/…嘛」。</span></li>
+          <li><span class="chip goi">いける<span class="star">★</span></span><a class="xref" href="concordance.html#q=いける" title="这个语法点在 5 个视频中共出现 6 次 — 点击查看全部用例">5视频</a><span>口语「行得通、没问题、可以」。</span></li>
+          <li><span class="chip joshi">じゃない</span><a class="xref" href="concordance.html#q=じゃない" title="这个语法点在 5 个视频中共出现 6 次 — 点击查看全部用例">5视频</a><span>反问式确认「不是…吗/…嘛」。</span></li>
         </ul>
       </div>
     </div>
@@ -1500,7 +1532,7 @@
         <div class="u-telop"><span class="tag-telop">テロップ</span>日常は無理</div>
         <ul class="u-points">
           <li><span class="chip goi">無理</span><span>「不行、办不到」。</span></li>
-          <li><span class="chip joshi">だけ</span><span>限定「只有…」。</span></li>
+          <li><span class="chip joshi">だけ</span><a class="xref" href="concordance.html#q=だけ" title="这个语法点在 4 个视频中共出现 5 次 — 点击查看全部用例">4视频</a><span>限定「只有…」。</span></li>
         </ul>
       </div>
     </div>
@@ -1511,9 +1543,9 @@
         <div class="u-cn"><span class="lbl">译</span>要是友情的话那当然可以，可是……</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「そりゃ」＝「それは」的口语音变。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜だったら</span><span>假定「如果是…的话」。</span></li>
-          <li><span class="chip goi">そりゃ</span><span>「それは」的口语缩约，「那当然」。</span></li>
-          <li><span class="chip joshi">けど</span><span>句末逆接，含言外之意「可是…」。</span></li>
+          <li><span class="chip katsu">〜だったら</span><a class="xref" href="concordance.html#q=〜だったら" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a><span>假定「如果是…的话」。</span></li>
+          <li><span class="chip goi">そりゃ</span><a class="xref" href="concordance.html#q=そりゃ" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「それは」的口语缩约，「那当然」。</span></li>
+          <li><span class="chip joshi">けど</span><a class="xref" href="concordance.html#q=けど" title="这个语法点在 9 个视频中共出现 17 次 — 点击查看全部用例">9视频</a><span>句末逆接，含言外之意「可是…」。</span></li>
         </ul>
       </div>
     </div>
@@ -1523,7 +1555,7 @@
         <div class="u-jp"><ruby>恋愛<rt>れんあい</rt></ruby>は<ruby>無理<rt>むり</rt></ruby>だね。</div>
         <div class="u-cn"><span class="lbl">译</span>谈恋爱是不可能的啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">は（主题）</span><span>提示主题的助词，读作「わ」。「恋愛は」＝「说到恋爱这件事」。</span></li>
+          <li><span class="chip joshi">は（主题）</span><a class="xref" href="concordance.html#q=は（主题）" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>提示主题的助词，读作「わ」。「恋愛は」＝「说到恋爱这件事」。</span></li>
           <li><span class="chip goi">無理（むり）</span><span>「做不到、不可能」，口语里常用来干脆地否定某事。</span></li>
           <li><span class="chip katsu">だね</span><span>断定助动词「だ」＋终助词「ね」，带感叹并寻求认同的语气：「…啊，对吧」。</span></li>
         </ul>
@@ -1549,7 +1581,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>原文「大事なことが4回言いました」不合语法；结合综艺／网络名梗「大事なことなので〇回言いました」还原为「なので」(?)，也可能是「大事なことを4回言いました」。</div>
         <ul class="u-points">
           <li><span class="chip goi">大事なことなので〇回言いました<span class="star">★</span></span><span>日本综艺／网络名句，原为「二回言いました（重要的事说两遍）」，这里套用改成「4回」制造笑点。</span></li>
-          <li><span class="chip katsu">なので</span><span>「な」＋「ので」＝「因为是（名词）…所以」；接名词时用「なので」而非「だので」。</span></li>
+          <li><span class="chip katsu">なので</span><a class="xref" href="concordance.html#q=なので" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>「な」＋「ので」＝「因为是（名词）…所以」；接名词时用「なので」而非「だので」。</span></li>
           <li><span class="chip katsu">言いました</span><span>「言う」的ます形过去式「言いました」，郑重体的过去时。</span></li>
         </ul>
       </div>
@@ -1561,8 +1593,8 @@
         <div class="u-cn"><span class="lbl">译</span>这可是名言啊。</div>
         <ul class="u-points">
           <li><span class="chip goi">名言（めいげん）</span><span>「名言、金句」，指值得铭记的经典话语，这里是打趣地夸赞。</span></li>
-          <li><span class="chip keigo">です</span><span>断定助动词「だ」的郑重（丁寧）形，礼貌地陈述。</span></li>
-          <li><span class="chip joshi">よ</span><span>终助词，向对方传达新信息或强调判断：「…哦／…啊」。</span></li>
+          <li><span class="chip keigo">です</span><a class="xref" href="concordance.html#q=です" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>断定助动词「だ」的郑重（丁寧）形，礼貌地陈述。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 7 个视频中共出现 17 次 — 点击查看全部用例">7视频</a><span>终助词，向对方传达新信息或强调判断：「…哦／…啊」。</span></li>
         </ul>
       </div>
     </div>
@@ -1576,9 +1608,9 @@
         <ul class="u-points">
           <li><span class="chip goi">スヌーズ機能（きのう）</span><span>外来语「スヌーズ＝snooze（贪睡）」＋「機能（功能）」，即闹钟的「再响一次」功能。</span></li>
           <li><span class="chip goi">何度も（なんども）</span><span>「好几次、反复地」，「何度」＋强调助词「も」。</span></li>
-          <li><span class="chip goi">やつ</span><span>口语里指人或物的「家伙、东西」，此处指「这么做的人」，带随意甚至轻蔑语气。</span></li>
+          <li><span class="chip goi">やつ</span><a class="xref" href="concordance.html#q=やつ" title="这个语法点在 5 个视频中共出现 10 次 — 点击查看全部用例">5视频</a><span>口语里指人或物的「家伙、东西」，此处指「这么做的人」，带随意甚至轻蔑语气。</span></li>
           <li><span class="chip joshi">と一緒（といっしょ）<span class="star">★</span></span><span>「と」＋「一緒」＝「和…一样／和…一起」，这里是「跟出轨一样」。</span></li>
-          <li><span class="chip joshi">で（手段）</span><span>格助词「で」表示手段／方法：「用贪睡功能」。</span></li>
+          <li><span class="chip joshi">で（手段）</span><a class="xref" href="concordance.html#q=で（手段）" title="这个语法点在 4 个视频中共出现 5 次 — 点击查看全部用例">4视频</a><span>格助词「で」表示手段／方法：「用贪睡功能」。</span></li>
         </ul>
       </div>
     </div>
@@ -1602,7 +1634,7 @@
         <ul class="u-points">
           <li><span class="chip goi">連れてくる</span><span>「連れて（連れる的て形）＋くる」＝「带（人）来」；「連れていく」则是「带（人）去」。</span></li>
           <li><span class="chip joshi">を（省略）</span><span>口语中宾格助词「を」常被省略，「誰連れてくる」＝「誰を連れてくる」。</span></li>
-          <li><span class="chip katsu">〜てくる</span><span>补助动词「くる」接て形，表示「（做某动作）过来」的方向性。</span></li>
+          <li><span class="chip katsu">〜てくる</span><a class="xref" href="concordance.html#q=〜てくる" title="这个语法点在 5 个视频中共出现 8 次 — 点击查看全部用例">5视频</a><span>补助动词「くる」接て形，表示「（做某动作）过来」的方向性。</span></li>
         </ul>
       </div>
     </div>
@@ -2140,6 +2172,12 @@
       var pts = rec.points || [];
       for (var i = 0; i < pts.length; i++)
         parts.push('・' + (pts[i].term || '') + '：' + (pts[i].note || ''));
+      // The pipeline's (?) means "this restoration may be a mishearing". The card is NOT dropped —
+      // the user deliberately saved this line, and silently omitting it from their deck would be a
+      // worse surprise than a caveat. But an unmarked card becomes a memorised fact, so the doubt
+      // travels with it.
+      if (/\(\?\)/.test(String(rec.jp_html || '') + String(rec.cn || '')))
+        parts.push('⚠ 含 (?) 存疑还原 — 该句可能为 ASR 误听，请以原音为准');
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
     // ---- v2 map-state helpers (one map per namespace) ----
@@ -3170,9 +3208,42 @@
     if (emptyEl) emptyEl.hidden = !(filtering && shown === 0);
   }
   if (input) input.addEventListener('input', apply);
+
+  // ---------- data-attribute lenses (存疑 / 被插话 / 方言) ----------
+  // Each is a CSS lens (a body class), NOT part of apply()'s match logic, so it composes with the
+  // search box and category chips instead of fighting them for the same `nomatch` flag. Factored to
+  // one helper because three near-identical copies is where the fourth quietly drifts. Two polarities:
+  //   hide=true  -> body class HIDES the flagged rows   (存疑: get the doubtful lines out of the way)
+  //   hide=false -> body class KEEPS ONLY the flagged rows (被插话/方言: study exactly these lines)
+  // Each button is revealed only when the page actually has such rows — a dead control is worse.
+  var lenses = [];
+  function wireLens(btnId, attr, bodyClass, label, offTitle){
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    var n = document.querySelectorAll('.u[' + attr + ']').length;
+    if (!n) return;
+    btn.hidden = false;
+    btn.textContent = label + ' ' + n;
+    btn.addEventListener('click', function(){
+      var on = !document.body.classList.contains(bodyClass);
+      document.body.classList.toggle(bodyClass, on);
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.title = on ? '显示全部句子' : offTitle;
+    });
+    lenses.push({ btn: btn, cls: bodyClass });
+  }
+  wireLens('unsureToggle',  'data-unsure',  'hide-unsure',   '存疑',  '隐藏含 (?) 的存疑还原句');
+  wireLens('overlapToggle', 'data-overlap', 'overlap-only',  '被插话', '只看被插话/同时说话盖住的句子（音频判定）');
+  wireLens('dialectToggle', 'data-dialect', 'dialect-only',  '方言',  '只看含方言→标准语对照的句子');
+
   if (resetBtn) resetBtn.addEventListener('click', function(){
     if (input) input.value = ''; curCat = '';
     if (catsBox) [].slice.call(catsBox.children).forEach(function(x){ x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
+    lenses.forEach(function(l){
+      document.body.classList.remove(l.cls);
+      l.btn.classList.remove('on'); l.btn.setAttribute('aria-pressed', 'false');
+    });
     apply();
   });
 
