@@ -650,6 +650,29 @@
   .resume-x{margin-left:auto;font:inherit;font-size:.85rem;cursor:pointer;color:var(--ink-faint);
     background:transparent;border:0;padding:.2rem .4rem;}
   .resume-x:hover{color:var(--shu);}
+
+  /* ? cheat sheet (keys.js) — study pages */
+  .keys-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+    padding:1rem;background:rgba(0,0,0,.45);}
+  .keys-overlay[hidden]{display:none;}
+  .keys-card{position:relative;max-width:32rem;width:100%;max-height:88vh;overflow-y:auto;
+    padding:1.4rem 1.6rem 1.6rem;background:var(--card);border:1px solid var(--line-strong);
+    border-radius:.6rem;font-family:var(--font-cn);color:var(--ink);}
+  .keys-card h2{margin:0 0 1rem;font-size:1.05rem;font-weight:600;}
+  .keys-card h3{margin:1.1rem 0 .5rem;font-size:.8rem;font-weight:600;letter-spacing:.08em;
+    color:var(--ink-faint);}
+  .keys-row{display:flex;gap:.9rem;align-items:baseline;padding:.28rem 0;font-size:.88rem;
+    color:var(--ink-soft);}
+  .keys-k{flex:0 0 7.2rem;display:flex;gap:.3rem;flex-wrap:wrap;}
+  .keys-card kbd{font-family:var(--font-mono);font-size:.78rem;line-height:1.5;color:var(--ink);
+    background:var(--card-2);border:1px solid var(--line-strong);border-bottom-width:2px;
+    border-radius:.3rem;padding:.05rem .4rem;white-space:nowrap;}
+  .keys-note{margin:1.1rem 0 0;padding-top:.9rem;border-top:1px solid var(--line);
+    font-size:.8rem;line-height:1.7;color:var(--ink-faint);}
+  .keys-close{position:absolute;top:.7rem;right:.8rem;font:inherit;font-size:.95rem;cursor:pointer;
+    color:var(--ink-faint);background:transparent;border:0;padding:.2rem .4rem;}
+  .keys-close:hover{color:var(--shu);}
+  @media (max-width:420px){ .keys-row{display:block;} .keys-k{margin-bottom:.15rem;} }
 </style>
 </head>
 <body>
@@ -7510,19 +7533,11 @@
   // shadow drill, or from a timestamp — the button must not lie about what the player is doing.
   setInterval(paintPlay, 250);
 
-  // Space toggles playback — the key people reflexively press. Never steal it from a text field,
-  // and never from a control the user is tabbed onto (Space is that control's own activation key).
-  document.addEventListener('keydown', function(e){
-    if (e.key !== ' ' && e.code !== 'Space') return;
-    var t = e.target || {};
-    var tag = (t.tagName || '').toUpperCase();
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' ||
-        tag === 'A' || t.isContentEditable) return;
-    if (!LP()) return;
-    e.preventDefault();
-    LP().toggle();
-    paintPlay();
-  });
+  // Space (and every other shortcut) lives in keys.js now — ONE document-level keydown owner for
+  // the page. This handler's tag-name guard missed <ruby>, which template.html gives role="button"
+  // + tabIndex=0, so Space on a focused reading both revealed it and toggled playback; keys.js
+  // matches on the ROLE as well. The button still repaints from the 250ms poll above, which is
+  // what already kept it honest when the user paused from the video's own controls.
 
   // floating re-follow control — reachable by thumb even when the dock has scrolled
   // off-screen; the CSS only reveals it (.show) on touch-sized screens when follow is off.
@@ -9284,6 +9299,283 @@
   }
   vStart.addEventListener('click', function(){ snap = vdue(); pos = 0; if (!snap.length) return; ov.hidden = false; document.body.classList.add('srs-open'); show(); });
   ov.querySelector('#vClose').addEventListener('click', function(){ ov.hidden = true; document.body.classList.remove('srs-open'); renderList(); });
+})();
+</script>
+<script>
+/* ============================================================================
+   Keyboard map (keys.js) — study pages. ONE owner for every document-level key.
+
+   Before this file the players each carried their own Space handler and nothing
+   else was reachable without a mouse: a page has ~1,700 focusable <ruby> and one
+   <span class="ts"> per line, so Tab reaches the toolbar only after a couple of
+   thousand stops. Every lens, filter and drill was pointer-only.
+
+   Two rules make the rest of this file small:
+
+   1. A SHORTCUT CLICKS THE CONTROL, it does not reimplement it. 跟随/全部读音/跟读/
+      听写/重点/被插话/收起 all already exist as buttons that own their aria-pressed,
+      fold and persistence logic, and line stepping is exactly what clicking a
+      timestamp does (seek + re-arm follow + flash). Dispatching a click keeps the
+      keyboard path and the mouse path from ever drifting apart — there is no second
+      copy of the state machine to keep in sync.
+   2. ONE listener per key. Two handlers on Space is how you get a <ruby> reading
+      revealed AND playback toggled from a single press (see isActivation below).
+
+   Talks to the player only through window.LangPlayer, so it works on both the video
+   (player_auto) and audio (player_audio) runtimes, and degrades to the lens toggles
+   alone on a player-less page. Pure core unit-tested in tools/test_keys.mjs.
+   ========================================================================== */
+(function(){
+  /*<<keys-pure>>*/
+  // Pure, DOM-free core. Extracted verbatim by the unit test, so it takes a plain
+  // {tag, role, editable} descriptor rather than a node.
+  function KEYS_PURE(){
+    var TYPING     = { INPUT: 1, TEXTAREA: 1, SELECT: 1 };
+    // Controls whose OWN activation key is Space/Enter. RUBY is the one that bites:
+    // template.html gives every <ruby> role="button" + tabIndex=0 so a reading can be
+    // revealed from the keyboard, but it stays a <ruby> tag — so the players' old
+    // tag-name guard (INPUT/TEXTAREA/SELECT/BUTTON/A) missed it, and Space on a focused
+    // ruby both revealed the reading and toggled playback. Match on the ROLE too.
+    var ACTIVATION = { BUTTON: 1, A: 1, RUBY: 1, SUMMARY: 1 };
+    var LENS = { f: 'follow', r: 'furi', s: 'shadow', d: 'dict',
+                 h: 'highlights', o: 'overlap', m: 'fold' };
+
+    function isTyping(t){ return !!t && (TYPING[t.tag] === 1 || t.editable === true); }
+    function isActivation(t){ return !!t && (ACTIVATION[t.tag] === 1 || t.role === 'button'); }
+
+    // key event -> action name, or null for "not ours; let the page and the browser have it".
+    function resolve(ev, tgt){
+      // An ACTIVE IME is not a theoretical concern on a ja→zh page: composing 「か」 in the
+      // filter box emits a raw `k` keydown first, and every letter below would fire mid-word.
+      // keyCode 229 is the same signal for the browsers that do not set isComposing.
+      if (ev.isComposing || ev.keyCode === 229) return null;
+      // Never fight a browser/OS shortcut. Shift is the only modifier we claim.
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return null;
+      var k = ev.key;
+      // Escape only leaves a text field here; the overlays own their own Escape.
+      if (k === 'Escape') return isTyping(tgt) ? 'blur' : null;
+      if (isTyping(tgt)) return null;
+      if (k === ' ' || k === 'Spacebar' || ev.code === 'Space')
+        return isActivation(tgt) ? null : 'toggle';
+      if (k === 'Enter') return null;                       // always the focused control's
+      // Horizontal = the playhead. Unmodified moves in the page's own unit (a sentence);
+      // Shift drops to the raw time axis. Vertical (↑↓ PgUp PgDn Home End) is deliberately
+      // NOT here — it scrolls the page and suspends follow, which the players already own.
+      if (k === 'ArrowLeft')  return ev.shiftKey ? 'scrub-back' : 'prev';
+      if (k === 'ArrowRight') return ev.shiftKey ? 'scrub-fwd'  : 'next';
+      if (k === '?') return 'help';                          // before '/': ? is Shift+/ on most layouts
+      if (k === '/') return 'search';
+      if (k === ',') return 'replay';
+      var low = (k || '').toLowerCase();
+      if (low === 'n') return 'next';
+      if (low === 'p') return 'prev';
+      return LENS[low] || null;
+    }
+
+    // The row nearest at/just-before the playhead. Same rule and the same 0.15s look-ahead
+    // as shadow.js currentIdx() — two different answers to "which line is playing" is a bug.
+    function currentIndex(starts, t){
+      var lo = 0;
+      for (var i = 0; i < starts.length; i++){ if (starts[i] <= t + 0.15) lo = i; else break; }
+      return lo;
+    }
+    // Step by VISIBLE DOM ROW, never by distinct time. Same-second twins are real, separate
+    // sentences (the floored-label clusters this repo clamps rather than sorts), so stepping
+    // past one because it shares a start with its neighbour would skip a line the reader can
+    // see. `visible` is the ascending list of in-set row indices, so filters are respected for
+    // free. Clamps at both ends rather than wrapping.
+    function stepIndex(visible, cur, dir){
+      if (!visible.length) return -1;
+      var i;
+      if (dir > 0){
+        for (i = 0; i < visible.length; i++) if (visible[i] > cur) return visible[i];
+        return visible[visible.length - 1];
+      }
+      for (i = visible.length - 1; i >= 0; i--) if (visible[i] < cur) return visible[i];
+      return visible[0];
+    }
+    // Seconds, clamped into the media. duration 0 = not known yet (a YouTube embed before
+    // onReady), in which case only the floor is enforceable.
+    function scrubTo(cur, delta, duration){
+      var t = cur + delta;
+      if (t < 0) t = 0;
+      if (duration > 0 && t > duration) t = duration;
+      return t;
+    }
+    return { resolve: resolve, currentIndex: currentIndex, stepIndex: stepIndex,
+             scrubTo: scrubTo, isTyping: isTyping, isActivation: isActivation };
+  }
+  /*<</keys-pure>>*/
+
+  var K = KEYS_PURE();
+  function LP(){
+    return (window.LangPlayer && window.LangPlayer.ready && window.LangPlayer.ready())
+      ? window.LangPlayer : null;
+  }
+
+  // Rows = every .u carrying a timestamp — the same construction player_auto.html uses to build
+  // its units, so index i here names the same line there.
+  var rows = [];
+  (function(){
+    var us = document.querySelectorAll('.u');
+    for (var i = 0; i < us.length; i++){
+      var ts = us[i].querySelector('.ts');
+      if (ts) rows.push({ el: us[i], ts: ts });
+    }
+  })();
+
+  // The player publishes its CLAMPED start onto each .ts as __sec (raw data-sec would land a
+  // floored twin BEFORE its own clamped start). Fall back the way startOf() does. Static once
+  // the player script has run — and this file is injected last — so it is computed once.
+  var startsCache = null;
+  function starts(){
+    if (startsCache) return startsCache;
+    startsCache = [];
+    for (var i = 0; i < rows.length; i++){
+      var ts = rows[i].ts, s = ts.__sec;
+      if (s == null){ var d = parseFloat(ts.getAttribute('data-sec')); s = isNaN(d) ? 0 : d; }
+      startsCache.push(s);
+    }
+    return startsCache;
+  }
+  // Recomputed per keypress: the filter bar and the lens toggles change this constantly.
+  function visible(){
+    var o = [];
+    for (var i = 0; i < rows.length; i++) if (rows[i].el.offsetParent !== null) o.push(i);
+    return o;
+  }
+
+  function goRow(i){
+    var r = rows[i];
+    if (!r) return;
+    // ARM, SCROLL, CLICK — in that order, and all three are load-bearing.
+    //
+    //   1. LangPlayer.seek() is the only entry point that calls guard.begin(); the timestamp click
+    //      path goes straight to transport.seek() and never arms it (it has never needed to — the
+    //      row you clicked is already on screen, so nothing scrolls). We DO scroll, so we arm it.
+    //   2. Scroll instantly (the default), never smooth. Two reasons: a `scroll` event is delivered
+    //      ASYNCHRONOUSLY, so merely ordering the calls does not order their effects — without the
+    //      guard above, our own scroll lands after setFollow(true) and suspends the follow the click
+    //      just re-armed, which is a race (it passed on one page and failed on another). And a
+    //      SMOOTH scroll across a long page outlives the guard's 900ms window, so the tail of its
+    //      own animation reads as a user scroll and suspends follow mid-flight.
+    //   3. Click last: setFollow(true) is then the final word, and the flash lands on the new row.
+    var lp = LP();
+    if (lp) lp.seek(starts()[i]);
+    if (r.el.scrollIntoView) r.el.scrollIntoView({ block: 'center' });
+    r.ts.click();                                  // seek + re-arm follow + flash, via the click path
+  }
+  function step(dir){
+    if (!LP() || !rows.length) return;
+    var cur = K.currentIndex(starts(), LP().getTime());
+    var i = K.stepIndex(visible(), cur, dir);
+    if (i >= 0) goRow(i);
+  }
+  function replay(){
+    if (!LP() || !rows.length) return;
+    goRow(K.currentIndex(starts(), LP().getTime()));
+  }
+  function scrub(delta){
+    var lp = LP();
+    if (!lp) return;
+    lp.seek(K.scrubTo(lp.getTime(), delta, lp.duration ? lp.duration() : 0));
+  }
+  function press(id){ var el = document.getElementById(id); if (el) el.click(); }
+
+  // ---------- the ? cheat sheet ----------
+  // An undiscoverable shortcut is a shortcut nobody uses, so every binding above is listed here
+  // and this overlay is the only place they are written down for the reader.
+  var LENS_BTN = { follow: 'dockFollow', furi: 'furiToggle', shadow: 'shadowToggle',
+                   dict: 'dictToggle', highlights: 'highlightsToggle',
+                   overlap: 'overlapToggle', fold: 'dockMin' };
+  var help = null;
+  function row(keys, what){
+    var ks = '';
+    for (var i = 0; i < keys.length; i++) ks += '<kbd>' + keys[i] + '</kbd>';
+    return '<div class="keys-row"><div class="keys-k">' + ks + '</div><div>' + what + '</div></div>';
+  }
+  function helpEl(){
+    if (help) return help;
+    help = document.createElement('div');
+    help.className = 'keys-overlay'; help.id = 'keysOverlay'; help.hidden = true;
+    help.innerHTML =
+      '<div class="keys-card" role="dialog" aria-modal="true" aria-label="键盘快捷键">' +
+        '<button class="keys-close" id="keysClose" type="button" aria-label="关闭">✕</button>' +
+        '<h2>键盘快捷键</h2>' +
+        '<h3>播放</h3>' +
+        row(['空格'], '播放 / 暂停') +
+        row(['←', '→'], '上一句 / 下一句（跳转并滚动到该句）') +
+        row(['N', 'P'], '同上 — 播放器获得焦点时仍然有效') +
+        row(['⇧←', '⇧→'], '后退 / 前进 5 秒') +
+        row([','], '重听当前句') +
+        '<h3>显示</h3>' +
+        row(['F'], '跟随') + row(['R'], '全部读音') + row(['S'], '跟读') +
+        row(['D'], '听写') + row(['H'], '重点') + row(['O'], '被插话') +
+        row(['M'], '收起 / 展开播放器') +
+        '<h3>其他</h3>' +
+        row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
+        '<p class="keys-note">竖向移动视线，横向移动播放位置：' +
+          '<kbd>↑</kbd><kbd>↓</kbd> 滚动页面并暂停跟随，<kbd>←</kbd><kbd>→</kbd> 移动播放位置。</p>' +
+      '</div>';
+    document.body.appendChild(help);
+    help.addEventListener('click', function(e){ if (e.target === help) toggleHelp(false); });
+    var x = help.querySelector('#keysClose');
+    if (x) x.addEventListener('click', function(){ toggleHelp(false); });
+    return help;
+  }
+  function helpOpen(){ return !!help && !help.hidden; }
+  function toggleHelp(on){
+    var el = helpEl();
+    el.hidden = !on;
+    if (on){ var x = el.querySelector('#keysClose'); if (x) x.focus(); }
+  }
+
+  var ACT = {
+    toggle:       function(){ var lp = LP(); if (lp) lp.toggle(); },
+    next:         function(){ step(1); },
+    prev:         function(){ step(-1); },
+    'scrub-fwd':  function(){ scrub(5); },
+    'scrub-back': function(){ scrub(-5); },
+    replay:       replay,
+    search:       function(){ var el = document.getElementById('filterInput'); if (el) el.focus(); },
+    blur:         function(){ var a = document.activeElement; if (a && a.blur) a.blur(); },
+    help:         function(){ toggleHelp(!helpOpen()); }
+  };
+
+  document.addEventListener('keydown', function(e){
+    // Escape closes the cheat sheet first — it is the only overlay this file owns, and the
+    // pure resolver deliberately hands Escape back to whoever else is listening.
+    if (e.key === 'Escape' && helpOpen()){ e.preventDefault(); toggleHelp(false); return; }
+    var t = e.target || {};
+    var action = K.resolve(e, {
+      tag: (t.tagName || '').toUpperCase(),
+      role: t.getAttribute ? t.getAttribute('role') : null,
+      editable: !!t.isContentEditable
+    });
+    if (!action) return;
+    var fn = ACT[action];
+    if (!fn && LENS_BTN[action]) fn = function(){ press(LENS_BTN[action]); };
+    if (!fn) return;
+    // CAPTURE + stopPropagation, not just preventDefault. Chrome's native media controls live in the
+    // <video>'s shadow tree and handle ArrowLeft/Right (∓5s) and Space in their OWN listener, at the
+    // target — so by the time a bubbling document listener runs, the seek has already happened and
+    // preventDefault is too late. Measured: with the offline <video> focused, → moved the clock
+    // 11s→16s natively AND then stepped a line from 16s, landing two rows past the right one.
+    // Capturing at the document is upstream of the shadow tree; stopping propagation there is what
+    // actually preempts it. 'blur' is exempt — Escape must still reach whatever else wants to close.
+    e.preventDefault();
+    if (action !== 'blur') e.stopPropagation();
+    fn();
+  }, true);
+
+  // The YouTube embed is cross-origin: once it has focus, keydown goes to the iframe and this
+  // page never sees it. We cannot listen inside it — but a click anywhere in OUR document is
+  // proof the user is back out here, so take focus back and the keys work again. Capture phase,
+  // so it runs before anything that might re-focus the frame.
+  document.addEventListener('click', function(){
+    var a = document.activeElement;
+    if (a && a.tagName === 'IFRAME') a.blur();
+  }, true);
 })();
 </script>
 </body>
