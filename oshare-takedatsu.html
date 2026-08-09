@@ -1255,6 +1255,19 @@
   // <video> (offline, timeupdate follow-along); if it's missing/404 (e.g. on
   // GitHub Pages) → swap to the YouTube IFrame Player API (poll follow-along).
   // One follow-along engine, two transports, auto-selected.
+  //
+  // THIRD, DEGRADED transport: data-bilibili-id, used only when there is no YouTube
+  // id. Bilibili's 外链播放器 is LOAD-TIME SEEK ONLY — the official parameter list
+  // (player.bilibili.com) documents `t` = 「跳转到媒体的初始时间点，单位：秒」and
+  // exposes NO postMessage/JS API for seeking after load, reading currentTime, or
+  // play/pause from the parent. So `seek` rebuilds the iframe src, and there is no
+  // clock: follow-along and the 跟读 drill are DISABLED (their controls hidden and
+  // disabled), not faked.
+  //
+  // Dead reckoning was considered and REJECTED: starting a local timer at the last
+  // commanded seek would track only until the viewer touches Bilibili's own controls,
+  // after which the highlight is confidently, silently wrong — worse than absent, and
+  // untestable against any ground truth. An honest missing feature beats a fake one.
   var dock      = document.getElementById('dock');
   var minBtn    = document.getElementById('dockMin');
   var followBtn = document.getElementById('dockFollow');
@@ -1279,6 +1292,11 @@
   }
   var video     = document.getElementById('clip');            // <video> + <source> + data-youtube-id
   var ytid      = video ? (video.getAttribute('data-youtube-id') || '') : '';
+  var bvid      = video ? (video.getAttribute('data-bilibili-id') || '') : '';
+  // A Bilibili upload is often a COLLECTION — this one is a whole 9-episode drama in ten parts —
+  // so the part number is as load-bearing as the id. Defaulting it silently to 1 would point every
+  // episode page at episode 1 and still look like it worked.
+  var bpage     = video ? (video.getAttribute('data-bilibili-page') || '1') : '1';
   var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 
   var transport = null;   // { seek(sec) }  — set once local/youtube is chosen
@@ -1314,6 +1332,12 @@
   var shadowPrevMin = null;    // fold state to restore when the 跟读 drill turns off (mobile auto-fold)
   window.LangPlayer = {
     ready:    function(){ return !!transport; },
+    // TRUE when the chosen transport can seek but cannot be OBSERVED — no clock, no play state
+    // (today: the Bilibili embed). Anything that drives the page from playback position must opt
+    // out on this rather than run against a getTime() that never advances. shadow.js reads it to
+    // leave the 跟读 toggle disabled: it independently re-enables that button once the adapter is
+    // live, which silently undid the transport's own attempt to switch the drill off.
+    seekOnly: function(){ return !!(transport && transport.limited); },
     seek:     function(t){ if (transport){ guard.begin(nowms()); transport.seek(t); } },
     getTime:  function(){ return (transport && transport.getTime) ? transport.getTime() : 0; },
     setRate:  function(r){ if (transport && transport.setRate) transport.setRate(clampRate(r)); },
@@ -1639,13 +1663,68 @@
     var first = document.getElementsByTagName('script')[0]; first.parentNode.insertBefore(tag, first);
   }
 
+  // ---------- transport C: Bilibili 外链播放器 (online, SEEK-ONLY) ----------
+  // Everything that needs a clock is switched off here rather than allowed to lie. See the
+  // header note: the embed exposes `t` (initial seek) and nothing else.
+  function useBilibili(){
+    var frame = document.createElement('iframe');
+    frame.id = 'clip';
+    frame.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    frame.setAttribute('allowfullscreen', '');
+    frame.setAttribute('scrolling', 'no');
+    frame.setAttribute('frameborder', '0');
+    frame.setAttribute('title', (video && video.getAttribute('title')) || '');
+    frame.style.border = '0';
+    // danmaku off: the whole point of the page is reading the line we annotated, and a
+    // scrolling comment track sits exactly on top of the subtitle.
+    var BASE = 'https://player.bilibili.com/player.html?bvid=' + encodeURIComponent(bvid) +
+               '&p=' + encodeURIComponent(bpage) + '&danmaku=0&hideCoverInfo=1';
+    frame.src = BASE + '&autoplay=0';
+    if (video && video.parentNode) video.parentNode.replaceChild(frame, video);
+
+    // A seek RELOADS the player. `last` is the commanded position, not an observed one — it is
+    // what getTime() can honestly report, and it is used for nothing but the resume banner.
+    var last = 0;
+    transport = {
+      seek: function(sec){
+        autoSetMin(false);
+        last = Math.max(0, Math.floor(sec));
+        frame.src = BASE + '&t=' + last + '&autoplay=1';
+      },
+      getTime:  function(){ return last; },
+      setRate:  function(){},                        // no API
+      paused:   function(){ return true; },          // unknowable → report the honest default
+      play:     function(){},
+      pause:    function(){},
+      rates:    function(){ return [1]; },
+      duration: function(){ return 0; },
+      limited:  'bilibili'
+    };
+
+    // Hide AND disable the clock-dependent controls. Disabling matters on its own: keys.js
+    // implements every shortcut by clicking the control that owns the lens, and a `display:none`
+    // <button> still dispatches a click — only `disabled` makes F / S / Space genuine no-ops
+    // instead of silently arming an engine that will never receive a tick.
+    function kill(el){ if (!el) return; el.style.display = 'none'; el.disabled = true; }
+    kill(followBtn);
+    kill(playBtn);
+    // #shadowToggle is NOT inside #dock — scoping the lookup to the dock silently found nothing and
+    // left the 跟读 drill fully live on a transport with no clock. Caught by tools/bili.sh on its
+    // first run; look it up on `document`, the way shadow.js itself does.
+    kill(document.getElementById('shadowToggle'));
+    if (fab) fab.style.display = 'none';
+    setFollow(false);
+  }
+
   // ---------- auto-detect: does the local mp4 load? ----------
   function decide(){
-    if (!video){ if (ytid) useYouTube(); return; }
-    if (!ytid){ useLocal(); return; }            // no fallback available → local only
+    if (!video){ if (ytid) useYouTube(); else if (bvid) useBilibili(); return; }
+    if (!ytid && !bvid){ useLocal(); return; }    // no fallback available → local only
+    var online = ytid ? useYouTube : useBilibili;
     var settled = false;
     function local(){ if (settled) return; settled = true; useLocal(); }
-    function yt(){ if (settled) return; settled = true; useYouTube(); }
+    function yt(){ if (settled) return; settled = true; online(); }
     // any sign the local file is usable → play it natively (offline)
     ['loadedmetadata', 'loadeddata', 'canplay'].forEach(function(ev){
       video.addEventListener(ev, local, { once: true });
@@ -2596,10 +2675,16 @@
 
   // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
   toggle.disabled = true;
+  // A SEEK-ONLY transport (Bilibili embed) can be told where to go but never says where it is, and
+  // the drill is a loop over observed position — it would arm, seek once and hang. Both exits below
+  // must honour it: this ran unconditionally and re-enabled a button the transport had already
+  // disabled, so 跟读 came back to life on a page with no clock. tools/bili.sh covers both orders
+  // (shadow enabling before the transport is chosen, and after).
+  function seekOnly(){ return !!(LP.seekOnly && LP.seekOnly()); }
   (function wait(tries){
-    if (LP.ready && LP.ready()){ toggle.disabled = false; reflect(); return; }
+    if (LP.ready && LP.ready()){ if (!seekOnly()){ toggle.disabled = false; reflect(); } return; }
     if (tries < 40) setTimeout(function(){ wait(tries + 1); }, 100);
-    else { toggle.disabled = false; reflect(); }       // best-effort: enable anyway
+    else if (!seekOnly()){ toggle.disabled = false; reflect(); }   // best-effort: enable anyway
   })(0);
 })();
 </script>
@@ -2707,7 +2792,13 @@
 
   function pageYt(){
     var el = document.getElementById('clip'); if (!el) return '';
-    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id'); if (y) return y;
+    // data-bilibili-id comes LAST and must stay last: favourite ids are `<yt>#<mmss>#<n>` and are
+    // FROZEN, so this OR order is part of the id. Appending is safe (every existing page matches an
+    // earlier attribute, so no shipped id moves); reordering would orphan every saved favourite.
+    // Without it a Bilibili-only page has an EMPTY prefix — ids like `#12:34#1`, which collide with
+    // any other id-less page and key nothing in the index badge or the search deep-links.
+    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id')
+            || el.getAttribute('data-bilibili-id'); if (y) return y;
     var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
   }
   var YT = pageYt();
