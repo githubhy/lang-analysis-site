@@ -722,6 +722,7 @@
       <div class="video-frame">
         <video id="clip" controls playsinline preload="metadata" data-youtube-id="H07Ga5eiYEw" title="いぎなり東北産 動物SP">
           <source src="iginari-fureai-clip.mp4" type="video/mp4">
+          <source src="https://pub-0cee7c9d32b64194aa94b50146493453.r2.dev/iginari-fureai.mp4" type="video/mp4">
           无法播放本地视频文件 <code>iginari-fureai-clip.mp4</code>（请确认它与本网页在同一目录）。
         </video>
       </div>
@@ -3801,9 +3802,14 @@
     ['loadedmetadata', 'loadeddata', 'canplay'].forEach(function(ev){
       video.addEventListener(ev, local, { once: true });
     });
-    // a genuine media error (mp4 absent / 404, e.g. on GitHub Pages) → embed the original
+    // a genuine media error (EVERY <source> absent / 404) → embed the original.
+    // ONLY on the element, never on a <source>. The page ships two candidates — the local file,
+    // then the self-hosted copy — and a listener on the FIRST source fires when the local mp4
+    // 404s, which is exactly what happens online. That jumped straight to the embed and the CDN
+    // copy was never tried; a video still played, so nothing went red. The element's own error
+    // fires with MEDIA_ERR_SRC_NOT_SUPPORTED only once ALL candidates are exhausted, which is the
+    // real signal. (sabotage: source-error-first)
     video.addEventListener('error', yt, { once: true });
-    var src = video.querySelector('source'); if (src) src.addEventListener('error', yt, { once: true });
     if (video.readyState >= 1) local();           // metadata already available synchronously
     else { try { video.load(); } catch (e) {} }
     // if neither event fires (slow load): on file:// bias to LOCAL so offline never breaks;
