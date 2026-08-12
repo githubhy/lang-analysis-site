@@ -259,8 +259,20 @@
   .u.active .u-jp{color:var(--ink);}
   .u-meta{display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;padding-top:.15rem;}
   .u-meta .ts{width:100%;text-align:center;}
+  /* The chip must WRAP, never nowrap. `.u` is a fixed 4.6rem gutter + 1fr body, and a grid item
+     that cannot shrink does not clip — it paints over the column next to it, which here is the 译
+     line. `white-space:nowrap` therefore put every label wider than ~5 full-width characters on top
+     of the translation: 12 of 21 shipped pages, worst 89px past the gutter (「サクちゃん（お便り読み
+     上げ）」 on tonari-otayori-182) and 90 of 221 rows overlapping on mushoku-tensei-s3-01. Sections
+     A/A1 of ux.sh could not see it — they measure against the DEVICE width, and this overflow never
+     leaves the page. Guarded behaviourally by ux.sh section A3.
+     `anywhere` (not `break-word`) is what makes the MIN-CONTENT width shrink, so the chip can be
+     narrower than its longest unbreakable run; `break-word` leaves min-content at the full run and
+     the box would still spill. Same trade the ≤520px `.chip{white-space:normal}` rule already makes:
+     wrapping a long label costs a line, not wrapping it costs the column. */
   .spk{font-family:var(--font-gothic);font-size:.66rem;font-weight:600;line-height:1.3;
-    padding:.12rem .4rem;border-radius:.3rem;white-space:nowrap;border:1px solid transparent;}
+    padding:.12rem .4rem;border-radius:.3rem;border:1px solid transparent;
+    max-width:100%;white-space:normal;overflow-wrap:anywhere;}
   .spk.iwata{color:var(--goi);background:var(--goi-t);}
   .spk.host{color:var(--ink-soft);background:var(--card-2);}
   .spk.nare{color:var(--katsu);background:var(--katsu-t);}
@@ -295,9 +307,13 @@
     .u{grid-template-columns:1fr;gap:.45rem;}
     /* flex-wrap is NOT optional here. This rule lays the metadata out as a ROW on the narrowest
        screens, and the row's content is un-shrinkable: the ts, the 44px touch tap targets (fav +
-       3 .u-act, forced by the (hover:none)+(pointer:coarse) block below), and a .spk whose width is
-       set by the speaker's NAME — 36px for 「先輩」, 129px for 「スタッフ(フクロウ担当)」. Left at the
-       default nowrap the row cannot fit a phone, and the overflow does not clip: the browser widens
+       3 .u-act, forced by the (hover:none)+(pointer:coarse) block below), and — when this was
+       written — a .spk whose width was set by the speaker's NAME: 36px for 「先輩」, 129px for
+       「スタッフ(フクロウ担当)」. That last one no longer holds; .spk now wraps and shrinks (see its
+       rule above, which had to change for the same reason at DESKTOP width, where the label was
+       overrunning the gutter into the 译 column). The ts and the tap targets are still rigid, so
+       this rule stays load-bearing on its own. Left unwrapped the row cannot fit a phone, and the
+       overflow does not clip: the browser widens
        the LAYOUT VIEWPORT to swallow it (320 -> 387 on konkatsu, 459 on iginari-fureai), so the whole
        page slides sideways under the thumb. Wrapping .u-actions alone is NOT enough — it still left
        the widest page 43px over. Guarded by ux.sh section A, which measures against the DEVICE width. */
@@ -782,7 +798,7 @@
         <div class="u-jp">はい、どうぞ。こちらは<ruby>小動物<rt>しょうどうぶつ</rt></ruby>と<ruby>鳥類<rt>ちょうるい</rt></ruby>のフロアになります。</div>
         <div class="u-cn"><span class="lbl">译</span>来，请进。这里是小动物和鸟类的楼层。</div>
         <ul class="u-points">
-          <li><span class="chip goi">〜になります<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜になります" title="这个语法点在 3 个视频中共出现 5 次 — 点击查看全部用例">3视频</a><span>比「〜です」更委婉郑重的断定表达，常见于服务业/导览介绍中。</span></li>
+          <li><span class="chip goi">〜になります<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜になります" title="这个语法点在 4 个视频中共出现 6 次 — 点击查看全部用例">4视频</a><span>比「〜です」更委婉郑重的断定表达，常见于服务业/导览介绍中。</span></li>
         </ul>
       </div>
     </div>
@@ -985,7 +1001,7 @@
         <div class="u-jp">すごいんですけど</div>
         <div class="u-cn"><span class="lbl">译</span>真的很厉害呢。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜んですけど<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですけど" title="这个语法点在 9 个视频中共出现 49 次 — 点击查看全部用例">9视频</a><span>「〜んです」+「けど」，用委婉、留有余地的语气陈述感想，常见于日常口语中不把话说死的表达方式。</span></li>
+          <li><span class="chip joshi">〜んですけど<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですけど" title="这个语法点在 10 个视频中共出现 50 次 — 点击查看全部用例">10视频</a><span>「〜んです」+「けど」，用委婉、留有余地的语气陈述感想，常见于日常口语中不把话说死的表达方式。</span></li>
         </ul>
       </div>
     </div>
@@ -996,7 +1012,7 @@
         <div class="u-cn"><span class="lbl">译</span>这边是鸟类的区域。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「毛菌類」听感不清、疑似误听或衍生音，前后文均为地区介绍，已省略未采用。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">〜ております<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ております" title="这个语法点在 6 个视频中共出现 6 次 — 点击查看全部用例">6视频</a><span>「〜ている」的谦逊/郑重体，「おる」是「いる」的自谦语，比「〜ています」更正式，常用于介绍/播报场合。</span></li>
+          <li><span class="chip keigo">〜ております<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ております" title="这个语法点在 7 个视频中共出现 7 次 — 点击查看全部用例">7视频</a><span>「〜ている」的谦逊/郑重体，「おる」是「いる」的自谦语，比「〜ています」更正式，常用于介绍/播报场合。</span></li>
         </ul>
       </div>
     </div>
@@ -1107,7 +1123,7 @@
         <div class="u-jp">すごいんだけど</div>
         <div class="u-cn"><span class="lbl">译</span>真的太厉害了吧。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜んだけど</span><a class="xref" href="concordance.html#q=〜んだけど" title="这个语法点在 5 个视频中共出现 7 次 — 点击查看全部用例">5视频</a><span>「〜んです」的简体口语形「〜んだ」+「けど」，语气比「〜んですけど」更随意、更年轻化。</span></li>
+          <li><span class="chip joshi">〜んだけど</span><a class="xref" href="concordance.html#q=〜んだけど" title="这个语法点在 6 个视频中共出现 8 次 — 点击查看全部用例">6视频</a><span>「〜んです」的简体口语形「〜んだ」+「けど」，语气比「〜んですけど」更随意、更年轻化。</span></li>
         </ul>
       </div>
     </div>
@@ -1243,7 +1259,7 @@
         <div class="u-jp">えぇ、そうだったんだ。</div>
         <div class="u-cn"><span class="lbl">译</span>欸，原来是这样啊。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜んだ<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んだ" title="这个语法点在 4 个视频中共出现 9 次 — 点击查看全部用例">4视频</a><span>のだ的口语缩约，表示恍然大悟／解释语气，「そうだったんだ」=原来如此。</span></li>
+          <li><span class="chip katsu">〜んだ<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んだ" title="这个语法点在 9 个视频中共出现 17 次 — 点击查看全部用例">9视频</a><span>のだ的口语缩约，表示恍然大悟／解释语气，「そうだったんだ」=原来如此。</span></li>
         </ul>
       </div>
     </div>
@@ -1286,7 +1302,7 @@
         <div class="u-cn"><span class="lbl">译</span>请问猫头鹰的脖子最多能转多少度呢？</div>
         <ul class="u-points">
           <li><span class="chip katsu">回せる（可能形）<span class="star">★</span></span><span>五段动词「回す」的可能形，表示「能转」。</span></li>
-          <li><span class="chip joshi">〜でしょう</span><span>用于向对方提出推测性提问，语气比「ですか」更委婉、常见于主持人出题。</span></li>
+          <li><span class="chip joshi">〜でしょう</span><a class="xref" href="concordance.html#q=〜でしょう" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>用于向对方提出推测性提问，语气比「ですか」更委婉、常见于主持人出题。</span></li>
         </ul>
       </div>
     </div>
@@ -1388,8 +1404,8 @@
         <div class="u-cn"><span class="lbl">译</span>那么难得有这个机会，我们来让猫头鹰飞一下吧。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「袋」还原为「フクロウ」（同上，同音ASR误听）；三句合并为一句。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てみましょうか<span class="star">★</span></span><span>「〜てみる」尝试+「ましょうか」邀约，「飛ばしてみましょうか」=要不要让它飞一下试试。</span></li>
-          <li><span class="chip joshi">せっかく</span><a class="xref" href="concordance.html#q=せっかく" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「难得（有这个机会）」，常接「〜ので」表示因为难得，所以要做某事。</span></li>
+          <li><span class="chip katsu">〜てみましょうか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てみましょうか" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「〜てみる」尝试+「ましょうか」邀约，「飛ばしてみましょうか」=要不要让它飞一下试试。</span></li>
+          <li><span class="chip joshi">せっかく</span><a class="xref" href="concordance.html#q=せっかく" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「难得（有这个机会）」，常接「〜ので」表示因为难得，所以要做某事。</span></li>
         </ul>
       </div>
     </div>
@@ -1399,7 +1415,7 @@
         <div class="u-jp">やりたい。</div>
         <div class="u-cn"><span class="lbl">译</span>我想做！</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜たい</span><a class="xref" href="concordance.html#q=〜たい" title="这个语法点在 7 个视频中共出现 12 次 — 点击查看全部用例">7视频</a><span>动词ます形去masu+たい，表示说话人自己的愿望。</span></li>
+          <li><span class="chip katsu">〜たい</span><a class="xref" href="concordance.html#q=〜たい" title="这个语法点在 8 个视频中共出现 13 次 — 点击查看全部用例">8视频</a><span>动词ます形去masu+たい，表示说话人自己的愿望。</span></li>
         </ul>
       </div>
     </div>
@@ -1435,7 +1451,7 @@
         <div class="u-cn"><span class="lbl">译</span>好，那么接下来要请您做猫头鹰的飞行训练。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「目袋」还原为「フクロウ」（ASR误听，指同一只猫头鹰）。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">〜していただく<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜していただく" title="这个语法点在 2 个视频中共出现 3 次 — 点击查看全部用例">2视频</a><span>授受表现，「してもらう」的谦让语，说话人（主持方）请对方（嘉宾）为自己做某事，常用于请嘉宾体验活动。</span></li>
+          <li><span class="chip keigo">〜していただく<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜していただく" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a><span>授受表现，「してもらう」的谦让语，说话人（主持方）请对方（嘉宾）为自己做某事，常用于请嘉宾体验活动。</span></li>
           <li><span class="chip joshi">〜んですけれども</span><a class="xref" href="concordance.html#q=〜んですけれども" title="这个语法点在 2 个视频中共出现 4 次 — 点击查看全部用例">2视频</a><span>「のですが」的口语缩约，用于委婉引出下文说明或请求。</span></li>
         </ul>
       </div>
@@ -1461,7 +1477,7 @@
         <div class="u-cn"><span class="lbl">译</span>当您觉得和猫头鹰对上眼的时候，请短促而用力地「哔」地吹一下哨子。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「袋」还原为「フクロウ」；原字幕重复出现两次，合并为一条。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜たら<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 15 个视频中共出现 23 次 — 点击查看全部用例">15视频</a><span>条件形，「〜と思ったら」=「一觉得〜的话」，表示前项动作／状态成立后紧接后项。</span></li>
+          <li><span class="chip katsu">〜たら<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 20 个视频中共出现 33 次 — 点击查看全部用例">20视频</a><span>条件形，「〜と思ったら」=「一觉得〜的话」，表示前项动作／状态成立后紧接后项。</span></li>
           <li><span class="chip keigo">〜ていただきたいです<span class="star">★</span></span><span>「〜ていただく」+「たい」，比「〜てください」更委婉客气的请求表达，常用于主持人指导嘉宾。</span></li>
         </ul>
       </div>
@@ -1575,7 +1591,7 @@
         <div class="u-jp"><ruby>水性<rt>すいせい</rt></ruby><ruby>生物<rt>せいぶつ</rt></ruby><ruby>担当<rt>たんとう</rt></ruby>しています、<ruby>鈴木<rt>すずき</rt></ruby>と<ruby>申<rt>もう</rt></ruby>します。</div>
         <div class="u-cn"><span class="lbl">译</span>我是负责水生生物的铃木。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">〜と申します<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜と申します" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a><span>「〜と言います」的谦让语，自我介绍时使用，比「です」更正式礼貌。</span></li>
+          <li><span class="chip keigo">〜と申します<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜と申します" title="这个语法点在 6 个视频中共出现 6 次 — 点击查看全部用例">6视频</a><span>「〜と言います」的谦让语，自我介绍时使用，比「です」更正式礼貌。</span></li>
           <li><span class="chip katsu">担当しています</span><span>「〜ている」表状态持续，「担当している」＝（目前）负责着〜。</span></li>
         </ul>
       </div>
@@ -1741,7 +1757,7 @@
         <div class="u-jp">だから、なかなか<ruby>日本<rt>にほん</rt></ruby>に<ruby>入<rt>はい</rt></ruby>ってくることがない<ruby>生き物<rt>いきもの</rt></ruby>ですね</div>
         <div class="u-cn"><span class="lbl">译</span>所以是很难进到日本来的生物呢</div>
         <ul class="u-points">
-          <li><span class="chip joshi">なかなか〜ない<span class="star">★</span></span><a class="xref" href="concordance.html#q=なかなか〜ない" title="这个语法点在 5 个视频中共出现 6 次 — 点击查看全部用例">5视频</a><span>「不容易…、很难…」，「なかなか」加否定表示程度之强</span></li>
+          <li><span class="chip joshi">なかなか〜ない<span class="star">★</span></span><a class="xref" href="concordance.html#q=なかなか〜ない" title="这个语法点在 6 个视频中共出现 7 次 — 点击查看全部用例">6视频</a><span>「不容易…、很难…」，「なかなか」加否定表示程度之强</span></li>
           <li><span class="chip goi">入ってくる</span><span>复合动词「入る＋来る」，表示「进来」这一带方向性的动作</span></li>
         </ul>
       </div>
@@ -1770,8 +1786,8 @@
         <div class="u-jp">だって<ruby>規制<rt>きせい</rt></ruby>されてるんでしょ</div>
         <div class="u-cn"><span class="lbl">译</span>可是不是说受管制吗</div>
         <ul class="u-points">
-          <li><span class="chip joshi">だって<span class="star">★</span></span><a class="xref" href="concordance.html#q=だって" title="这个语法点在 9 个视频中共出现 15 次 — 点击查看全部用例">9视频</a><span>口语接续词，用来反驳或找理由，「可是…」</span></li>
-          <li><span class="chip joshi">〜んでしょ</span><a class="xref" href="concordance.html#q=〜んでしょ" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「〜のでしょう」的口语缩略，带确认语气，「不是…吗」</span></li>
+          <li><span class="chip joshi">だって<span class="star">★</span></span><a class="xref" href="concordance.html#q=だって" title="这个语法点在 12 个视频中共出现 22 次 — 点击查看全部用例">12视频</a><span>口语接续词，用来反驳或找理由，「可是…」</span></li>
+          <li><span class="chip joshi">〜んでしょ</span><a class="xref" href="concordance.html#q=〜んでしょ" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「〜のでしょう」的口语缩略，带确认语气，「不是…吗」</span></li>
         </ul>
       </div>
     </div>
@@ -1791,7 +1807,7 @@
         <div class="u-jp">え、<ruby>30万<rt>さんじゅうまん</rt></ruby>とか</div>
         <div class="u-cn"><span class="lbl">译</span>诶，30万左右吧</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 14 个视频中共出现 40 次 — 点击查看全部用例">14视频</a><span>口语中「とか」用于举例或模糊化说法，降低断言的语气，避免说得太绝对</span></li>
+          <li><span class="chip joshi">〜とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 18 个视频中共出现 45 次 — 点击查看全部用例">18视频</a><span>口语中「とか」用于举例或模糊化说法，降低断言的语气，避免说得太绝对</span></li>
         </ul>
       </div>
     </div>
@@ -1840,7 +1856,7 @@
         <div class="u-jp">すごい<ruby>貴重<rt>きちょう</rt></ruby>な<ruby>生き物<rt>いきもの</rt></ruby>になります</div>
         <div class="u-cn"><span class="lbl">译</span>是非常珍贵的生物</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜になります<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜になります" title="这个语法点在 3 个视频中共出现 5 次 — 点击查看全部用例">3视频</a><span>「です」的郑重体「になります」，介绍/说明事物时常用的敬体句尾</span></li>
+          <li><span class="chip katsu">〜になります<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜になります" title="这个语法点在 4 个视频中共出现 6 次 — 点击查看全部用例">4视频</a><span>「です」的郑重体「になります」，介绍/说明事物时常用的敬体句尾</span></li>
         </ul>
       </div>
     </div>
@@ -1935,7 +1951,7 @@
         <div class="u-jp">あ、<ruby>失礼<rt>しつれい</rt></ruby>します</div>
         <div class="u-cn"><span class="lbl">译</span>啊，打扰了</div>
         <ul class="u-points">
-          <li><span class="chip keigo">失礼します<span class="star">★</span></span><a class="xref" href="concordance.html#q=失礼します" title="这个语法点在 4 个视频中共出现 7 次 — 点击查看全部用例">4视频</a><span>郑重打招呼用语，用于进行某动作（此处为靠近动物喂食）之前的礼貌表达</span></li>
+          <li><span class="chip keigo">失礼します<span class="star">★</span></span><a class="xref" href="concordance.html#q=失礼します" title="这个语法点在 6 个视频中共出现 9 次 — 点击查看全部用例">6视频</a><span>郑重打招呼用语，用于进行某动作（此处为靠近动物喂食）之前的礼貌表达</span></li>
         </ul>
       </div>
     </div>
@@ -2068,7 +2084,7 @@
         <div class="u-jp">あ、そうなんだ</div>
         <div class="u-cn"><span class="lbl">译</span>啊，原来如此</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜んだ</span><a class="xref" href="concordance.html#q=〜んだ" title="这个语法点在 4 个视频中共出现 9 次 — 点击查看全部用例">4视频</a><span>「のだ」的口语缩略，句尾用于表示恍然大悟、说明语气</span></li>
+          <li><span class="chip joshi">〜んだ</span><a class="xref" href="concordance.html#q=〜んだ" title="这个语法点在 9 个视频中共出现 17 次 — 点击查看全部用例">9视频</a><span>「のだ」的口语缩略，句尾用于表示恍然大悟、说明语气</span></li>
         </ul>
       </div>
     </div>
@@ -2113,7 +2129,7 @@
         <div class="u-cn"><span class="lbl">译</span>好，这位是淡水魟鱼哦。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>ASR原文作「淡水泳」，结合后文「ポルカドットスティングレイ（圆点魟）」判断应为「淡水エイ」（淡水魟鱼）。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ですね</span><a class="xref" href="concordance.html#q=ですね" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a><span>終助詞「ね」で軽く確認・同意を求める説明口調。</span></li>
+          <li><span class="chip joshi">ですね</span><a class="xref" href="concordance.html#q=ですね" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>終助詞「ね」で軽く確認・同意を求める説明口調。</span></li>
         </ul>
       </div>
     </div>
@@ -2133,7 +2149,7 @@
         <div class="u-jp">え、<ruby>最近<rt>さいきん</rt></ruby>のトレンド<ruby>知<rt>し</rt></ruby>ってますか？<ruby>水玉<rt>みずたま</rt></ruby>のこと。</div>
         <div class="u-cn"><span class="lbl">译</span>诶，你知道最近的潮流吗？就是水玉图案的事。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">知ってます</span><a class="xref" href="concordance.html#q=知ってます" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「知っている」の丁寧体の口語省略形（知っています→知ってます）。状態を表すている形。</span></li>
+          <li><span class="chip katsu">知ってます</span><a class="xref" href="concordance.html#q=知ってます" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「知っている」の丁寧体の口語省略形（知っています→知ってます）。状態を表すている形。</span></li>
         </ul>
       </div>
     </div>
@@ -2143,7 +2159,7 @@
         <div class="u-jp">ドット<ruby>柄<rt>がら</rt></ruby>ね、すごい。</div>
         <div class="u-cn"><span class="lbl">译</span>圆点花纹呢，好厉害。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 11 个视频中共出现 24 次 — 点击查看全部用例">11视频</a><span>終助詞。確認・軽い感嘆を添える。</span></li>
+          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 17 个视频中共出现 34 次 — 点击查看全部用例">17视频</a><span>終助詞。確認・軽い感嘆を添える。</span></li>
         </ul>
       </div>
     </div>
@@ -2195,7 +2211,7 @@
         <div class="u-jp">この<ruby>子<rt>こ</rt></ruby>まだ<ruby>全然<rt>ぜんぜん</rt></ruby><ruby>経<rt>た</rt></ruby>ってないと<ruby>思<rt>おも</rt></ruby>います。1<ruby>年<rt>ねん</rt></ruby>も<ruby>経<rt>た</rt></ruby>ってないと<ruby>思<rt>おも</rt></ruby>います。</div>
         <div class="u-cn"><span class="lbl">译</span>这孩子应该还完全没过多久。应该连一年都还没到。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">も<span class="star">★</span></span><a class="xref" href="concordance.html#q=も" title="这个语法点在 15 个视频中共出现 33 次 — 点击查看全部用例">15视频</a><span>「1年も経ってない」の「も」は数量を強調し「〜さえ／〜すら」に近いニュアンスを添える。</span></li>
+          <li><span class="chip joshi">も<span class="star">★</span></span><a class="xref" href="concordance.html#q=も" title="这个语法点在 18 个视频中共出现 37 次 — 点击查看全部用例">18视频</a><span>「1年も経ってない」の「も」は数量を強調し「〜さえ／〜すら」に近いニュアンスを添える。</span></li>
         </ul>
       </div>
     </div>
@@ -2205,7 +2221,7 @@
         <div class="u-jp">あ、そうなんだ。じゃあ<ruby>赤<rt>あか</rt></ruby>ちゃんだ。</div>
         <div class="u-cn"><span class="lbl">译</span>啊，是这样啊。那就是宝宝了。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">んだ</span><a class="xref" href="concordance.html#q=んだ" title="这个语法点在 9 个视频中共出现 12 次 — 点击查看全部用例">9视频</a><span>説明・納得を表す語気の「のだ」の口語形。</span></li>
+          <li><span class="chip joshi">んだ</span><a class="xref" href="concordance.html#q=んだ" title="这个语法点在 11 个视频中共出现 14 次 — 点击查看全部用例">11视频</a><span>説明・納得を表す語気の「のだ」の口語形。</span></li>
         </ul>
       </div>
     </div>
@@ -2222,7 +2238,7 @@
         <div class="u-jp"><ruby>針<rt>はり</rt></ruby>とかあるんですか？</div>
         <div class="u-cn"><span class="lbl">译</span>有刺之类的东西吗？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=とか" title="这个语法点在 14 个视频中共出现 33 次 — 点击查看全部用例">14视频</a><span>例示・婉曲を表す助詞。断定を避けてやわらかく尋ねる。</span></li>
+          <li><span class="chip joshi">とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=とか" title="这个语法点在 16 个视频中共出现 36 次 — 点击查看全部用例">16视频</a><span>例示・婉曲を表す助詞。断定を避けてやわらかく尋ねる。</span></li>
         </ul>
       </div>
     </div>
@@ -2242,7 +2258,7 @@
         <div class="u-jp">え、<ruby>毒針<rt>どくばり</rt></ruby>があるんですね。</div>
         <div class="u-cn"><span class="lbl">译</span>诶，原来有毒针啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">んですね</span><a class="xref" href="concordance.html#q=んですね" title="这个语法点在 8 个视频中共出现 9 次 — 点击查看全部用例">8视频</a><span>新たに知った事実への納得・確認を表す語気。</span></li>
+          <li><span class="chip joshi">んですね</span><a class="xref" href="concordance.html#q=んですね" title="这个语法点在 9 个视频中共出现 10 次 — 点击查看全部用例">9视频</a><span>新たに知った事実への納得・確認を表す語気。</span></li>
         </ul>
       </div>
     </div>
@@ -2253,7 +2269,7 @@
         <div class="u-cn"><span class="lbl">译</span>嗯，是的。然后呢，这些孩子身上也有叫做毒针的东西。</div>
         <ul class="u-points">
           <li><span class="chip keigo">ございまして<span class="star">★</span></span><span>「あります」の丁寧・改まった表現「ございます」のて形。話を続けるために文をつなげている。</span></li>
-          <li><span class="chip joshi">にも</span><a class="xref" href="concordance.html#q=にも" title="这个语法点在 5 个视频中共出现 9 次 — 点击查看全部用例">5视频</a><span>「にも」＝〜にも／〜も、対象の範囲を追加することを表す。</span></li>
+          <li><span class="chip joshi">にも</span><a class="xref" href="concordance.html#q=にも" title="这个语法点在 6 个视频中共出现 11 次 — 点击查看全部用例">6视频</a><span>「にも」＝〜にも／〜も、対象の範囲を追加することを表す。</span></li>
         </ul>
       </div>
     </div>
@@ -2282,7 +2298,7 @@
         <div class="u-cn"><span class="lbl">译</span>（针）直挺挺地立着（？）。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>ASR原文「ピンって中」语意不明，结合前后文（说明毒针）推测为「ピンと立ってる」（直挺挺地立着），用(?)标注。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">って<span class="star">★</span></span><a class="xref" href="concordance.html#q=って" title="这个语法点在 15 个视频中共出现 58 次 — 点击查看全部用例">15视频</a><span>＝と。口語で副詞（ピン）の後に続けて状態を説明する用法。</span></li>
+          <li><span class="chip joshi">って<span class="star">★</span></span><a class="xref" href="concordance.html#q=って" title="这个语法点在 20 个视频中共出现 74 次 — 点击查看全部用例">20视频</a><span>＝と。口語で副詞（ピン）の後に続けて状態を説明する用法。</span></li>
         </ul>
       </div>
     </div>
@@ -2318,7 +2334,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>前半「刺されたら」が言い直しで2回繰り返される口語のまま残した。</div>
         <ul class="u-points">
           <li><span class="chip katsu">刺されたら<span class="star">★</span></span><span>「刺す」の受身形「刺される」＋仮定の「たら」で「もし刺されたら」という受身＋条件を表す。</span></li>
-          <li><span class="chip goi">らしい<span class="star">★</span></span><a class="xref" href="concordance.html#q=らしい" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>伝聞・推量を表す。自分の体験ではなく聞いた情報に基づく判断を示す。</span></li>
+          <li><span class="chip goi">らしい<span class="star">★</span></span><a class="xref" href="concordance.html#q=らしい" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a><span>伝聞・推量を表す。自分の体験ではなく聞いた情報に基づく判断を示す。</span></li>
         </ul>
       </div>
     </div>
@@ -2337,7 +2353,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>06:57と06:59の2つの言い直しを1つの完成した文にまとめた。</div>
         <ul class="u-points">
           <li><span class="chip joshi">たりとか<span class="star">★</span></span><a class="xref" href="concordance.html#q=たりとか" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「〜たり」＋「とか」で例示をさらに婉曲にする口語表現。</span></li>
-          <li><span class="chip goi">さすがに</span><a class="xref" href="concordance.html#q=さすがに" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「さすがに」＝さすがに／それでも、程度が高い事柄について「それは〜だ」と念を押すニュアンス。</span></li>
+          <li><span class="chip goi">さすがに</span><a class="xref" href="concordance.html#q=さすがに" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>「さすがに」＝さすがに／それでも、程度が高い事柄について「それは〜だ」と念を押すニュアンス。</span></li>
         </ul>
       </div>
     </div>
@@ -2406,7 +2422,7 @@
         <div class="u-cn"><span class="lbl">译</span>所以基本上性格温顺又很亲人，因为嘴巴刚好长在下面，所以应该能拍到牠们进食的样子。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>原文は「ので」で3つの節がゆるくつながる口語の言い回しを、意味のまとまりごとに1文に整理した。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=ので" title="这个语法点在 9 个视频中共出现 23 次 — 点击查看全部用例">9视频</a><span>理由を表す接続助詞。ここでは3回連続で使われ、口語的に理由を重ねて説明している。</span></li>
+          <li><span class="chip joshi">ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=ので" title="这个语法点在 10 个视频中共出现 24 次 — 点击查看全部用例">10视频</a><span>理由を表す接続助詞。ここでは3回連続で使われ、口語的に理由を重ねて説明している。</span></li>
           <li><span class="chip katsu">大人しくて</span><span>形容詞のて形。「大人しい」＋「人懐っこい」を並列に接続。</span></li>
           <li><span class="chip goi">〜かなと思います</span><a class="xref" href="concordance.html#q=〜かなと思います" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「かな」で軽い推量・独り言のニュアンスを添え、断定を避ける丁寧な言い方。</span></li>
         </ul>
@@ -2425,7 +2441,7 @@
         <div class="u-jp">いやー、<ruby>楽<rt>たの</rt></ruby>しみだな。</div>
         <div class="u-cn"><span class="lbl">译</span>哎呀～真令人期待啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">な</span><a class="xref" href="concordance.html#q=な" title="这个语法点在 6 个视频中共出现 9 次 — 点击查看全部用例">6视频</a><span>終助詞。感嘆や独り言のような気持ちを表す。</span></li>
+          <li><span class="chip joshi">な</span><a class="xref" href="concordance.html#q=な" title="这个语法点在 11 个视频中共出现 19 次 — 点击查看全部用例">11视频</a><span>終助詞。感嘆や独り言のような気持ちを表す。</span></li>
         </ul>
       </div>
     </div>
@@ -3047,7 +3063,7 @@
         <div class="u-jp"><ruby>何<rt>なに</rt></ruby>それ、<ruby>何<rt>なに</rt></ruby><ruby>言<rt>い</rt></ruby>われてる?</div>
         <div class="u-cn"><span class="lbl">译</span>什么啊那个？被叫做什么？</div>
         <ul class="u-points">
-          <li><span class="chip goi">何それ</span><a class="xref" href="concordance.html#q=何それ" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>惊讶反问的固定口语说法，「那是什么？／什么意思？」</span></li>
+          <li><span class="chip goi">何それ</span><a class="xref" href="concordance.html#q=何それ" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>惊讶反问的固定口语说法，「那是什么？／什么意思？」</span></li>
         </ul>
       </div>
     </div>
@@ -3169,7 +3185,7 @@
         <div class="u-jp">たくさん<ruby>紹介<rt>しょうかい</rt></ruby>していただいてありがとうございました</div>
         <div class="u-cn"><span class="lbl">译</span>谢谢您为我们介绍了这么多</div>
         <ul class="u-points">
-          <li><span class="chip keigo">〜していただく<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜していただく" title="这个语法点在 2 个视频中共出现 3 次 — 点击查看全部用例">2视频</a><span>授受表现，谦逊地表示「对方为自己做了……」，比「〜してもらう」更礼貌</span></li>
+          <li><span class="chip keigo">〜していただく<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜していただく" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a><span>授受表现，谦逊地表示「对方为自己做了……」，比「〜してもらう」更礼貌</span></li>
         </ul>
       </div>
     </div>
@@ -3860,6 +3876,24 @@
       }
       return out;
     }
+/*<<page-key>>*/
+    // ---- identity PREFIX: the <key> in <key>#<mmss>#<n>, derived from #clip's attributes.
+    // DUPLICATED VERBATIM into favorites.js; test_page_tools.mjs asserts the two agree on a
+    // shared table. It lives in the pure core because the two DOM copies DID diverge and shipped
+    // that way: favorites read youtube→video→episode and page_tools read youtube→video→bilibili,
+    // so on a Bilibili page favorites keyed every card on the EMPTY STRING while page_tools keyed
+    // on the bvid — one card, two keyspaces, and every id-less page colliding with every other.
+    // THE ORDER IS FROZEN (ids derived from it are permanent). Appending is safe; reordering is not.
+    // `_p<N>` for N>1 because one bvid can be a whole COLLECTION: all seven parts of BV1p4MD6KEqW
+    // are separate episodes running 0–23:4x, so without the part they would share nearly every id.
+    // Part 1 stays BARE so the pages already published under the plain bvid keep theirs.
+    function pageKey(a){
+      a = a || {};
+      var y = a.youtube || a.video || a.episode; if (y) return y;
+      if (a.bilibili) return (a.page && String(a.page) !== '1') ? a.bilibili + '_p' + a.page : a.bilibili;
+      var m = String(a.src || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+    }
+    /*<</page-key>>*/
     // ---- furigana stripping (for the Anki FRONT: reading must not give the answer)
     function stripFuri(html){
       return String(html == null ? '' : html)
@@ -4028,7 +4062,7 @@
       if (s.pending > 0) return 'wait';
       return 'ok';
     }
-    return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds,
+    return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds, pageKey: pageKey,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
              migrate: migrate, serialize: serialize, applyOps: applyOps,
              makeSync: makeSync, makeSyncEngine: makeSyncEngine,
@@ -4177,12 +4211,17 @@
   // ---------- capture UI (study pages only: where .u cards exist) ----------
   var cards = [].slice.call(document.querySelectorAll('.u'));
   var IDS = [], filterBtn = null, favEmpty = null;
+  // The chain itself is P.pageKey (pure core, duplicated verbatim from page_tools.js). This wrapper
+  // is ONLY the DOM read — keep it that way: the two modules diverged precisely because each owned
+  // its own copy of the ordering.
   function pageYt(){
     var el = document.getElementById('clip'); if (!el) return '';
-    // data-episode-id keys favourites on an AUDIO (podcast) page — its stable per-episode id, the
-    // <key> in <key>#<mmss>#<n>. Additive: video pages carry data-youtube-id and never reach it.
-    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id') || el.getAttribute('data-episode-id'); if (y) return y;
-    var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+    return P.pageKey({ youtube:  el.getAttribute('data-youtube-id'),
+                       video:    el.getAttribute('data-video-id'),
+                       episode:  el.getAttribute('data-episode-id'),
+                       bilibili: el.getAttribute('data-bilibili-id'),
+                       page:     el.getAttribute('data-bilibili-page'),
+                       src:      el.getAttribute('src') });
   }
   function cnText(card){
     var el = card.querySelector('.u-cn'); if (!el) return '';
@@ -4806,6 +4845,24 @@
       }
       return out;
     }
+    /*<<page-key>>*/
+    // ---- identity PREFIX: the <key> in <key>#<mmss>#<n>, derived from #clip's attributes.
+    // DUPLICATED VERBATIM into favorites.js; test_page_tools.mjs asserts the two agree on a
+    // shared table. It lives in the pure core because the two DOM copies DID diverge and shipped
+    // that way: favorites read youtube→video→episode and page_tools read youtube→video→bilibili,
+    // so on a Bilibili page favorites keyed every card on the EMPTY STRING while page_tools keyed
+    // on the bvid — one card, two keyspaces, and every id-less page colliding with every other.
+    // THE ORDER IS FROZEN (ids derived from it are permanent). Appending is safe; reordering is not.
+    // `_p<N>` for N>1 because one bvid can be a whole COLLECTION: all seven parts of BV1p4MD6KEqW
+    // are separate episodes running 0–23:4x, so without the part they would share nearly every id.
+    // Part 1 stays BARE so the pages already published under the plain bvid keep theirs.
+    function pageKey(a){
+      a = a || {};
+      var y = a.youtube || a.video || a.episode; if (y) return y;
+      if (a.bilibili) return (a.page && String(a.page) !== '1') ? a.bilibili + '_p' + a.page : a.bilibili;
+      var m = String(a.src || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+    }
+    /*<</page-key>>*/
     // parse #s=<encoded id> → decoded id, or null
     function parseHash(hash){
       var m = String(hash || '').match(/[#&]s=([^&]+)/);
@@ -4857,7 +4914,7 @@
     }
     function telopClass(hidden){ return hidden ? 'no-telop' : ''; }
 
-    return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId,
+    return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
              matchSentence: matchSentence, cardText: cardText,
              TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
@@ -4868,16 +4925,17 @@
   var cards = [].slice.call(document.querySelectorAll('.u'));
   if (!cards.length) return;
 
+  // The chain itself is P.pageKey (pure core, duplicated verbatim in favorites.js). This wrapper is
+  // ONLY the DOM read — keep it that way: the two modules diverged precisely because each owned its
+  // own copy of the ordering.
   function pageYt(){
     var el = document.getElementById('clip'); if (!el) return '';
-    // data-bilibili-id comes LAST and must stay last: favourite ids are `<yt>#<mmss>#<n>` and are
-    // FROZEN, so this OR order is part of the id. Appending is safe (every existing page matches an
-    // earlier attribute, so no shipped id moves); reordering would orphan every saved favourite.
-    // Without it a Bilibili-only page has an EMPTY prefix — ids like `#12:34#1`, which collide with
-    // any other id-less page and key nothing in the index badge or the search deep-links.
-    var y = el.getAttribute('data-youtube-id') || el.getAttribute('data-video-id')
-            || el.getAttribute('data-bilibili-id'); if (y) return y;
-    var m = (el.getAttribute('src') || '').match(/embed\/([\w-]+)/); return m ? m[1] : '';
+    return P.pageKey({ youtube:  el.getAttribute('data-youtube-id'),
+                       video:    el.getAttribute('data-video-id'),
+                       episode:  el.getAttribute('data-episode-id'),
+                       bilibili: el.getAttribute('data-bilibili-id'),
+                       page:     el.getAttribute('data-bilibili-page'),
+                       src:      el.getAttribute('src') });
   }
   var YT = pageYt();
   var IDS = P.assignIds(YT, cards.map(function(c){ var t = c.querySelector('.ts'); return t ? t.textContent : ''; }));
