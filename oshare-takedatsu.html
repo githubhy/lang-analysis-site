@@ -1314,6 +1314,11 @@
   // so the part number is as load-bearing as the id. Defaulting it silently to 1 would point every
   // episode page at episode 1 and still look like it worked.
   var bpage     = video ? (video.getAttribute('data-bilibili-page') || '1') : '1';
+  // A part is not always one episode either: this repo's drama source is all ten episodes
+  // concatenated into a single 7h52m part, so `p` cannot separate them. This is where the
+  // page's own t=0 sits inside that part; every seek is expressed in PAGE time and shifted
+  // into PART time here, in one place, so nothing upstream has to know.
+  var boffset   = video ? (parseInt(video.getAttribute('data-bilibili-offset'), 10) || 0) : 0;
   var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 
   var transport = null;   // { seek(sec) }  — set once local/youtube is chosen
@@ -1697,7 +1702,7 @@
     // scrolling comment track sits exactly on top of the subtitle.
     var BASE = 'https://player.bilibili.com/player.html?bvid=' + encodeURIComponent(bvid) +
                '&p=' + encodeURIComponent(bpage) + '&danmaku=0&hideCoverInfo=1';
-    frame.src = BASE + '&autoplay=0';
+    frame.src = BASE + (boffset ? '&t=' + boffset : '') + '&autoplay=0';
     if (video && video.parentNode) video.parentNode.replaceChild(frame, video);
 
     // A seek RELOADS the player. `last` is the commanded position, not an observed one — it is
@@ -1707,7 +1712,7 @@
       seek: function(sec){
         autoSetMin(false);
         last = Math.max(0, Math.floor(sec));
-        frame.src = BASE + '&t=' + last + '&autoplay=1';
+        frame.src = BASE + '&t=' + (last + boffset) + '&autoplay=1';
       },
       getTime:  function(){ return last; },
       setRate:  function(){},                        // no API
