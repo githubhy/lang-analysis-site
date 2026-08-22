@@ -4556,8 +4556,8 @@
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
     // ---- v2 map-state helpers (one map per namespace) ----
-    var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
-    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {}, vocab: {}, activity: {} }; }
+    var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'vsrs', 'activity'];
+    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {}, vocab: {}, vsrs: {}, activity: {} }; }
     function cloneState(state){
       state = state || {};
       var out = emptyState();
@@ -4572,13 +4572,15 @@
     function migrate(parsed){
       parsed = parsed || {};
       return { items: parsed.items || {}, srs: parsed.srs || {}, notes: parsed.notes || {},
-               progress: parsed.progress || {}, vocab: parsed.vocab || {}, activity: parsed.activity || {} };
+               progress: parsed.progress || {}, vocab: parsed.vocab || {}, vsrs: parsed.vsrs || {},
+               activity: parsed.activity || {} };
     }
     // v2 writer: ALWAYS serialize every namespace map under {v:2, …}.
     function serialize(state){
       state = state || {};
       return { v: 2, items: state.items || {}, srs: state.srs || {}, notes: state.notes || {},
-               progress: state.progress || {}, vocab: state.vocab || {}, activity: state.activity || {} };
+               progress: state.progress || {}, vocab: state.vocab || {}, vsrs: state.vsrs || {},
+               activity: state.activity || {} };
     }
     // normalize a legacy favorite op into a v2 namespaced op.
     function normalizeOp(o){
@@ -4697,7 +4699,22 @@
       if (s.pending > 0) return 'wait';
       return 'ok';
     }
+    // ---- canonical term text. ONE definition, TWO consumers that must differ on one point:
+    // srs.js's clozeCore strips only, because its output has to stay a VERBATIM substring of the
+    // sentence surface; vocab.js's termId additionally NFKC-folds, because 第４段階 and 第4段階 are
+    // one card but are not the same span of text. Folding inside clozeCore would silently shrink
+    // clozePick's coverage (第４段階→第4段階, （笑）→(笑), １つ→1つ) with no error anywhere.
+    // tools/test_vocab.mjs pins both the agreement and the divergence.
+    function stripPlaceholders(t){
+      return String(t == null ? '' : t).replace(/^★\s*/, '')
+        .replace(/^[〜～~…\/\s]+/, '').replace(/[〜～~…\/\s]+$/, '').trim();
+    }
+    function normTerm(t){
+      var s = stripPlaceholders(t);
+      return s.normalize ? s.normalize('NFKC') : s;
+    }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds, pageKey: pageKey,
+             stripPlaceholders: stripPlaceholders, normTerm: normTerm,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
              migrate: migrate, serialize: serialize, applyOps: applyOps,
              makeSync: makeSync, makeSyncEngine: makeSyncEngine,
@@ -4711,15 +4728,17 @@
   var P = FAV_PURE();
 
   var K = { store: 'langfav:v1', srs: 'langfav:srs', notes: 'langfav:notes',
-            progress: 'langfav:progress', vocab: 'langfav:vocab', activity: 'langfav:activity',
+            progress: 'langfav:progress', vocab: 'langfav:vocab', vsrs: 'langfav:vsrs',
+            activity: 'langfav:activity',
             ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
-  var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
+  var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'vsrs', 'activity'];
   function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
   function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 
   var state = { items: readJSON(K.store, {}), srs: readJSON(K.srs, {}),
                 notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}),
-                vocab: readJSON(K.vocab, {}), activity: readJSON(K.activity, {}) };
+                vocab: readJSON(K.vocab, {}), vsrs: readJSON(K.vsrs, {}),
+                activity: readJSON(K.activity, {}) };
   var favs = state.items;                // alias kept for the capture UI
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
   var changeHooks = [];
@@ -4728,7 +4747,8 @@
   function persist(){
     writeJSON(K.store, state.items); writeJSON(K.srs, state.srs);
     writeJSON(K.notes, state.notes); writeJSON(K.progress, state.progress);
-    writeJSON(K.vocab, state.vocab); writeJSON(K.activity, state.activity);
+    writeJSON(K.vocab, state.vocab); writeJSON(K.vsrs, state.vsrs);
+    writeJSON(K.activity, state.activity);
   }
   function setState(next){ state = next; favs = state.items; }
   function queueOp(op){
@@ -4752,7 +4772,7 @@
   function todayStr(){ var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
   function stampToday(){ var s = todayStr(); setKey('activity', s, (getNS('activity')[s] || 0) + 1); }
-  function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
+  function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; if (!state[ns]) state[ns] = {}; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
   function delKey(ns, key, opts){ if (NS.indexOf(ns) < 0) return; if (state[ns][key] == null) return; delete state[ns][key]; queueOp({ ns: ns, op: 'del', key: key }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
 
   // ---------- sync (opt-in): localStorage cache ⇄ private Gist (source of truth) ----------
@@ -6345,26 +6365,119 @@
    ========================================================================== */
 (function(){
   /*<<vocab-pure>>*/
-  function VOCAB_PURE(){
-    // Stable id from the term text — deduped globally (one card per unique term).
-    function termId(term){ return 'v:' + String(term == null ? '' : term).replace(/^★\s*/, '').trim(); }
-    // Vocab ids with .srs.due <= now, ascending by due, ties in insertion order.
-    function vdueQueue(vocab, now){
-      vocab = vocab || {}; var arr = [];
-      for (var id in vocab) if (Object.prototype.hasOwnProperty.call(vocab, id)){
-        var c = vocab[id], s = c && c.srs;
-        if (s && s.due <= now) arr.push({ id: id, due: s.due, i: arr.length });
+  function VOCAB_PURE(normTerm){
+    // Identity is the NORMALISED term, so one grammar point is ONE card: 「よね」「〜よね」「よね～」
+    // were three separate schedules, none of which ever reached a long interval. 583 terms across
+    // the corpus were duplicated this way. normTerm is injected (favorites.js's FAV_PURE) because
+    // srs.js — where the same strip rule lives as clozeCore — is NOT loaded on study pages, and
+    // termId runs there on every chip tap.
+    function termId(term){
+      var raw = String(term == null ? '' : term).trim();
+      var n = normTerm ? normTerm(term) : raw;
+      // a chip of only placeholders (「〜」) must not collapse onto the single key "v:"
+      return 'v:' + (n || raw);
+    }
+    // Typed vsrs keys (v:<term>#rec|prod) whose card is due, ascending by due, ties in insertion
+    // order. Reads the card DIRECTLY: a vsrs value IS a card, where the old inline shape nested it
+    // under .srs on the vocab record.
+    function vdueQueue(vsrs, now){
+      vsrs = vsrs || {}; var arr = [];
+      for (var id in vsrs) if (Object.prototype.hasOwnProperty.call(vsrs, id)){
+        var c = vsrs[id];
+        if (c && c.due <= now) arr.push({ id: id, due: c.due, i: arr.length });
       }
       arr.sort(function(a, b){ return (a.due - b.due) || (a.i - b.i); });
       return arr.map(function(x){ return x.id; });
     }
-    return { termId: termId, vdueQueue: vdueQueue };
+    // ---- card types. Two SCHEDULED types; 'pick' (multiple choice) is deliberately NOT one:
+    // it needs >=3 same-cat siblings, which is a property of the whole DECK, not of the record.
+    // Scheduling it would break this function's purity and churn cards whenever an unrelated term
+    // is saved. It is a render variant of 'rec' instead — see pickDistractors.
+    var VTYPES = ['rec', 'prod'];
+    function vocabCardTypes(){ return VTYPES.slice(); }
+    function newV(now){ return { due: now, ivl: 0, ease: 2.5, reps: 0, lapses: 0 }; }
+    // PESSIMISTIC merge: you do not get credit for "knowing" 〜よね while you keep failing よね, so
+    // the soonest due and the lowest ease win. A merge cannot manufacture an interval never earned.
+    function mergeCard(a, b){
+      if (!a) return b; if (!b) return a;
+      return { due: Math.min(a.due, b.due), ivl: Math.min(a.ivl, b.ivl),
+               ease: Math.min(a.ease, b.ease),
+               reps: (a.reps || 0) + (b.reps || 0), lapses: (a.lapses || 0) + (b.lapses || 0) };
+    }
+    function shallowSame(a, b){
+      if (a === b) return true;
+      if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+      var k; for (k in a) if (has(a, k) && a[k] !== b[k]) return false;
+      for (k in b) if (has(b, k) && a[k] !== b[k]) return false;
+      return true;
+    }
+    function has(o, k){ return Object.prototype.hasOwnProperty.call(o, k); }
+    // (vocab, vsrs, now) -> ops. Computes the DESIRED state and diffs it against the input, which
+    // is why idempotence is structural rather than argued: a second run diffs equal state to {}.
+    //   M1  an inline record.srs is lifted to vsrs[<id>#rec]
+    //   M2  a record whose termId(term) differs from its key is re-keyed, merging any collision
+    function vocabReconcile(vocab, vsrs, now){
+      vocab = vocab || {}; vsrs = vsrs || {};
+      var wantVocab = {}, wantVsrs = {}, k, i, t, ty;
+      for (k in vocab) if (has(vocab, k)){
+        var rec = vocab[k] || {};
+        var id = termId(rec.term != null ? rec.term : String(k).replace(/^v:/, ''));
+        if (!wantVocab[id]){                       // first writer wins the gloss/source, as before
+          var copy = {};
+          for (i in rec) if (has(rec, i) && i !== 'srs') copy[i] = rec[i];
+          wantVocab[id] = copy;
+        }
+        for (t = 0; t < VTYPES.length; t++){
+          ty = VTYPES[t];
+          var src = (ty === 'rec' && rec.srs) ? rec.srs : vsrs[k + '#' + ty];
+          if (src) wantVsrs[id + '#' + ty] = mergeCard(wantVsrs[id + '#' + ty], src);
+        }
+      }
+      for (k in wantVocab) if (has(wantVocab, k)){
+        for (t = 0; t < VTYPES.length; t++){
+          var key = k + '#' + VTYPES[t];
+          if (!wantVsrs[key]) wantVsrs[key] = newV(now);
+        }
+      }
+      var setVocab = {}, delVocab = [], setVsrs = {}, delVsrs = [];
+      for (k in wantVocab) if (has(wantVocab, k) && !shallowSame(vocab[k], wantVocab[k])) setVocab[k] = wantVocab[k];
+      for (k in vocab)     if (has(vocab, k)     && !has(wantVocab, k)) delVocab.push(k);
+      for (k in wantVsrs)  if (has(wantVsrs, k)  && !shallowSame(vsrs[k], wantVsrs[k])) setVsrs[k] = wantVsrs[k];
+      for (k in vsrs)      if (has(vsrs, k)      && !has(wantVsrs, k)) delVsrs.push(k);
+      return { setVocab: setVocab, delVocab: delVocab, setVsrs: setVsrs, delVsrs: delVsrs };
+    }
+    // Distractors for the 'pick' RENDER variant of a rec card: other saved terms of the same cat.
+    // Deterministic in (id, day) — no Math.random, so the pure core stays reproducible and a card
+    // does not reshuffle if the session is reopened. Returns [] below 3 siblings, which is the
+    // caller's signal to fall back to a plain recall card.
+    function pickDistractors(id, vocab, day){
+      vocab = vocab || {};
+      var cat = (vocab[id] || {}).cat, pool = [], k;
+      for (k in vocab) if (has(vocab, k)){
+        if (k !== id && vocab[k] && vocab[k].cat === cat && vocab[k].term) pool.push(vocab[k].term);
+      }
+      if (pool.length < 3) return [];
+      pool.sort();
+      var h = 0, seed = String(id) + '|' + String(day);
+      for (var i = 0; i < seed.length; i++) h = ((h * 31) + seed.charCodeAt(i)) >>> 0;
+      var out = [], used = {};
+      while (out.length < 3){
+        var j = h % pool.length;
+        h = ((h * 1103515245) + 12345) >>> 0;
+        if (used[j]) continue;
+        used[j] = 1; out.push(pool[j]);
+      }
+      return out;
+    }
+    return { termId: termId, vdueQueue: vdueQueue, vocabCardTypes: vocabCardTypes,
+             vocabReconcile: vocabReconcile, mergeCard: mergeCard,
+             pickDistractors: pickDistractors };
   }
   /*<</vocab-pure>>*/
 
   var LF = window.LangFav;
   if (!LF) return;                                     // online-only gate (no LangFav on file://)
-  var VP = VOCAB_PURE();
+  var VP = VOCAB_PURE(LF.pure && LF.pure.normTerm);
   window.LangVocab = VP;                               // expose the vocab core to the 今日学习 home (due count) — before the page-specific gates
   function nowSec(){ return Math.floor(Date.now() / 1000); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
@@ -6387,6 +6500,10 @@
         if (cur[id]){ LF.delKey('vocab', id); chip.classList.remove('saved'); return; }
         var li = chip.closest('li'), gloss = (li && li.children[1]) ? (li.children[1].textContent || '').trim() : '';
         var row = chip.closest('.u'), ts = row ? row.querySelector('.ts') : null;
+        // The inline `srs` is written on purpose even though schedules now live in `vsrs`: a study
+        // page has no reconcile (that runs on favorites.html), so this keeps a freshly saved term
+        // scheduled immediately, and M1 lifts it on the next review-page load. It also means the
+        // migration path is exercised continuously rather than being a one-shot that can rot.
         LF.setKey('vocab', id, { term: term, cat: catOf(chip), gloss: gloss,
           page: (location.pathname.split('/').pop() || ''), mmss: ts ? (ts.textContent || '').trim() : '',
           srs: newSrs() });
@@ -6396,6 +6513,19 @@
       chip.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } });
     });
   }
+
+  // Lift inline schedules into `vsrs` and fold un-normalised keys together, then seed any missing
+  // type. Idempotent, so running it on every load is free after the first.
+  function applyReconcile(){
+    var r = VP.vocabReconcile(LF.getNS('vocab'), LF.getNS('vsrs'), nowSec()), k;
+    LF.batch(function(){
+      for (k in r.setVocab) if (Object.prototype.hasOwnProperty.call(r.setVocab, k)) LF.setKey('vocab', k, r.setVocab[k]);
+      for (k in r.setVsrs)  if (Object.prototype.hasOwnProperty.call(r.setVsrs, k))  LF.setKey('vsrs',  k, r.setVsrs[k]);
+      r.delVocab.forEach(function(x){ LF.delKey('vocab', x); });
+      r.delVsrs.forEach(function(x){ LF.delKey('vsrs',  x); });
+    });
+  }
+  applyReconcile();
 
   // ---------- REVIEW PAGE (favorites.html): 词汇 deck + review ----------
   var listEl = document.getElementById('favList');
@@ -6408,7 +6538,9 @@
   (document.querySelector('main') || document.body).appendChild(section);
   var vList = section.querySelector('#vocabList'), vStart = section.querySelector('#vocabStart');
 
-  function vdue(){ return VP.vdueQueue(LF.getNS('vocab'), nowSec()); }
+  function vtypeOf(k){ var h = String(k).lastIndexOf('#'); return h < 0 ? '' : k.slice(h + 1); }
+  function vbaseOf(k){ var h = String(k).lastIndexOf('#'); return h < 0 ? k : k.slice(0, h); }
+  function vdue(){ return VP.vdueQueue(LF.getNS('vsrs'), nowSec()); }
   function renderList(){
     var vocab = LF.getNS('vocab'), ids = Object.keys(vocab), due = vdue().length;
     section.hidden = ids.length === 0;
@@ -6421,7 +6553,10 @@
         '<button class="vdel" type="button" data-id="' + esc(id) + '" aria-label="移除">✕</button></li>';
     }).join('');
     [].slice.call(vList.querySelectorAll('.vdel')).forEach(function(b){
-      b.addEventListener('click', function(){ LF.delKey('vocab', b.getAttribute('data-id')); });
+      b.addEventListener('click', function(){
+        LF.delKey('vocab', b.getAttribute('data-id'));
+        applyReconcile();                               // drop the now-orphaned vsrs cards too
+      });
     });
   }
   LF.onChange(renderList); renderList();
@@ -6440,17 +6575,38 @@
 
   function show(){
     if (pos >= snap.length){ ov.hidden = true; document.body.classList.remove('srs-open'); renderList(); return; }
-    var id = snap[pos], r = LF.getNS('vocab')[id];
+    var key = snap[pos], type = vtypeOf(key), vid = vbaseOf(key), r = LF.getNS('vocab')[vid];
     if (!r){ pos++; return show(); }
     vProg.textContent = (pos + 1) + ' / ' + snap.length;
-    vFront.innerHTML = '<span class="srs-badge srs-b-cloze">词汇</span><div class="vterm">' + esc(r.term) + '</div>';
+    if (type === 'prod'){                                // 产出: gloss -> produce the term
+      vFront.innerHTML = '<span class="srs-badge srs-b-prod">产出</span>' +
+        '<div class="srs-cn">' + esc(r.gloss || '（无释义）') + '</div>' +
+        '<div class="srs-prompt">说出这个词条</div>';
+    } else {
+      var ds = VP.pickDistractors(vid, LF.getNS('vocab'), Math.floor(nowSec() / 86400));
+      if (ds.length){                                    // 识别: discriminate among same-cat siblings
+        var opts = ds.concat([r.term]).sort();
+        vFront.innerHTML = '<span class="srs-badge srs-b-pick">识别</span>' +
+          '<div class="srs-cn">' + esc(r.gloss || '（无释义）') + '</div>' +
+          '<ul class="vpick">' + opts.map(function(o){
+            return '<li><span class="chip ' + esc(r.cat || 'goi') + '">' + esc(o) + '</span></li>';
+          }).join('') + '</ul>';
+      } else {                                           // 词汇: the original recall card
+        vFront.innerHTML = '<span class="srs-badge srs-b-cloze">词汇</span><div class="vterm">' + esc(r.term) + '</div>';
+      }
+    }
     vFront.hidden = false; vBack.hidden = true; vBack.innerHTML = '';
     vCtl.innerHTML = '<button class="btn" id="vReveal" type="button">显示答案</button>';
     ov.querySelector('#vReveal').addEventListener('click', reveal);
   }
   function reveal(){
-    var id = snap[pos], r = LF.getNS('vocab')[id]; if (!r){ pos++; return show(); }
-    vBack.innerHTML = '<div class="srs-cn">' + esc(r.gloss || '（无释义）') + '</div>' +
+    var key = snap[pos], type = vtypeOf(key), vid = vbaseOf(key), r = LF.getNS('vocab')[vid];
+    if (!r){ pos++; return show(); }
+    // 产出 asked for the term, so the term IS the answer; the other two asked for the meaning.
+    var answer = (type === 'prod')
+      ? '<div class="vterm">' + esc(r.term) + '</div>'
+      : '<div class="srs-cn">' + esc(r.gloss || '（无释义）') + '</div>';
+    vBack.innerHTML = answer +
       (r.page ? '<a class="vsrc" href="' + esc(r.page) + '">' + esc(r.mmss || '↗ 原句') + '</a>' : '');
     vBack.hidden = false;
     vCtl.innerHTML = '<button class="btn srs-g" data-g="again">重来</button><button class="btn srs-g" data-g="hard">困难</button>' +
@@ -6460,10 +6616,11 @@
     });
   }
   function grade(g){
-    var id = snap[pos], vocab = LF.getNS('vocab'), r = vocab[id];
-    if (r && window.LangSRS){ r.srs = window.LangSRS.schedule(r.srs || newSrs(), g, nowSec()); LF.setKey('vocab', id, r); }
-    if (r) LF.stampToday();                             // log today's activity (streak)
-    if (g === 'again' && r) snap.push(id);
+    var key = snap[pos], card = LF.getNS('vsrs')[key];
+    // The schedule lives in `vsrs` now, keyed per TYPE — grading 产出 must not move 识别.
+    if (card && window.LangSRS) LF.setKey('vsrs', key, window.LangSRS.schedule(card, g, nowSec()));
+    if (card) LF.stampToday();                          // log today's activity (streak)
+    if (g === 'again' && card) snap.push(key);
     pos++; show();
   }
   vStart.addEventListener('click', function(){ snap = vdue(); pos = 0; if (!snap.length) return; ov.hidden = false; document.body.classList.add('srs-open'); show(); });

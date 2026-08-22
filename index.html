@@ -914,8 +914,8 @@
       return { front: front, back: sanitizeField(parts.join('\n')) };
     }
     // ---- v2 map-state helpers (one map per namespace) ----
-    var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
-    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {}, vocab: {}, activity: {} }; }
+    var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'vsrs', 'activity'];
+    function emptyState(){ return { items: {}, srs: {}, notes: {}, progress: {}, vocab: {}, vsrs: {}, activity: {} }; }
     function cloneState(state){
       state = state || {};
       var out = emptyState();
@@ -930,13 +930,15 @@
     function migrate(parsed){
       parsed = parsed || {};
       return { items: parsed.items || {}, srs: parsed.srs || {}, notes: parsed.notes || {},
-               progress: parsed.progress || {}, vocab: parsed.vocab || {}, activity: parsed.activity || {} };
+               progress: parsed.progress || {}, vocab: parsed.vocab || {}, vsrs: parsed.vsrs || {},
+               activity: parsed.activity || {} };
     }
     // v2 writer: ALWAYS serialize every namespace map under {v:2, …}.
     function serialize(state){
       state = state || {};
       return { v: 2, items: state.items || {}, srs: state.srs || {}, notes: state.notes || {},
-               progress: state.progress || {}, vocab: state.vocab || {}, activity: state.activity || {} };
+               progress: state.progress || {}, vocab: state.vocab || {}, vsrs: state.vsrs || {},
+               activity: state.activity || {} };
     }
     // normalize a legacy favorite op into a v2 namespaced op.
     function normalizeOp(o){
@@ -1055,7 +1057,22 @@
       if (s.pending > 0) return 'wait';
       return 'ok';
     }
+    // ---- canonical term text. ONE definition, TWO consumers that must differ on one point:
+    // srs.js's clozeCore strips only, because its output has to stay a VERBATIM substring of the
+    // sentence surface; vocab.js's termId additionally NFKC-folds, because 第４段階 and 第4段階 are
+    // one card but are not the same span of text. Folding inside clozeCore would silently shrink
+    // clozePick's coverage (第４段階→第4段階, （笑）→(笑), １つ→1つ) with no error anywhere.
+    // tools/test_vocab.mjs pins both the agreement and the divergence.
+    function stripPlaceholders(t){
+      return String(t == null ? '' : t).replace(/^★\s*/, '')
+        .replace(/^[〜～~…\/\s]+/, '').replace(/[〜～~…\/\s]+$/, '').trim();
+    }
+    function normTerm(t){
+      var s = stripPlaceholders(t);
+      return s.normalize ? s.normalize('NFKC') : s;
+    }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds, pageKey: pageKey,
+             stripPlaceholders: stripPlaceholders, normTerm: normTerm,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
              migrate: migrate, serialize: serialize, applyOps: applyOps,
              makeSync: makeSync, makeSyncEngine: makeSyncEngine,
@@ -1069,15 +1086,17 @@
   var P = FAV_PURE();
 
   var K = { store: 'langfav:v1', srs: 'langfav:srs', notes: 'langfav:notes',
-            progress: 'langfav:progress', vocab: 'langfav:vocab', activity: 'langfav:activity',
+            progress: 'langfav:progress', vocab: 'langfav:vocab', vsrs: 'langfav:vsrs',
+            activity: 'langfav:activity',
             ops: 'langfav:ops', tok: 'langfav:tok', gid: 'langfav:gid' };
-  var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'activity'];
+  var NS = ['items', 'srs', 'notes', 'progress', 'vocab', 'vsrs', 'activity'];
   function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
   function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 
   var state = { items: readJSON(K.store, {}), srs: readJSON(K.srs, {}),
                 notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}),
-                vocab: readJSON(K.vocab, {}), activity: readJSON(K.activity, {}) };
+                vocab: readJSON(K.vocab, {}), vsrs: readJSON(K.vsrs, {}),
+                activity: readJSON(K.activity, {}) };
   var favs = state.items;                // alias kept for the capture UI
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
   var changeHooks = [];
@@ -1086,7 +1105,8 @@
   function persist(){
     writeJSON(K.store, state.items); writeJSON(K.srs, state.srs);
     writeJSON(K.notes, state.notes); writeJSON(K.progress, state.progress);
-    writeJSON(K.vocab, state.vocab); writeJSON(K.activity, state.activity);
+    writeJSON(K.vocab, state.vocab); writeJSON(K.vsrs, state.vsrs);
+    writeJSON(K.activity, state.activity);
   }
   function setState(next){ state = next; favs = state.items; }
   function queueOp(op){
@@ -1110,7 +1130,7 @@
   function todayStr(){ var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
   function stampToday(){ var s = todayStr(); setKey('activity', s, (getNS('activity')[s] || 0) + 1); }
-  function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
+  function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; if (!state[ns]) state[ns] = {}; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
   function delKey(ns, key, opts){ if (NS.indexOf(ns) < 0) return; if (state[ns][key] == null) return; delete state[ns][key]; queueOp({ ns: ns, op: 'del', key: key }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
 
   // ---------- sync (opt-in): localStorage cache ⇄ private Gist (source of truth) ----------
