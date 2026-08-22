@@ -7915,8 +7915,18 @@
     // one card but are not the same span of text. Folding inside clozeCore would silently shrink
     // clozePick's coverage (第４段階→第4段階, （笑）→(笑), １つ→1つ) with no error anywhere.
     // tools/test_vocab.mjs pins both the agreement and the divergence.
+    // ★ is the 重点 MARKER, never part of the term — and build_page puts it INSIDE the chip span
+    // and AFTER the text, as a nested star span, so a leading-anchored strip caught 1 of 5,977
+    // starred chips across the 45 built pages. (Do NOT paste the literal chip markup into a
+    // comment here: propagate.py's _CHIP_RE rewrites that shape ANYWHERE in the page and would
+    // splice an xref <a> into this script. Its uniqueness assert catches it, loudly.) Measured
+    // fallout: 0 of those 5,977 were a verbatim substring of their own sentence, so 重点 lines —
+    // the ones an analyst flagged as most important — were the LEAST likely to get a cloze card
+    // (43.1% vs 61.4% overall). Stripping the star anywhere takes 重点 to 77.0%. The marker of
+    // importance was the cause of the degradation. Strip it everywhere the term is read.
+    function stripStar(t){ return String(t == null ? '' : t).replace(/★/g, '').trim(); }
     function stripPlaceholders(t){
-      return String(t == null ? '' : t).replace(/^★\s*/, '')
+      return stripStar(t)
         .replace(/^[〜～~…\/\s]+/, '').replace(/[〜～~…\/\s]+$/, '').trim();
     }
     function normTerm(t){
@@ -7924,7 +7934,7 @@
       return s.normalize ? s.normalize('NFKC') : s;
     }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds, pageKey: pageKey,
-             stripPlaceholders: stripPlaceholders, normTerm: normTerm,
+             stripStar: stripStar, stripPlaceholders: stripPlaceholders, normTerm: normTerm,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
              migrate: migrate, serialize: serialize, applyOps: applyOps,
              makeSync: makeSync, makeSyncEngine: makeSyncEngine,
@@ -8097,7 +8107,7 @@
     return [].slice.call(card.querySelectorAll('.u-points li')).map(function(li){
       var chip = li.querySelector('.chip');
       var cat = chip ? ([].slice.call(chip.classList).filter(function(x){ return x !== 'chip' && x !== 'star'; })[0] || '') : '';
-      return { cat: cat, term: chip ? chip.textContent.trim() : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
+      return { cat: cat, term: chip ? P.stripStar(chip.textContent) : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
     });
   }
   function recordFor(card, id){
@@ -9575,7 +9585,10 @@
    ========================================================================== */
 (function(){
   /*<<vocab-pure>>*/
-  function VOCAB_PURE(normTerm){
+  function VOCAB_PURE(normTerm, stripStar){
+    // Both deps come from favorites.js's FAV_PURE (the only asset loaded on BOTH the study
+    // page and favorites.html). The fallbacks keep the core standalone-testable.
+    function stripStarOf(t){ return stripStar ? stripStar(t) : String(t == null ? '' : t).replace(/★/g, '').trim(); }
     // Identity is the NORMALISED term, so one grammar point is ONE card: 「よね」「〜よね」「よね～」
     // were three separate schedules, none of which ever reached a long interval. 583 terms across
     // the corpus were duplicated this way. normTerm is injected (favorites.js's FAV_PURE) because
@@ -9635,6 +9648,11 @@
         if (!wantVocab[id]){                       // first writer wins the gloss/source, as before
           var copy = {};
           for (i in rec) if (has(rec, i) && i !== 'srs') copy[i] = rec[i];
+          // M3: scrub the 重点 ★ out of the DISPLAY term too. M2 re-keys 「めっちゃ★」 onto
+          // v:めっちゃ for free once stripPlaceholders drops the star, but the record's own
+          // `term` is copied verbatim, so without this the merged card's front still reads
+          // 「めっちゃ★」. Keeps 〜 (meaningful); only the marker goes.
+          if (copy.term != null) copy.term = stripStarOf(copy.term);
           wantVocab[id] = copy;
         }
         for (t = 0; t < VTYPES.length; t++){
@@ -9679,7 +9697,7 @@
       }
       return out;
     }
-    return { termId: termId, vdueQueue: vdueQueue, vocabCardTypes: vocabCardTypes,
+    return { termId: termId, stripStarOf: stripStarOf, vdueQueue: vdueQueue, vocabCardTypes: vocabCardTypes,
              vocabReconcile: vocabReconcile, mergeCard: mergeCard,
              pickDistractors: pickDistractors };
   }
@@ -9687,7 +9705,7 @@
 
   var LF = window.LangFav;
   if (!LF) return;                                     // online-only gate (no LangFav on file://)
-  var VP = VOCAB_PURE(LF.pure && LF.pure.normTerm);
+  var VP = VOCAB_PURE(LF.pure && LF.pure.normTerm, LF.pure && LF.pure.stripStar);
   window.LangVocab = VP;                               // expose the vocab core to the 今日学习 home (due count) — before the page-specific gates
   function nowSec(){ return Math.floor(Date.now() / 1000); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
@@ -9700,7 +9718,9 @@
   var chips = [].slice.call(document.querySelectorAll('.u-points .chip'));
   if (chips.length){
     chips.forEach(function(chip){
-      var term = (chip.textContent || '').replace(/^★\s*/, '').trim();
+      // The 重点 ★ sits in a nested span AFTER the term, so a ^-anchored strip never fired:
+      // 5,977 chips corpus-wide saved as 「めっちゃ★」, a separate card from 「めっちゃ」.
+      var term = VP.stripStarOf(chip.textContent);
       if (!term) return;
       var id = VP.termId(term);
       chip.setAttribute('role', 'button'); chip.setAttribute('tabindex', '0'); chip.title = '收藏该词条';

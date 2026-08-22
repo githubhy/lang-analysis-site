@@ -1063,8 +1063,18 @@
     // one card but are not the same span of text. Folding inside clozeCore would silently shrink
     // clozePick's coverage (第４段階→第4段階, （笑）→(笑), １つ→1つ) with no error anywhere.
     // tools/test_vocab.mjs pins both the agreement and the divergence.
+    // ★ is the 重点 MARKER, never part of the term — and build_page puts it INSIDE the chip span
+    // and AFTER the text, as a nested star span, so a leading-anchored strip caught 1 of 5,977
+    // starred chips across the 45 built pages. (Do NOT paste the literal chip markup into a
+    // comment here: propagate.py's _CHIP_RE rewrites that shape ANYWHERE in the page and would
+    // splice an xref <a> into this script. Its uniqueness assert catches it, loudly.) Measured
+    // fallout: 0 of those 5,977 were a verbatim substring of their own sentence, so 重点 lines —
+    // the ones an analyst flagged as most important — were the LEAST likely to get a cloze card
+    // (43.1% vs 61.4% overall). Stripping the star anywhere takes 重点 to 77.0%. The marker of
+    // importance was the cause of the degradation. Strip it everywhere the term is read.
+    function stripStar(t){ return String(t == null ? '' : t).replace(/★/g, '').trim(); }
     function stripPlaceholders(t){
-      return String(t == null ? '' : t).replace(/^★\s*/, '')
+      return stripStar(t)
         .replace(/^[〜～~…\/\s]+/, '').replace(/[〜～~…\/\s]+$/, '').trim();
     }
     function normTerm(t){
@@ -1072,7 +1082,7 @@
       return s.normalize ? s.normalize('NFKC') : s;
     }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds, pageKey: pageKey,
-             stripPlaceholders: stripPlaceholders, normTerm: normTerm,
+             stripStar: stripStar, stripPlaceholders: stripPlaceholders, normTerm: normTerm,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
              migrate: migrate, serialize: serialize, applyOps: applyOps,
              makeSync: makeSync, makeSyncEngine: makeSyncEngine,
@@ -1245,7 +1255,7 @@
     return [].slice.call(card.querySelectorAll('.u-points li')).map(function(li){
       var chip = li.querySelector('.chip');
       var cat = chip ? ([].slice.call(chip.classList).filter(function(x){ return x !== 'chip' && x !== 'star'; })[0] || '') : '';
-      return { cat: cat, term: chip ? chip.textContent.trim() : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
+      return { cat: cat, term: chip ? P.stripStar(chip.textContent) : '', note: li.children[1] ? li.children[1].textContent.trim() : '' };
     });
   }
   function recordFor(card, id){

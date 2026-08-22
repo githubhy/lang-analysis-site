@@ -2902,7 +2902,10 @@
     // (〜～~…／ + whitespace) from BOTH ends. Mirrors srs.js clozeCore so a pattern like
     // 〜かどうか blanks its core かどうか; an interior placeholder (〜ば〜ほど) stays → won't match.
     function core(term){
-      return String(term || '').replace(/^★\s*/, '')
+      // ★ anywhere, not just leading: build_page puts the 重点 marker AFTER the term, in a
+      // nested star span inside the chip, so the old ^-anchored strip left it in and the core
+      // could never match. Measured: 0 of 5,977 starred chips matched their own sentence.
+      return String(term || '').replace(/★/g, '')
         .replace(/^[〜～~…\/\s]+/, '').replace(/[〜～~…\/\s]+$/, '').trim();
     }
     // Blank the pattern's core in a sentence. If the core is <2 chars or not a verbatim
