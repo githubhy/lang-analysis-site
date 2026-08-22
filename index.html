@@ -768,7 +768,7 @@
   <div class="sec idx-recent-h">最近更新</div>
   <div class="idx-recent"><a class="idx-card" href="okada-stretch.html"><span class="idx-card-eb" style="color:#b8860b">バラエティ · 08-11</span><span class="idx-card-jp">全力ストレッチに“ストレッチ目的”で行ってるふりする男</span><span class="idx-card-src">岡田を追え!! 【緑】</span><span class="idx-card-pills"><span class="idx-pill">416 句</span><span class="idx-pill">24:37</span><span class="idx-pill idx-fav-n" data-yt="wnS33eLfFRQ" hidden></span></span></a><a class="idx-card" href="mushoku-tensei-s3-01.html"><span class="idx-card-eb" style="color:#4a7ab5">アニメ · 08-08</span><span class="idx-card-jp">無職転生 第3期 第1話「エリス、剣の聖地へ」</span><span class="idx-card-src">テレビアニメ『無職転生』第3期</span><span class="idx-card-pills"><span class="idx-pill">221 句</span><span class="idx-pill">23:41</span><span class="idx-pill idx-fav-n" data-yt="BV1p4MD6KEqW" hidden></span></span></a><a class="idx-card" href="mushoku-tensei-s3-02.html"><span class="idx-card-eb" style="color:#4a7ab5">アニメ · 08-08</span><span class="idx-card-jp">無職転生 第3期 第2話「吠えよ狂犬」</span><span class="idx-card-src">テレビアニメ『無職転生』第3期</span><span class="idx-card-pills"><span class="idx-pill">275 句</span><span class="idx-pill">23:14</span><span class="idx-pill idx-fav-n" data-yt="BV1p4MD6KEqW_p2" hidden></span></span></a></div>
 
-  <div class="sec idx-all-h">全部 · 全 40 篇</div>
+  <div class="sec idx-all-h">全部 · 全 41 篇</div>
   <div class="idx-list">
     <div class="idx-month">2026 年 8 月</div>
     <a class="idx-row" href="okada-stretch.html" data-genre="var" data-search="全力ストレッチに“ストレッチ目的”で行ってるふりする男 岡田を追え!! 【緑】 okada-stretch バラエティ"><span class="idx-date">08-11</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">全力ストレッチに“ストレッチ目的”で行ってるふりする男</span><span class="idx-n">416 句</span><span class="idx-dur">24:37</span></a>
@@ -815,6 +815,7 @@
     <div class="idx-month">2019 年 1 月</div>
     <a class="idx-row" href="queen-scandal-02.html" data-genre="dra" data-search="スキャンダル専門弁護士 queen 第2話 関西テレビ・フジテレビ系 queen-scandal-02 ドラマ"><span class="idx-date">01-23</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">スキャンダル専門弁護士 QUEEN 第2話</span><span class="idx-n">662 句</span><span class="idx-dur">46:10</span></a>
     <a class="idx-row" href="queen-scandal-01.html" data-genre="dra" data-search="スキャンダル専門弁護士 queen 第1話 関西テレビ・フジテレビ系 queen-scandal-01 ドラマ"><span class="idx-date">01-16</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">スキャンダル専門弁護士 QUEEN 第1話</span><span class="idx-n">897 句</span><span class="idx-dur">57:10</span></a>
+    <a class="idx-row" href="hajimete-koi-01.html" data-genre="dra" data-search="初めて恋をした日に読む話 第1話 tbs系 火曜ドラマ hajimete-koi-01 ドラマ"><span class="idx-date">01-15</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">初めて恋をした日に読む話 第1話</span><span class="idx-n">715 句</span><span class="idx-dur">56:50</span></a>
     <div class="idx-month">2015 年 10 月</div>
     <a class="idx-row" href="siren-keiji-01.html" data-genre="dra" data-search="サイレーン 刑事×彼女×完全悪女 第1話 フジテレビ系 siren-keiji-01 ドラマ"><span class="idx-date">10-20</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">サイレーン 刑事×彼女×完全悪女 第1話</span><span class="idx-n">1002 句</span><span class="idx-dur">92:56</span></a>
     <div class="idx-month">2014 年 10 月</div>
@@ -1077,12 +1078,21 @@
       return stripStar(t)
         .replace(/^[〜～~…\/\s]+/, '').replace(/[〜～~…\/\s]+$/, '').trim();
     }
+    // Sentence surface: readings and tags stripped. Duplicated from srs.js's surfaceOf ON PURPOSE
+    // — srs.js is not loaded on study pages, and vocabCardTypes must answer IDENTICALLY on a study
+    // page and on favorites.html or reconcile adds the cloze card on one surface and deletes it on
+    // the other, forever, through the synced op log. test_vocab.mjs pins the two implementations
+    // output-equal, the same way it pins clozeCore against stripPlaceholders.
+    function surfaceOf(html){
+      return String(html == null ? '' : html).replace(/<rt>[\s\S]*?<\/rt>/g, '').replace(/<[^>]+>/g, '');
+    }
     function normTerm(t){
       var s = stripPlaceholders(t);
       return s.normalize ? s.normalize('NFKC') : s;
     }
     return { tsToSec: tsToSec, secToMmss: secToMmss, assignFavIds: assignFavIds, pageKey: pageKey,
              stripStar: stripStar, stripPlaceholders: stripPlaceholders, normTerm: normTerm,
+             surfaceOf: surfaceOf,
              stripFuri: stripFuri, sanitizeField: sanitizeField, ankiCard: ankiCard,
              migrate: migrate, serialize: serialize, applyOps: applyOps,
              makeSync: makeSync, makeSyncEngine: makeSyncEngine,
