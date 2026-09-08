@@ -4316,9 +4316,10 @@
 </script>
 <script>
 /*<<subs-pure>>*/
-// 遮中文 — mask the burned-in CHINESE subtitle band on a bilingual hardsub and draw the page's own
-// Japanese line in its place, large and crisp. Per-page: a source with no second burned-in language
-// carries no `cover_band` in pages.json, grows no button, and this file returns on line one.
+// 遮中文 — mask the burned-in CHINESE subtitle band on a bilingual hardsub and draw the JAPANESE
+// that is on screen right now in its place, large and crisp. Per-page: a source with no second
+// burned-in language carries no `cover_band` in pages.json, grows no button, and this file returns
+// on line one.
 //
 // WHY THIS DRAWS TEXT AND NOT A PIXEL ZOOM — the obvious reading of "make the Japanese bigger" is to
 // magnify the burned-in strip, and the arithmetic kills it. shosen-taningoto-01 is 1280x720; the ja
@@ -4328,11 +4329,23 @@
 // unreadable — and that page's own A/B found upscaling 18px glyphs FLAT across 1x/2x/3x (訴える read
 // correctly at 1x and wrongly at 2x/3x). The pixels are not there to enlarge. The text is.
 //
-// THE COST, STATED: that text is the page's reconciled line, not the pixels. Measured against the
-// Chinese band on the same episode, 10.9% of pairs were real read errors at this resolution. Which
-// is exactly why the mask STOPS at the top of the Japanese band instead of covering it: the
-// burned-in line stays on screen underneath as the ground truth you can check the big line against.
-// Covering both was offered and deliberately not taken.
+// WHICH TEXT — THE BAND'S OWN TRACK, NOT THE ACTIVE ROW. The first cut keyed the plate off whichever
+// `.u` the follow-along engine had marked `.active`, and that is the wrong authority for a magnifier
+// of the band: measured on shosen-taningoto-01, 105 of 776 displays (13.5%) had no row at all — real
+// dialogue the analysis merged into a neighbour, so the plate showed the PREVIOUS sentence — and of
+// the 671 that did, 74 (11%) sat >0.5s from the display's own start and 35 >1.5s, always speech
+// leading its own caption. So `tools/bake_band_track.py` bakes the read's display spans into the
+// page as `#subsBand` and this file renders THAT: the plate now changes exactly when the band under
+// it changes. Where a display and a row are the same sentence the row's `.u-jp` is what gets drawn,
+// so the plate keeps the repairs (74 Opus rewrites, 13 frame-confirmed) and the furigana the R lens
+// needs; only a display with no row falls back to the raw read. No track, or a stale one, and the
+// old active-row path below still runs — a rebuilt page renders a beat early, never a wrong line.
+//
+// THE COST, STATED: this is still the READ, not the pixels. Measured against the Chinese band on the
+// same episode, 10.9% of pairs were real read errors at this resolution. Which is exactly why the
+// mask STOPS at the top of the Japanese band instead of covering it: the burned-in line stays on
+// screen underneath as the ground truth you can check the big line against. Covering both was
+// offered and deliberately not taken.
 //
 // GEOMETRY is per-page (`data-cover-band="top,bottom"`, fractions of frame height) because it is a
 // property of the upload, not of the pipeline. The video is object-fit:contain on a 16:9 source in a
@@ -4383,7 +4396,41 @@
     new ResizeObserver(function(es){ fit(es[0].contentRect.width); }).observe(frame);
   }
 
-  // ---- rows + the END of a line. TWO bounds, and both are load-bearing.
+  var US = document.querySelectorAll('.u');
+
+  // ---- the baked band track: [startMs, durMs, rowIndex], or [startMs, durMs, -1, "raw text"].
+  //
+  // `data-units` is the whole staleness guard and it is not ceremony: a row index is only meaningful
+  // against the row list it was computed from, and `build_page` re-deriving a page changes that list
+  // without touching this block. A mismatch must fall back rather than render a shifted sentence,
+  // because a plate that is confidently one line off is worse than one that is a beat late.
+  // checks_favorites.py fails the build on the same comparison, so this is the second line, not the
+  // first. Overlapping spans are normal, not a defect: a two-line burned-in subtitle is read as two
+  // display events with the same start, and both belong on the plate.
+  var TRACK = null, tStarts = null, MAXDUR = 0;
+  (function(){
+    var el = document.getElementById('subsBand');
+    if (!el) return;
+    if (parseInt(el.getAttribute('data-units'), 10) !== US.length) return;   // stale — use the rows
+    var raw;
+    try { raw = JSON.parse(el.textContent || '[]'); } catch (e){ return; }
+    if (!raw || !raw.length) return;
+    var out = [];
+    for (var i = 0; i < raw.length; i++){
+      var r = raw[i], s = r[0] / 1000, d = r[1] / 1000, idx = r[2];
+      if (!(d > 0) || !(s >= 0)) continue;
+      if (idx >= 0 && !US[idx]) continue;
+      out.push({ s: s, e: s + d, i: idx, raw: idx < 0 ? String(r[3] || '') : null });
+      if (d > MAXDUR) MAXDUR = d;
+    }
+    if (!out.length) return;
+    out.sort(function(a, b){ return a.s - b.s; });
+    TRACK = out;
+    tStarts = out.map(function(x){ return x.s; });
+  })();
+
+  // ---- rows + the END of a line: the FALLBACK path, used on a page with no track (or a stale one).
+  // TWO bounds, and both are load-bearing.
   //
   // (1) The next DISTINCT onset. Never starts[i+1]: the page's clock is mixed-precision, so a
   //     floored twin can share a second with a recovered line and the next row's start can be
@@ -4412,12 +4459,11 @@
   }
   function rowList(){
     if (rows) return rows;
-    var us = document.querySelectorAll('.u');
-    if (!us.length) return null;
+    if (!US.length) return null;
     rows = [];
-    for (var i = 0; i < us.length; i++){
-      var ts = us[i].querySelector('.ts');
-      rows.push({ el: us[i], sec: (ts && ts.__sec != null) ? ts.__sec : null, len: baseLen(us[i]) });
+    for (var i = 0; i < US.length; i++){
+      var ts = US[i].querySelector('.ts');
+      rows.push({ el: US[i], sec: (ts && ts.__sec != null) ? ts.__sec : null, len: baseLen(US[i]) });
     }
     return rows;
   }
@@ -4448,29 +4494,76 @@
     if (!ok && frame.classList.contains('cover-zh')) apply(false, true);
   }
 
-  // ---- paint. Only writes when the line or its visibility actually changes: the dock already
+  // ---- what is on the band at time t. Returns the entries covering it, in track order, so a
+  // two-line subtitle draws as two lines. The backward scan is bounded by the longest span in the
+  // track rather than by a guessed constant, because a display can legitimately run 11s.
+  function atTime(t){
+    var hit = [];
+    var k = upperBound(tStarts, t) - 1;
+    for (; k >= 0; k--){
+      var x = TRACK[k];
+      if (x.s < t - MAXDUR - 0.01) break;
+      if (t >= x.s && t < x.e) hit.push(k);
+    }
+    hit.reverse();
+    return hit;
+  }
+  function upperBound(a, v){
+    var lo = 0, hi = a.length;
+    while (lo < hi){ var mid = (lo + hi) >> 1; if (a[mid] <= v) lo = mid + 1; else hi = mid; }
+    return lo;
+  }
+
+  // ---- paint. Only writes when what should be on the plate actually changes: the dock already
   // learned this lesson once (a forever-4Hz write is what `dock-paint-churn` guards), and this one
   // would run on every timeupdate.
-  var shownIdx = -1, shownVis = null;
+  var shown = null;
+  function line(node){
+    var d = document.createElement('div');
+    d.className = 'u-jp';                              // keeps the R furigana lens applying
+    d.appendChild(node);
+    return d;
+  }
   function paint(force){
     if (!frame.classList.contains('cover-zh')) return;
+    var lp = window.LangPlayer;
+    var t  = (lp && lp.getTime) ? lp.getTime() : 0;
+    var key, draw;
+
+    if (TRACK){
+      var hit = atTime(t);
+      key = 't|' + hit.join(',');
+      if (!force && key === shown) return;
+      shown = key;
+      cap.textContent = '';
+      for (var n = 0; n < hit.length; n++){
+        var x = TRACK[hit[n]];
+        if (x.i >= 0){
+          var jp = US[x.i].querySelector('.u-jp');
+          if (jp) cap.appendChild(jp.cloneNode(true));
+        } else {
+          cap.appendChild(line(document.createTextNode(x.raw)));
+        }
+      }
+      return;
+    }
+
     var r = rowList();
     if (!r) return;
     var a = document.querySelector('.u.active');
     var idx = -1;
     if (a){ for (var i = 0; i < r.length; i++){ if (r[i].el === a){ idx = i; break; } } }
-    var lp  = window.LangPlayer;
-    var t   = (lp && lp.getTime) ? lp.getTime() : 0;
     // Blank in the GAPS. The player keeps the last line .active after its audio ends (indexAt takes
     // the last row at or before now), so without this the big line would sit there through silences
     // the real hardsub has already left.
     var vis = idx >= 0 && t < endOf(idx) + 0.05;
-    if (!force && idx === shownIdx && vis === shownVis) return;
-    shownIdx = idx; shownVis = vis;
+    key = 'r|' + idx + '|' + vis;
+    if (!force && key === shown) return;
+    shown = key;
     cap.textContent = '';
     if (!vis) return;
-    var jp = r[idx].el.querySelector('.u-jp');
-    if (jp) cap.appendChild(jp.cloneNode(true));       // keeps .u-jp, so the R furigana lens applies
+    var jp2 = r[idx].el.querySelector('.u-jp');
+    if (jp2) cap.appendChild(jp2.cloneNode(true));
   }
 
   function apply(on, silent){
@@ -4480,7 +4573,7 @@
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     }
     if (!silent){ try { window.localStorage.setItem(KEY, on ? '1' : '0'); } catch (e){} }
-    if (on){ shownIdx = -1; paint(true); }
+    if (on){ shown = null; paint(true); }
   }
 
   if (btn) btn.addEventListener('click', function(){
