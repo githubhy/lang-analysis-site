@@ -118,6 +118,34 @@
   .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
     border:0;display:block;background:#000;object-fit:contain;}
   .video-dock.min .dock-video{display:none;}
+  /* 遮中文 — mask the burned-in Chinese band and draw the page's own Japanese line in its place.
+     Geometry is per-page (data-cover-band on .video-frame); subs.js carries the measurement and the
+     reason this is TEXT and not a pixel zoom. The video is object-fit:contain on a 16:9 source in a
+     16:9 frame, so a % here is a fraction of the SOURCE frame — a measured band becomes CSS with no
+     scaling step in between. pointer-events:none throughout: the mask sits over the picture and must
+     never swallow a click aimed at the video's own controls. */
+  /* ONE plate: it masks the band AND carries the text, so the two can never disagree about how much
+     is covered (they did — a 2-line caption overflowed a fixed-height mask onto bare picture).
+     min-height is the measured band, set inline; height beyond that is whatever the line needs, and
+     it grows UPWARD because the box is anchored by `bottom`. OPAQUE, not blurred: the job is that
+     the Chinese cannot be read, and blur leaves 36px glyphs guessable. */
+  .subs-cap{display:none;position:absolute;left:0;right:0;z-index:2;pointer-events:none;
+    box-sizing:border-box;background:rgba(0,0,0,.94);padding:.2em 3% .12em;
+    font-family:var(--font-gothic);font-size:var(--subs-fs,18px);line-height:1.35;
+    color:#fff;text-align:center;}
+  .video-frame.cover-zh .subs-cap{display:flex;align-items:flex-end;justify-content:center;}
+  .subs-cap .u-jp{width:100%;font-size:inherit;line-height:inherit;color:inherit;margin:0;display:block;}
+  .subs-cap rt{color:#bfe3ff;}
+  /* The control sits in the frame's TOP-right: the bottom is where <video controls> draws its own
+     bar, and an overlay button there is a button the user cannot reliably hit. */
+  .subs-btn{position:absolute;top:.4rem;right:.4rem;z-index:4;
+    font-family:var(--font-gothic);font-size:.72rem;font-weight:600;line-height:1;
+    padding:.34rem .5rem;border-radius:.4rem;cursor:pointer;
+    color:#fff;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.38);}
+  .subs-btn[hidden]{display:none;}
+  .subs-btn:hover{background:rgba(0,0,0,.72);border-color:#fff;}
+  .subs-btn:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .subs-btn.on{color:#111;background:#fff;border-color:#fff;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
   .play-hint b{color:var(--ink);font-weight:600;}
 
@@ -369,6 +397,7 @@
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
     .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
+    .subs-btn{ min-height:44px; min-width:44px; padding:.5rem .7rem; font-size:.8rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -7206,7 +7235,7 @@
     // ruby both revealed the reading and toggled playback. Match on the ROLE too.
     var ACTIVATION = { BUTTON: 1, A: 1, RUBY: 1, SUMMARY: 1 };
     var LENS = { f: 'follow', r: 'furi', s: 'shadow', d: 'dict',
-                 h: 'highlights', o: 'overlap', m: 'fold' };
+                 h: 'highlights', o: 'overlap', m: 'fold', c: 'covers' };
 
     function isTyping(t){ return !!t && (TYPING[t.tag] === 1 || t.editable === true); }
     function isActivation(t){ return !!t && (ACTIVATION[t.tag] === 1 || t.role === 'button'); }
@@ -7353,9 +7382,11 @@
   // ---------- the ? cheat sheet ----------
   // An undiscoverable shortcut is a shortcut nobody uses, so every binding above is listed here
   // and this overlay is the only place they are written down for the reader.
+  // 'covers' (遮中文) exists on bilingual-hardsub pages only. press() no-ops on a missing id, so
+  // binding it globally costs the other pages nothing — the key is simply inert where the button is.
   var LENS_BTN = { follow: 'dockFollow', furi: 'furiToggle', shadow: 'shadowToggle',
                    dict: 'dictToggle', highlights: 'highlightsToggle',
-                   overlap: 'overlapToggle', fold: 'dockMin' };
+                   overlap: 'overlapToggle', fold: 'dockMin', covers: 'subsToggle' };
   var help = null;
   function row(keys, what){
     var ks = '';
@@ -7380,6 +7411,7 @@
         row(['F'], '跟随') + row(['R'], '全部读音') + row(['S'], '跟读') +
         row(['D'], '听写') + row(['H'], '重点') + row(['O'], '被插话') +
         row(['M'], '收起 / 展开播放器') +
+        row(['C'], '遮中文 — 盖住烧录的中文字幕，放大日文（仅双语硬字幕页）') +
         '<h3>其他</h3>' +
         row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
         '<p class="keys-note">竖向移动视线，横向移动播放位置：' +
@@ -7828,6 +7860,197 @@
   vStart.addEventListener('click', function(){ snap = vdue(); pos = 0; if (!snap.length) return; ov.hidden = false; document.body.classList.add('srs-open'); show(); });
   ov.querySelector('#vClose').addEventListener('click', function(){ ov.hidden = true; document.body.classList.remove('srs-open'); renderList(); });
 })();
+</script>
+<script>
+/*<<subs-pure>>*/
+// 遮中文 — mask the burned-in CHINESE subtitle band on a bilingual hardsub and draw the page's own
+// Japanese line in its place, large and crisp. Per-page: a source with no second burned-in language
+// carries no `cover_band` in pages.json, grows no button, and this file returns on line one.
+//
+// WHY THIS DRAWS TEXT AND NOT A PIXEL ZOOM — the obvious reading of "make the Japanese bigger" is to
+// magnify the burned-in strip, and the arithmetic kills it. shosen-taningoto-01 is 1280x720; the ja
+// band is 18px tall (the zh band above it is 36px); .dock-video caps the picture at 32rem = 512 CSS
+// px, i.e. 0.4x native, so those glyphs reach the screen at ~7 CSS px. A fit-width magnifier is
+// bounded by the 46rem (736px) column = 0.575x native = 10.4 CSS px — 1.4x more and still
+// unreadable — and that page's own A/B found upscaling 18px glyphs FLAT across 1x/2x/3x (訴える read
+// correctly at 1x and wrongly at 2x/3x). The pixels are not there to enlarge. The text is.
+//
+// THE COST, STATED: that text is the page's reconciled line, not the pixels. Measured against the
+// Chinese band on the same episode, 10.9% of pairs were real read errors at this resolution. Which
+// is exactly why the mask STOPS at the top of the Japanese band instead of covering it: the
+// burned-in line stays on screen underneath as the ground truth you can check the big line against.
+// Covering both was offered and deliberately not taken.
+//
+// GEOMETRY is per-page (`data-cover-band="top,bottom"`, fractions of frame height) because it is a
+// property of the upload, not of the pipeline. The video is object-fit:contain on a 16:9 source in a
+// 16:9 frame, so a CSS % of .video-frame IS a fraction of the source frame — which is what lets a
+// measured band become CSS with no scaling step to get wrong.
+//
+// HOW THAT BAND WAS MEASURED, because the obvious method is wrong: a plain "count near-white pixels
+// per row" detector merges lit clothing and a bright prop into the band and reports a two-line
+// Chinese subtitle that does not exist (it claimed a top edge of 0.804 on frames whose real top edge
+// is 0.896). Broadcast subs are white with a hard black outline, so the detector that works keys on
+// a bright pixel having a near-BLACK pixel within 4 rows in the same column. Over 34 sampled frames:
+// zh 0.887(p05)-0.954(max), ja 0.954-0.985. Hence 0.876-0.956 — clear of the first, above the second.
+// KNOWN LEAK, not a bug to hunt: the ED montage (~55:20-56:35) places its captions higher and the
+// mask does not reach them.
+(function(){
+  var KEY   = 'langCoverZh';
+  var frame = document.querySelector('.video-frame');
+  var band  = frame && frame.getAttribute('data-cover-band');
+  if (!frame || !band) return;                       // not an opted-in page — do nothing at all
+
+  var p = band.split(','), top = parseFloat(p[0]), bot = parseFloat(p[1]);
+  if (!(top >= 0 && bot > top && bot <= 1)) return;  // refuse a malformed band rather than paint a bar
+
+  var btn = document.getElementById('subsToggle');
+
+  // ONE element, not a mask plus a caption. The first cut had two, and a screenshot showed them
+  // disagreeing exactly where it matters: the mask is a fixed 8% of the frame (~23 CSS px in the
+  // dock) while a two-line caption is ~58px, so every long line rendered its top half on BARE
+  // picture above the mask — unreadable, and with the Chinese still showing beside it. As one plate
+  // anchored at the band's floor with min-height = the band, the covered area is by construction
+  // whatever the text needs, and a gap still covers the band because the min-height holds with no
+  // text in it.
+  var cap = document.createElement('div');
+  cap.className = 'subs-cap';
+  cap.style.bottom    = ((1 - bot) * 100).toFixed(3) + '%';
+  cap.style.minHeight = ((bot - top) * 100).toFixed(3) + '%';
+  frame.appendChild(cap);
+
+  // ---- font size tracks the frame, which is 512px on a desktop dock and full-width on a phone.
+  // A ResizeObserver rather than a container query: this has to hold on whatever Chrome the
+  // behavioural suites launch, and it is one line either way.
+  function fit(w){
+    var px = Math.max(12, Math.min(30, w * 0.042));
+    frame.style.setProperty('--subs-fs', px.toFixed(1) + 'px');
+  }
+  fit(frame.getBoundingClientRect().width || 512);
+  if (window.ResizeObserver){
+    new ResizeObserver(function(es){ fit(es[0].contentRect.width); }).observe(frame);
+  }
+
+  // ---- rows + the END of a line. TWO bounds, and both are load-bearing.
+  //
+  // (1) The next DISTINCT onset. Never starts[i+1]: the page's clock is mixed-precision, so a
+  //     floored twin can share a second with a recovered line and the next row's start can be
+  //     EARLIER than this one's. The player already publishes its CLAMPED start on each .ts as
+  //     __sec (keys.js reads the same field), so this is the repo's nextDistinct rule sourced from
+  //     the player's own clock rather than re-derived here, where it could drift.
+  //
+  // (2) A dwell estimate from the line's own length — because bound (1) ALONE is wrong wherever the
+  //     episode goes quiet, and it is wrong in the direction nobody notices while testing a talky
+  //     stretch. This episode has a 41.9s hole between the onsets at 908.25s and 950.14s, and with
+  //     only the onset bound the big line sat on screen for all 41.9 seconds while the burned-in
+  //     line it mirrors had long since gone. 0.22 s/char is deliberately generous against the
+  //     4-6 chars/sec a broadcast sub is written to be read at, so the failure mode is a caption
+  //     that lingers a beat, never one that blanks mid-sentence.
+  var DWELL_BASE = 1.0, DWELL_PER_CHAR = 0.22, DWELL_MAX = 12;
+  var rows = null;
+  function baseLen(el){
+    // Count the SENTENCE, not the furigana: .u-jp's textContent concatenates every <rt>, so
+    // 「出来事」 with a reading counts as 「出来事できごと」 and a ruby-dense line would be granted
+    // roughly double the dwell it needs.
+    var jp = el.querySelector('.u-jp');
+    if (!jp) return 0;
+    var c = jp.cloneNode(true), rt = c.querySelectorAll('rt,rp');
+    for (var i = 0; i < rt.length; i++) rt[i].parentNode.removeChild(rt[i]);
+    return (c.textContent || '').trim().length;
+  }
+  function rowList(){
+    if (rows) return rows;
+    var us = document.querySelectorAll('.u');
+    if (!us.length) return null;
+    rows = [];
+    for (var i = 0; i < us.length; i++){
+      var ts = us[i].querySelector('.ts');
+      rows.push({ el: us[i], sec: (ts && ts.__sec != null) ? ts.__sec : null, len: baseLen(us[i]) });
+    }
+    return rows;
+  }
+  function endOf(i){
+    var r = rows, s = r[i].sec;
+    if (s == null) return Infinity;
+    var nxt = Infinity;
+    for (var j = i + 1; j < r.length; j++){
+      if (r[j].sec != null && r[j].sec > s + 1e-6){ nxt = r[j].sec; break; }
+    }
+    var dwell = Math.min(DWELL_MAX, DWELL_BASE + DWELL_PER_CHAR * r[i].len);
+    return Math.min(nxt, s + dwell);                  // whichever comes first
+  }
+
+  // ---- availability. The mask is aimed at pixels of OUR mp4 at OUR geometry, so it is meaningless
+  // on any other transport: the YouTube path replaces <video> with a <div>, and the Bilibili path
+  // builds its own iframe and is seek-only (no clock, so the caption could never advance). Both hide
+  // the control rather than showing one that lies — the same call seekOnly() forces on 跟随/跟读.
+  function usable(){
+    if (!document.querySelector('video#clip')) return false;
+    var lp = window.LangPlayer;
+    if (lp && lp.seekOnly && lp.seekOnly()) return false;
+    return true;
+  }
+  function refreshAvail(){
+    var ok = usable();
+    if (btn) btn.hidden = !ok;
+    if (!ok && frame.classList.contains('cover-zh')) apply(false, true);
+  }
+
+  // ---- paint. Only writes when the line or its visibility actually changes: the dock already
+  // learned this lesson once (a forever-4Hz write is what `dock-paint-churn` guards), and this one
+  // would run on every timeupdate.
+  var shownIdx = -1, shownVis = null;
+  function paint(force){
+    if (!frame.classList.contains('cover-zh')) return;
+    var r = rowList();
+    if (!r) return;
+    var a = document.querySelector('.u.active');
+    var idx = -1;
+    if (a){ for (var i = 0; i < r.length; i++){ if (r[i].el === a){ idx = i; break; } } }
+    var lp  = window.LangPlayer;
+    var t   = (lp && lp.getTime) ? lp.getTime() : 0;
+    // Blank in the GAPS. The player keeps the last line .active after its audio ends (indexAt takes
+    // the last row at or before now), so without this the big line would sit there through silences
+    // the real hardsub has already left.
+    var vis = idx >= 0 && t < endOf(idx) + 0.05;
+    if (!force && idx === shownIdx && vis === shownVis) return;
+    shownIdx = idx; shownVis = vis;
+    cap.textContent = '';
+    if (!vis) return;
+    var jp = r[idx].el.querySelector('.u-jp');
+    if (jp) cap.appendChild(jp.cloneNode(true));       // keeps .u-jp, so the R furigana lens applies
+  }
+
+  function apply(on, silent){
+    frame.classList.toggle('cover-zh', on);
+    if (btn){
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    if (!silent){ try { window.localStorage.setItem(KEY, on ? '1' : '0'); } catch (e){} }
+    if (on){ shownIdx = -1; paint(true); }
+  }
+
+  if (btn) btn.addEventListener('click', function(){
+    apply(!frame.classList.contains('cover-zh'));
+  });
+
+  var stored = '0';
+  try { stored = window.localStorage.getItem(KEY) || '0'; } catch (e){}
+  apply(stored === '1', true);
+
+  refreshAvail();
+  // The transport resolves asynchronously (the local <source> has to fail before the online one is
+  // tried), so re-ask once it has settled rather than trusting the state at parse time.
+  setTimeout(refreshAvail, 1200);
+  var first = true;
+  if (window.LangPlayer && window.LangPlayer.onTick){
+    window.LangPlayer.onTick(function(){
+      if (first){ first = false; refreshAvail(); }
+      paint(false);
+    });
+  }
+})();
+/*<</subs-pure>>*/
 </script>
 </body>
 </html>

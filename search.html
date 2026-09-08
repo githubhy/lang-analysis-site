@@ -118,6 +118,33 @@
   .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
     border:0;display:block;background:#000;object-fit:contain;}
   .video-dock.min .dock-video{display:none;}
+  /* 遮中文 — mask the burned-in Chinese band and draw the page's own Japanese line in its place.
+     Geometry is per-page (data-cover-band on .video-frame); subs.js carries the measurement and the
+     reason this is TEXT and not a pixel zoom. The video is object-fit:contain on a 16:9 source in a
+     16:9 frame, so a % here is a fraction of the SOURCE frame — a measured band becomes CSS with no
+     scaling step in between. pointer-events:none throughout: the mask sits over the picture and must
+     never swallow a click aimed at the video's own controls. */
+  .subs-mask,.subs-cap{display:none;position:absolute;left:0;right:0;pointer-events:none;}
+  .video-frame.cover-zh .subs-mask,.video-frame.cover-zh .subs-cap{display:block;}
+  /* Solid over the band, with a short fade above it so it reads as a caption plate rather than a
+     slab. The fade must finish BEFORE the Chinese starts (mask top .876 vs zh top .887) or glyph
+     tops show through the transparent part — which is the whole job undone. */
+  .subs-mask{z-index:2;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,#000 12%,#000 100%);}
+  .subs-cap{z-index:3;font-family:var(--font-gothic);font-size:var(--subs-fs,18px);line-height:1.35;
+    color:#fff;text-align:center;padding:0 3%;
+    text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 8px rgba(0,0,0,.8);}
+  .subs-cap .u-jp{font-size:inherit;line-height:inherit;color:inherit;margin:0;display:block;}
+  .subs-cap rt{color:#bfe3ff;}
+  /* The control sits in the frame's TOP-right: the bottom is where <video controls> draws its own
+     bar, and an overlay button there is a button the user cannot reliably hit. */
+  .subs-btn{position:absolute;top:.4rem;right:.4rem;z-index:4;
+    font-family:var(--font-gothic);font-size:.72rem;font-weight:600;line-height:1;
+    padding:.34rem .5rem;border-radius:.4rem;cursor:pointer;
+    color:#fff;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.38);}
+  .subs-btn[hidden]{display:none;}
+  .subs-btn:hover{background:rgba(0,0,0,.72);border-color:#fff;}
+  .subs-btn:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  .subs-btn.on{color:#111;background:#fff;border-color:#fff;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
   .play-hint b{color:var(--ink);font-weight:600;}
 
@@ -369,6 +396,7 @@
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
     .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
+    .subs-btn{ min-height:44px; min-width:44px; padding:.5rem .7rem; font-size:.8rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
