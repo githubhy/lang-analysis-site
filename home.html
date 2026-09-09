@@ -133,9 +133,16 @@
     box-sizing:border-box;background:rgba(0,0,0,.94);padding:.2em 3% .12em;
     font-family:var(--font-gothic);font-size:var(--subs-fs,18px);line-height:1.35;
     color:#fff;text-align:center;}
-  .video-frame.cover-zh .subs-cap{display:flex;align-items:flex-end;justify-content:center;}
+  .video-frame.cover-zh .subs-cap{display:flex;flex-direction:column;align-items:center;
+    justify-content:flex-end;}
   .subs-cap .u-jp{width:100%;font-size:inherit;line-height:inherit;color:inherit;margin:0;display:block;}
   .subs-cap rt{color:#bfe3ff;}
+  /* The magnifier: a window onto the burned-in band itself, cropped to the sentence. The <video>
+     inside is oversized and offset by subs.js, so the window must clip it and must not stretch --
+     max-width:none defeats the global img/video fit rule that would otherwise squash it back. */
+  .subs-lens{position:relative;width:100%;overflow:hidden;flex:0 0 auto;}
+  .subs-lens video{position:absolute;left:0;top:0;max-width:none;height:auto;pointer-events:none;}
+  .subs-lens[hidden]{display:none;}
   /* The control sits in the frame's TOP-right: the bottom is where <video controls> draws its own
      bar, and an overlay button there is a button the user cannot reliably hit. */
   .subs-btn{position:absolute;top:.4rem;right:.4rem;z-index:4;

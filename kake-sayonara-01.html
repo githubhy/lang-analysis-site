@@ -133,9 +133,16 @@
     box-sizing:border-box;background:rgba(0,0,0,.94);padding:.2em 3% .12em;
     font-family:var(--font-gothic);font-size:var(--subs-fs,18px);line-height:1.35;
     color:#fff;text-align:center;}
-  .video-frame.cover-zh .subs-cap{display:flex;align-items:flex-end;justify-content:center;}
+  .video-frame.cover-zh .subs-cap{display:flex;flex-direction:column;align-items:center;
+    justify-content:flex-end;}
   .subs-cap .u-jp{width:100%;font-size:inherit;line-height:inherit;color:inherit;margin:0;display:block;}
   .subs-cap rt{color:#bfe3ff;}
+  /* The magnifier: a window onto the burned-in band itself, cropped to the sentence. The <video>
+     inside is oversized and offset by subs.js, so the window must clip it and must not stretch --
+     max-width:none defeats the global img/video fit rule that would otherwise squash it back. */
+  .subs-lens{position:relative;width:100%;overflow:hidden;flex:0 0 auto;}
+  .subs-lens video{position:absolute;left:0;top:0;max-width:none;height:auto;pointer-events:none;}
+  .subs-lens[hidden]{display:none;}
   /* The control sits in the frame's TOP-right: the bottom is where <video controls> draws its own
      bar, and an overlay button there is a button the user cannot reliably hit. */
   .subs-btn{position:absolute;top:.4rem;right:.4rem;z-index:4;
@@ -7879,7 +7886,19 @@
 // needs; only a display with no row falls back to the raw read. No track, or a stale one, and the
 // old active-row path below still runs — a rebuilt page renders a beat early, never a wrong line.
 //
-// THE COST, STATED: this is still the READ, not the pixels. Measured against the Chinese band on the
+// AND THE PLATE SHOWS THE PIXELS TOO, cropped to the sentence. A fit-WIDTH magnifier of the whole
+// band is pointless — 1280 native px into a 512 CSS px dock is 0.40x, a shrink — but these
+// subtitles are narrow: measured over 767 boxed displays the sentence is a MEDIAN 313 px wide, 24%
+// of the frame. Crop to it and the same plate width gives a median 1.64x, and 90% of lines clear
+// 1:1, i.e. you finally see every pixel the upload has rather than the 40% the dock keeps. The box
+// per display is baked by tools/bake_band_track.py --zoom (centre-anchored, gap-limited: a lit
+// railing and the ED credit block both defeat min/max and ink percentiles, and neither is centred
+// or contiguous with the sentence). The magnifier stays PAUSED and is seeked once per display —
+// a burned-in line does not move within its own span, so a second PLAYING decoder would buy
+// nothing and cost a stream. Where no box was measured, or the transport has no clock, the text
+// line alone still runs.
+//
+// THE COST, STATED: the text line is still the READ, not the pixels. Measured against the Chinese band on the
 // same episode, 10.9% of pairs were real read errors at this resolution. Which is exactly why the
 // mask STOPS at the top of the Japanese band instead of covering it: the burned-in line stays on
 // screen underneath as the ground truth you can check the big line against. Covering both was
@@ -7931,7 +7950,7 @@
   }
   fit(frame.getBoundingClientRect().width || 512);
   if (window.ResizeObserver){
-    new ResizeObserver(function(es){ fit(es[0].contentRect.width); }).observe(frame);
+    new ResizeObserver(function(es){ fit(es[0].contentRect.width); shown = null; paint(true); }).observe(frame);
   }
 
   var US = document.querySelectorAll('.u');
@@ -7958,7 +7977,11 @@
       var r = raw[i], s = r[0] / 1000, d = r[1] / 1000, idx = r[2];
       if (!(d > 0) || !(s >= 0)) continue;
       if (idx >= 0 && !US[idx]) continue;
-      out.push({ s: s, e: s + d, i: idx, raw: idx < 0 ? String(r[3] || '') : null });
+      // the magnifier box is APPENDED, so its position depends on whether text is carried
+      var zAt = idx < 0 ? 4 : 3;
+      var x0 = r[zAt], x1 = r[zAt + 1];
+      var box = (typeof x0 === 'number' && typeof x1 === 'number' && x1 > x0) ? [x0, x1] : null;
+      out.push({ s: s, e: s + d, i: idx, raw: idx < 0 ? String(r[3] || '') : null, box: box });
       if (d > MAXDUR) MAXDUR = d;
     }
     if (!out.length) return;
@@ -8052,6 +8075,79 @@
     return lo;
   }
 
+  // ---- the magnifier. A SECOND <video> on the same sources, muted and never played: the burned-in
+  // line is static for its whole display span, so one seek per subtitle shows it exactly, with no
+  // drift to correct and no second decoder running for an hour. Built on demand and torn down when
+  // the lens is off, because online that element is a second range-stream of the same mp4.
+  //
+  // GEOMETRY. The video is object-fit:contain on a 16:9 source in a 16:9 frame, so the displayed
+  // picture is exactly W x W*9/16 and one native px is W/1280 CSS px. To make the box [x0,x1] fill
+  // the plate we render the clone at W*k where k = 1280/(x1-x0+1), then offset it so the box's left
+  // edge and the band's top edge sit at the window's origin. k is capped: 「あら」 is 48px wide and
+  // would otherwise arrive at 26x, a single kana filling the screen.
+  // MMAX caps magnification against the SOURCE — CSS px per native px — and that distinction is
+  // the whole bug the first cut shipped: capping the scale applied to the *displayed* video pinned
+  // every line at 1.28x instead of its real 1.90x, because the dock already renders at 0.40x.
+  var BAND_Y0 = 686, BAND_H = 26, NATIVE_W = 1280, MMAX = 3.0;
+  var lensWrap = null, lensVid = null, lensKey = null;
+
+  function lensBuild(){
+    if (lensWrap) return true;
+    var main = document.querySelector('video#clip');
+    if (!main) return false;
+    lensWrap = document.createElement('div');
+    lensWrap.className = 'subs-lens';
+    lensWrap.hidden = true;
+    lensVid = document.createElement('video');
+    lensVid.muted = true; lensVid.defaultMuted = true;
+    lensVid.setAttribute('playsinline', '');
+    lensVid.setAttribute('preload', 'auto');
+    lensVid.setAttribute('aria-hidden', 'true');
+    // currentSrc — the candidate that ALREADY WON — not a copy of the <source> ladder. Copying the
+    // ladder would hand the offline deliverable an https candidate it never asked for, and
+    // `zero network requests on file://` is a thing that suite asserts. One resolved URL cannot
+    // fall back to anything.
+    if (main.currentSrc) lensVid.src = main.currentSrc;
+    else { lensWrap = lensVid = null; return false; }
+    // A failed load must not leave a black bar sitting over the picture forever.
+    lensVid.addEventListener('error', function(){ lensWrap.hidden = true; lensKey = 'ERR'; });
+    lensVid.addEventListener('seeked', function(){ if (lensKey && lensKey !== 'ERR') lensWrap.hidden = false; });
+    lensWrap.appendChild(lensVid);
+    cap.insertBefore(lensWrap, cap.firstChild);
+    return true;
+  }
+  function lensDestroy(){
+    if (!lensWrap) return;
+    try { lensVid.pause(); lensVid.removeAttribute('src'); lensVid.load(); } catch (e){}
+    lensWrap.parentNode.removeChild(lensWrap);
+    lensWrap = lensVid = null; lensKey = null;
+  }
+  function lensShow(ent){
+    if (!ent || !ent.box || !lensBuild()){ if (lensWrap) lensWrap.hidden = true; return; }
+    // The LENS WINDOW's width, not the frame's: .subs-cap carries 3% side padding, so sizing the
+    // clone against the frame overflowed the window by 6% and sheared the last glyph off every
+    // line — 「ねぇ。」 arriving as 「ねぇ」. The window is what the box has to fill.
+    lensWrap.hidden = false;
+    var W = lensWrap.getBoundingClientRect().width;
+    if (!(W > 10)){ lensWrap.hidden = true; return; }
+    var bw = ent.box[1] - ent.box[0] + 1;
+    var m  = Math.min(MMAX, W / bw);                  // CSS px per native px
+    var visible = W / m;                              // native px the window can show
+    var cx = (ent.box[0] + ent.box[1]) / 2;
+    var left = Math.max(0, Math.min(NATIVE_W - visible, cx - visible / 2));
+    lensWrap.style.height = (BAND_H * m).toFixed(2) + 'px';
+    lensVid.style.width   = (NATIVE_W * m).toFixed(2) + 'px';
+    lensVid.style.left    = (-left * m).toFixed(2) + 'px';
+    lensVid.style.top     = (-BAND_Y0 * m).toFixed(2) + 'px';
+    // Seek to the instant the box was measured at, so what is framed is what was measured.
+    var at = ent.s + Math.min(0.6, (ent.e - ent.s) / 2);
+    var key = at.toFixed(2);
+    if (key !== lensKey){
+      lensKey = key;
+      try { lensVid.currentTime = at; } catch (e){ lensWrap.hidden = true; }
+    }
+  }
+
   // ---- paint. Only writes when what should be on the plate actually changes: the dock already
   // learned this lesson once (a forever-4Hz write is what `dock-paint-churn` guards), and this one
   // would run on every timeupdate.
@@ -8073,9 +8169,14 @@
       key = 't|' + hit.join(',');
       if (!force && key === shown) return;
       shown = key;
-      cap.textContent = '';
+      // Rebuild only the TEXT children; the lens element is reused so a re-seek does not restart
+      // its load on every line.
+      var kid = cap.lastChild;
+      while (kid && kid !== lensWrap){ var prev = kid.previousSibling; cap.removeChild(kid); kid = prev; }
+      var withBox = null;
       for (var n = 0; n < hit.length; n++){
         var x = TRACK[hit[n]];
+        if (!withBox && x.box) withBox = x;
         if (x.i >= 0){
           var jp = US[x.i].querySelector('.u-jp');
           if (jp) cap.appendChild(jp.cloneNode(true));
@@ -8083,6 +8184,7 @@
           cap.appendChild(line(document.createTextNode(x.raw)));
         }
       }
+      lensShow(withBox);
       return;
     }
 
@@ -8098,7 +8200,7 @@
     key = 'r|' + idx + '|' + vis;
     if (!force && key === shown) return;
     shown = key;
-    cap.textContent = '';
+    cap.textContent = ''; lensWrap = lensVid = null; lensKey = null;
     if (!vis) return;
     var jp2 = r[idx].el.querySelector('.u-jp');
     if (jp2) cap.appendChild(jp2.cloneNode(true));
@@ -8111,6 +8213,7 @@
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     }
     if (!silent){ try { window.localStorage.setItem(KEY, on ? '1' : '0'); } catch (e){} }
+    if (!on) lensDestroy();
     if (on){ shown = null; paint(true); }
   }
 
