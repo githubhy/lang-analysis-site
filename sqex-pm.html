@@ -789,7 +789,7 @@
     <button class="filter-cat" id="dialectToggle" type="button" aria-pressed="false" hidden
             title="只看含方言→标准语对照的句子">方言</button>
     <button class="filter-cat" id="cnMaskToggle" type="button" aria-pressed="false" hidden
-            title="遮住中文字幕带：播放器里只留日文字幕（本地视频同时放大）">遮中文</button>
+            title="遮住中文字幕带：日文带放大到中文位置（点按循环：遮中文 → 全遮 → 关闭）">遮中文</button>
     <button class="filter-reset" id="filterReset" type="button">全部</button>
   </div>
   <p id="filterEmpty" hidden>无匹配 — 换个关键词或点「全部」。</p>
@@ -4669,12 +4669,14 @@
         if (aspect > fa){ cw = frame.w; ch = frame.w / aspect; cy = (frame.h - ch) / 2; }
         else            { ch = frame.h; cw = frame.h * aspect; cx = (frame.w - cw) / 2; }
       }
-      function band(b){
-        return { x: cx, y: cy + b[0] * ch, w: cw, h: (b[1] - b[0]) * ch };
+      function band(a, b){
+        return { x: cx, y: cy + a * ch, w: cw, h: (b - a) * ch };
       }
-      var cover = band(zh), src = band(ja);
-      return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, src: src,
-               magnify: cover.h > src.h + 0.5 };
+      var cover = band(zh[0], zh[1]);          // mode 1: mask the translation band only
+      var coverAll = band(zh[0], ja[1]);       // mode 2: mask both bands, one enlarged line
+      var src = band(ja[0], ja[1]);
+      return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, coverAll: coverAll,
+               src: src, magnify: cover.h > src.h + 0.5, magnifyAll: coverAll.h > src.h + 0.5 };
     }
 
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
@@ -4687,12 +4689,16 @@
   var P = PAGE_TOOLS_PURE();
 
   // ---------- 遮中文: the band magnifier is the ONLY mask ---------------------------------
-  // One fixed overlay covers the Chinese band; on a native <video> it simultaneously draws the
-  // Japanese band into that rectangle, so the thing concealing the Chinese IS the thing being
-  // magnified and the two can never drift. Not a cursor lens and not a second mask element.
-  // Revealed only when the build emitted band geometry (build_page.py's `bands` config), which
-  // only a hardsub page carries. Works on every transport: cross-origin embeds cannot be read
-  // pixel-wise, so there the same rectangle is an opaque cover.
+  // One fixed overlay, three states, cycled by its button (and by `C`, which clicks it):
+  //   0 off · 1 mask the zh band, drawing the ja band into that rectangle · 2 mask zh AND the
+  //   original ja line, leaving one enlarged line where both bands were.
+  // On a native <video> the overlay DRAWS the Japanese band (that is the magnification); the thing
+  // concealing the Chinese is the thing being magnified, so the two cannot drift. Not a cursor
+  // lens and not a second mask element. Revealed only when the build emitted band geometry
+  // (build_page.py's `bands` config). On cross-origin embeds the pixels cannot be read, so the
+  // same rectangles are opaque covers — same control, no magnification.
+  // The enlargement is vertical (the source is already full-width); a uniform zoom would have to
+  // crop the line's ends horizontally, which loses words.
   function wireCnMask(){
     var frameEl = document.querySelector('.video-frame');
     var btn = document.getElementById('cnMaskToggle');
@@ -4710,49 +4716,60 @@
     var el = document.createElement(isVideo ? 'canvas' : 'div');
     el.className = 'cn-mask'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
     frameEl.appendChild(el);
-    var ctx = null, raf = 0;
+    var ctx = null, raf = 0, state = 0;   // 0 off · 1 mask the zh band · 2 mask zh AND the small ja line
+    var TITLE = [
+      '遮住中文字幕带：日文带放大到中文位置（点按循环：遮中文 → 全遮 → 关闭）',
+      '只遮中文：日文放大到中文位置，下方原日文仍在（点按切到「全遮」）',
+      '全遮：中文与原日文都遮住，只留一条放大的日文（点按关闭）'
+    ];
+    function target(g){ return state === 2 ? g.coverAll : g.cover; }
     function place(){
       var r = frameEl.getBoundingClientRect();
       var aspect = (isVideo && clip.videoWidth) ? clip.videoWidth / clip.videoHeight : 0;
       var g = P.bandRects({ w: r.width, h: r.height }, aspect, zh, ja);
-      el.style.left = g.cover.x + 'px'; el.style.top = g.cover.y + 'px';
-      el.style.width = g.cover.w + 'px'; el.style.height = g.cover.h + 'px';
+      var t = target(g);
+      el.style.left = t.x + 'px'; el.style.top = t.y + 'px';
+      el.style.width = t.w + 'px'; el.style.height = t.h + 'px';
       return g;
     }
     function draw(){
       raf = 0;
-      if (el.hidden) return;
+      if (!state) return;
       var g = place();
       if (!isVideo) return;
       var vw = clip.videoWidth, vh = clip.videoHeight;
       if (!ctx || !vw || clip.readyState < 2) return;
+      var t = target(g);
       var dpr = window.devicePixelRatio || 1;
-      el.width = Math.max(1, Math.round(g.cover.w * dpr));
-      el.height = Math.max(1, Math.round(g.cover.h * dpr));
+      el.width = Math.max(1, Math.round(t.w * dpr));
+      el.height = Math.max(1, Math.round(t.h * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, g.cover.w, g.cover.h);
+      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, t.w, t.h);
     }
-    function loop(){ if (el.hidden) return; draw(); raf = requestAnimationFrame(loop); }
-    function set(on){
-      el.hidden = !on;
-      btn.classList.toggle('on', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      try { localStorage.setItem('lang:cn-mask', on ? '1' : '0'); } catch (e) {}
-      if (on){
+    function loop(){ if (!state) return; draw(); raf = requestAnimationFrame(loop); }
+    function set(next){
+      state = next;
+      el.hidden = !state;
+      btn.textContent = state === 2 ? '全遮' : '遮中文';
+      btn.title = TITLE[state];
+      btn.classList.toggle('on', !!state);
+      btn.setAttribute('aria-pressed', state ? 'true' : 'false');
+      try { localStorage.setItem('lang:cn-mask', String(state)); } catch (e) {}
+      if (state){
         if (isVideo && !ctx) ctx = el.getContext('2d');
         draw();
         if (isVideo && !raf) raf = requestAnimationFrame(loop);
       } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
     }
-    btn.addEventListener('click', function(){ set(el.hidden); });
+    btn.addEventListener('click', function(){ set((state + 1) % 3); });
     if (isVideo){
       clip.addEventListener('seeked', draw);
       clip.addEventListener('loadedmetadata', draw);
     }
     window.addEventListener('resize', draw);
-    var saved = false;
-    try { saved = localStorage.getItem('lang:cn-mask') === '1'; } catch (e) {}
-    if (saved) set(true);
+    var saved = 0;
+    try { var v = localStorage.getItem('lang:cn-mask'); saved = v === '2' ? 2 : (v === '1' ? 1 : 0); } catch (e) {}
+    if (saved) set(saved);
   }
   wireCnMask();
 
@@ -5850,7 +5867,7 @@
         '<h3>显示</h3>' +
         row(['F'], '跟随') + row(['R'], '全部读音') + row(['S'], '跟读') +
         row(['D'], '听写') + row(['H'], '重点') + row(['O'], '被插话') +
-        row(['C'], '遮中文（遮住中文字幕带；本地视频同时放大日文）') +
+        row(['C'], '遮中文（点按循环：遮中文 → 全遮 → 关）') +
         row(['M'], '收起 / 展开播放器') +
         '<h3>其他</h3>' +
         row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
