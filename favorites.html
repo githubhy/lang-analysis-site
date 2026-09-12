@@ -615,7 +615,11 @@
   .filter-cats{display:flex;flex-wrap:wrap;gap:.4rem;}
   .filter-cat{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;
     background:transparent;border:1px solid currentColor;border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;opacity:.75;transition:opacity .12s,background .12s;}
-  .filter-cat.on{opacity:1;color:var(--paper)!important;}
+  /* `.on` flips the text to the page colour — which only reads when a background comes with it.
+     The [data-cat] chips below supply their own accent; every OTHER filter-cat (存疑 / 被插话 /
+     方言 / 遮中文) had no background rule, so its active state painted paper-on-paper and the
+     label vanished. Give the generic case an ink fill; the accent rules out-specify it. */
+  .filter-cat.on{opacity:1;background:var(--ink);border-color:var(--ink);color:var(--paper)!important;}
   .filter-cat[data-cat="katsu"]{color:var(--katsu);} .filter-cat[data-cat="katsu"].on{background:var(--katsu);border-color:var(--katsu);}
   .filter-cat[data-cat="keigo"]{color:var(--keigo);} .filter-cat[data-cat="keigo"].on{background:var(--keigo);border-color:var(--keigo);}
   .filter-cat[data-cat="joshi"]{color:var(--joshi);} .filter-cat[data-cat="joshi"].on{background:var(--joshi);border-color:var(--joshi);}
@@ -624,6 +628,11 @@
     background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.24rem .7rem;}
   .filter-reset:hover{color:var(--shu);border-color:var(--shu);}
   .filter-cat:focus-visible,.filter-reset:focus-visible,#filterInput:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  /* 遮中文 state dots (page_tools.js): three positions inside the button — 关 · 遮中文 · 全遮.
+     A click ON a dot jumps to that state; a click elsewhere on the button cycles. */
+  .filter-cat .cn-dot{display:inline-block;width:.42rem;height:.42rem;border-radius:50%;
+    border:1px solid currentColor;margin-left:.15rem;vertical-align:.02em;opacity:.4;}
+  .filter-cat .cn-dot.on{background:currentColor;opacity:1;}
   #filterEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
     background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
   body.filtering .u.nomatch{display:none;}

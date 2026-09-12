@@ -615,7 +615,11 @@
   .filter-cats{display:flex;flex-wrap:wrap;gap:.4rem;}
   .filter-cat{font-family:var(--font-gothic);font-size:.76rem;font-weight:600;cursor:pointer;
     background:transparent;border:1px solid currentColor;border-radius:2rem;padding:.24rem .7rem;white-space:nowrap;opacity:.75;transition:opacity .12s,background .12s;}
-  .filter-cat.on{opacity:1;color:var(--paper)!important;}
+  /* `.on` flips the text to the page colour — which only reads when a background comes with it.
+     The [data-cat] chips below supply their own accent; every OTHER filter-cat (存疑 / 被插话 /
+     方言 / 遮中文) had no background rule, so its active state painted paper-on-paper and the
+     label vanished. Give the generic case an ink fill; the accent rules out-specify it. */
+  .filter-cat.on{opacity:1;background:var(--ink);border-color:var(--ink);color:var(--paper)!important;}
   .filter-cat[data-cat="katsu"]{color:var(--katsu);} .filter-cat[data-cat="katsu"].on{background:var(--katsu);border-color:var(--katsu);}
   .filter-cat[data-cat="keigo"]{color:var(--keigo);} .filter-cat[data-cat="keigo"].on{background:var(--keigo);border-color:var(--keigo);}
   .filter-cat[data-cat="joshi"]{color:var(--joshi);} .filter-cat[data-cat="joshi"].on{background:var(--joshi);border-color:var(--joshi);}
@@ -624,6 +628,11 @@
     background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.24rem .7rem;}
   .filter-reset:hover{color:var(--shu);border-color:var(--shu);}
   .filter-cat:focus-visible,.filter-reset:focus-visible,#filterInput:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  /* 遮中文 state dots (page_tools.js): three positions inside the button — 关 · 遮中文 · 全遮.
+     A click ON a dot jumps to that state; a click elsewhere on the button cycles. */
+  .filter-cat .cn-dot{display:inline-block;width:.42rem;height:.42rem;border-radius:50%;
+    border:1px solid currentColor;margin-left:.15rem;vertical-align:.02em;opacity:.4;}
+  .filter-cat .cn-dot.on{background:currentColor;opacity:1;}
   #filterEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
     background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
   body.filtering .u.nomatch{display:none;}
@@ -5664,6 +5673,7 @@
       '只遮中文：日文放大到中文位置，下方原日文仍在（点按切到「全遮」）',
       '全遮：中文与原日文都遮住，只留一条放大的日文（点按关闭）'
     ];
+    var DOT_TITLE = ['关闭', '只遮中文：日文放大到中文位置，下方原日文仍在', '全遮：中文与原日文都遮住，只留放大的日文'];
     function target(g){ return state === 2 ? g.coverAll : g.cover; }
     function place(){
       var r = frameEl.getBoundingClientRect();
@@ -5689,10 +5699,21 @@
       ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, t.w, t.h);
     }
     function loop(){ if (!state) return; draw(); raf = requestAnimationFrame(loop); }
+    // The dots INSIDE the button are the state indicator AND a direct jump: clicking a dot sets
+    // that state, clicking anywhere else on the button cycles (so Space/Enter/C on the control
+    // still just cycle). One element, one id, three states — the dots are spans, not nested
+    // buttons, because a button cannot contain buttons.
+    function render(){
+      var h = state === 2 ? '全遮' : '遮中文';
+      for (var i = 0; i < 3; i++)
+        h += '<span class="cn-dot' + (i === state ? ' on' : '') + '" data-state="' + i + '" title="'
+             + DOT_TITLE[i] + '"></span>';
+      btn.innerHTML = h;
+    }
     function set(next){
       state = next;
       el.hidden = !state;
-      btn.textContent = state === 2 ? '全遮' : '遮中文';
+      render();
       btn.title = TITLE[state];
       btn.classList.toggle('on', !!state);
       btn.setAttribute('aria-pressed', state ? 'true' : 'false');
@@ -5703,12 +5724,16 @@
         if (isVideo && !raf) raf = requestAnimationFrame(loop);
       } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
     }
-    btn.addEventListener('click', function(){ set((state + 1) % 3); });
+    btn.addEventListener('click', function(ev){
+      var d = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-state');
+      set(d == null ? (state + 1) % 3 : parseInt(d, 10));
+    });
     if (isVideo){
       clip.addEventListener('seeked', draw);
       clip.addEventListener('loadedmetadata', draw);
     }
     window.addEventListener('resize', draw);
+    render();                       // dots must exist even in the off state (all hollow)
     var saved = 0;
     try { var v = localStorage.getItem('lang:cn-mask'); saved = v === '2' ? 2 : (v === '1' ? 1 : 0); } catch (e) {}
     if (saved) set(saved);
@@ -6427,7 +6452,7 @@
         '<h3>显示</h3>' +
         row(['F'], '跟随') + row(['R'], '全部读音') + row(['S'], '跟读') +
         row(['D'], '听写') + row(['H'], '重点') + row(['O'], '被插话') +
-        row(['C'], '遮中文（点按循环：遮中文 → 全遮 → 关）') +
+        row(['C'], '遮中文（循环：遮中文 → 全遮 → 关；按钮上的圆点可直接选状态）') +
         row(['M'], '收起 / 展开播放器') +
         '<h3>其他</h3>' +
         row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
