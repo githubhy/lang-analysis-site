@@ -117,42 +117,14 @@
   .video-frame{position:relative;aspect-ratio:16/9;background:#000;max-height:var(--dock-max);}
   .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
     border:0;display:block;background:#000;object-fit:contain;}
+  /* 遮中文 (band magnifier): one fixed overlay inside the video frame. On a native <video> it is a
+     canvas drawing the Japanese band into the Chinese band's rectangle — cover and magnify in one
+     element, so the mask cannot drift from what it magnifies. On a cross-origin player the pixels
+     cannot be read, so the same rectangle becomes an opaque cover: still the only mask, just
+     without magnification. Geometry: data-band-zh / data-band-ja on .video-frame. */
+  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;}
+  .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
-  /* 遮中文 — mask the burned-in Chinese band and draw the page's own Japanese line in its place.
-     Geometry is per-page (data-cover-band on .video-frame); subs.js carries the measurement and the
-     reason this is TEXT and not a pixel zoom. The video is object-fit:contain on a 16:9 source in a
-     16:9 frame, so a % here is a fraction of the SOURCE frame — a measured band becomes CSS with no
-     scaling step in between. pointer-events:none throughout: the mask sits over the picture and must
-     never swallow a click aimed at the video's own controls. */
-  /* ONE plate: it masks the band AND carries the text, so the two can never disagree about how much
-     is covered (they did — a 2-line caption overflowed a fixed-height mask onto bare picture).
-     min-height is the measured band, set inline; height beyond that is whatever the line needs, and
-     it grows UPWARD because the box is anchored by `bottom`. OPAQUE, not blurred: the job is that
-     the Chinese cannot be read, and blur leaves 36px glyphs guessable. */
-  .subs-cap{display:none;position:absolute;left:0;right:0;z-index:2;pointer-events:none;
-    box-sizing:border-box;background:rgba(0,0,0,.94);padding:.2em 3% .12em;
-    font-family:var(--font-gothic);font-size:var(--subs-fs,18px);line-height:1.35;
-    color:#fff;text-align:center;}
-  .video-frame.cover-zh .subs-cap{display:flex;flex-direction:column;align-items:center;
-    justify-content:flex-end;}
-  .subs-cap .u-jp{width:100%;font-size:inherit;line-height:inherit;color:inherit;margin:0;display:block;}
-  .subs-cap rt{color:#bfe3ff;}
-  /* The magnifier: a window onto the burned-in band itself, cropped to the sentence. The <video>
-     inside is oversized and offset by subs.js, so the window must clip it and must not stretch --
-     max-width:none defeats the global img/video fit rule that would otherwise squash it back. */
-  .subs-lens{position:relative;width:100%;overflow:hidden;flex:0 0 auto;}
-  .subs-lens video{position:absolute;left:0;top:0;max-width:none;height:auto;pointer-events:none;}
-  .subs-lens[hidden]{display:none;}
-  /* The control sits in the frame's TOP-right: the bottom is where <video controls> draws its own
-     bar, and an overlay button there is a button the user cannot reliably hit. */
-  .subs-btn{position:absolute;top:.4rem;right:.4rem;z-index:4;
-    font-family:var(--font-gothic);font-size:.72rem;font-weight:600;line-height:1;
-    padding:.34rem .5rem;border-radius:.4rem;cursor:pointer;
-    color:#fff;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.38);}
-  .subs-btn[hidden]{display:none;}
-  .subs-btn:hover{background:rgba(0,0,0,.72);border-color:#fff;}
-  .subs-btn:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
-  .subs-btn.on{color:#111;background:#fff;border-color:#fff;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
   .play-hint b{color:var(--ink);font-weight:600;}
 
@@ -404,7 +376,6 @@
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
     .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
-    .subs-btn{ min-height:44px; min-width:44px; padding:.5rem .7rem; font-size:.8rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -817,6 +788,8 @@
             title="只看被插话/同时说话盖住的句子（音频判定）">被插话</button>
     <button class="filter-cat" id="dialectToggle" type="button" aria-pressed="false" hidden
             title="只看含方言→标准语对照的句子">方言</button>
+    <button class="filter-cat" id="cnMaskToggle" type="button" aria-pressed="false" hidden
+            title="遮住中文字幕带：播放器里只留日文字幕（本地视频同时放大）">遮中文</button>
     <button class="filter-reset" id="filterReset" type="button">全部</button>
   </div>
   <p id="filterEmpty" hidden>无匹配 — 换个关键词或点「全部」。</p>
@@ -834,7 +807,7 @@
         <div class="u-jp">ゲームと<ruby>仕事<rt>しごと</rt></ruby>って<ruby>似<rt>に</rt></ruby>ている<ruby>気<rt>き</rt></ruby>がしてて、<ruby>試行錯誤<rt>しこうさくご</rt></ruby>と<ruby>努力<rt>どりょく</rt></ruby>を<ruby>積<rt>つ</rt></ruby>み<ruby>重<rt>かさ</rt></ruby>ねて<ruby>目指<rt>めざ</rt></ruby>す。</div>
         <div class="u-cn"><span class="lbl">译</span>我总觉得游戏和工作有点像——都是不断反复试错、积累努力，朝着目标前进。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜って<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 30 个视频中共出现 83 次 — 点击查看全部用例">30视频</a><span>口语中「って」＝「〜という/〜とは」，引出话题，比书面语「は」更随意。</span></li>
+          <li><span class="chip joshi">〜って<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 31 个视频中共出现 94 次 — 点击查看全部用例">31视频</a><span>口语中「って」＝「〜という/〜とは」，引出话题，比书面语「は」更随意。</span></li>
           <li><span class="chip katsu">気がして（て形）</span><span>「気がする」的て形，表示「感觉…」，此处て形连接后续说明，相当于「因为感觉…所以」。</span></li>
           <li><span class="chip goi">積み重ねる</span><span>复合动词，「積む(堆积)＋重ねる(叠加)」，表示「不断积累」。</span></li>
           <li><span class="chip goi">〜を目指す</span><span>惯用句式，「以…为目标/朝着…努力」。</span></li>
@@ -849,7 +822,7 @@
         <ul class="u-points">
           <li><span class="chip goi">〜ものじゃない<span class="star">★</span></span><span>「もの」表示一般常理/本质，「〜ものじゃない」＝「不该是…的东西」，用来否定一种普遍认知。</span></li>
           <li><span class="chip joshi">〜と信じている</span><span>引用助词「と」＋「信じる」，表示「相信…」，「と」前接名词化的判断内容「〜じゃないな」。</span></li>
-          <li><span class="chip joshi">〜んですよ<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですよ" title="这个语法点在 23 个视频中共出现 51 次 — 点击查看全部用例">23视频</a><span>「のだ」的口语形＋终助词「よ」，说明理由并带告知/强调语气。</span></li>
+          <li><span class="chip joshi">〜んですよ<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですよ" title="这个语法点在 24 个视频中共出现 53 次 — 点击查看全部用例">24视频</a><span>「のだ」的口语形＋终助词「よ」，说明理由并带告知/强调语气。</span></li>
         </ul>
       </div>
     </div>
@@ -860,7 +833,7 @@
         <div class="u-cn"><span class="lbl">译</span>既受到大家喜爱，玩家也容易产生亲近感的角色——对玩家来说这也是件好事，最终能收获『做了真好』这样的结局，我觉得能做到这一点真的很了不起。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「キャラクターな」后语气疑似被打断/省略（原意可能是「キャラクターを作ることは」），按现场口语节奏保留，未强行补全，故加 (?)。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜し<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 27 个视频中共出现 55 次 — 点击查看全部用例">27视频</a><span>并列接续助词，列举多个理由/性质，口语中常连续使用，相当于「既…又…」。</span></li>
+          <li><span class="chip joshi">〜し<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 28 个视频中共出现 57 次 — 点击查看全部用例">28视频</a><span>并列接续助词，列举多个理由/性质，口语中常连续使用，相当于「既…又…」。</span></li>
           <li><span class="chip katsu">愛されてる</span><span>「愛する」的受身形「愛される」＋口语「ている→てる」，表示被动状态的持续。</span></li>
           <li><span class="chip goi">くっつきやすい</span><span>「くっつく(粘住/亲近)＋やすい(容易…)」，表示「容易让人产生亲近感」。</span></li>
           <li><span class="chip joshi">〜にとって</span><a class="xref" href="concordance.html#q=〜にとって" title="这个语法点在 6 个视频中共出现 6 次 — 点击查看全部用例">6视频</a><span>表示「对…来说」，站在某对象的立场进行评价。</span></li>
@@ -955,7 +928,7 @@
         <div class="u-jp">おはようございます。</div>
         <div class="u-cn"><span class="lbl">译</span>早上好。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">おはようございます<span class="star">★</span></span><a class="xref" href="concordance.html#q=おはようございます" title="这个语法点在 10 个视频中共出现 20 次 — 点击查看全部用例">10视频</a><span>郑重体寒暄语，「おはよう」＋「ございます」(丁宁语)，比「おはよう」更礼貌，用于早晨问候，职场/对外场合常用。</span></li>
+          <li><span class="chip keigo">おはようございます<span class="star">★</span></span><a class="xref" href="concordance.html#q=おはようございます" title="这个语法点在 11 个视频中共出现 23 次 — 点击查看全部用例">11视频</a><span>郑重体寒暄语，「おはよう」＋「ございます」(丁宁语)，比「おはよう」更礼貌，用于早晨问候，职场/对外场合常用。</span></li>
         </ul>
       </div>
     </div>
@@ -979,7 +952,7 @@
         <div class="u-cn"><span class="lbl">译</span>请多关照。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>字幕未标注说话人切换，根据前后对话（自我介绍→寒暄→提问）推断此句为采访者(host)所说，标注为推断。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">よろしくお願いします<span class="star">★</span></span><a class="xref" href="concordance.html#q=よろしくお願いします" title="这个语法点在 19 个视频中共出现 39 次 — 点击查看全部用例">19视频</a><span>固定寒暄敬语，「请多多关照」，日常/商务场合初次见面或请求他人时常用。</span></li>
+          <li><span class="chip keigo">よろしくお願いします<span class="star">★</span></span><a class="xref" href="concordance.html#q=よろしくお願いします" title="这个语法点在 20 个视频中共出现 44 次 — 点击查看全部用例">20视频</a><span>固定寒暄敬语，「请多多关照」，日常/商务场合初次见面或请求他人时常用。</span></li>
         </ul>
       </div>
     </div>
@@ -998,9 +971,9 @@
         <div class="u-cn"><span class="lbl">译</span>您早上有什么固定的routine（惯例流程）吗？</div>
         <ul class="u-points">
           <li><span class="chip goi">ルーティン</span><span>外来语，「routine」，指日常固定的流程/习惯。</span></li>
-          <li><span class="chip joshi">〜とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 27 个视频中共出现 60 次 — 点击查看全部用例">27视频</a><span>口语列举助词，「…之类的」，比「や」更随意，常用于举例并留有余地。</span></li>
+          <li><span class="chip joshi">〜とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 28 个视频中共出现 61 次 — 点击查看全部用例">28视频</a><span>口语列举助词，「…之类的」，比「や」更随意，常用于举例并留有余地。</span></li>
           <li><span class="chip katsu">あったりする</span><span>「〜たりする」表示列举/举例性动作，口语中常用来委婉表达「有没有类似…的情况」。</span></li>
-          <li><span class="chip joshi">〜んですか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですか" title="这个语法点在 25 个视频中共出现 67 次 — 点击查看全部用例">25视频</a><span>「のだ」疑问形口语，用于确认/询问理由或情况，语气比单纯「〜ますか」更随和、带探寻感。</span></li>
+          <li><span class="chip joshi">〜んですか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですか" title="这个语法点在 26 个视频中共出现 68 次 — 点击查看全部用例">26视频</a><span>「のだ」疑问形口语，用于确认/询问理由或情况，语气比单纯「〜ますか」更随和、带探寻感。</span></li>
         </ul>
       </div>
     </div>
@@ -1108,7 +1081,7 @@
         <div class="u-cn"><span class="lbl">译</span>像《尼尔:机械纪元》和《尼尔:复制体》之类的，我们有不少共同喜好。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「ニアオトマタ」推测为游戏『ニーア オートマタ／NieR:Automata』的听写误差，结合下文「レプリカント」（同系列作品『ニーア レプリカント』）还原，标 (?)。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">なんで</span><a class="xref" href="concordance.html#q=なんで" title="这个语法点在 24 个视频中共出现 37 次 — 点击查看全部用例">24视频</a><span>「なので」的口语缩约，表原因，「因为…所以…」，句尾语气随意。</span></li>
+          <li><span class="chip joshi">なんで</span><a class="xref" href="concordance.html#q=なんで" title="这个语法点在 25 个视频中共出现 41 次 — 点击查看全部用例">25视频</a><span>「なので」的口语缩约，表原因，「因为…所以…」，句尾语气随意。</span></li>
           <li><span class="chip goi">共通で好き</span><span>「有共同的喜好」，「共通」+「で」作连用修饰。</span></li>
         </ul>
       </div>
@@ -1415,7 +1388,7 @@
         <div class="u-jp">じゃあこちらです。</div>
         <div class="u-cn"><span class="lbl">译</span>那么，这边请。</div>
         <ul class="u-points">
-          <li><span class="chip goi">じゃあ</span><a class="xref" href="concordance.html#q=じゃあ" title="这个语法点在 22 个视频中共出现 26 次 — 点击查看全部用例">22视频</a><span>「それでは」的口语简化，「那么/那就」，用于转换话题或场景。</span></li>
+          <li><span class="chip goi">じゃあ</span><a class="xref" href="concordance.html#q=じゃあ" title="这个语法点在 23 个视频中共出现 29 次 — 点击查看全部用例">23视频</a><span>「それでは」的口语简化，「那么/那就」，用于转换话题或场景。</span></li>
         </ul>
       </div>
     </div>
@@ -1450,7 +1423,7 @@
         <div class="u-jp">よろしくお<ruby>願<rt>ねが</rt></ruby>いします。</div>
         <div class="u-cn"><span class="lbl">译</span>请多关照。</div>
         <ul class="u-points">
-          <li><span class="chip goi">よろしくお願いします<span class="star">★</span></span><a class="xref" href="concordance.html#q=よろしくお願いします" title="这个语法点在 19 个视频中共出现 39 次 — 点击查看全部用例">19视频</a><span>日语最常用寒暄语之一，初次见面或请求关照时使用，「请多关照」。</span></li>
+          <li><span class="chip goi">よろしくお願いします<span class="star">★</span></span><a class="xref" href="concordance.html#q=よろしくお願いします" title="这个语法点在 20 个视频中共出现 44 次 — 点击查看全部用例">20视频</a><span>日语最常用寒暄语之一，初次见面或请求关照时使用，「请多关照」。</span></li>
         </ul>
       </div>
     </div>
@@ -1527,7 +1500,7 @@
         <div class="u-cn"><span class="lbl">译</span>果然还是……平常大家各自一个人埋头在项目里，这种时候作为PM最好能介入进去……</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「についってて」发音不清，ASR还原存疑，可能是「について＋やってて」或「に入っていて」的连读省略，标(?)；句子在「方が」处被截断，语义未完，应在下一段延续。</div>
         <ul class="u-points">
-          <li><span class="chip goi">やっぱり</span><a class="xref" href="concordance.html#q=やっぱり" title="这个语法点在 19 个视频中共出现 33 次 — 点击查看全部用例">19视频</a><span>「やはり」的口语音变，「果然/终究」，表说话人重新确认自己的想法。</span></li>
+          <li><span class="chip goi">やっぱり</span><a class="xref" href="concordance.html#q=やっぱり" title="这个语法点在 20 个视频中共出现 35 次 — 点击查看全部用例">20视频</a><span>「やはり」的口语音变，「果然/终究」，表说话人重新确认自己的想法。</span></li>
           <li><span class="chip joshi">〜た方が（いい）<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜た方が（いい）" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「〜た方がいい」的省略形，本句在「方が」处被截断，后续（いい/いいと思う等）待下段续接；表建议/判断「最好…」。</span></li>
         </ul>
       </div>
@@ -1583,7 +1556,7 @@
         <div class="u-cn"><span class="lbl">译</span>说到这个PM（职位）呢，我觉得会涉及到很多不同的方面/要素。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「このPMテレは」推测为「このPMっていうのは」的连读弱化被ASR记错，已按此还原，但把握不大，故标(?)。</div>
         <ul class="u-points">
-          <li><span class="chip goi">〜っていうのは<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜っていうのは" title="这个语法点在 12 个视频中共出现 16 次 — 点击查看全部用例">12视频</a><span>「は」的口语强调形式，「〜っていうのは」＝所谓…、说到…，用于提出话题并加以说明。</span></li>
+          <li><span class="chip goi">〜っていうのは<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜っていうのは" title="这个语法点在 13 个视频中共出现 18 次 — 点击查看全部用例">13视频</a><span>「は」的口语强调形式，「〜っていうのは」＝所谓…、说到…，用于提出话题并加以说明。</span></li>
         </ul>
       </div>
     </div>
@@ -1633,9 +1606,9 @@
         <div class="u-asr"><span class="tag-asr">还原</span>本句为口语中常见的长句堆叠结构，用多个「〜ところ」「〜っていう」连接分句，无明显残留ASR误听。</div>
         <ul class="u-points">
           <li><span class="chip joshi">〜とか（列挙）</span><a class="xref" href="concordance.html#q=〜とか（列挙）" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>用于列举例子，暗示还有其他类似情况，语气比「や」更随意、口语化。</span></li>
-          <li><span class="chip katsu">〜なきゃいけない</span><a class="xref" href="concordance.html#q=〜なきゃいけない" title="这个语法点在 6 个视频中共出现 12 次 — 点击查看全部用例">6视频</a><span>「なければならない」的口语缩略形，表示「必须〜」。</span></li>
+          <li><span class="chip katsu">〜なきゃいけない</span><a class="xref" href="concordance.html#q=〜なきゃいけない" title="这个语法点在 7 个视频中共出现 13 次 — 点击查看全部用例">7视频</a><span>「なければならない」的口语缩略形，表示「必须〜」。</span></li>
           <li><span class="chip goi">〜ところ（抽象化用法）<span class="star">★</span></span><span>「ところ」不表示具体地点，而是把前面的动词短语名词化，指「…这一点/这方面」，本段反复出现，是很典型的口语句式。</span></li>
-          <li><span class="chip joshi">〜っていう</span><a class="xref" href="concordance.html#q=〜っていう" title="这个语法点在 13 个视频中共出现 25 次 — 点击查看全部用例">13视频</a><span>「という」的口语缩约形，用来引出/复述前面的内容。</span></li>
+          <li><span class="chip joshi">〜っていう</span><a class="xref" href="concordance.html#q=〜っていう" title="这个语法点在 14 个视频中共出现 26 次 — 点击查看全部用例">14视频</a><span>「という」的口语缩约形，用来引出/复述前面的内容。</span></li>
           <li><span class="chip keigo">ご＋名词（尊敬の接頭辞）</span><span>「ご経験」在名词前加「ご」表示尊敬，用于称呼第三者（此处水川さん）的经验，属尊敬语接头辞用法。</span></li>
         </ul>
       </div>
@@ -1760,7 +1733,7 @@
         <div class="u-jp">よいしょ</div>
         <div class="u-cn"><span class="lbl">译</span>哎哟嘿（发力/坐下时的语气词）</div>
         <ul class="u-points">
-          <li><span class="chip goi">よいしょ</span><a class="xref" href="concordance.html#q=よいしょ" title="这个语法点在 6 个视频中共出现 11 次 — 点击查看全部用例">6视频</a><span>发力、起身或搬东西时发出的感叹词，相当于中文「哎哟」「嘿咻」，常用于开始某个动作之前。</span></li>
+          <li><span class="chip goi">よいしょ</span><a class="xref" href="concordance.html#q=よいしょ" title="这个语法点在 7 个视频中共出现 12 次 — 点击查看全部用例">7视频</a><span>发力、起身或搬东西时发出的感叹词，相当于中文「哎哟」「嘿咻」，常用于开始某个动作之前。</span></li>
         </ul>
       </div>
     </div>
@@ -1998,7 +1971,7 @@
         <div class="u-jp"><ruby>時間<rt>じかん</rt></ruby>どう<ruby>作<rt>つく</rt></ruby>ってるとか、<ruby>結構<rt>けっこう</rt></ruby><ruby>相談<rt>そうだん</rt></ruby>に<ruby>乗<rt>の</rt></ruby>ってもらったり。</div>
         <div class="u-cn"><span class="lbl">译</span>比如时间要怎么安排之类的，也没少找她商量。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜とか</span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 27 个视频中共出现 60 次 — 点击查看全部用例">27视频</a><span>表示举例、说法不太笃定，相当于「…之类的」</span></li>
+          <li><span class="chip joshi">〜とか</span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 28 个视频中共出现 61 次 — 点击查看全部用例">28视频</a><span>表示举例、说法不太笃定，相当于「…之类的」</span></li>
           <li><span class="chip keigo">〜てもらう<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てもらう" title="这个语法点在 15 个视频中共出现 28 次 — 点击查看全部用例">15视频</a><span>「相談に乗ってもらう」＝请对方帮自己出主意，「てもらう」表示对方为我做某事、我因此受益的语气</span></li>
           <li><span class="chip goi">相談に乗る</span><a class="xref" href="concordance.html#q=相談に乗る" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>固定搭配，意为『帮忙商量、给建议』</span></li>
         </ul>
@@ -2012,7 +1985,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>ASR「3級」→ 应为『産休』（同音さんきゅう），结合『子供たちの年齢も同じ』的语境还原</div>
         <ul class="u-points">
           <li><span class="chip goi">産休<span class="star">★</span></span><a class="xref" href="concordance.html#q=産休" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>『産休』＝産前産後休業，即产假；与『3級』同音，字幕原文误听成了3級</span></li>
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 19 个视频中共出现 33 次 — 点击查看全部用例">19视频</a><span>表原因，比から更客观委婉，『因为…所以…』</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 20 个视频中共出现 35 次 — 点击查看全部用例">20视频</a><span>表原因，比から更客观委婉，『因为…所以…』</span></li>
           <li><span class="chip katsu">〜と（句末引出用法）</span><span>句末的と引出说话内容，口语中后面常省略言う/思う</span></li>
         </ul>
       </div>
@@ -2097,7 +2070,7 @@
         <div class="u-jp">そうですね。</div>
         <div class="u-cn"><span class="lbl">译</span>是啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜ですね</span><a class="xref" href="concordance.html#q=〜ですね" title="这个语法点在 9 个视频中共出现 16 次 — 点击查看全部用例">9视频</a><span>终助词「ね」表示轻微确认、寻求共鸣</span></li>
+          <li><span class="chip joshi">〜ですね</span><a class="xref" href="concordance.html#q=〜ですね" title="这个语法点在 10 个视频中共出现 17 次 — 点击查看全部用例">10视频</a><span>终助词「ね」表示轻微确认、寻求共鸣</span></li>
         </ul>
       </div>
     </div>
@@ -2244,7 +2217,7 @@
         <div class="u-cn"><span class="lbl">译</span>做一款游戏，总是会发生很多问题，而且要不断去解决它们。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>原句较长，依语义拆分为两句（本条＋下一条）以便学习。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜し</span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 27 个视频中共出现 55 次 — 点击查看全部用例">27视频</a><span>并列助词，列举多个理由或情况，含“而且”之意，口语中常用来延续说明。</span></li>
+          <li><span class="chip joshi">〜し</span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 28 个视频中共出现 57 次 — 点击查看全部用例">28视频</a><span>并列助词，列举多个理由或情况，含“而且”之意，口语中常用来延续说明。</span></li>
           <li><span class="chip goi">〜ってこと</span><a class="xref" href="concordance.html#q=〜ってこと" title="这个语法点在 6 个视频中共出现 6 次 — 点击查看全部用例">6视频</a><span>「ということ」的口语缩略形式，“…这件事”。</span></li>
         </ul>
       </div>
@@ -2269,7 +2242,7 @@
         <div class="u-cn"><span class="lbl">译</span>接下来呢，因为有个叫做「评审会」的相当重要的会议，所以我想移动到别的楼层去。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「次はですね」在原字幕中重复出现两次（可能是说话者重新组织语言时的重录），合并去重后只保留一次。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 19 个视频中共出现 33 次 — 点击查看全部用例">19视频</a><span>接续助词，表原因，语气比「から」更客观委婉，常用于郑重场合说明理由。</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 20 个视频中共出现 35 次 — 点击查看全部用例">20视频</a><span>接续助词，表原因，语气比「から」更客观委婉，常用于郑重场合说明理由。</span></li>
           <li><span class="chip katsu">〜たいと思います<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜たいと思います" title="这个语法点在 6 个视频中共出现 7 次 — 点击查看全部用例">6视频</a><span>「意向对象+たい+と思います」，礼貌地表达自己的意愿／打算，是日语中极常见的委婉表达方式。</span></li>
         </ul>
       </div>
@@ -2415,7 +2388,7 @@
         <div class="u-jp">そうですね、<ruby>中身<rt>なかみ</rt></ruby>ですよね。</div>
         <div class="u-cn"><span class="lbl">译</span>对啊，是内容（这一方面）吧。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ですよね</span><a class="xref" href="concordance.html#q=ですよね" title="这个语法点在 10 个视频中共出现 13 次 — 点击查看全部用例">10视频</a><span>「ですよね」用于确认并寻求对方同感，语气比较委婉。</span></li>
+          <li><span class="chip joshi">ですよね</span><a class="xref" href="concordance.html#q=ですよね" title="这个语法点在 11 个视频中共出现 14 次 — 点击查看全部用例">11视频</a><span>「ですよね」用于确认并寻求对方同感，语气比较委婉。</span></li>
         </ul>
       </div>
     </div>
@@ -2682,7 +2655,7 @@
         <div class="u-jp">大丈夫です。</div>
         <div class="u-cn"><span class="lbl">译</span>没问题。</div>
         <ul class="u-points">
-          <li><span class="chip goi">大丈夫</span><a class="xref" href="concordance.html#q=大丈夫" title="这个语法点在 8 个视频中共出现 15 次 — 点击查看全部用例">8视频</a><span>「大丈夫」是な形容词，可直接加「です」表示「没问题/没关系」，日常口语和商务场合都很常用。</span></li>
+          <li><span class="chip goi">大丈夫</span><a class="xref" href="concordance.html#q=大丈夫" title="这个语法点在 9 个视频中共出现 16 次 — 点击查看全部用例">9视频</a><span>「大丈夫」是な形容词，可直接加「です」表示「没问题/没关系」，日常口语和商务场合都很常用。</span></li>
         </ul>
       </div>
     </div>
@@ -2705,7 +2678,7 @@
         <ul class="u-points">
           <li><span class="chip katsu">なきゃいけない<span class="star">★</span></span><a class="xref" href="concordance.html#q=なきゃいけない" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「なければいけない」的口语缩约形，表示「必须…」，「なきゃ」是「なければ」在日常口语中的常见省略。</span></li>
           <li><span class="chip goi">見えてきた</span><span>「見える」的「〜てくる」形式，表示「渐渐看出来/浮现出来」的变化过程。</span></li>
-          <li><span class="chip goi">さん</span><a class="xref" href="concordance.html#q=さん" title="这个语法点在 13 个视频中共出现 15 次 — 点击查看全部用例">13视频</a><span>在「開発会社」后加「さん」，是商务日语中对合作公司表示礼貌与尊重的常见用法。</span></li>
+          <li><span class="chip goi">さん</span><a class="xref" href="concordance.html#q=さん" title="这个语法点在 14 个视频中共出现 17 次 — 点击查看全部用例">14视频</a><span>在「開発会社」后加「さん」，是商务日语中对合作公司表示礼貌与尊重的常见用法。</span></li>
         </ul>
       </div>
     </div>
@@ -4682,14 +4655,107 @@
     }
     function telopClass(hidden){ return hidden ? 'no-telop' : ''; }
 
+    // 遮中文 geometry: where to PAINT the band lens, in CSS pixels inside .video-frame.
+    // `aspect` is the video's intrinsic w/h (0 for an embed, whose rendered content box is not
+    // readable cross-origin — the overlay then assumes the player fills the frame, which is what
+    // YouTube/Bilibili do inside their own 16:9 boxes). The content box is letterboxed exactly
+    // the way object-fit:contain does it, because a band fraction is a fraction of the PICTURE,
+    // not of the element — measuring against the element shifts the mask whenever the source is
+    // not 16:9.
+    function bandRects(frame, aspect, zh, ja){
+      var cw = frame.w, ch = frame.h, cx = 0, cy = 0;
+      if (aspect > 0){
+        var fa = frame.w / frame.h;
+        if (aspect > fa){ cw = frame.w; ch = frame.w / aspect; cy = (frame.h - ch) / 2; }
+        else            { ch = frame.h; cw = frame.h * aspect; cx = (frame.w - cw) / 2; }
+      }
+      function band(b){
+        return { x: cx, y: cy + b[0] * ch, w: cw, h: (b[1] - b[0]) * ch };
+      }
+      var cover = band(zh), src = band(ja);
+      return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, src: src,
+               magnify: cover.h > src.h + 0.5 };
+    }
+
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
-             matchSentence: matchSentence, cardText: cardText,
+             matchSentence: matchSentence, cardText: cardText, bandRects: bandRects,
              TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
   }
   /*<</page-tools-pure>>*/
 
   var P = PAGE_TOOLS_PURE();
+
+  // ---------- 遮中文: the band magnifier is the ONLY mask ---------------------------------
+  // One fixed overlay covers the Chinese band; on a native <video> it simultaneously draws the
+  // Japanese band into that rectangle, so the thing concealing the Chinese IS the thing being
+  // magnified and the two can never drift. Not a cursor lens and not a second mask element.
+  // Revealed only when the build emitted band geometry (build_page.py's `bands` config), which
+  // only a hardsub page carries. Works on every transport: cross-origin embeds cannot be read
+  // pixel-wise, so there the same rectangle is an opaque cover.
+  function wireCnMask(){
+    var frameEl = document.querySelector('.video-frame');
+    var btn = document.getElementById('cnMaskToggle');
+    if (!frameEl || !btn) return;
+    function pair(name){
+      var v = (frameEl.getAttribute(name) || '').split(',');
+      var a = parseFloat(v[0]), b = parseFloat(v[1]);
+      return (v.length === 2 && isFinite(a) && isFinite(b) && a < b) ? [a, b] : null;
+    }
+    var zh = pair('data-band-zh'), ja = pair('data-band-ja');
+    if (!zh || !ja) return;
+    var clip = document.getElementById('clip');
+    var isVideo = !!clip && clip.tagName === 'VIDEO';
+    btn.hidden = false;
+    var el = document.createElement(isVideo ? 'canvas' : 'div');
+    el.className = 'cn-mask'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
+    frameEl.appendChild(el);
+    var ctx = null, raf = 0;
+    function place(){
+      var r = frameEl.getBoundingClientRect();
+      var aspect = (isVideo && clip.videoWidth) ? clip.videoWidth / clip.videoHeight : 0;
+      var g = P.bandRects({ w: r.width, h: r.height }, aspect, zh, ja);
+      el.style.left = g.cover.x + 'px'; el.style.top = g.cover.y + 'px';
+      el.style.width = g.cover.w + 'px'; el.style.height = g.cover.h + 'px';
+      return g;
+    }
+    function draw(){
+      raf = 0;
+      if (el.hidden) return;
+      var g = place();
+      if (!isVideo) return;
+      var vw = clip.videoWidth, vh = clip.videoHeight;
+      if (!ctx || !vw || clip.readyState < 2) return;
+      var dpr = window.devicePixelRatio || 1;
+      el.width = Math.max(1, Math.round(g.cover.w * dpr));
+      el.height = Math.max(1, Math.round(g.cover.h * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, g.cover.w, g.cover.h);
+    }
+    function loop(){ if (el.hidden) return; draw(); raf = requestAnimationFrame(loop); }
+    function set(on){
+      el.hidden = !on;
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      try { localStorage.setItem('lang:cn-mask', on ? '1' : '0'); } catch (e) {}
+      if (on){
+        if (isVideo && !ctx) ctx = el.getContext('2d');
+        draw();
+        if (isVideo && !raf) raf = requestAnimationFrame(loop);
+      } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
+    }
+    btn.addEventListener('click', function(){ set(el.hidden); });
+    if (isVideo){
+      clip.addEventListener('seeked', draw);
+      clip.addEventListener('loadedmetadata', draw);
+    }
+    window.addEventListener('resize', draw);
+    var saved = false;
+    try { saved = localStorage.getItem('lang:cn-mask') === '1'; } catch (e) {}
+    if (saved) set(true);
+  }
+  wireCnMask();
+
   var cards = [].slice.call(document.querySelectorAll('.u'));
   if (!cards.length) return;
 
@@ -5611,7 +5677,7 @@
     // ruby both revealed the reading and toggled playback. Match on the ROLE too.
     var ACTIVATION = { BUTTON: 1, A: 1, RUBY: 1, SUMMARY: 1 };
     var LENS = { f: 'follow', r: 'furi', s: 'shadow', d: 'dict',
-                 h: 'highlights', o: 'overlap', m: 'fold', c: 'covers' };
+                 h: 'highlights', o: 'overlap', m: 'fold', c: 'cnmask' };
 
     function isTyping(t){ return !!t && (TYPING[t.tag] === 1 || t.editable === true); }
     function isActivation(t){ return !!t && (ACTIVATION[t.tag] === 1 || t.role === 'button'); }
@@ -5758,11 +5824,9 @@
   // ---------- the ? cheat sheet ----------
   // An undiscoverable shortcut is a shortcut nobody uses, so every binding above is listed here
   // and this overlay is the only place they are written down for the reader.
-  // 'covers' (遮中文) exists on bilingual-hardsub pages only. press() no-ops on a missing id, so
-  // binding it globally costs the other pages nothing — the key is simply inert where the button is.
   var LENS_BTN = { follow: 'dockFollow', furi: 'furiToggle', shadow: 'shadowToggle',
                    dict: 'dictToggle', highlights: 'highlightsToggle',
-                   overlap: 'overlapToggle', fold: 'dockMin', covers: 'subsToggle' };
+                   overlap: 'overlapToggle', fold: 'dockMin', cnmask: 'cnMaskToggle' };
   var help = null;
   function row(keys, what){
     var ks = '';
@@ -5786,8 +5850,8 @@
         '<h3>显示</h3>' +
         row(['F'], '跟随') + row(['R'], '全部读音') + row(['S'], '跟读') +
         row(['D'], '听写') + row(['H'], '重点') + row(['O'], '被插话') +
+        row(['C'], '遮中文（遮住中文字幕带；本地视频同时放大日文）') +
         row(['M'], '收起 / 展开播放器') +
-        row(['C'], '遮中文 — 盖住烧录的中文字幕，放大日文（仅双语硬字幕页）') +
         '<h3>其他</h3>' +
         row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
         '<p class="keys-note">竖向移动视线，横向移动播放位置：' +
@@ -5853,386 +5917,6 @@
     if (a && a.tagName === 'IFRAME') a.blur();
   }, true);
 })();
-</script>
-<script>
-/*<<subs-pure>>*/
-// 遮中文 — mask the burned-in CHINESE subtitle band on a bilingual hardsub and draw the JAPANESE
-// that is on screen right now in its place, large and crisp. Per-page: a source with no second
-// burned-in language carries no `cover_band` in pages.json, grows no button, and this file returns
-// on line one.
-//
-// WHY THIS DRAWS TEXT AND NOT A PIXEL ZOOM — the obvious reading of "make the Japanese bigger" is to
-// magnify the burned-in strip, and the arithmetic kills it. shosen-taningoto-01 is 1280x720; the ja
-// band is 18px tall (the zh band above it is 36px); .dock-video caps the picture at 32rem = 512 CSS
-// px, i.e. 0.4x native, so those glyphs reach the screen at ~7 CSS px. A fit-width magnifier is
-// bounded by the 46rem (736px) column = 0.575x native = 10.4 CSS px — 1.4x more and still
-// unreadable — and that page's own A/B found upscaling 18px glyphs FLAT across 1x/2x/3x (訴える read
-// correctly at 1x and wrongly at 2x/3x). The pixels are not there to enlarge. The text is.
-//
-// WHICH TEXT — THE BAND'S OWN TRACK, NOT THE ACTIVE ROW. The first cut keyed the plate off whichever
-// `.u` the follow-along engine had marked `.active`, and that is the wrong authority for a magnifier
-// of the band: measured on shosen-taningoto-01, 105 of 776 displays (13.5%) had no row at all — real
-// dialogue the analysis merged into a neighbour, so the plate showed the PREVIOUS sentence — and of
-// the 671 that did, 74 (11%) sat >0.5s from the display's own start and 35 >1.5s, always speech
-// leading its own caption. So `tools/bake_band_track.py` bakes the read's display spans into the
-// page as `#subsBand` and this file renders THAT: the plate now changes exactly when the band under
-// it changes. Where a display and a row are the same sentence the row's `.u-jp` is what gets drawn,
-// so the plate keeps the repairs (74 Opus rewrites, 13 frame-confirmed) and the furigana the R lens
-// needs; only a display with no row falls back to the raw read. No track, or a stale one, and the
-// old active-row path below still runs — a rebuilt page renders a beat early, never a wrong line.
-//
-// AND THE PLATE SHOWS THE PIXELS TOO, cropped to the sentence. A fit-WIDTH magnifier of the whole
-// band is pointless — 1280 native px into a 512 CSS px dock is 0.40x, a shrink — but these
-// subtitles are narrow: measured over 767 boxed displays the sentence is a MEDIAN 313 px wide, 24%
-// of the frame. Crop to it and the same plate width gives a median 1.64x, and 90% of lines clear
-// 1:1, i.e. you finally see every pixel the upload has rather than the 40% the dock keeps. The box
-// per display is baked by tools/bake_band_track.py --zoom (centre-anchored, gap-limited: a lit
-// railing and the ED credit block both defeat min/max and ink percentiles, and neither is centred
-// or contiguous with the sentence). The magnifier stays PAUSED and is seeked once per display —
-// a burned-in line does not move within its own span, so a second PLAYING decoder would buy
-// nothing and cost a stream. Where no box was measured, or the transport has no clock, the text
-// line alone still runs.
-//
-// THE COST, STATED: the text line is still the READ, not the pixels. Measured against the Chinese band on the
-// same episode, 10.9% of pairs were real read errors at this resolution. Which is exactly why the
-// mask STOPS at the top of the Japanese band instead of covering it: the burned-in line stays on
-// screen underneath as the ground truth you can check the big line against. Covering both was
-// offered and deliberately not taken.
-//
-// GEOMETRY is per-page (`data-cover-band="top,bottom"`, fractions of frame height) because it is a
-// property of the upload, not of the pipeline. The video is object-fit:contain on a 16:9 source in a
-// 16:9 frame, so a CSS % of .video-frame IS a fraction of the source frame — which is what lets a
-// measured band become CSS with no scaling step to get wrong.
-//
-// HOW THAT BAND WAS MEASURED, because the obvious method is wrong: a plain "count near-white pixels
-// per row" detector merges lit clothing and a bright prop into the band and reports a two-line
-// Chinese subtitle that does not exist (it claimed a top edge of 0.804 on frames whose real top edge
-// is 0.896). Broadcast subs are white with a hard black outline, so the detector that works keys on
-// a bright pixel having a near-BLACK pixel within 4 rows in the same column. Over 34 sampled frames:
-// zh 0.887(p05)-0.954(max), ja 0.954-0.985. Hence 0.876-0.956 — clear of the first, above the second.
-// KNOWN LEAK, not a bug to hunt: the ED montage (~55:20-56:35) places its captions higher and the
-// mask does not reach them.
-(function(){
-  var KEY   = 'langCoverZh';
-  var frame = document.querySelector('.video-frame');
-  var band  = frame && frame.getAttribute('data-cover-band');
-  if (!frame || !band) return;                       // not an opted-in page — do nothing at all
-
-  var p = band.split(','), top = parseFloat(p[0]), bot = parseFloat(p[1]);
-  if (!(top >= 0 && bot > top && bot <= 1)) return;  // refuse a malformed band rather than paint a bar
-
-  var btn = document.getElementById('subsToggle');
-
-  // ONE element, not a mask plus a caption. The first cut had two, and a screenshot showed them
-  // disagreeing exactly where it matters: the mask is a fixed 8% of the frame (~23 CSS px in the
-  // dock) while a two-line caption is ~58px, so every long line rendered its top half on BARE
-  // picture above the mask — unreadable, and with the Chinese still showing beside it. As one plate
-  // anchored at the band's floor with min-height = the band, the covered area is by construction
-  // whatever the text needs, and a gap still covers the band because the min-height holds with no
-  // text in it.
-  var cap = document.createElement('div');
-  cap.className = 'subs-cap';
-  cap.style.bottom    = ((1 - bot) * 100).toFixed(3) + '%';
-  cap.style.minHeight = ((bot - top) * 100).toFixed(3) + '%';
-  frame.appendChild(cap);
-
-  // ---- font size tracks the frame, which is 512px on a desktop dock and full-width on a phone.
-  // A ResizeObserver rather than a container query: this has to hold on whatever Chrome the
-  // behavioural suites launch, and it is one line either way.
-  function fit(w){
-    var px = Math.max(12, Math.min(30, w * 0.042));
-    frame.style.setProperty('--subs-fs', px.toFixed(1) + 'px');
-  }
-  fit(frame.getBoundingClientRect().width || 512);
-  if (window.ResizeObserver){
-    new ResizeObserver(function(es){ fit(es[0].contentRect.width); shown = null; paint(true); }).observe(frame);
-  }
-
-  var US = document.querySelectorAll('.u');
-
-  // ---- the baked band track: [startMs, durMs, rowIndex], or [startMs, durMs, -1, "raw text"].
-  //
-  // `data-units` is the whole staleness guard and it is not ceremony: a row index is only meaningful
-  // against the row list it was computed from, and `build_page` re-deriving a page changes that list
-  // without touching this block. A mismatch must fall back rather than render a shifted sentence,
-  // because a plate that is confidently one line off is worse than one that is a beat late.
-  // checks_favorites.py fails the build on the same comparison, so this is the second line, not the
-  // first. Overlapping spans are normal, not a defect: a two-line burned-in subtitle is read as two
-  // display events with the same start, and both belong on the plate.
-  var TRACK = null, tStarts = null, MAXDUR = 0;
-  (function(){
-    var el = document.getElementById('subsBand');
-    if (!el) return;
-    if (parseInt(el.getAttribute('data-units'), 10) !== US.length) return;   // stale — use the rows
-    var raw;
-    try { raw = JSON.parse(el.textContent || '[]'); } catch (e){ return; }
-    if (!raw || !raw.length) return;
-    var out = [];
-    for (var i = 0; i < raw.length; i++){
-      var r = raw[i], s = r[0] / 1000, d = r[1] / 1000, idx = r[2];
-      if (!(d > 0) || !(s >= 0)) continue;
-      if (idx >= 0 && !US[idx]) continue;
-      // the magnifier box is APPENDED, so its position depends on whether text is carried
-      var zAt = idx < 0 ? 4 : 3;
-      var x0 = r[zAt], x1 = r[zAt + 1];
-      var box = (typeof x0 === 'number' && typeof x1 === 'number' && x1 > x0) ? [x0, x1] : null;
-      out.push({ s: s, e: s + d, i: idx, raw: idx < 0 ? String(r[3] || '') : null, box: box });
-      if (d > MAXDUR) MAXDUR = d;
-    }
-    if (!out.length) return;
-    out.sort(function(a, b){ return a.s - b.s; });
-    TRACK = out;
-    tStarts = out.map(function(x){ return x.s; });
-  })();
-
-  // ---- rows + the END of a line: the FALLBACK path, used on a page with no track (or a stale one).
-  // TWO bounds, and both are load-bearing.
-  //
-  // (1) The next DISTINCT onset. Never starts[i+1]: the page's clock is mixed-precision, so a
-  //     floored twin can share a second with a recovered line and the next row's start can be
-  //     EARLIER than this one's. The player already publishes its CLAMPED start on each .ts as
-  //     __sec (keys.js reads the same field), so this is the repo's nextDistinct rule sourced from
-  //     the player's own clock rather than re-derived here, where it could drift.
-  //
-  // (2) A dwell estimate from the line's own length — because bound (1) ALONE is wrong wherever the
-  //     episode goes quiet, and it is wrong in the direction nobody notices while testing a talky
-  //     stretch. This episode has a 41.9s hole between the onsets at 908.25s and 950.14s, and with
-  //     only the onset bound the big line sat on screen for all 41.9 seconds while the burned-in
-  //     line it mirrors had long since gone. 0.22 s/char is deliberately generous against the
-  //     4-6 chars/sec a broadcast sub is written to be read at, so the failure mode is a caption
-  //     that lingers a beat, never one that blanks mid-sentence.
-  var DWELL_BASE = 1.0, DWELL_PER_CHAR = 0.22, DWELL_MAX = 12;
-  var rows = null;
-  function baseLen(el){
-    // Count the SENTENCE, not the furigana: .u-jp's textContent concatenates every <rt>, so
-    // 「出来事」 with a reading counts as 「出来事できごと」 and a ruby-dense line would be granted
-    // roughly double the dwell it needs.
-    var jp = el.querySelector('.u-jp');
-    if (!jp) return 0;
-    var c = jp.cloneNode(true), rt = c.querySelectorAll('rt,rp');
-    for (var i = 0; i < rt.length; i++) rt[i].parentNode.removeChild(rt[i]);
-    return (c.textContent || '').trim().length;
-  }
-  function rowList(){
-    if (rows) return rows;
-    if (!US.length) return null;
-    rows = [];
-    for (var i = 0; i < US.length; i++){
-      var ts = US[i].querySelector('.ts');
-      rows.push({ el: US[i], sec: (ts && ts.__sec != null) ? ts.__sec : null, len: baseLen(US[i]) });
-    }
-    return rows;
-  }
-  function endOf(i){
-    var r = rows, s = r[i].sec;
-    if (s == null) return Infinity;
-    var nxt = Infinity;
-    for (var j = i + 1; j < r.length; j++){
-      if (r[j].sec != null && r[j].sec > s + 1e-6){ nxt = r[j].sec; break; }
-    }
-    var dwell = Math.min(DWELL_MAX, DWELL_BASE + DWELL_PER_CHAR * r[i].len);
-    return Math.min(nxt, s + dwell);                  // whichever comes first
-  }
-
-  // ---- availability. The mask is aimed at pixels of OUR mp4 at OUR geometry, so it is meaningless
-  // on any other transport: the YouTube path replaces <video> with a <div>, and the Bilibili path
-  // builds its own iframe and is seek-only (no clock, so the caption could never advance). Both hide
-  // the control rather than showing one that lies — the same call seekOnly() forces on 跟随/跟读.
-  function usable(){
-    if (!document.querySelector('video#clip')) return false;
-    var lp = window.LangPlayer;
-    if (lp && lp.seekOnly && lp.seekOnly()) return false;
-    return true;
-  }
-  function refreshAvail(){
-    var ok = usable();
-    if (btn) btn.hidden = !ok;
-    if (!ok && frame.classList.contains('cover-zh')) apply(false, true);
-  }
-
-  // ---- what is on the band at time t. Returns the entries covering it, in track order, so a
-  // two-line subtitle draws as two lines. The backward scan is bounded by the longest span in the
-  // track rather than by a guessed constant, because a display can legitimately run 11s.
-  function atTime(t){
-    var hit = [];
-    var k = upperBound(tStarts, t) - 1;
-    for (; k >= 0; k--){
-      var x = TRACK[k];
-      if (x.s < t - MAXDUR - 0.01) break;
-      if (t >= x.s && t < x.e) hit.push(k);
-    }
-    hit.reverse();
-    return hit;
-  }
-  function upperBound(a, v){
-    var lo = 0, hi = a.length;
-    while (lo < hi){ var mid = (lo + hi) >> 1; if (a[mid] <= v) lo = mid + 1; else hi = mid; }
-    return lo;
-  }
-
-  // ---- the magnifier. A SECOND <video> on the same sources, muted and never played: the burned-in
-  // line is static for its whole display span, so one seek per subtitle shows it exactly, with no
-  // drift to correct and no second decoder running for an hour. Built on demand and torn down when
-  // the lens is off, because online that element is a second range-stream of the same mp4.
-  //
-  // GEOMETRY. The video is object-fit:contain on a 16:9 source in a 16:9 frame, so the displayed
-  // picture is exactly W x W*9/16 and one native px is W/1280 CSS px. To make the box [x0,x1] fill
-  // the plate we render the clone at W*k where k = 1280/(x1-x0+1), then offset it so the box's left
-  // edge and the band's top edge sit at the window's origin. k is capped: 「あら」 is 48px wide and
-  // would otherwise arrive at 26x, a single kana filling the screen.
-  // MMAX caps magnification against the SOURCE — CSS px per native px — and that distinction is
-  // the whole bug the first cut shipped: capping the scale applied to the *displayed* video pinned
-  // every line at 1.28x instead of its real 1.90x, because the dock already renders at 0.40x.
-  var BAND_Y0 = 686, BAND_H = 26, NATIVE_W = 1280, MMAX = 3.0;
-  var lensWrap = null, lensVid = null, lensKey = null;
-
-  function lensBuild(){
-    if (lensWrap) return true;
-    var main = document.querySelector('video#clip');
-    if (!main) return false;
-    lensWrap = document.createElement('div');
-    lensWrap.className = 'subs-lens';
-    lensWrap.hidden = true;
-    lensVid = document.createElement('video');
-    lensVid.muted = true; lensVid.defaultMuted = true;
-    lensVid.setAttribute('playsinline', '');
-    lensVid.setAttribute('preload', 'auto');
-    lensVid.setAttribute('aria-hidden', 'true');
-    // currentSrc — the candidate that ALREADY WON — not a copy of the <source> ladder. Copying the
-    // ladder would hand the offline deliverable an https candidate it never asked for, and
-    // `zero network requests on file://` is a thing that suite asserts. One resolved URL cannot
-    // fall back to anything.
-    if (main.currentSrc) lensVid.src = main.currentSrc;
-    else { lensWrap = lensVid = null; return false; }
-    // A failed load must not leave a black bar sitting over the picture forever.
-    lensVid.addEventListener('error', function(){ lensWrap.hidden = true; lensKey = 'ERR'; });
-    lensVid.addEventListener('seeked', function(){ if (lensKey && lensKey !== 'ERR') lensWrap.hidden = false; });
-    lensWrap.appendChild(lensVid);
-    cap.insertBefore(lensWrap, cap.firstChild);
-    return true;
-  }
-  function lensDestroy(){
-    if (!lensWrap) return;
-    try { lensVid.pause(); lensVid.removeAttribute('src'); lensVid.load(); } catch (e){}
-    lensWrap.parentNode.removeChild(lensWrap);
-    lensWrap = lensVid = null; lensKey = null;
-  }
-  function lensShow(ent){
-    if (!ent || !ent.box || !lensBuild()){ if (lensWrap) lensWrap.hidden = true; return; }
-    // The LENS WINDOW's width, not the frame's: .subs-cap carries 3% side padding, so sizing the
-    // clone against the frame overflowed the window by 6% and sheared the last glyph off every
-    // line — 「ねぇ。」 arriving as 「ねぇ」. The window is what the box has to fill.
-    lensWrap.hidden = false;
-    var W = lensWrap.getBoundingClientRect().width;
-    if (!(W > 10)){ lensWrap.hidden = true; return; }
-    var bw = ent.box[1] - ent.box[0] + 1;
-    var m  = Math.min(MMAX, W / bw);                  // CSS px per native px
-    var visible = W / m;                              // native px the window can show
-    var cx = (ent.box[0] + ent.box[1]) / 2;
-    var left = Math.max(0, Math.min(NATIVE_W - visible, cx - visible / 2));
-    lensWrap.style.height = (BAND_H * m).toFixed(2) + 'px';
-    lensVid.style.width   = (NATIVE_W * m).toFixed(2) + 'px';
-    lensVid.style.left    = (-left * m).toFixed(2) + 'px';
-    lensVid.style.top     = (-BAND_Y0 * m).toFixed(2) + 'px';
-    // Seek to the instant the box was measured at, so what is framed is what was measured.
-    var at = ent.s + Math.min(0.6, (ent.e - ent.s) / 2);
-    var key = at.toFixed(2);
-    if (key !== lensKey){
-      lensKey = key;
-      try { lensVid.currentTime = at; } catch (e){ lensWrap.hidden = true; }
-    }
-  }
-
-  // ---- paint. Only writes when what should be on the plate actually changes: the dock already
-  // learned this lesson once (a forever-4Hz write is what `dock-paint-churn` guards), and this one
-  // would run on every timeupdate.
-  var shown = null;
-  function line(node){
-    var d = document.createElement('div');
-    d.className = 'u-jp';                              // keeps the R furigana lens applying
-    d.appendChild(node);
-    return d;
-  }
-  function paint(force){
-    if (!frame.classList.contains('cover-zh')) return;
-    var lp = window.LangPlayer;
-    var t  = (lp && lp.getTime) ? lp.getTime() : 0;
-    var key, draw;
-
-    if (TRACK){
-      var hit = atTime(t);
-      key = 't|' + hit.join(',');
-      if (!force && key === shown) return;
-      shown = key;
-      // Rebuild only the TEXT children; the lens element is reused so a re-seek does not restart
-      // its load on every line.
-      var kid = cap.lastChild;
-      while (kid && kid !== lensWrap){ var prev = kid.previousSibling; cap.removeChild(kid); kid = prev; }
-      var withBox = null;
-      for (var n = 0; n < hit.length; n++){
-        var x = TRACK[hit[n]];
-        if (!withBox && x.box) withBox = x;
-        if (x.i >= 0){
-          var jp = US[x.i].querySelector('.u-jp');
-          if (jp) cap.appendChild(jp.cloneNode(true));
-        } else {
-          cap.appendChild(line(document.createTextNode(x.raw)));
-        }
-      }
-      lensShow(withBox);
-      return;
-    }
-
-    var r = rowList();
-    if (!r) return;
-    var a = document.querySelector('.u.active');
-    var idx = -1;
-    if (a){ for (var i = 0; i < r.length; i++){ if (r[i].el === a){ idx = i; break; } } }
-    // Blank in the GAPS. The player keeps the last line .active after its audio ends (indexAt takes
-    // the last row at or before now), so without this the big line would sit there through silences
-    // the real hardsub has already left.
-    var vis = idx >= 0 && t < endOf(idx) + 0.05;
-    key = 'r|' + idx + '|' + vis;
-    if (!force && key === shown) return;
-    shown = key;
-    cap.textContent = ''; lensWrap = lensVid = null; lensKey = null;
-    if (!vis) return;
-    var jp2 = r[idx].el.querySelector('.u-jp');
-    if (jp2) cap.appendChild(jp2.cloneNode(true));
-  }
-
-  function apply(on, silent){
-    frame.classList.toggle('cover-zh', on);
-    if (btn){
-      btn.classList.toggle('on', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-    if (!silent){ try { window.localStorage.setItem(KEY, on ? '1' : '0'); } catch (e){} }
-    if (!on) lensDestroy();
-    if (on){ shown = null; paint(true); }
-  }
-
-  if (btn) btn.addEventListener('click', function(){
-    apply(!frame.classList.contains('cover-zh'));
-  });
-
-  var stored = '0';
-  try { stored = window.localStorage.getItem(KEY) || '0'; } catch (e){}
-  apply(stored === '1', true);
-
-  refreshAvail();
-  // The transport resolves asynchronously (the local <source> has to fail before the online one is
-  // tried), so re-ask once it has settled rather than trusting the state at parse time.
-  setTimeout(refreshAvail, 1200);
-  var first = true;
-  if (window.LangPlayer && window.LangPlayer.onTick){
-    window.LangPlayer.onTick(function(){
-      if (first){ first = false; refreshAvail(); }
-      paint(false);
-    });
-  }
-})();
-/*<</subs-pure>>*/
 </script>
 </body>
 </html>

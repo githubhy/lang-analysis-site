@@ -117,42 +117,14 @@
   .video-frame{position:relative;aspect-ratio:16/9;background:#000;max-height:var(--dock-max);}
   .video-frame iframe,.video-frame video{position:absolute;inset:0;width:100%;height:100%;
     border:0;display:block;background:#000;object-fit:contain;}
+  /* 遮中文 (band magnifier): one fixed overlay inside the video frame. On a native <video> it is a
+     canvas drawing the Japanese band into the Chinese band's rectangle — cover and magnify in one
+     element, so the mask cannot drift from what it magnifies. On a cross-origin player the pixels
+     cannot be read, so the same rectangle becomes an opaque cover: still the only mask, just
+     without magnification. Geometry: data-band-zh / data-band-ja on .video-frame. */
+  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;}
+  .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
-  /* 遮中文 — mask the burned-in Chinese band and draw the page's own Japanese line in its place.
-     Geometry is per-page (data-cover-band on .video-frame); subs.js carries the measurement and the
-     reason this is TEXT and not a pixel zoom. The video is object-fit:contain on a 16:9 source in a
-     16:9 frame, so a % here is a fraction of the SOURCE frame — a measured band becomes CSS with no
-     scaling step in between. pointer-events:none throughout: the mask sits over the picture and must
-     never swallow a click aimed at the video's own controls. */
-  /* ONE plate: it masks the band AND carries the text, so the two can never disagree about how much
-     is covered (they did — a 2-line caption overflowed a fixed-height mask onto bare picture).
-     min-height is the measured band, set inline; height beyond that is whatever the line needs, and
-     it grows UPWARD because the box is anchored by `bottom`. OPAQUE, not blurred: the job is that
-     the Chinese cannot be read, and blur leaves 36px glyphs guessable. */
-  .subs-cap{display:none;position:absolute;left:0;right:0;z-index:2;pointer-events:none;
-    box-sizing:border-box;background:rgba(0,0,0,.94);padding:.2em 3% .12em;
-    font-family:var(--font-gothic);font-size:var(--subs-fs,18px);line-height:1.35;
-    color:#fff;text-align:center;}
-  .video-frame.cover-zh .subs-cap{display:flex;flex-direction:column;align-items:center;
-    justify-content:flex-end;}
-  .subs-cap .u-jp{width:100%;font-size:inherit;line-height:inherit;color:inherit;margin:0;display:block;}
-  .subs-cap rt{color:#bfe3ff;}
-  /* The magnifier: a window onto the burned-in band itself, cropped to the sentence. The <video>
-     inside is oversized and offset by subs.js, so the window must clip it and must not stretch --
-     max-width:none defeats the global img/video fit rule that would otherwise squash it back. */
-  .subs-lens{position:relative;width:100%;overflow:hidden;flex:0 0 auto;}
-  .subs-lens video{position:absolute;left:0;top:0;max-width:none;height:auto;pointer-events:none;}
-  .subs-lens[hidden]{display:none;}
-  /* The control sits in the frame's TOP-right: the bottom is where <video controls> draws its own
-     bar, and an overlay button there is a button the user cannot reliably hit. */
-  .subs-btn{position:absolute;top:.4rem;right:.4rem;z-index:4;
-    font-family:var(--font-gothic);font-size:.72rem;font-weight:600;line-height:1;
-    padding:.34rem .5rem;border-radius:.4rem;cursor:pointer;
-    color:#fff;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.38);}
-  .subs-btn[hidden]{display:none;}
-  .subs-btn:hover{background:rgba(0,0,0,.72);border-color:#fff;}
-  .subs-btn:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
-  .subs-btn.on{color:#111;background:#fff;border-color:#fff;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
   .play-hint b{color:var(--ink);font-weight:600;}
 
@@ -404,7 +376,6 @@
     .ts{ min-height:44px; padding:.5rem .7rem; display:inline-flex;
          align-items:center; justify-content:center; }
     .dock-min,.dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-pin-toggle,.dock-toc-toggle{ min-height:44px; min-width:44px; padding:.5rem .95rem; }
-    .subs-btn{ min-height:44px; min-width:44px; padding:.5rem .7rem; font-size:.8rem; }
     .dock-play{ min-height:44px; min-width:44px; padding:.5rem .7rem; }
     /* The play button costs width, and it squeezed the dock title to 「なぜ…」 — a truncation
        that carries no information. On a touch screen the title is already redundant: the
@@ -822,6 +793,8 @@
             title="只看被插话/同时说话盖住的句子（音频判定）">被插话</button>
     <button class="filter-cat" id="dialectToggle" type="button" aria-pressed="false" hidden
             title="只看含方言→标准语对照的句子">方言</button>
+    <button class="filter-cat" id="cnMaskToggle" type="button" aria-pressed="false" hidden
+            title="遮住中文字幕带：播放器里只留日文字幕（本地视频同时放大）">遮中文</button>
     <button class="filter-reset" id="filterReset" type="button">全部</button>
   </div>
   <p id="filterEmpty" hidden>无匹配 — 换个关键词或点「全部」。</p>
@@ -886,7 +859,7 @@
         <div class="u-cn"><span class="lbl">译</span>然后她突然就着急起来，露出了从没见过的表情呢。</div>
         <ul class="u-points">
           <li><span class="chip katsu">焦り出す</span><span>复合动词，「焦る（着急）」的连用形＋「出す（开始）」，表示「开始着急」。</span></li>
-          <li><span class="chip katsu">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 16 个视频中共出现 26 次 — 点击查看全部用例">16视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ない</span><span>形容词「ない」的口语变体，男性多用。</span></li>
+          <li><span class="chip katsu">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 17 个视频中共出现 27 次 — 点击查看全部用例">17视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ない</span><span>形容词「ない」的口语变体，男性多用。</span></li>
           <li><span class="chip joshi">ぜ</span><a class="xref" href="concordance.html#q=ぜ" title="这个语法点在 3 个视频中共出现 5 次 — 点击查看全部用例">3视频</a><span>男性语气的句末助词，表示强调或告知，带有粗放感。</span></li>
         </ul>
       </div>
@@ -910,7 +883,7 @@
         <div class="u-cn"><span class="lbl">译</span>真不愧是那条疯狗的竞争对手呢。</div>
         <ul class="u-points">
           <li><span class="chip goi">さすが</span><a class="xref" href="concordance.html#q=さすが" title="这个语法点在 12 个视频中共出现 13 次 — 点击查看全部用例">12视频</a><span>感叹词，表示「真不愧是」「果然」，用于对某人/事符合预期表示赞赏或感叹。</span></li>
-          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 31 个视频中共出现 124 次 — 点击查看全部用例">31视频</a><span>句末终助词，表示轻微的感叹或寻求同意，女性多用。</span></li>
+          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 32 个视频中共出现 128 次 — 点击查看全部用例">32视频</a><span>句末终助词，表示轻微的感叹或寻求同意，女性多用。</span></li>
         </ul>
       </div>
     </div>
@@ -920,9 +893,9 @@
         <div class="u-jp">ニナは<ruby>恋愛<rt>れんあい</rt></ruby>なんてしている<ruby>暇<rt>ひま</rt></ruby>はないか。</div>
         <div class="u-cn"><span class="lbl">译</span>妮娜大概没空谈恋爱吧。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 22 个视频中共出现 68 次 — 点击查看全部用例">22视频</a><span>副助词，表示轻视或举例，意为「…之类的」，此处带有轻微的贬低语气。</span></li>
+          <li><span class="chip joshi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 23 个视频中共出现 69 次 — 点击查看全部用例">23视频</a><span>副助词，表示轻视或举例，意为「…之类的」，此处带有轻微的贬低语气。</span></li>
           <li><span class="chip goi">暇はない</span><span>惯用表达，意为「没空」「没时间」。</span></li>
-          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 14 个视频中共出现 30 次 — 点击查看全部用例">14视频</a><span>句末终助词，此处是自言自语式的疑问，表示「…吧」「…吗」。</span></li>
+          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 15 个视频中共出现 31 次 — 点击查看全部用例">15视频</a><span>句末终助词，此处是自言自语式的疑问，表示「…吧」「…吗」。</span></li>
         </ul>
       </div>
     </div>
@@ -961,7 +934,7 @@
         <div class="u-jp">ふぅん、どうせあなたには<ruby>男<rt>おとこ</rt></ruby>なんてできないんでしょうね。</div>
         <div class="u-cn"><span class="lbl">译</span>哼，反正你这种人也找不到男人吧。</div>
         <ul class="u-points">
-          <li><span class="chip goi">どうせ</span><a class="xref" href="concordance.html#q=どうせ" title="这个语法点在 10 个视频中共出现 11 次 — 点击查看全部用例">10视频</a><span>副词，表示「反正」「横竖」，带有放弃或轻视的语气。</span></li>
+          <li><span class="chip goi">どうせ</span><a class="xref" href="concordance.html#q=どうせ" title="这个语法点在 11 个视频中共出现 12 次 — 点击查看全部用例">11视频</a><span>副词，表示「反正」「横竖」，带有放弃或轻视的语气。</span></li>
           <li><span class="chip goi">男ができない</span><span>口语表达，意为「找不到男朋友」「没有男人缘」。</span></li>
           <li><span class="chip joshi">でしょうね</span><a class="xref" href="concordance.html#q=でしょうね" title="这个语法点在 6 个视频中共出现 6 次 — 点击查看全部用例">6视频</a><span>「だろう＋ね」的女性语形式，表示推测加轻微的感叹或确认。</span></li>
         </ul>
@@ -1020,7 +993,7 @@
         <div class="u-cn"><span class="lbl">译</span>是从小一起长大的人。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜頃から</span><span>「从…时候起」，表示时间的起点。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>句末终助词，女性多用，表示告知或强调。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>句末终助词，女性多用，表示告知或强调。</span></li>
         </ul>
       </div>
     </div>
@@ -1080,8 +1053,8 @@
         <div class="u-jp">ルーデウスなんてどうせエリスの<ruby>妄<rt>もう</rt></ruby><ruby>想<rt>そう</rt></ruby>に<ruby>違<rt>ちが</rt></ruby>いないわ。</div>
         <div class="u-cn"><span class="lbl">译</span>鲁迪乌斯什么的，反正肯定是艾莉丝的妄想吧。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 22 个视频中共出现 68 次 — 点击查看全部用例">22视频</a><span>副助词，表示轻视、不屑的语气，相当于「などというものは」。</span></li>
-          <li><span class="chip goi">どうせ</span><a class="xref" href="concordance.html#q=どうせ" title="这个语法点在 10 个视频中共出现 11 次 — 点击查看全部用例">10视频</a><span>副词，意为“反正、横竖、终究”，带有放弃、自暴自弃或轻视的语气。</span></li>
+          <li><span class="chip joshi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 23 个视频中共出现 69 次 — 点击查看全部用例">23视频</a><span>副助词，表示轻视、不屑的语气，相当于「などというものは」。</span></li>
+          <li><span class="chip goi">どうせ</span><a class="xref" href="concordance.html#q=どうせ" title="这个语法点在 11 个视频中共出现 12 次 — 点击查看全部用例">11视频</a><span>副词，意为“反正、横竖、终究”，带有放弃、自暴自弃或轻视的语气。</span></li>
           <li><span class="chip goi">〜に違いない</span><span>句型，表示说话人非常有把握的推测，意为“一定是……、肯定是……”。</span></li>
         </ul>
       </div>
@@ -1295,7 +1268,7 @@
         <ul class="u-points">
           <li><span class="chip goi">〜だなんて</span><a class="xref" href="concordance.html#q=〜だなんて" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a><span>「〜だなどと」的口语形式，表示引用并带有意外、轻视或难以置信的语气。这里表达「居然说〜」的语感。</span></li>
           <li><span class="chip goi">嘘くさい</span><span>形容词，意为「听起来像假的」「不可信」。由「嘘（谎言）」加接尾词「くさい（带有〜气味）」构成，表示「有〜的嫌疑」。</span></li>
-          <li><span class="chip joshi">〜し</span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 27 个视频中共出现 55 次 — 点击查看全部用例">27视频</a><span>接续助词，接在用言终止形后，表示列举理由。这里暗示「不止这一个理由」，后面还有话要说。</span></li>
+          <li><span class="chip joshi">〜し</span><a class="xref" href="concordance.html#q=〜し" title="这个语法点在 28 个视频中共出现 57 次 — 点击查看全部用例">28视频</a><span>接续助词，接在用言终止形后，表示列举理由。这里暗示「不止这一个理由」，后面还有话要说。</span></li>
         </ul>
       </div>
     </div>
@@ -1318,7 +1291,7 @@
         <div class="u-cn"><span class="lbl">译</span>没错。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>妮娜在听了少女们的议论后，下定了决心。</div>
         <ul class="u-points">
-          <li><span class="chip goi">そうだ</span><a class="xref" href="concordance.html#q=そうだ" title="这个语法点在 6 个视频中共出现 7 次 — 点击查看全部用例">6视频</a><span>这里不是传闻助动词，而是表示「认同」「下定决心」的感叹。相当于「对，就这么办」。</span></li>
+          <li><span class="chip goi">そうだ</span><a class="xref" href="concordance.html#q=そうだ" title="这个语法点在 7 个视频中共出现 8 次 — 点击查看全部用例">7视频</a><span>这里不是传闻助动词，而是表示「认同」「下定决心」的感叹。相当于「对，就这么办」。</span></li>
         </ul>
       </div>
     </div>
@@ -1333,7 +1306,7 @@
           <li><span class="chip goi">〜とやら</span><span>表示「叫什么来着」「所谓的〜」，带有轻视或不以为然的语气。妮娜用这个词表达对鲁迪乌斯的不屑。</span></li>
           <li><span class="chip goi">下僕</span><span>意为「仆人」「奴仆」，比「使用人」更带有屈从的意味。妮娜要用这个词来羞辱艾莉丝。</span></li>
           <li><span class="chip goi">あんた</span><a class="xref" href="concordance.html#q=あんた" title="这个语法点在 14 个视频中共出现 43 次 — 点击查看全部用例">14视频</a> <span class="dialect" title="方言 → 标准语">→ あなた</span><span>第二人称「あなた」的口语音变形，女性常用。在妮娜的语体中属于粗野的称呼方式，对同辈或晚辈使用。</span></li>
-          <li><span class="chip keigo">〜てあげる</span><a class="xref" href="concordance.html#q=〜てあげる" title="这个语法点在 4 个视频中共出现 5 次 — 点击查看全部用例">4视频</a><span>表示为对方做某事，带有施恩的语气。这里妮娜用「連れてきてあげる」表达一种居高临下的态度——「我帮你把他带来」。</span></li>
+          <li><span class="chip keigo">〜てあげる</span><a class="xref" href="concordance.html#q=〜てあげる" title="这个语法点在 5 个视频中共出现 7 次 — 点击查看全部用例">5视频</a><span>表示为对方做某事，带有施恩的语气。这里妮娜用「連れてきてあげる」表达一种居高临下的态度——「我帮你把他带来」。</span></li>
         </ul>
       </div>
     </div>
@@ -1348,7 +1321,7 @@
         <div class="u-cn"><span class="lbl">译</span>魔术师啊，意外地有很多体格强壮的人呢。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>妮娜来到魔法都市，看到排队挑战鲁迪乌斯的人群后发出的感慨。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜って</span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 30 个视频中共出现 83 次 — 点击查看全部用例">30视频</a> <span class="dialect" title="方言 → 标准语">→ 〜というのは</span><span>表示主题的口语助词，相当于「〜というのは」。用于提起一个话题并加以评论。</span></li>
+          <li><span class="chip joshi">〜って</span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 31 个视频中共出现 94 次 — 点击查看全部用例">31视频</a> <span class="dialect" title="方言 → 标准语">→ 〜というのは</span><span>表示主题的口语助词，相当于「〜というのは」。用于提起一个话题并加以评论。</span></li>
           <li><span class="chip goi">屈強</span><span>形容动词，意为「健壮」「强悍」，指体格强壮有力。通常用来形容战士或体力劳动者，用在魔术师身上显得意外。</span></li>
           <li><span class="chip joshi">〜のね</span><a class="xref" href="concordance.html#q=〜のね" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>句末终助词「の」+「ね」的组合，女性常用。表示轻微的感叹或确认，带有「原来如此」的语感。</span></li>
         </ul>
@@ -1380,7 +1353,7 @@
         <div class="u-jp">お<ruby>前<rt>まえ</rt></ruby>もルーデウスと<ruby>決闘<rt>けっとう</rt></ruby>を？</div>
         <div class="u-cn"><span class="lbl">译</span>你也要和鲁迪乌斯决斗吗？</div>
         <ul class="u-points">
-          <li><span class="chip goi">お前</span><a class="xref" href="concordance.html#q=お前" title="这个语法点在 16 个视频中共出现 52 次 — 点击查看全部用例">16视频</a><span>第二人称，男性用语，对同辈或晚辈使用，语气较粗。冒险者之间的随意称呼。</span></li>
+          <li><span class="chip goi">お前</span><a class="xref" href="concordance.html#q=お前" title="这个语法点在 17 个视频中共出现 55 次 — 点击查看全部用例">17视频</a><span>第二人称，男性用语，对同辈或晚辈使用，语气较粗。冒险者之间的随意称呼。</span></li>
           <li><span class="chip joshi">〜を？</span><span>句末省略了「するのか」等谓语，用助词「を」+ 上升语调构成疑问。口语中常见的省略表达。</span></li>
         </ul>
       </div>
@@ -1513,7 +1486,7 @@
         <div class="u-jp"><ruby>魔術師<rt>まじゅつし</rt></ruby>があの<ruby>距離<rt>きょり</rt></ruby>で<ruby>戦士<rt>せんし</rt></ruby>を<ruby>倒<rt>たお</rt></ruby>すなんて。</div>
         <div class="u-cn"><span class="lbl">译</span>魔术师居然在那个距离打倒战士。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 22 个视频中共出现 68 次 — 点击查看全部用例">22视频</a><span>表示惊讶、意外或轻视的语气，相当于“居然、竟然”。</span></li>
+          <li><span class="chip joshi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 23 个视频中共出现 69 次 — 点击查看全部用例">23视频</a><span>表示惊讶、意外或轻视的语气，相当于“居然、竟然”。</span></li>
         </ul>
       </div>
     </div>
@@ -1711,7 +1684,7 @@
         <div class="u-jp">では、いきますよ。</div>
         <div class="u-cn"><span class="lbl">译</span>那么，我要上了哦。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>终助词，表示告知、提醒对方注意。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>终助词，表示告知、提醒对方注意。</span></li>
         </ul>
       </div>
     </div>
@@ -1772,7 +1745,7 @@
         <div class="u-cn"><span class="lbl">译</span>大老远地特意赶来，辛苦你了。</div>
         <ul class="u-points">
           <li><span class="chip keigo">〜てくれた<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てくれた" title="这个语法点在 6 个视频中共出现 12 次 — 点击查看全部用例">6视频</a> <span class="dialect" title="方言 → 标准语">→ 〜てくれた</span><span>「くれる」表示对方为自己做某事，这里「来てくれた」是「（你）特意来了」的意思，带有感谢、领情的语气。</span></li>
-          <li><span class="chip joshi">な（終助詞）</span><a class="xref" href="concordance.html#q=な（終助詞）" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a> <span class="dialect" title="方言 → 标准语">→ な</span><span>男性对平辈或晚辈使用的感叹/确认语气，这里表示感慨。</span></li>
+          <li><span class="chip joshi">な（終助詞）</span><a class="xref" href="concordance.html#q=な（終助詞）" title="这个语法点在 6 个视频中共出现 6 次 — 点击查看全部用例">6视频</a> <span class="dialect" title="方言 → 标准语">→ な</span><span>男性对平辈或晚辈使用的感叹/确认语气，这里表示感慨。</span></li>
         </ul>
       </div>
     </div>
@@ -1801,7 +1774,7 @@
         <div class="u-jp">まったくだよ</div>
         <div class="u-cn"><span class="lbl">译</span>可不是嘛。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜だよ</span><a class="xref" href="concordance.html#q=〜だよ" title="这个语法点在 14 个视频中共出现 17 次 — 点击查看全部用例">14视频</a> <span class="dialect" title="方言 → 标准语">→ 〜だよ</span><span>口语中表示强调、告知的语气。这里「まったく」是「完全、简直」的意思，整句表示「你说得完全对」。</span></li>
+          <li><span class="chip joshi">〜だよ</span><a class="xref" href="concordance.html#q=〜だよ" title="这个语法点在 15 个视频中共出现 18 次 — 点击查看全部用例">15视频</a> <span class="dialect" title="方言 → 标准语">→ 〜だよ</span><span>口语中表示强调、告知的语气。这里「まったく」是「完全、简直」的意思，整句表示「你说得完全对」。</span></li>
         </ul>
       </div>
     </div>
@@ -1892,7 +1865,7 @@
         <div class="u-jp"><ruby>水神<rt>すいじん</rt></ruby><ruby>様<rt>さま</rt></ruby> お<ruby>久<rt>ひさ</rt></ruby>しぶりです</div>
         <div class="u-cn"><span class="lbl">译</span>水神大人，好久不见。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">お久しぶりです</span><a class="xref" href="concordance.html#q=お久しぶりです" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a> <span class="dialect" title="方言 → 标准语">→ お久しぶりです</span><span>「好久不见」的礼貌说法。</span></li>
+          <li><span class="chip keigo">お久しぶりです</span><a class="xref" href="concordance.html#q=お久しぶりです" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a> <span class="dialect" title="方言 → 标准语">→ お久しぶりです</span><span>「好久不见」的礼貌说法。</span></li>
         </ul>
       </div>
     </div>
@@ -1904,7 +1877,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「おになかい」疑似 ASR 误听，推测为「おや、ニナかい」（哎呀，是妮娜吗）或类似称呼，但无法自证，按字面保留。</div>
         <ul class="u-points">
           <li><span class="chip joshi">〜かい</span><a class="xref" href="concordance.html#q=〜かい" title="这个语法点在 3 个视频中共出现 4 次 — 点击查看全部用例">3视频</a> <span class="dialect" title="方言 → 标准语">→ 〜か</span><span>老年男性/女性使用的疑问终助词，相当于「〜か」。</span></li>
-          <li><span class="chip joshi">〜ねえ</span><a class="xref" href="concordance.html#q=〜ねえ" title="这个语法点在 8 个视频中共出现 11 次 — 点击查看全部用例">8视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ね</span><span>「〜ね」的拉长音，老年女性常用，带有感慨、怀念的语气。</span></li>
+          <li><span class="chip joshi">〜ねえ</span><a class="xref" href="concordance.html#q=〜ねえ" title="这个语法点在 9 个视频中共出现 12 次 — 点击查看全部用例">9视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ね</span><span>「〜ね」的拉长音，老年女性常用，带有感慨、怀念的语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1948,10 +1921,10 @@
         <div class="u-jp">って、あんた、<ruby>座<rt>すわ</rt></ruby>りなさいよ。<ruby>失礼<rt>しつれい</rt></ruby>でしょ。</div>
         <div class="u-cn"><span class="lbl">译</span>喂，你，给我坐下。太没礼貌了吧。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">って</span><a class="xref" href="concordance.html#q=って" title="这个语法点在 37 个视频中共出现 174 次 — 点击查看全部用例">37视频</a> <span class="dialect" title="方言 → 标准语">→ ねえ</span><span>口语中用于引起对方注意的感叹词，相当于「ねえ」「ちょっと」。</span></li>
+          <li><span class="chip joshi">って</span><a class="xref" href="concordance.html#q=って" title="这个语法点在 38 个视频中共出现 175 次 — 点击查看全部用例">38视频</a> <span class="dialect" title="方言 → 标准语">→ ねえ</span><span>口语中用于引起对方注意的感叹词，相当于「ねえ」「ちょっと」。</span></li>
           <li><span class="chip goi">あんた</span><a class="xref" href="concordance.html#q=あんた" title="这个语法点在 14 个视频中共出现 43 次 — 点击查看全部用例">14视频</a> <span class="dialect" title="方言 → 标准语">→ あなた</span><span>「あなた」的口语变体，语气较粗鲁，常用于关系亲近或对下级。妮娜对艾莉丝使用，体现其粗野性格。</span></li>
           <li><span class="chip katsu">〜なさい</span><a class="xref" href="concordance.html#q=〜なさい" title="这个语法点在 8 个视频中共出现 22 次 — 点击查看全部用例">8视频</a><span>动词连用形+なさい，表示命令，语气比命令形温和但仍带强制。这里是「座る→座りなさい」。</span></li>
-          <li><span class="chip joshi">〜でしょ</span><a class="xref" href="concordance.html#q=〜でしょ" title="这个语法点在 18 个视频中共出现 29 次 — 点击查看全部用例">18视频</a> <span class="dialect" title="方言 → 标准语">→ 〜だろう</span><span>「〜だろう」的女性口语体，这里表示责备语气「太失礼了吧」。</span></li>
+          <li><span class="chip joshi">〜でしょ</span><a class="xref" href="concordance.html#q=〜でしょ" title="这个语法点在 19 个视频中共出现 30 次 — 点击查看全部用例">19视频</a> <span class="dialect" title="方言 → 标准语">→ 〜だろう</span><span>「〜だろう」的女性口语体，这里表示责备语气「太失礼了吧」。</span></li>
         </ul>
       </div>
     </div>
@@ -2040,7 +2013,7 @@
         <div class="u-jp"><ruby>何<rt>なに</rt></ruby>も<ruby>教<rt>おし</rt></ruby>えなくていいさ。</div>
         <div class="u-cn"><span class="lbl">译</span>什么都不用教。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜さ</span><a class="xref" href="concordance.html#q=〜さ" title="这个语法点在 12 个视频中共出现 19 次 — 点击查看全部用例">12视频</a><span>终助词，老年女性语体中常用，表示轻松的断言或强调，语气较随意。</span></li>
+          <li><span class="chip joshi">〜さ</span><a class="xref" href="concordance.html#q=〜さ" title="这个语法点在 13 个视频中共出现 20 次 — 点击查看全部用例">13视频</a><span>终助词，老年女性语体中常用，表示轻松的断言或强调，语气较随意。</span></li>
           <li><span class="chip katsu">〜なくていい</span><a class="xref" href="concordance.html#q=〜なくていい" title="这个语法点在 8 个视频中共出现 8 次 — 点击查看全部用例">8视频</a><span>表示「不必……」「不用……」，是「〜なくてもいい」的口语省略。</span></li>
         </ul>
       </div>
@@ -2158,7 +2131,7 @@
         <ul class="u-points">
           <li><span class="chip goi">そりゃ</span><a class="xref" href="concordance.html#q=そりゃ" title="这个语法点在 13 个视频中共出现 18 次 — 点击查看全部用例">13视频</a> <span class="dialect" title="方言 → 标准语">→ それは</span><span>「それは」的口语缩约形。</span></li>
           <li><span class="chip goi">大きく出る</span><span>惯用表达，意为「说大话」「夸下海口」。</span></li>
-          <li><span class="chip joshi">〜ね</span><a class="xref" href="concordance.html#q=〜ね" title="这个语法点在 18 个视频中共出现 31 次 — 点击查看全部用例">18视频</a><span>终助词，老年女性语体中表示感叹或确认。</span></li>
+          <li><span class="chip joshi">〜ね</span><a class="xref" href="concordance.html#q=〜ね" title="这个语法点在 19 个视频中共出现 32 次 — 点击查看全部用例">19视频</a><span>终助词，老年女性语体中表示感叹或确认。</span></li>
         </ul>
       </div>
     </div>
@@ -2178,7 +2151,7 @@
         <div class="u-jp"><ruby>俺<rt>おれ</rt></ruby>は、できると<ruby>思<rt>おも</rt></ruby>っている。エリスのな。</div>
         <div class="u-cn"><span class="lbl">译</span>我觉得能行。艾莉丝的话。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜の</span><a class="xref" href="concordance.html#q=〜の" title="这个语法点在 8 个视频中共出现 17 次 — 点击查看全部用例">8视频</a> <span class="dialect" title="方言 → 标准语">→ 〜のことだな</span><span>准体助词「の」+终助词「な」。相当于「〜のことだな」，此处用于补充说明，意为「是艾莉丝的话」。剑神的粗男性语体特征。</span></li>
+          <li><span class="chip joshi">〜の</span><a class="xref" href="concordance.html#q=〜の" title="这个语法点在 9 个视频中共出现 19 次 — 点击查看全部用例">9视频</a> <span class="dialect" title="方言 → 标准语">→ 〜のことだな</span><span>准体助词「の」+终助词「な」。相当于「〜のことだな」，此处用于补充说明，意为「是艾莉丝的话」。剑神的粗男性语体特征。</span></li>
         </ul>
       </div>
     </div>
@@ -2199,7 +2172,7 @@
         <div class="u-cn"><span class="lbl">译</span>不过啊，我可不想陪没才能的家伙浪费时间。</div>
         <ul class="u-points">
           <li><span class="chip goi">まっぴらごめん</span><span>惯用表达，意为「绝对不干」「敬谢不敏」，语气强烈。老年女性语体中常用。</span></li>
-          <li><span class="chip joshi">〜ね</span><a class="xref" href="concordance.html#q=〜ね" title="这个语法点在 18 个视频中共出现 31 次 — 点击查看全部用例">18视频</a><span>间投助词，老年女性语体中用于引出话题或转折。</span></li>
+          <li><span class="chip joshi">〜ね</span><a class="xref" href="concordance.html#q=〜ね" title="这个语法点在 19 个视频中共出现 32 次 — 点击查看全部用例">19视频</a><span>间投助词，老年女性语体中用于引出话题或转折。</span></li>
           <li><span class="chip katsu">〜なんだ</span><a class="xref" href="concordance.html#q=〜なんだ" title="这个语法点在 8 个视频中共出现 8 次 — 点击查看全部用例">8视频</a><span>「〜なのだ」的口语形，表示说明或强调。</span></li>
         </ul>
       </div>
@@ -2242,7 +2215,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>两行合并为一句。</div>
         <ul class="u-points">
           <li><span class="chip keigo">〜です</span><a class="xref" href="concordance.html#q=〜です" title="这个语法点在 11 个视频中共出现 17 次 — 点击查看全部用例">11视频</a><span>丁宁体断定助动词。妮娜平时用粗野语体，此处是正式自我介绍场合，使用丁宁体。</span></li>
-          <li><span class="chip keigo">よろしくお願いします</span><a class="xref" href="concordance.html#q=よろしくお願いします" title="这个语法点在 19 个视频中共出现 39 次 — 点击查看全部用例">19视频</a><span>固定寒暄语，意为「请多关照」。标准丁宁体。</span></li>
+          <li><span class="chip keigo">よろしくお願いします</span><a class="xref" href="concordance.html#q=よろしくお願いします" title="这个语法点在 20 个视频中共出现 44 次 — 点击查看全部用例">20视频</a><span>固定寒暄语，意为「请多关照」。标准丁宁体。</span></li>
         </ul>
       </div>
     </div>
@@ -2315,7 +2288,7 @@
         <div class="u-jp">これは<ruby>面<rt>おも</rt></ruby><ruby>白<rt>しろ</rt></ruby>い<ruby>結果<rt>けっか</rt></ruby>になったな。</div>
         <div class="u-cn"><span class="lbl">译</span>这结果变得有意思了啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">な</span><a class="xref" href="concordance.html#q=な" title="这个语法点在 20 个视频中共出现 49 次 — 点击查看全部用例">20视频</a><span>终助词，男性用语，表示感叹或确认。剑神用「な」符合其粗犷男性语体。</span></li>
+          <li><span class="chip joshi">な</span><a class="xref" href="concordance.html#q=な" title="这个语法点在 21 个视频中共出现 51 次 — 点击查看全部用例">21视频</a><span>终助词，男性用语，表示感叹或确认。剑神用「な」符合其粗犷男性语体。</span></li>
         </ul>
       </div>
     </div>
@@ -2326,7 +2299,7 @@
         <div class="u-cn"><span class="lbl">译</span>一点也不有趣。</div>
         <ul class="u-points">
           <li><span class="chip goi">〜もなんともない</span><span>强调完全否定。「面白くもなんともない」= 完全不有趣。水神用「ね」收尾，是老年女性语体的特征。</span></li>
-          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 31 个视频中共出现 124 次 — 点击查看全部用例">31视频</a><span>终助词，老年女性常用，带有轻微的感叹或确认语气，比「よ」柔和。</span></li>
+          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 32 个视频中共出现 128 次 — 点击查看全部用例">32视频</a><span>终助词，老年女性常用，带有轻微的感叹或确认语气，比「よ」柔和。</span></li>
         </ul>
       </div>
     </div>
@@ -2369,7 +2342,7 @@
         <div class="u-cn"><span class="lbl">译</span>是吗，是吗。那样就好。</div>
         <ul class="u-points">
           <li><span class="chip joshi">かい</span><a class="xref" href="concordance.html#q=かい" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a> <span class="dialect" title="方言 → 标准语">→ 〜か</span><span>老年语体的疑问/确认终助词，相当于「か」+「い」。此处并非真正疑问，而是表示理解与接纳的感叹。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>终助词，表示告知或强调。老年女性用「よ」比「ね」更直接。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>终助词，表示告知或强调。老年女性用「よ」比「ね」更直接。</span></li>
         </ul>
       </div>
     </div>
@@ -2391,7 +2364,7 @@
         <div class="u-jp">まあ、そうだな。</div>
         <div class="u-cn"><span class="lbl">译</span>嗯，也是啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">な</span><a class="xref" href="concordance.html#q=な" title="这个语法点在 20 个视频中共出现 49 次 — 点击查看全部用例">20视频</a><span>男性语体终助词，表示同意或感叹。剑神用「な」符合其身份。</span></li>
+          <li><span class="chip joshi">な</span><a class="xref" href="concordance.html#q=な" title="这个语法点在 21 个视频中共出现 51 次 — 点击查看全部用例">21视频</a><span>男性语体终助词，表示同意或感叹。剑神用「な」符合其身份。</span></li>
         </ul>
       </div>
     </div>
@@ -2421,7 +2394,7 @@
         <div class="u-jp"><ruby>分<rt>わ</rt></ruby>かったわ。</div>
         <div class="u-cn"><span class="lbl">译</span>知道了。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 12 个视频中共出现 25 次 — 点击查看全部用例">12视频</a><span>女性语体终助词，表示告知或轻微感叹。艾莉丝用「わ」符合其年轻女性身份。</span></li>
+          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 13 个视频中共出现 26 次 — 点击查看全部用例">13视频</a><span>女性语体终助词，表示告知或轻微感叹。艾莉丝用「わ」符合其年轻女性身份。</span></li>
         </ul>
       </div>
     </div>
@@ -2435,7 +2408,7 @@
         <div class="u-jp">また<ruby>私<rt>わたし</rt></ruby>の<ruby>勝<rt>か</rt></ruby>ちですね。</div>
         <div class="u-cn"><span class="lbl">译</span>又是我赢了呢。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 31 个视频中共出现 124 次 — 点击查看全部用例">31视频</a><span>终助词，表示确认或寻求共鸣。伊佐尔缇用丁宁体+「ね」，谦逊中带着自信。</span></li>
+          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 32 个视频中共出现 128 次 — 点击查看全部用例">32视频</a><span>终助词，表示确认或寻求共鸣。伊佐尔缇用丁宁体+「ね」，谦逊中带着自信。</span></li>
         </ul>
       </div>
     </div>
@@ -2659,7 +2632,7 @@
         <ul class="u-points">
           <li><span class="chip joshi">〜なんて</span><a class="xref" href="concordance.html#q=〜なんて" title="这个语法点在 18 个视频中共出现 50 次 — 点击查看全部用例">18视频</a><span>表轻视或举例，「之类的东西」。此处「先なんて」＝「先手这种东西」，带不屑语气。</span></li>
           <li><span class="chip goi">〜なくてもいい</span><span>「不必…也可以」。动词未然形＋なくてもいい，表许可/不必要。</span></li>
-          <li><span class="chip joshi">〜でしょ</span><a class="xref" href="concordance.html#q=〜でしょ" title="这个语法点在 18 个视频中共出现 29 次 — 点击查看全部用例">18视频</a> <span class="dialect" title="方言 → 标准语">→ 〜でしょう</span><span>「でしょう」的口语形，表确认或主张。ニナ的语体特征之一，语气干脆。</span></li>
+          <li><span class="chip joshi">〜でしょ</span><a class="xref" href="concordance.html#q=〜でしょ" title="这个语法点在 19 个视频中共出现 30 次 — 点击查看全部用例">19视频</a> <span class="dialect" title="方言 → 标准语">→ 〜でしょう</span><span>「でしょう」的口语形，表确认或主张。ニナ的语体特征之一，语气干脆。</span></li>
         </ul>
       </div>
     </div>
@@ -2732,7 +2705,7 @@
         <div class="u-jp"><ruby>視線<rt>しせん</rt></ruby>とかを<ruby>使<rt>つか</rt></ruby>えば <ruby>相手<rt>あいて</rt></ruby>を<ruby>自分<rt>じぶん</rt></ruby>より<ruby>先<rt>さき</rt></ruby>に<ruby>動<rt>うご</rt></ruby>かしたり</div>
         <div class="u-cn"><span class="lbl">译</span>利用视线之类的，可以让对手比自己先动，</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜とか</span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 27 个视频中共出现 60 次 — 点击查看全部用例">27视频</a><span>表举例，「…之类的」。口语中常用，比「〜や」更随意。</span></li>
+          <li><span class="chip joshi">〜とか</span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 28 个视频中共出现 61 次 — 点击查看全部用例">28视频</a><span>表举例，「…之类的」。口语中常用，比「〜や」更随意。</span></li>
           <li><span class="chip katsu">使えば</span><span>「使う」的假定形，「如果使用的话」。</span></li>
           <li><span class="chip katsu">動かしたり</span><span>「動かす」的て形「動かして」＋「たり」，表举例或并列。此处与下一行「後に動かしたり」呼应，表「时而…时而…」。</span></li>
         </ul>
@@ -2771,7 +2744,7 @@
         <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>の<ruby>先生<rt>せんせい</rt></ruby>よ。</div>
         <div class="u-cn"><span class="lbl">译</span>我的老师。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>终助词，表示告知对方不知道的信息。女性常用，语调较强。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>终助词，表示告知对方不知道的信息。女性常用，语调较强。</span></li>
         </ul>
       </div>
     </div>
@@ -2792,7 +2765,7 @@
         <div class="u-jp">そうよ。</div>
         <div class="u-cn"><span class="lbl">译</span>对。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>再次使用「よ」表示肯定告知，与イゾルテ的丁宁体形成语体对照。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>再次使用「よ」表示肯定告知，与イゾルテ的丁宁体形成语体对照。</span></li>
         </ul>
       </div>
     </div>
@@ -2813,7 +2786,7 @@
         <div class="u-jp">やってるけど、あなた<ruby>動<rt>うご</rt></ruby>かないわね。</div>
         <div class="u-cn"><span class="lbl">译</span>我是用了，但你不动呢。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てる</span><a class="xref" href="concordance.html#q=〜てる" title="这个语法点在 24 个视频中共出现 47 次 — 点击查看全部用例">24视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ている</span><span>「〜ている」的口语缩约形，表示动作正在进行或持续。</span></li>
+          <li><span class="chip katsu">〜てる</span><a class="xref" href="concordance.html#q=〜てる" title="这个语法点在 25 个视频中共出现 49 次 — 点击查看全部用例">25视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ている</span><span>「〜ている」的口语缩约形，表示动作正在进行或持续。</span></li>
           <li><span class="chip joshi">けど</span><a class="xref" href="concordance.html#q=けど" title="这个语法点在 30 个视频中共出现 76 次 — 点击查看全部用例">30视频</a><span>接续助词，表示转折或铺垫。「虽然…但是…」。口语中常用于句末表示委婉。</span></li>
           <li><span class="chip joshi">わね</span><a class="xref" href="concordance.html#q=わね" title="这个语法点在 5 个视频中共出现 11 次 — 点击查看全部用例">5视频</a><span>女性语体终助词。「わ」表示感叹或主张，「ね」表示征求同意或确认。</span></li>
         </ul>
@@ -2851,7 +2824,7 @@
         <div class="u-cn"><span class="lbl">译</span>我试试。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜てみる</span><a class="xref" href="concordance.html#q=〜てみる" title="这个语法点在 12 个视频中共出现 13 次 — 点击查看全部用例">12视频</a><span>「试着做…」。</span></li>
-          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 12 个视频中共出现 25 次 — 点击查看全部用例">12视频</a><span>女性终助词，表示决意或感叹。</span></li>
+          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 13 个视频中共出现 26 次 — 点击查看全部用例">13视频</a><span>女性终助词，表示决意或感叹。</span></li>
         </ul>
       </div>
     </div>
@@ -2861,7 +2834,7 @@
         <div class="u-jp">ねえ、<ruby>私<rt>わたし</rt></ruby>はどうしたらいいと<ruby>思<rt>おも</rt></ruby>う？</div>
         <div class="u-cn"><span class="lbl">译</span>喂，你觉得我该怎么办？</div>
         <ul class="u-points">
-          <li><span class="chip goi">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 16 个视频中共出现 26 次 — 点击查看全部用例">16视频</a><span>感叹词，用于呼唤对方注意，「喂」「我说」。</span></li>
+          <li><span class="chip goi">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 17 个视频中共出现 27 次 — 点击查看全部用例">17视频</a><span>感叹词，用于呼唤对方注意，「喂」「我说」。</span></li>
           <li><span class="chip goi">どうしたらいい</span><span>「怎么做才好」。「どうする」的假定形「どうしたら」+「いい」。询问建议的常用句式。</span></li>
           <li><span class="chip joshi">と思う？</span><span>「と」（引用）+「思う」（想）。句末省略「か」，口语中直接用「と思う？」表示疑问，语调上扬。</span></li>
         </ul>
@@ -2895,8 +2868,8 @@
         <div class="u-cn"><span class="lbl">译</span>要是那么容易就能让他教，我们三个就不会在这儿一起训练了。</div>
         <ul class="u-points">
           <li><span class="chip keigo">〜てもらえる</span><a class="xref" href="concordance.html#q=〜てもらえる" title="这个语法点在 5 个视频中共出现 6 次 — 点击查看全部用例">5视频</a><span>「〜てもらう」（请/让某人做）的可能态，表示「能得到（某人）做…」。</span></li>
-          <li><span class="chip katsu">〜なら</span><a class="xref" href="concordance.html#q=〜なら" title="这个语法点在 20 个视频中共出现 33 次 — 点击查看全部用例">20视频</a><span>假定形，表示「如果是…的话」。</span></li>
-          <li><span class="chip goi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 22 个视频中共出现 68 次 — 点击查看全部用例">22视频</a><span>副助词，表示轻视、意外等语气。「…之类的」。此处「訓練なんてしてない」表示「才不会做训练这种事」。</span></li>
+          <li><span class="chip katsu">〜なら</span><a class="xref" href="concordance.html#q=〜なら" title="这个语法点在 21 个视频中共出现 34 次 — 点击查看全部用例">21视频</a><span>假定形，表示「如果是…的话」。</span></li>
+          <li><span class="chip goi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 23 个视频中共出现 69 次 — 点击查看全部用例">23视频</a><span>副助词，表示轻视、意外等语气。「…之类的」。此处「訓練なんてしてない」表示「才不会做训练这种事」。</span></li>
           <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 23 个视频中共出现 75 次 — 点击查看全部用例">23视频</a><span>句末终助词，女性用语，表示说明或强调。此处带有反驳语气。</span></li>
         </ul>
       </div>
@@ -2908,7 +2881,7 @@
         <div class="u-cn"><span class="lbl">译</span>唉，开什么反省会，根本没意义嘛。</div>
         <ul class="u-points">
           <li><span class="chip goi">はぁ</span><a class="xref" href="concordance.html#q=はぁ" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>感叹词，叹气声。表示失望、无奈。</span></li>
-          <li><span class="chip goi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 22 个视频中共出现 68 次 — 点击查看全部用例">22视频</a><span>再次使用「なんて」，表示轻视。「反省会这种东西」。</span></li>
+          <li><span class="chip goi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 23 个视频中共出现 69 次 — 点击查看全部用例">23视频</a><span>再次使用「なんて」，表示轻视。「反省会这种东西」。</span></li>
           <li><span class="chip katsu">〜ても</span><a class="xref" href="concordance.html#q=〜ても" title="这个语法点在 19 个视频中共出现 28 次 — 点击查看全部用例">19视频</a><span>逆接假定，「即使…也」。</span></li>
           <li><span class="chip goi">意味ない</span><span>「没有意义」。口语中省略「が」，「意味がない」→「意味ない」。</span></li>
           <li><span class="chip joshi">じゃない</span><a class="xref" href="concordance.html#q=じゃない" title="这个语法点在 13 个视频中共出现 17 次 — 点击查看全部用例">13视频</a> <span class="dialect" title="方言 → 标准语">→ ではない</span><span>「ではない」的口语形，此处为反问/确认语气，「不是…吗？」。</span></li>
@@ -2925,7 +2898,7 @@
         <div class="u-jp">ねえ、<ruby>何<rt>なに</rt></ruby>？</div>
         <div class="u-cn"><span class="lbl">译</span>喂，怎么了？</div>
         <ul class="u-points">
-          <li><span class="chip goi">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 16 个视频中共出现 26 次 — 点击查看全部用例">16视频</a><span>呼唤对方注意。</span></li>
+          <li><span class="chip goi">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 17 个视频中共出现 27 次 — 点击查看全部用例">17视频</a><span>呼唤对方注意。</span></li>
           <li><span class="chip goi">何？</span><a class="xref" href="concordance.html#q=何？" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>口语省略「ですか／だ」，直接以「何」加疑问语调表示「什么事？」。</span></li>
         </ul>
       </div>
@@ -2938,7 +2911,7 @@
         <ul class="u-points">
           <li><span class="chip goi">どうして</span><a class="xref" href="concordance.html#q=どうして" title="这个语法点在 8 个视频中共出现 11 次 — 点击查看全部用例">8视频</a><span>疑问副词，「为什么」。</span></li>
           <li><span class="chip goi">お揃い</span><a class="xref" href="concordance.html#q=お揃い" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「揃い」（成套、相同）加前缀「お」，表示「同款」「成对的」。</span></li>
-          <li><span class="chip katsu">〜てる</span><a class="xref" href="concordance.html#q=〜てる" title="这个语法点在 24 个视频中共出现 47 次 — 点击查看全部用例">24视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ている</span><span>「〜ている」的口语缩约。</span></li>
+          <li><span class="chip katsu">〜てる</span><a class="xref" href="concordance.html#q=〜てる" title="这个语法点在 25 个视频中共出现 49 次 — 点击查看全部用例">25视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ている</span><span>「〜ている」的口语缩约。</span></li>
           <li><span class="chip joshi">のよ</span><a class="xref" href="concordance.html#q=のよ" title="这个语法点在 12 个视频中共出现 23 次 — 点击查看全部用例">12视频</a><span>女性语体终助词连用。「の」表示说明或疑问，「よ」表示强调告知。此处为质问语气。</span></li>
         </ul>
       </div>
@@ -2949,8 +2922,8 @@
         <div class="u-jp">え？ああ、うちじゃ<ruby>剣聖<rt>けんせい</rt></ruby>になるときに<ruby>作<rt>つく</rt></ruby>らされるの。</div>
         <div class="u-cn"><span class="lbl">译</span>诶？啊，在我们那儿，成为剑圣的时候会被要求做的。</div>
         <ul class="u-points">
-          <li><span class="chip goi">うち</span><a class="xref" href="concordance.html#q=うち" title="这个语法点在 7 个视频中共出现 11 次 — 点击查看全部用例">7视频</a><span>此处指「自己的所属团体/地方」，即「我们剑神流/道场」。关西方言色彩，但此处为年轻女性口语。</span></li>
-          <li><span class="chip joshi">じゃ</span><a class="xref" href="concordance.html#q=じゃ" title="这个语法点在 9 个视频中共出现 10 次 — 点击查看全部用例">9视频</a> <span class="dialect" title="方言 → 标准语">→ では</span><span>「では」的口语缩约形。</span></li>
+          <li><span class="chip goi">うち</span><a class="xref" href="concordance.html#q=うち" title="这个语法点在 8 个视频中共出现 13 次 — 点击查看全部用例">8视频</a><span>此处指「自己的所属团体/地方」，即「我们剑神流/道场」。关西方言色彩，但此处为年轻女性口语。</span></li>
+          <li><span class="chip joshi">じゃ</span><a class="xref" href="concordance.html#q=じゃ" title="这个语法点在 10 个视频中共出现 12 次 — 点击查看全部用例">10视频</a> <span class="dialect" title="方言 → 标准语">→ では</span><span>「では」的口语缩约形。</span></li>
           <li><span class="chip katsu">〜（ら）される</span><span>使役被动形，「被要求做…」「被迫做…」。此处「作る」→「作らされる」。</span></li>
           <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 23 个视频中共出现 75 次 — 点击查看全部用例">23视频</a><span>句末终助词，女性用语，表示说明。</span></li>
         </ul>
@@ -2975,7 +2948,7 @@
         <div class="u-cn"><span class="lbl">译</span>我没有呢。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜てない</span><a class="xref" href="concordance.html#q=〜てない" title="这个语法点在 10 个视频中共出现 11 次 — 点击查看全部用例">10视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ていない</span><span>「〜ていない」的口语缩约，表示「还没…」「没有…」。</span></li>
-          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 12 个视频中共出现 25 次 — 点击查看全部用例">12视频</a><span>女性终助词，此处表示轻微的感叹。</span></li>
+          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 13 个视频中共出现 26 次 — 点击查看全部用例">13视频</a><span>女性终助词，此处表示轻微的感叹。</span></li>
         </ul>
       </div>
     </div>
@@ -2997,7 +2970,7 @@
         <div class="u-cn"><span class="lbl">译</span>你的话，肯定能行吧。</div>
         <ul class="u-points">
           <li><span class="chip goi">あんた</span><a class="xref" href="concordance.html#q=あんた" title="这个语法点在 14 个视频中共出现 43 次 — 点击查看全部用例">14视频</a><span>第二人称「你」，比「あなた」粗鲁，女性同辈间或对下级使用。妮娜的语体特征之一。</span></li>
-          <li><span class="chip katsu">〜だったら</span><a class="xref" href="concordance.html#q=〜だったら" title="这个语法点在 8 个视频中共出现 9 次 — 点击查看全部用例">8视频</a><span>「だ」的假定形，「如果是…的话」。</span></li>
+          <li><span class="chip katsu">〜だったら</span><a class="xref" href="concordance.html#q=〜だったら" title="这个语法点在 9 个视频中共出现 10 次 — 点击查看全部用例">9视频</a><span>「だ」的假定形，「如果是…的话」。</span></li>
           <li><span class="chip goi">いける</span><a class="xref" href="concordance.html#q=いける" title="这个语法点在 9 个视频中共出现 10 次 — 点击查看全部用例">9视频</a><span>「行く」的可能态，此处为口语用法，表示「能行」「能做到」。</span></li>
           <li><span class="chip joshi">でしょ</span><a class="xref" href="concordance.html#q=でしょ" title="这个语法点在 21 个视频中共出现 69 次 — 点击查看全部用例">21视频</a> <span class="dialect" title="方言 → 标准语">→ でしょう</span><span>「でしょう」的口语缩约，此处表示推测确认，「对吧」。</span></li>
         </ul>
@@ -3055,7 +3028,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>合并 15:38 一行，原句实为两句。</div>
         <ul class="u-points">
           <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 23 个视频中共出现 75 次 — 点击查看全部用例">23视频</a><span>连体修饰语中的主格助词，相当于「〜がある」。'滝のある森' = '滝がある森'。</span></li>
-          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 12 个视频中共出现 25 次 — 点击查看全部用例">12视频</a><span>女性用语尾，轻描淡写地陈述自己的判断。</span></li>
+          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 13 个视频中共出现 26 次 — 点击查看全部用例">13视频</a><span>女性用语尾，轻描淡写地陈述自己的判断。</span></li>
         </ul>
       </div>
     </div>
@@ -3066,7 +3039,7 @@
         <div class="u-cn"><span class="lbl">译</span>带路啊</div>
         <ul class="u-points">
           <li><span class="chip keigo">〜なさい</span><a class="xref" href="concordance.html#q=〜なさい" title="这个语法点在 8 个视频中共出现 22 次 — 点击查看全部用例">8视频</a><span>动词连用形+なさい，表示命令，语气比命令形温和但仍带有强制力。常用于长辈对晚辈或关系亲密者之间。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>句末终助词，加强语气，催促对方行动。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>句末终助词，加强语气，催促对方行动。</span></li>
         </ul>
       </div>
     </div>
@@ -3117,8 +3090,8 @@
         <div class="u-cn"><span class="lbl">译</span>我不太有和魔物战斗的经验，所以有点紧张呢。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜たことがない</span><a class="xref" href="concordance.html#q=〜たことがない" title="这个语法点在 9 个视频中共出现 14 次 — 点击查看全部用例">9视频</a><span>动词过去形+ことがない，表示没有过某种经历。</span></li>
-          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 19 个视频中共出现 33 次 — 点击查看全部用例">19视频</a><span>表示原因、理由，比「から」更正式、礼貌。伊佐尔缇的丁宁体特征之一。</span></li>
-          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 31 个视频中共出现 124 次 — 点击查看全部用例">31视频</a><span>句末终助词，表示轻微的感叹或寻求共鸣。</span></li>
+          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 20 个视频中共出现 35 次 — 点击查看全部用例">20视频</a><span>表示原因、理由，比「から」更正式、礼貌。伊佐尔缇的丁宁体特征之一。</span></li>
+          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 32 个视频中共出现 128 次 — 点击查看全部用例">32视频</a><span>句末终助词，表示轻微的感叹或寻求共鸣。</span></li>
         </ul>
       </div>
     </div>
@@ -3139,7 +3112,7 @@
         <div class="u-jp">ねえ、<ruby>魔物<rt>まもの</rt></ruby>はどこにいるの</div>
         <div class="u-cn"><span class="lbl">译</span>喂，魔物在哪儿呢？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 16 个视频中共出现 26 次 — 点击查看全部用例">16视频</a><span>呼唤对方注意的感叹词，相当于'喂'或'那个'。</span></li>
+          <li><span class="chip joshi">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 17 个视频中共出现 27 次 — 点击查看全部用例">17视频</a><span>呼唤对方注意的感叹词，相当于'喂'或'那个'。</span></li>
           <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 23 个视频中共出现 75 次 — 点击查看全部用例">23视频</a><span>句末终助词，女性/儿童用，表示疑问。エリス的口语特征。</span></li>
         </ul>
       </div>
@@ -3150,7 +3123,7 @@
         <div class="u-jp"><ruby>火<rt>ひ</rt></ruby>を<ruby>焚<rt>た</rt></ruby>いたら<ruby>寄<rt>よ</rt></ruby>ってくるわ</div>
         <div class="u-cn"><span class="lbl">译</span>点起火就会聚过来了。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜たら</span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 37 个视频中共出现 86 次 — 点击查看全部用例">37视频</a><span>动词过去形+ら，表示假定条件，'如果…了的话'。</span></li>
+          <li><span class="chip katsu">〜たら</span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 38 个视频中共出现 88 次 — 点击查看全部用例">38视频</a><span>动词过去形+ら，表示假定条件，'如果…了的话'。</span></li>
           <li><span class="chip goi">寄ってくる</span><span>复合动词，'寄る'(靠近) + 'くる'(来)，表示向说话人这边靠近。</span></li>
         </ul>
       </div>
@@ -3194,7 +3167,7 @@
         <div class="u-jp">あんた、<ruby>魔術<rt>まじゅつ</rt></ruby>なんて<ruby>使<rt>つか</rt></ruby>えたの？</div>
         <div class="u-cn"><span class="lbl">译</span>你居然会用魔术？</div>
         <ul class="u-points">
-          <li><span class="chip goi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 22 个视频中共出现 68 次 — 点击查看全部用例">22视频</a><span>表示意外、轻视或列举。这里带有'竟然'的意外语气。</span></li>
+          <li><span class="chip goi">なんて</span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 23 个视频中共出现 69 次 — 点击查看全部用例">23视频</a><span>表示意外、轻视或列举。这里带有'竟然'的意外语气。</span></li>
           <li><span class="chip katsu">使えた</span><span>「使う」的可能态「使える」的过去形，表示'居然会/能用'。</span></li>
           <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 23 个视频中共出现 75 次 — 点击查看全部用例">23视频</a><span>句末终助词，女性用语，表示疑问或确认。</span></li>
         </ul>
@@ -3287,7 +3260,7 @@
         <div class="u-cn"><span class="lbl">译</span>那就是之前说的那只魔物哦。</div>
         <ul class="u-points">
           <li><span class="chip goi">例の</span><a class="xref" href="concordance.html#q=例の" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>「那个……」「之前提到的那个……」，用于指代双方都知道但不必明说的事物。口语中非常常用。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>句末终助词，表示告知、提醒。伊佐尔缇用「よ」而非丁宁体的「ますよ」，此处是口语中与同伴说话时的自然切换。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>句末终助词，表示告知、提醒。伊佐尔缇用「よ」而非丁宁体的「ますよ」，此处是口语中与同伴说话时的自然切换。</span></li>
         </ul>
       </div>
     </div>
@@ -3334,7 +3307,7 @@
         <ul class="u-points">
           <li><span class="chip goi">なんだか</span><span>副词，「不知为何」「总觉得」。表示没有明确理由但有一种感觉。</span></li>
           <li><span class="chip goi">とっても</span><a class="xref" href="concordance.html#q=とっても" title="这个语法点在 2 个视频中共出现 3 次 — 点击查看全部用例">2视频</a> <span class="dialect" title="方言 → 标准语">→ とても</span><span>「とても」的口语强调形，促音插入增强语气。</span></li>
-          <li><span class="chip keigo">です</span><a class="xref" href="concordance.html#q=です" title="这个语法点在 13 个视频中共出现 14 次 — 点击查看全部用例">13视频</a><span>丁宁体助动词。伊佐尔缇全篇使用「です・ます」体，体现其作为水王的教养与谦逊性格，与艾莉丝、妮娜的粗野语体形成鲜明对照。</span></li>
+          <li><span class="chip keigo">です</span><a class="xref" href="concordance.html#q=です" title="这个语法点在 14 个视频中共出现 16 次 — 点击查看全部用例">14视频</a><span>丁宁体助动词。伊佐尔缇全篇使用「です・ます」体，体现其作为水王的教养与谦逊性格，与艾莉丝、妮娜的粗野语体形成鲜明对照。</span></li>
         </ul>
       </div>
     </div>
@@ -3357,7 +3330,7 @@
         <div class="u-cn"><span class="lbl">译</span>像这样去狩猎魔物什么的，还是第一次呢。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>此句与上一行「魔物を狩りに行ったのなんて 初めてでしたから」合并，属同一句的后半。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">なんて<span class="star">★</span></span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 22 个视频中共出现 68 次 — 点击查看全部用例">22视频</a><span>副助词，接在名词或用言连体形后，表示「……之类的」「……什么的」，带有轻视、意外或感叹的语气。这里表示「去狩猎魔物这种事」，带有「竟然」的意外感。口语中极常用。</span></li>
+          <li><span class="chip joshi">なんて<span class="star">★</span></span><a class="xref" href="concordance.html#q=なんて" title="这个语法点在 23 个视频中共出现 69 次 — 点击查看全部用例">23视频</a><span>副助词，接在名词或用言连体形后，表示「……之类的」「……什么的」，带有轻视、意外或感叹的语气。这里表示「去狩猎魔物这种事」，带有「竟然」的意外感。口语中极常用。</span></li>
           <li><span class="chip katsu">〜でしたから</span> <span class="dialect" title="方言 → 标准语">→ 〜だったから</span><span>丁宁体「です」的过去形「でした」+ 原因理由的「から」。伊佐尔缇用丁宁体表达原因，保持全篇语体一致。</span></li>
         </ul>
       </div>
@@ -3400,7 +3373,7 @@
         <div class="u-jp"><ruby>今日<rt>きょう</rt></ruby>はありがとうございました。</div>
         <div class="u-cn"><span class="lbl">译</span>今天非常感谢。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">ありがとうございました<span class="star">★</span></span><a class="xref" href="concordance.html#q=ありがとうございました" title="这个语法点在 15 个视频中共出现 20 次 — 点击查看全部用例">15视频</a><span>「ありがとう」的敬体过去形。用过去形表示对已发生之事的感谢，比「ありがとうございます」更完整地表达“今天一整天的感谢”。</span></li>
+          <li><span class="chip keigo">ありがとうございました<span class="star">★</span></span><a class="xref" href="concordance.html#q=ありがとうございました" title="这个语法点在 16 个视频中共出现 21 次 — 点击查看全部用例">16视频</a><span>「ありがとう」的敬体过去形。用过去形表示对已发生之事的感谢，比「ありがとうございます」更完整地表达“今天一整天的感谢”。</span></li>
         </ul>
       </div>
     </div>
@@ -3431,7 +3404,7 @@
         <div class="u-jp">エリスさんもありがとうございました。</div>
         <div class="u-cn"><span class="lbl">译</span>艾莉丝小姐也谢谢你。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">〜さん</span><a class="xref" href="concordance.html#q=〜さん" title="这个语法点在 9 个视频中共出现 14 次 — 点击查看全部用例">9视频</a><span>敬称，加在名字后。伊佐尔缇全篇使用丁宁体，对艾莉丝也保持礼貌的「さん」称呼。</span></li>
+          <li><span class="chip keigo">〜さん</span><a class="xref" href="concordance.html#q=〜さん" title="这个语法点在 10 个视频中共出现 18 次 — 点击查看全部用例">10视频</a><span>敬称，加在名字后。伊佐尔缇全篇使用丁宁体，对艾莉丝也保持礼貌的「さん」称呼。</span></li>
         </ul>
       </div>
     </div>
@@ -3442,7 +3415,7 @@
         <div class="u-cn"><span class="lbl">译</span>下次我会打中一击的。</div>
         <ul class="u-points">
           <li><span class="chip goi">一撃入れる</span><span>「一撃」意为“一击”，「入れる」在这里是“击中、打进”的意思。整句意为“下次要打中你一击”。</span></li>
-          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 12 个视频中共出现 25 次 — 点击查看全部用例">12视频</a><span>女性句末语气词，用于表达自己的主张或决心。艾莉丝的典型语尾。</span></li>
+          <li><span class="chip joshi">わ</span><a class="xref" href="concordance.html#q=わ" title="这个语法点在 13 个视频中共出现 26 次 — 点击查看全部用例">13视频</a><span>女性句末语气词，用于表达自己的主张或决心。艾莉丝的典型语尾。</span></li>
         </ul>
       </div>
     </div>
@@ -3546,7 +3519,7 @@
         <div class="u-cn"><span class="lbl">译</span>试试看啊。</div>
         <ul class="u-points">
           <li><span class="chip keigo">〜なさい</span><a class="xref" href="concordance.html#q=〜なさい" title="这个语法点在 8 个视频中共出现 22 次 — 点击查看全部用例">8视频</a><span>动词连用形 + 「なさい」，表示命令，语气比命令形温和但仍带有强制感。常用于长辈对晚辈或关系亲密的同辈之间。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 33 个视频中共出现 161 次 — 点击查看全部用例">33视频</a><span>句末语气词，加强劝诱或命令的语气。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 34 个视频中共出现 163 次 — 点击查看全部用例">34视频</a><span>句末语气词，加强劝诱或命令的语气。</span></li>
         </ul>
       </div>
     </div>
@@ -3605,7 +3578,7 @@
           <li><span class="chip goi">何だかんだ</span><span>惯用表达，意为「不管怎样、总之、说来道去」。表示虽然过程复杂，但结果如此。</span></li>
           <li><span class="chip goi">互角</span><a class="xref" href="concordance.html#q=互角" title="这个语法点在 2 个视频中共出现 3 次 — 点击查看全部用例">2视频</a><span>名词/形容动词，意为「势均力敌、不相上下」。</span></li>
           <li><span class="chip katsu">〜てきた</span><a class="xref" href="concordance.html#q=〜てきた" title="这个语法点在 22 个视频中共出现 29 次 — 点击查看全部用例">22视频</a><span>「てくる」的过去式，表示从过去到现在的变化过程。「〜てきたようです」意为「似乎逐渐变得〜」。</span></li>
-          <li><span class="chip joshi">〜な</span><a class="xref" href="concordance.html#q=〜な" title="这个语法点在 11 个视频中共出现 18 次 — 点击查看全部用例">11视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ね</span><span>终助词，老年男性或地位高者使用的感叹语气，相当于「〜ね」。此处为剑神的粗犷男性语体。</span></li>
+          <li><span class="chip joshi">〜な</span><a class="xref" href="concordance.html#q=〜な" title="这个语法点在 12 个视频中共出现 19 次 — 点击查看全部用例">12视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ね</span><span>终助词，老年男性或地位高者使用的感叹语气，相当于「〜ね」。此处为剑神的粗犷男性语体。</span></li>
         </ul>
       </div>
     </div>
@@ -3660,7 +3633,7 @@
         <div class="u-cn"><span class="lbl">译</span>哼，嘛，确实在变强呢，是吧。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜てんな</span><a class="xref" href="concordance.html#q=〜てんな" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a> <span class="dialect" title="方言 → 标准语">→ 強くなっているな</span><span>「〜ているな」的口语缩约。完整形为「強くなっているな」。老年/粗犷语感。</span></li>
-          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 14 个视频中共出现 30 次 — 点击查看全部用例">14视频</a><span>终助词，此处为自问自答式的确认「是吧」。</span></li>
+          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 15 个视频中共出现 31 次 — 点击查看全部用例">15视频</a><span>终助词，此处为自问自答式的确认「是吧」。</span></li>
         </ul>
       </div>
     </div>
@@ -3682,7 +3655,7 @@
         <div class="u-jp"><ruby>次<rt>つぎ</rt></ruby>、<ruby>私<rt>わたし</rt></ruby>とニナよね。</div>
         <div class="u-cn"><span class="lbl">译</span>接下来，是我和妮娜对吧。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜よね</span><a class="xref" href="concordance.html#q=〜よね" title="这个语法点在 26 个视频中共出现 65 次 — 点击查看全部用例">26视频</a><span>向对方确认的语气，「对吧」「是吧」。</span></li>
+          <li><span class="chip joshi">〜よね</span><a class="xref" href="concordance.html#q=〜よね" title="这个语法点在 27 个视频中共出现 66 次 — 点击查看全部用例">27视频</a><span>向对方确认的语气，「对吧」「是吧」。</span></li>
         </ul>
       </div>
     </div>
@@ -3734,7 +3707,7 @@
         <div class="u-cn"><span class="lbl">译</span>开反省会之前，好好去洗个澡再来。</div>
         <ul class="u-points">
           <li><span class="chip keigo">〜なさい</span><a class="xref" href="concordance.html#q=〜なさい" title="这个语法点在 8 个视频中共出现 22 次 — 点击查看全部用例">8视频</a><span>动词连用形+「なさい」，表示命令，语气比「〜てください」强硬，常用于长辈对晚辈或关系亲密的平辈之间。</span></li>
-          <li><span class="chip katsu">〜てくる</span><a class="xref" href="concordance.html#q=〜てくる" title="这个语法点在 25 个视频中共出现 40 次 — 点击查看全部用例">25视频</a><span>「〜てくる」表示去做某个动作再回来。此处「入ってきなさい」=「去洗了澡再回来」。</span></li>
+          <li><span class="chip katsu">〜てくる</span><a class="xref" href="concordance.html#q=〜てくる" title="这个语法点在 26 个视频中共出现 42 次 — 点击查看全部用例">26视频</a><span>「〜てくる」表示去做某个动作再回来。此处「入ってきなさい」=「去洗了澡再回来」。</span></li>
         </ul>
       </div>
     </div>
@@ -3744,7 +3717,7 @@
         <div class="u-jp">わかったわ。</div>
         <div class="u-cn"><span class="lbl">译</span>知道了。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜わ</span><a class="xref" href="concordance.html#q=〜わ" title="这个语法点在 14 个视频中共出现 25 次 — 点击查看全部用例">14视频</a><span>女性用语，表示轻微的主张或答应。</span></li>
+          <li><span class="chip joshi">〜わ</span><a class="xref" href="concordance.html#q=〜わ" title="这个语法点在 15 个视频中共出现 26 次 — 点击查看全部用例">15视频</a><span>女性用语，表示轻微的主张或答应。</span></li>
         </ul>
       </div>
     </div>
@@ -5500,14 +5473,107 @@
     }
     function telopClass(hidden){ return hidden ? 'no-telop' : ''; }
 
+    // 遮中文 geometry: where to PAINT the band lens, in CSS pixels inside .video-frame.
+    // `aspect` is the video's intrinsic w/h (0 for an embed, whose rendered content box is not
+    // readable cross-origin — the overlay then assumes the player fills the frame, which is what
+    // YouTube/Bilibili do inside their own 16:9 boxes). The content box is letterboxed exactly
+    // the way object-fit:contain does it, because a band fraction is a fraction of the PICTURE,
+    // not of the element — measuring against the element shifts the mask whenever the source is
+    // not 16:9.
+    function bandRects(frame, aspect, zh, ja){
+      var cw = frame.w, ch = frame.h, cx = 0, cy = 0;
+      if (aspect > 0){
+        var fa = frame.w / frame.h;
+        if (aspect > fa){ cw = frame.w; ch = frame.w / aspect; cy = (frame.h - ch) / 2; }
+        else            { ch = frame.h; cw = frame.h * aspect; cx = (frame.w - cw) / 2; }
+      }
+      function band(b){
+        return { x: cx, y: cy + b[0] * ch, w: cw, h: (b[1] - b[0]) * ch };
+      }
+      var cover = band(zh), src = band(ja);
+      return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, src: src,
+               magnify: cover.h > src.h + 0.5 };
+    }
+
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
-             matchSentence: matchSentence, cardText: cardText,
+             matchSentence: matchSentence, cardText: cardText, bandRects: bandRects,
              TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
   }
   /*<</page-tools-pure>>*/
 
   var P = PAGE_TOOLS_PURE();
+
+  // ---------- 遮中文: the band magnifier is the ONLY mask ---------------------------------
+  // One fixed overlay covers the Chinese band; on a native <video> it simultaneously draws the
+  // Japanese band into that rectangle, so the thing concealing the Chinese IS the thing being
+  // magnified and the two can never drift. Not a cursor lens and not a second mask element.
+  // Revealed only when the build emitted band geometry (build_page.py's `bands` config), which
+  // only a hardsub page carries. Works on every transport: cross-origin embeds cannot be read
+  // pixel-wise, so there the same rectangle is an opaque cover.
+  function wireCnMask(){
+    var frameEl = document.querySelector('.video-frame');
+    var btn = document.getElementById('cnMaskToggle');
+    if (!frameEl || !btn) return;
+    function pair(name){
+      var v = (frameEl.getAttribute(name) || '').split(',');
+      var a = parseFloat(v[0]), b = parseFloat(v[1]);
+      return (v.length === 2 && isFinite(a) && isFinite(b) && a < b) ? [a, b] : null;
+    }
+    var zh = pair('data-band-zh'), ja = pair('data-band-ja');
+    if (!zh || !ja) return;
+    var clip = document.getElementById('clip');
+    var isVideo = !!clip && clip.tagName === 'VIDEO';
+    btn.hidden = false;
+    var el = document.createElement(isVideo ? 'canvas' : 'div');
+    el.className = 'cn-mask'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
+    frameEl.appendChild(el);
+    var ctx = null, raf = 0;
+    function place(){
+      var r = frameEl.getBoundingClientRect();
+      var aspect = (isVideo && clip.videoWidth) ? clip.videoWidth / clip.videoHeight : 0;
+      var g = P.bandRects({ w: r.width, h: r.height }, aspect, zh, ja);
+      el.style.left = g.cover.x + 'px'; el.style.top = g.cover.y + 'px';
+      el.style.width = g.cover.w + 'px'; el.style.height = g.cover.h + 'px';
+      return g;
+    }
+    function draw(){
+      raf = 0;
+      if (el.hidden) return;
+      var g = place();
+      if (!isVideo) return;
+      var vw = clip.videoWidth, vh = clip.videoHeight;
+      if (!ctx || !vw || clip.readyState < 2) return;
+      var dpr = window.devicePixelRatio || 1;
+      el.width = Math.max(1, Math.round(g.cover.w * dpr));
+      el.height = Math.max(1, Math.round(g.cover.h * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, g.cover.w, g.cover.h);
+    }
+    function loop(){ if (el.hidden) return; draw(); raf = requestAnimationFrame(loop); }
+    function set(on){
+      el.hidden = !on;
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      try { localStorage.setItem('lang:cn-mask', on ? '1' : '0'); } catch (e) {}
+      if (on){
+        if (isVideo && !ctx) ctx = el.getContext('2d');
+        draw();
+        if (isVideo && !raf) raf = requestAnimationFrame(loop);
+      } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
+    }
+    btn.addEventListener('click', function(){ set(el.hidden); });
+    if (isVideo){
+      clip.addEventListener('seeked', draw);
+      clip.addEventListener('loadedmetadata', draw);
+    }
+    window.addEventListener('resize', draw);
+    var saved = false;
+    try { saved = localStorage.getItem('lang:cn-mask') === '1'; } catch (e) {}
+    if (saved) set(true);
+  }
+  wireCnMask();
+
   var cards = [].slice.call(document.querySelectorAll('.u'));
   if (!cards.length) return;
 
@@ -6047,7 +6113,7 @@
     // ruby both revealed the reading and toggled playback. Match on the ROLE too.
     var ACTIVATION = { BUTTON: 1, A: 1, RUBY: 1, SUMMARY: 1 };
     var LENS = { f: 'follow', r: 'furi', s: 'shadow', d: 'dict',
-                 h: 'highlights', o: 'overlap', m: 'fold', c: 'covers' };
+                 h: 'highlights', o: 'overlap', m: 'fold', c: 'cnmask' };
 
     function isTyping(t){ return !!t && (TYPING[t.tag] === 1 || t.editable === true); }
     function isActivation(t){ return !!t && (ACTIVATION[t.tag] === 1 || t.role === 'button'); }
@@ -6194,11 +6260,9 @@
   // ---------- the ? cheat sheet ----------
   // An undiscoverable shortcut is a shortcut nobody uses, so every binding above is listed here
   // and this overlay is the only place they are written down for the reader.
-  // 'covers' (遮中文) exists on bilingual-hardsub pages only. press() no-ops on a missing id, so
-  // binding it globally costs the other pages nothing — the key is simply inert where the button is.
   var LENS_BTN = { follow: 'dockFollow', furi: 'furiToggle', shadow: 'shadowToggle',
                    dict: 'dictToggle', highlights: 'highlightsToggle',
-                   overlap: 'overlapToggle', fold: 'dockMin', covers: 'subsToggle' };
+                   overlap: 'overlapToggle', fold: 'dockMin', cnmask: 'cnMaskToggle' };
   var help = null;
   function row(keys, what){
     var ks = '';
@@ -6222,8 +6286,8 @@
         '<h3>显示</h3>' +
         row(['F'], '跟随') + row(['R'], '全部读音') + row(['S'], '跟读') +
         row(['D'], '听写') + row(['H'], '重点') + row(['O'], '被插话') +
+        row(['C'], '遮中文（遮住中文字幕带；本地视频同时放大日文）') +
         row(['M'], '收起 / 展开播放器') +
-        row(['C'], '遮中文 — 盖住烧录的中文字幕，放大日文（仅双语硬字幕页）') +
         '<h3>其他</h3>' +
         row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
         '<p class="keys-note">竖向移动视线，横向移动播放位置：' +
@@ -6672,386 +6736,6 @@
   vStart.addEventListener('click', function(){ snap = vdue(); pos = 0; if (!snap.length) return; ov.hidden = false; document.body.classList.add('srs-open'); show(); });
   ov.querySelector('#vClose').addEventListener('click', function(){ ov.hidden = true; document.body.classList.remove('srs-open'); renderList(); });
 })();
-</script>
-<script>
-/*<<subs-pure>>*/
-// 遮中文 — mask the burned-in CHINESE subtitle band on a bilingual hardsub and draw the JAPANESE
-// that is on screen right now in its place, large and crisp. Per-page: a source with no second
-// burned-in language carries no `cover_band` in pages.json, grows no button, and this file returns
-// on line one.
-//
-// WHY THIS DRAWS TEXT AND NOT A PIXEL ZOOM — the obvious reading of "make the Japanese bigger" is to
-// magnify the burned-in strip, and the arithmetic kills it. shosen-taningoto-01 is 1280x720; the ja
-// band is 18px tall (the zh band above it is 36px); .dock-video caps the picture at 32rem = 512 CSS
-// px, i.e. 0.4x native, so those glyphs reach the screen at ~7 CSS px. A fit-width magnifier is
-// bounded by the 46rem (736px) column = 0.575x native = 10.4 CSS px — 1.4x more and still
-// unreadable — and that page's own A/B found upscaling 18px glyphs FLAT across 1x/2x/3x (訴える read
-// correctly at 1x and wrongly at 2x/3x). The pixels are not there to enlarge. The text is.
-//
-// WHICH TEXT — THE BAND'S OWN TRACK, NOT THE ACTIVE ROW. The first cut keyed the plate off whichever
-// `.u` the follow-along engine had marked `.active`, and that is the wrong authority for a magnifier
-// of the band: measured on shosen-taningoto-01, 105 of 776 displays (13.5%) had no row at all — real
-// dialogue the analysis merged into a neighbour, so the plate showed the PREVIOUS sentence — and of
-// the 671 that did, 74 (11%) sat >0.5s from the display's own start and 35 >1.5s, always speech
-// leading its own caption. So `tools/bake_band_track.py` bakes the read's display spans into the
-// page as `#subsBand` and this file renders THAT: the plate now changes exactly when the band under
-// it changes. Where a display and a row are the same sentence the row's `.u-jp` is what gets drawn,
-// so the plate keeps the repairs (74 Opus rewrites, 13 frame-confirmed) and the furigana the R lens
-// needs; only a display with no row falls back to the raw read. No track, or a stale one, and the
-// old active-row path below still runs — a rebuilt page renders a beat early, never a wrong line.
-//
-// AND THE PLATE SHOWS THE PIXELS TOO, cropped to the sentence. A fit-WIDTH magnifier of the whole
-// band is pointless — 1280 native px into a 512 CSS px dock is 0.40x, a shrink — but these
-// subtitles are narrow: measured over 767 boxed displays the sentence is a MEDIAN 313 px wide, 24%
-// of the frame. Crop to it and the same plate width gives a median 1.64x, and 90% of lines clear
-// 1:1, i.e. you finally see every pixel the upload has rather than the 40% the dock keeps. The box
-// per display is baked by tools/bake_band_track.py --zoom (centre-anchored, gap-limited: a lit
-// railing and the ED credit block both defeat min/max and ink percentiles, and neither is centred
-// or contiguous with the sentence). The magnifier stays PAUSED and is seeked once per display —
-// a burned-in line does not move within its own span, so a second PLAYING decoder would buy
-// nothing and cost a stream. Where no box was measured, or the transport has no clock, the text
-// line alone still runs.
-//
-// THE COST, STATED: the text line is still the READ, not the pixels. Measured against the Chinese band on the
-// same episode, 10.9% of pairs were real read errors at this resolution. Which is exactly why the
-// mask STOPS at the top of the Japanese band instead of covering it: the burned-in line stays on
-// screen underneath as the ground truth you can check the big line against. Covering both was
-// offered and deliberately not taken.
-//
-// GEOMETRY is per-page (`data-cover-band="top,bottom"`, fractions of frame height) because it is a
-// property of the upload, not of the pipeline. The video is object-fit:contain on a 16:9 source in a
-// 16:9 frame, so a CSS % of .video-frame IS a fraction of the source frame — which is what lets a
-// measured band become CSS with no scaling step to get wrong.
-//
-// HOW THAT BAND WAS MEASURED, because the obvious method is wrong: a plain "count near-white pixels
-// per row" detector merges lit clothing and a bright prop into the band and reports a two-line
-// Chinese subtitle that does not exist (it claimed a top edge of 0.804 on frames whose real top edge
-// is 0.896). Broadcast subs are white with a hard black outline, so the detector that works keys on
-// a bright pixel having a near-BLACK pixel within 4 rows in the same column. Over 34 sampled frames:
-// zh 0.887(p05)-0.954(max), ja 0.954-0.985. Hence 0.876-0.956 — clear of the first, above the second.
-// KNOWN LEAK, not a bug to hunt: the ED montage (~55:20-56:35) places its captions higher and the
-// mask does not reach them.
-(function(){
-  var KEY   = 'langCoverZh';
-  var frame = document.querySelector('.video-frame');
-  var band  = frame && frame.getAttribute('data-cover-band');
-  if (!frame || !band) return;                       // not an opted-in page — do nothing at all
-
-  var p = band.split(','), top = parseFloat(p[0]), bot = parseFloat(p[1]);
-  if (!(top >= 0 && bot > top && bot <= 1)) return;  // refuse a malformed band rather than paint a bar
-
-  var btn = document.getElementById('subsToggle');
-
-  // ONE element, not a mask plus a caption. The first cut had two, and a screenshot showed them
-  // disagreeing exactly where it matters: the mask is a fixed 8% of the frame (~23 CSS px in the
-  // dock) while a two-line caption is ~58px, so every long line rendered its top half on BARE
-  // picture above the mask — unreadable, and with the Chinese still showing beside it. As one plate
-  // anchored at the band's floor with min-height = the band, the covered area is by construction
-  // whatever the text needs, and a gap still covers the band because the min-height holds with no
-  // text in it.
-  var cap = document.createElement('div');
-  cap.className = 'subs-cap';
-  cap.style.bottom    = ((1 - bot) * 100).toFixed(3) + '%';
-  cap.style.minHeight = ((bot - top) * 100).toFixed(3) + '%';
-  frame.appendChild(cap);
-
-  // ---- font size tracks the frame, which is 512px on a desktop dock and full-width on a phone.
-  // A ResizeObserver rather than a container query: this has to hold on whatever Chrome the
-  // behavioural suites launch, and it is one line either way.
-  function fit(w){
-    var px = Math.max(12, Math.min(30, w * 0.042));
-    frame.style.setProperty('--subs-fs', px.toFixed(1) + 'px');
-  }
-  fit(frame.getBoundingClientRect().width || 512);
-  if (window.ResizeObserver){
-    new ResizeObserver(function(es){ fit(es[0].contentRect.width); shown = null; paint(true); }).observe(frame);
-  }
-
-  var US = document.querySelectorAll('.u');
-
-  // ---- the baked band track: [startMs, durMs, rowIndex], or [startMs, durMs, -1, "raw text"].
-  //
-  // `data-units` is the whole staleness guard and it is not ceremony: a row index is only meaningful
-  // against the row list it was computed from, and `build_page` re-deriving a page changes that list
-  // without touching this block. A mismatch must fall back rather than render a shifted sentence,
-  // because a plate that is confidently one line off is worse than one that is a beat late.
-  // checks_favorites.py fails the build on the same comparison, so this is the second line, not the
-  // first. Overlapping spans are normal, not a defect: a two-line burned-in subtitle is read as two
-  // display events with the same start, and both belong on the plate.
-  var TRACK = null, tStarts = null, MAXDUR = 0;
-  (function(){
-    var el = document.getElementById('subsBand');
-    if (!el) return;
-    if (parseInt(el.getAttribute('data-units'), 10) !== US.length) return;   // stale — use the rows
-    var raw;
-    try { raw = JSON.parse(el.textContent || '[]'); } catch (e){ return; }
-    if (!raw || !raw.length) return;
-    var out = [];
-    for (var i = 0; i < raw.length; i++){
-      var r = raw[i], s = r[0] / 1000, d = r[1] / 1000, idx = r[2];
-      if (!(d > 0) || !(s >= 0)) continue;
-      if (idx >= 0 && !US[idx]) continue;
-      // the magnifier box is APPENDED, so its position depends on whether text is carried
-      var zAt = idx < 0 ? 4 : 3;
-      var x0 = r[zAt], x1 = r[zAt + 1];
-      var box = (typeof x0 === 'number' && typeof x1 === 'number' && x1 > x0) ? [x0, x1] : null;
-      out.push({ s: s, e: s + d, i: idx, raw: idx < 0 ? String(r[3] || '') : null, box: box });
-      if (d > MAXDUR) MAXDUR = d;
-    }
-    if (!out.length) return;
-    out.sort(function(a, b){ return a.s - b.s; });
-    TRACK = out;
-    tStarts = out.map(function(x){ return x.s; });
-  })();
-
-  // ---- rows + the END of a line: the FALLBACK path, used on a page with no track (or a stale one).
-  // TWO bounds, and both are load-bearing.
-  //
-  // (1) The next DISTINCT onset. Never starts[i+1]: the page's clock is mixed-precision, so a
-  //     floored twin can share a second with a recovered line and the next row's start can be
-  //     EARLIER than this one's. The player already publishes its CLAMPED start on each .ts as
-  //     __sec (keys.js reads the same field), so this is the repo's nextDistinct rule sourced from
-  //     the player's own clock rather than re-derived here, where it could drift.
-  //
-  // (2) A dwell estimate from the line's own length — because bound (1) ALONE is wrong wherever the
-  //     episode goes quiet, and it is wrong in the direction nobody notices while testing a talky
-  //     stretch. This episode has a 41.9s hole between the onsets at 908.25s and 950.14s, and with
-  //     only the onset bound the big line sat on screen for all 41.9 seconds while the burned-in
-  //     line it mirrors had long since gone. 0.22 s/char is deliberately generous against the
-  //     4-6 chars/sec a broadcast sub is written to be read at, so the failure mode is a caption
-  //     that lingers a beat, never one that blanks mid-sentence.
-  var DWELL_BASE = 1.0, DWELL_PER_CHAR = 0.22, DWELL_MAX = 12;
-  var rows = null;
-  function baseLen(el){
-    // Count the SENTENCE, not the furigana: .u-jp's textContent concatenates every <rt>, so
-    // 「出来事」 with a reading counts as 「出来事できごと」 and a ruby-dense line would be granted
-    // roughly double the dwell it needs.
-    var jp = el.querySelector('.u-jp');
-    if (!jp) return 0;
-    var c = jp.cloneNode(true), rt = c.querySelectorAll('rt,rp');
-    for (var i = 0; i < rt.length; i++) rt[i].parentNode.removeChild(rt[i]);
-    return (c.textContent || '').trim().length;
-  }
-  function rowList(){
-    if (rows) return rows;
-    if (!US.length) return null;
-    rows = [];
-    for (var i = 0; i < US.length; i++){
-      var ts = US[i].querySelector('.ts');
-      rows.push({ el: US[i], sec: (ts && ts.__sec != null) ? ts.__sec : null, len: baseLen(US[i]) });
-    }
-    return rows;
-  }
-  function endOf(i){
-    var r = rows, s = r[i].sec;
-    if (s == null) return Infinity;
-    var nxt = Infinity;
-    for (var j = i + 1; j < r.length; j++){
-      if (r[j].sec != null && r[j].sec > s + 1e-6){ nxt = r[j].sec; break; }
-    }
-    var dwell = Math.min(DWELL_MAX, DWELL_BASE + DWELL_PER_CHAR * r[i].len);
-    return Math.min(nxt, s + dwell);                  // whichever comes first
-  }
-
-  // ---- availability. The mask is aimed at pixels of OUR mp4 at OUR geometry, so it is meaningless
-  // on any other transport: the YouTube path replaces <video> with a <div>, and the Bilibili path
-  // builds its own iframe and is seek-only (no clock, so the caption could never advance). Both hide
-  // the control rather than showing one that lies — the same call seekOnly() forces on 跟随/跟读.
-  function usable(){
-    if (!document.querySelector('video#clip')) return false;
-    var lp = window.LangPlayer;
-    if (lp && lp.seekOnly && lp.seekOnly()) return false;
-    return true;
-  }
-  function refreshAvail(){
-    var ok = usable();
-    if (btn) btn.hidden = !ok;
-    if (!ok && frame.classList.contains('cover-zh')) apply(false, true);
-  }
-
-  // ---- what is on the band at time t. Returns the entries covering it, in track order, so a
-  // two-line subtitle draws as two lines. The backward scan is bounded by the longest span in the
-  // track rather than by a guessed constant, because a display can legitimately run 11s.
-  function atTime(t){
-    var hit = [];
-    var k = upperBound(tStarts, t) - 1;
-    for (; k >= 0; k--){
-      var x = TRACK[k];
-      if (x.s < t - MAXDUR - 0.01) break;
-      if (t >= x.s && t < x.e) hit.push(k);
-    }
-    hit.reverse();
-    return hit;
-  }
-  function upperBound(a, v){
-    var lo = 0, hi = a.length;
-    while (lo < hi){ var mid = (lo + hi) >> 1; if (a[mid] <= v) lo = mid + 1; else hi = mid; }
-    return lo;
-  }
-
-  // ---- the magnifier. A SECOND <video> on the same sources, muted and never played: the burned-in
-  // line is static for its whole display span, so one seek per subtitle shows it exactly, with no
-  // drift to correct and no second decoder running for an hour. Built on demand and torn down when
-  // the lens is off, because online that element is a second range-stream of the same mp4.
-  //
-  // GEOMETRY. The video is object-fit:contain on a 16:9 source in a 16:9 frame, so the displayed
-  // picture is exactly W x W*9/16 and one native px is W/1280 CSS px. To make the box [x0,x1] fill
-  // the plate we render the clone at W*k where k = 1280/(x1-x0+1), then offset it so the box's left
-  // edge and the band's top edge sit at the window's origin. k is capped: 「あら」 is 48px wide and
-  // would otherwise arrive at 26x, a single kana filling the screen.
-  // MMAX caps magnification against the SOURCE — CSS px per native px — and that distinction is
-  // the whole bug the first cut shipped: capping the scale applied to the *displayed* video pinned
-  // every line at 1.28x instead of its real 1.90x, because the dock already renders at 0.40x.
-  var BAND_Y0 = 686, BAND_H = 26, NATIVE_W = 1280, MMAX = 3.0;
-  var lensWrap = null, lensVid = null, lensKey = null;
-
-  function lensBuild(){
-    if (lensWrap) return true;
-    var main = document.querySelector('video#clip');
-    if (!main) return false;
-    lensWrap = document.createElement('div');
-    lensWrap.className = 'subs-lens';
-    lensWrap.hidden = true;
-    lensVid = document.createElement('video');
-    lensVid.muted = true; lensVid.defaultMuted = true;
-    lensVid.setAttribute('playsinline', '');
-    lensVid.setAttribute('preload', 'auto');
-    lensVid.setAttribute('aria-hidden', 'true');
-    // currentSrc — the candidate that ALREADY WON — not a copy of the <source> ladder. Copying the
-    // ladder would hand the offline deliverable an https candidate it never asked for, and
-    // `zero network requests on file://` is a thing that suite asserts. One resolved URL cannot
-    // fall back to anything.
-    if (main.currentSrc) lensVid.src = main.currentSrc;
-    else { lensWrap = lensVid = null; return false; }
-    // A failed load must not leave a black bar sitting over the picture forever.
-    lensVid.addEventListener('error', function(){ lensWrap.hidden = true; lensKey = 'ERR'; });
-    lensVid.addEventListener('seeked', function(){ if (lensKey && lensKey !== 'ERR') lensWrap.hidden = false; });
-    lensWrap.appendChild(lensVid);
-    cap.insertBefore(lensWrap, cap.firstChild);
-    return true;
-  }
-  function lensDestroy(){
-    if (!lensWrap) return;
-    try { lensVid.pause(); lensVid.removeAttribute('src'); lensVid.load(); } catch (e){}
-    lensWrap.parentNode.removeChild(lensWrap);
-    lensWrap = lensVid = null; lensKey = null;
-  }
-  function lensShow(ent){
-    if (!ent || !ent.box || !lensBuild()){ if (lensWrap) lensWrap.hidden = true; return; }
-    // The LENS WINDOW's width, not the frame's: .subs-cap carries 3% side padding, so sizing the
-    // clone against the frame overflowed the window by 6% and sheared the last glyph off every
-    // line — 「ねぇ。」 arriving as 「ねぇ」. The window is what the box has to fill.
-    lensWrap.hidden = false;
-    var W = lensWrap.getBoundingClientRect().width;
-    if (!(W > 10)){ lensWrap.hidden = true; return; }
-    var bw = ent.box[1] - ent.box[0] + 1;
-    var m  = Math.min(MMAX, W / bw);                  // CSS px per native px
-    var visible = W / m;                              // native px the window can show
-    var cx = (ent.box[0] + ent.box[1]) / 2;
-    var left = Math.max(0, Math.min(NATIVE_W - visible, cx - visible / 2));
-    lensWrap.style.height = (BAND_H * m).toFixed(2) + 'px';
-    lensVid.style.width   = (NATIVE_W * m).toFixed(2) + 'px';
-    lensVid.style.left    = (-left * m).toFixed(2) + 'px';
-    lensVid.style.top     = (-BAND_Y0 * m).toFixed(2) + 'px';
-    // Seek to the instant the box was measured at, so what is framed is what was measured.
-    var at = ent.s + Math.min(0.6, (ent.e - ent.s) / 2);
-    var key = at.toFixed(2);
-    if (key !== lensKey){
-      lensKey = key;
-      try { lensVid.currentTime = at; } catch (e){ lensWrap.hidden = true; }
-    }
-  }
-
-  // ---- paint. Only writes when what should be on the plate actually changes: the dock already
-  // learned this lesson once (a forever-4Hz write is what `dock-paint-churn` guards), and this one
-  // would run on every timeupdate.
-  var shown = null;
-  function line(node){
-    var d = document.createElement('div');
-    d.className = 'u-jp';                              // keeps the R furigana lens applying
-    d.appendChild(node);
-    return d;
-  }
-  function paint(force){
-    if (!frame.classList.contains('cover-zh')) return;
-    var lp = window.LangPlayer;
-    var t  = (lp && lp.getTime) ? lp.getTime() : 0;
-    var key, draw;
-
-    if (TRACK){
-      var hit = atTime(t);
-      key = 't|' + hit.join(',');
-      if (!force && key === shown) return;
-      shown = key;
-      // Rebuild only the TEXT children; the lens element is reused so a re-seek does not restart
-      // its load on every line.
-      var kid = cap.lastChild;
-      while (kid && kid !== lensWrap){ var prev = kid.previousSibling; cap.removeChild(kid); kid = prev; }
-      var withBox = null;
-      for (var n = 0; n < hit.length; n++){
-        var x = TRACK[hit[n]];
-        if (!withBox && x.box) withBox = x;
-        if (x.i >= 0){
-          var jp = US[x.i].querySelector('.u-jp');
-          if (jp) cap.appendChild(jp.cloneNode(true));
-        } else {
-          cap.appendChild(line(document.createTextNode(x.raw)));
-        }
-      }
-      lensShow(withBox);
-      return;
-    }
-
-    var r = rowList();
-    if (!r) return;
-    var a = document.querySelector('.u.active');
-    var idx = -1;
-    if (a){ for (var i = 0; i < r.length; i++){ if (r[i].el === a){ idx = i; break; } } }
-    // Blank in the GAPS. The player keeps the last line .active after its audio ends (indexAt takes
-    // the last row at or before now), so without this the big line would sit there through silences
-    // the real hardsub has already left.
-    var vis = idx >= 0 && t < endOf(idx) + 0.05;
-    key = 'r|' + idx + '|' + vis;
-    if (!force && key === shown) return;
-    shown = key;
-    cap.textContent = ''; lensWrap = lensVid = null; lensKey = null;
-    if (!vis) return;
-    var jp2 = r[idx].el.querySelector('.u-jp');
-    if (jp2) cap.appendChild(jp2.cloneNode(true));
-  }
-
-  function apply(on, silent){
-    frame.classList.toggle('cover-zh', on);
-    if (btn){
-      btn.classList.toggle('on', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-    if (!silent){ try { window.localStorage.setItem(KEY, on ? '1' : '0'); } catch (e){} }
-    if (!on) lensDestroy();
-    if (on){ shown = null; paint(true); }
-  }
-
-  if (btn) btn.addEventListener('click', function(){
-    apply(!frame.classList.contains('cover-zh'));
-  });
-
-  var stored = '0';
-  try { stored = window.localStorage.getItem(KEY) || '0'; } catch (e){}
-  apply(stored === '1', true);
-
-  refreshAvail();
-  // The transport resolves asynchronously (the local <source> has to fail before the online one is
-  // tried), so re-ask once it has settled rather than trusting the state at parse time.
-  setTimeout(refreshAvail, 1200);
-  var first = true;
-  if (window.LangPlayer && window.LangPlayer.onTick){
-    window.LangPlayer.onTick(function(){
-      if (first){ first = false; refreshAvail(); }
-      paint(false);
-    });
-  }
-})();
-/*<</subs-pure>>*/
 </script>
 </body>
 </html>
