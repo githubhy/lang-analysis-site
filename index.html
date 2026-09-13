@@ -122,7 +122,10 @@
      element, so the mask cannot drift from what it magnifies. On a cross-origin player the pixels
      cannot be read, so the same rectangle becomes an opaque cover: still the only mask, just
      without magnification. Geometry: data-band-zh / data-band-ja on .video-frame. */
-  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;}
+  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;
+    transition:opacity .15s ease;}
+  /* peeking: the pointer is over the native controls strip, which the overlay covers (page_tools.js) */
+  .cn-mask.cn-peek{opacity:0;}
   .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
@@ -149,6 +152,12 @@
     border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
   .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
   .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+  /* The hint under each category may be ONE unbreakable Latin token — the en profile's
+     「relative/conditional/cleft…」 is 166px with no break opportunity (browsers do not wrap at '/'),
+     and as a flex/grid item's min-content it pushed gaffigan-teenagers 7px past a 390px phone.
+     `anywhere` (not break-word) is the value that also lowers min-content, so the cell can shrink
+     and the token wraps only when it has to. */
+  .lg > span:last-child{min-width:0;overflow-wrap:anywhere;}
 
   /* ---------- section label ---------- */
   .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
@@ -786,7 +795,7 @@
   <div class="sec idx-recent-h">最近更新</div>
   <div class="idx-recent"><a class="idx-card" href="kenryoku-hakaba-01.html"><span class="idx-card-eb" style="color:#8c3a5a">ドラマ · 08-26</span><span class="idx-card-jp">権力の墓場 1〜5話 · 逐句精讲</span><span class="idx-card-src">BUMP</span><span class="idx-card-pills"><span class="idx-pill">270 句</span><span class="idx-pill">14:56</span><span class="idx-pill idx-fav-n" data-yt="Bv3sj-D5VUU" hidden></span></span></a><a class="idx-card" href="gaffigan-teenagers.html"><span class="idx-card-eb" style="color:#b8860b">バラエティ · 08-12</span><span class="idx-card-jp">Why Teenagers Are So Embarrassing · line by line</span><span class="idx-card-src">Jim Gaffigan</span><span class="idx-card-pills"><span class="idx-pill">115 句</span><span class="idx-pill">9:27</span><span class="idx-pill idx-fav-n" data-yt="YwSjURxQRn4" hidden></span></span></a><a class="idx-card" href="okada-stretch.html"><span class="idx-card-eb" style="color:#b8860b">バラエティ · 08-11</span><span class="idx-card-jp">全力ストレッチに“ストレッチ目的”で行ってるふりする男</span><span class="idx-card-src">岡田を追え!! 【緑】</span><span class="idx-card-pills"><span class="idx-pill">416 句</span><span class="idx-pill">24:37</span><span class="idx-pill idx-fav-n" data-yt="wnS33eLfFRQ" hidden></span></span></a></div>
 
-  <div class="sec idx-all-h">全部 · 全 57 篇</div>
+  <div class="sec idx-all-h">全部 · 全 58 篇</div>
   <div class="idx-list">
     <div class="idx-month">2026 年 8 月</div>
     <a class="idx-row" href="kenryoku-hakaba-01.html" data-genre="dra" data-search="権力の墓場 1〜5話 · 逐句精讲 bump kenryoku-hakaba-01 ドラマ"><span class="idx-date">08-26</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">権力の墓場 1〜5話 · 逐句精讲</span><span class="idx-n">270 句</span><span class="idx-dur">14:56</span></a>
@@ -845,6 +854,7 @@
     <a class="idx-row" href="shinonome-gravure.html" data-genre="var" data-search="「愛理ちゃんの写真集を解説」 動画、はじめてみました【テレビ朝日公式】 shinonome-gravure バラエティ"><span class="idx-date">03-30</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「愛理ちゃんの写真集を解説」</span><span class="idx-n">358 句</span><span class="idx-dur">23:17</span></a>
     <div class="idx-month">2023 年 7 月</div>
     <a class="idx-row" href="kake-sayonara-01.html" data-genre="dra" data-search="賭けからはじまるサヨナラの恋 第1話 u-next オリジナル kake-sayonara-01 ドラマ"><span class="idx-date">07-20</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">賭けからはじまるサヨナラの恋 第1話</span><span class="idx-n">409 句</span><span class="idx-dur">30:20</span></a>
+    <a class="idx-row" href="iyashi-otonari-01.html" data-genre="dra" data-search="癒やしのお隣さんには秘密がある 第1話 日本テレビ iyashi-otonari-01 ドラマ"><span class="idx-date">07-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">癒やしのお隣さんには秘密がある 第1話</span><span class="idx-n">246 句</span><span class="idx-dur">21:48</span></a>
     <div class="idx-month">2022 年 6 月</div>
     <a class="idx-row" href="animals-01.html" data-genre="dra" data-search="animals 第1話（拡大初回） abema animals-01 ドラマ"><span class="idx-date">06-23</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">ANIMALS 第1話（拡大初回）</span><span class="idx-n">1034 句</span><span class="idx-dur">132:19</span></a>
     <div class="idx-month">2020 年 8 月</div>

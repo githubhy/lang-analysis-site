@@ -122,7 +122,10 @@
      element, so the mask cannot drift from what it magnifies. On a cross-origin player the pixels
      cannot be read, so the same rectangle becomes an opaque cover: still the only mask, just
      without magnification. Geometry: data-band-zh / data-band-ja on .video-frame. */
-  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;}
+  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;
+    transition:opacity .15s ease;}
+  /* peeking: the pointer is over the native controls strip, which the overlay covers (page_tools.js) */
+  .cn-mask.cn-peek{opacity:0;}
   .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
@@ -149,6 +152,12 @@
     border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
   .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
   .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+  /* The hint under each category may be ONE unbreakable Latin token — the en profile's
+     「relative/conditional/cleft…」 is 166px with no break opportunity (browsers do not wrap at '/'),
+     and as a flex/grid item's min-content it pushed gaffigan-teenagers 7px past a 390px phone.
+     `anywhere` (not break-word) is the value that also lowers min-content, so the cell can shrink
+     and the token wraps only when it has to. */
+  .lg > span:last-child{min-width:0;overflow-wrap:anywhere;}
 
   /* ---------- section label ---------- */
   .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
@@ -853,7 +862,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「つい」后面省略了「買っちゃって」等表示「忍不住做了某事」的谓语。</div>
         <ul class="u-points">
           <li><span class="chip joshi">から（原因）</span><a class="xref" href="concordance.html#q=から（原因）" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>接在「だった」（だ的过去形）后面，表示原因、理由。「特売だったから」=「因为是大特价」。</span></li>
-          <li><span class="chip goi">つい</span><a class="xref" href="concordance.html#q=つい" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>副词，表示「不由得、忍不住、无意中」做了某事。后面常接「〜てしまう」表示后悔的语气。此处省略了后面的内容。</span></li>
+          <li><span class="chip goi">つい</span><a class="xref" href="concordance.html#q=つい" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a><span>副词，表示「不由得、忍不住、无意中」做了某事。后面常接「〜てしまう」表示后悔的语气。此处省略了后面的内容。</span></li>
         </ul>
       </div>
     </div>
@@ -876,7 +885,7 @@
         <div class="u-cn"><span class="lbl">译</span>因为放在家里的话，就会忍不住吃掉。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「食べちゃう」=「食べてしまう」的口语缩约形。「から」在句末表示原因理由，后面省略了「配ってくる」等主句内容。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜ちゃう<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ちゃう" title="这个语法点在 25 个视频中共出现 45 次 — 点击查看全部用例">25视频</a> <span class="dialect" title="方言 → 标准语">→ 〜てしまう</span><span>「〜てしまう」的口语缩约形，此处表示「忍不住、不由自主地」做了某事。「食べちゃう」=「食べてしまう」。</span></li>
+          <li><span class="chip katsu">〜ちゃう<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ちゃう" title="这个语法点在 26 个视频中共出现 46 次 — 点击查看全部用例">26视频</a> <span class="dialect" title="方言 → 标准语">→ 〜てしまう</span><span>「〜てしまう」的口语缩约形，此处表示「忍不住、不由自主地」做了某事。「食べちゃう」=「食べてしまう」。</span></li>
           <li><span class="chip joshi">と（条件）</span><a class="xref" href="concordance.html#q=と（条件）" title="这个语法点在 5 个视频中共出现 8 次 — 点击查看全部用例">5视频</a><span>接在动词辞书形后，表示「一……就……」的恒常条件或自然结果。「家にあると」=「一放在家里（就）」。</span></li>
           <li><span class="chip joshi">から（句末原因）</span><span>句末的「から」表示原因、理由，后面省略了主句（如「配ってくる」）。口语中常这样省略。</span></li>
         </ul>
@@ -937,7 +946,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「だと」=「だ」+「と」表示内容引用。「のに」表示逆接「明明……却」。「やめられなくて」是「やめられない」的て形，表示原因，后面省略了「困っている」等。</div>
         <ul class="u-points">
           <li><span class="chip joshi">のに（逆接）<span class="star">★</span></span><a class="xref" href="concordance.html#q=のに（逆接）" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>接在句末（此处接在「わかっている」后），表示「明明……却……」的逆接关系，带有不满、遗憾的语气。</span></li>
-          <li><span class="chip joshi">と（引用）</span><a class="xref" href="concordance.html#q=と（引用）" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「おやつだと」中的「と」是引用助词，引用前面「原因はおやつだ」这个判断内容。</span></li>
+          <li><span class="chip joshi">と（引用）</span><a class="xref" href="concordance.html#q=と（引用）" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a><span>「おやつだと」中的「と」是引用助词，引用前面「原因はおやつだ」这个判断内容。</span></li>
           <li><span class="chip katsu">やめられなくて</span><span>「やめる」的可能形「やめられる」的否定形「やめられない」的て形，表示「戒不掉，所以……」。て形在此表示原因，后面省略了主句。</span></li>
         </ul>
       </div>
@@ -1021,7 +1030,7 @@
         <div class="u-cn"><span class="lbl">译</span>随时毕业证书。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>道具名。「いつでも」=「无论何时」。「卒業証書」=「毕业证书」。</div>
         <ul class="u-points">
-          <li><span class="chip goi">いつでも</span><a class="xref" href="concordance.html#q=いつでも" title="这个语法点在 4 个视频中共出现 4 次 — 点击查看全部用例">4视频</a><span>「いつ」+「でも」表示「无论何时、随时」。</span></li>
+          <li><span class="chip goi">いつでも</span><a class="xref" href="concordance.html#q=いつでも" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>「いつ」+「でも」表示「无论何时、随时」。</span></li>
           <li><span class="chip goi">卒業証書</span><span>「卒業」+「証書」=「毕业证书」。此处是道具名称。</span></li>
         </ul>
       </div>
@@ -1103,7 +1112,7 @@
         <div class="u-cn"><span class="lbl">译</span>早上好。早上好。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>此处是道具效果演示：在证书上写下「おやつ」后，大雄和妈妈互相问候，表示「从零食毕业」后像早晨醒来一样清爽。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">おはようございます</span><a class="xref" href="concordance.html#q=おはようございます" title="这个语法点在 13 个视频中共出现 26 次 — 点击查看全部用例">13视频</a><span>「おはよう」的郑重说法，是早晨的问候语。「ございます」是「ある」的敬语形式，此处构成固定的寒暄语。</span></li>
+          <li><span class="chip keigo">おはようございます</span><a class="xref" href="concordance.html#q=おはようございます" title="这个语法点在 14 个视频中共出现 28 次 — 点击查看全部用例">14视频</a><span>「おはよう」的郑重说法，是早晨的问候语。「ございます」是「ある」的敬语形式，此处构成固定的寒暄语。</span></li>
         </ul>
       </div>
     </div>
@@ -1228,7 +1237,7 @@
         <div class="u-jp">あるよ</div>
         <div class="u-cn"><span class="lbl">译</span>有啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 37 个视频中共出现 168 次 — 点击查看全部用例">37视频</a><span>终助词，告知对方新信息、强调肯定语气。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 38 个视频中共出现 171 次 — 点击查看全部用例">38视频</a><span>终助词，告知对方新信息、强调肯定语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1238,8 +1247,8 @@
         <div class="u-jp">のび<ruby>太<rt>た</rt></ruby>くんも<ruby>何<rt>なに</rt></ruby>か<ruby>卒業<rt>そつぎょう</rt></ruby>する</div>
         <div class="u-cn"><span class="lbl">译</span>大雄你也毕业点什么吗？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">も</span><a class="xref" href="concordance.html#q=も" title="这个语法点在 38 个视频中共出现 91 次 — 点击查看全部用例">38视频</a><span>提示助词，「也」。暗示「妈妈已经毕业了，你也……」。</span></li>
-          <li><span class="chip joshi">何か</span><a class="xref" href="concordance.html#q=何か" title="这个语法点在 11 个视频中共出现 18 次 — 点击查看全部用例">11视频</a><span>不定称，「某样东西、什么」。此处「何か卒業する」＝「从什么东西毕业」。</span></li>
+          <li><span class="chip joshi">も</span><a class="xref" href="concordance.html#q=も" title="这个语法点在 39 个视频中共出现 93 次 — 点击查看全部用例">39视频</a><span>提示助词，「也」。暗示「妈妈已经毕业了，你也……」。</span></li>
+          <li><span class="chip joshi">何か</span><a class="xref" href="concordance.html#q=何か" title="这个语法点在 12 个视频中共出现 19 次 — 点击查看全部用例">12视频</a><span>不定称，「某样东西、什么」。此处「何か卒業する」＝「从什么东西毕业」。</span></li>
         </ul>
       </div>
     </div>
@@ -1295,7 +1304,7 @@
         <ul class="u-points">
           <li><span class="chip goi">ワシ</span> <span class="dialect" title="方言 → 标准语">→ わたし／おれ</span><span>老年男性常用的第一人称，「我」。标准语中一般用「わたし／ぼく／おれ」。</span></li>
           <li><span class="chip katsu">〜ちゃって<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ちゃって" title="这个语法点在 10 个视频中共出现 16 次 — 点击查看全部用例">10视频</a> <span class="dialect" title="方言 → 标准语">→ 〜てしまって</span><span>「〜てしまって」的口语缩约形，表遗憾、懊恼、完了。「壊しちゃって」＝「弄坏了（真糟糕）」。</span></li>
-          <li><span class="chip joshi">より</span><a class="xref" href="concordance.html#q=より" title="这个语法点在 10 个视频中共出现 12 次 — 点击查看全部用例">10视频</a><span>格助词，表比较基准。「命より大事」＝「比命还重要」。</span></li>
+          <li><span class="chip joshi">より</span><a class="xref" href="concordance.html#q=より" title="这个语法点在 11 个视频中共出现 13 次 — 点击查看全部用例">11视频</a><span>格助词，表比较基准。「命より大事」＝「比命还重要」。</span></li>
         </ul>
       </div>
     </div>
@@ -1638,7 +1647,7 @@
         <div class="u-jp">ご、ごめんなさい</div>
         <div class="u-cn"><span class="lbl">译</span>对、对不起</div>
         <ul class="u-points">
-          <li><span class="chip goi">ごめんなさい</span><a class="xref" href="concordance.html#q=ごめんなさい" title="这个语法点在 15 个视频中共出现 24 次 — 点击查看全部用例">15视频</a><span>道歉的常用表达。此处「ご、」是结巴，表示害怕或慌张。</span></li>
+          <li><span class="chip goi">ごめんなさい</span><a class="xref" href="concordance.html#q=ごめんなさい" title="这个语法点在 16 个视频中共出现 26 次 — 点击查看全部用例">16视频</a><span>道歉的常用表达。此处「ご、」是结巴，表示害怕或慌张。</span></li>
         </ul>
       </div>
     </div>
@@ -1786,7 +1795,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「何言ってんだよ」是「何を言っているんだよ」的口语缩约形。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜てんだ<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てんだ" title="这个语法点在 5 个视频中共出现 10 次 — 点击查看全部用例">5视频</a> <span class="dialect" title="方言 → 标准语">→ 何を言っているんだ</span><span>「〜ているんだ」的口语缩约形，表示「正在…」。此处「何言ってんだ」=「你在说什么」。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 37 个视频中共出现 168 次 — 点击查看全部用例">37视频</a><span>句末语气词，加强主张、提醒对方注意。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 38 个视频中共出现 171 次 — 点击查看全部用例">38视频</a><span>句末语气词，加强主张、提醒对方注意。</span></li>
         </ul>
       </div>
     </div>
@@ -1899,7 +1908,7 @@
         <div class="u-jp">どうしたの それ</div>
         <div class="u-cn"><span class="lbl">译</span>那是什么情况？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 25 个视频中共出现 79 次 — 点击查看全部用例">25视频</a><span>句末语气词，此处表示疑问。</span></li>
+          <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 26 个视频中共出现 80 次 — 点击查看全部用例">26视频</a><span>句末语气词，此处表示疑问。</span></li>
         </ul>
       </div>
     </div>
@@ -2041,7 +2050,7 @@
         <div class="u-cn"><span class="lbl">译</span>算了，随便吧。</div>
         <ul class="u-points">
           <li><span class="chip joshi">まあ</span><a class="xref" href="concordance.html#q=まあ" title="这个语法点在 14 个视频中共出现 23 次 — 点击查看全部用例">14视频</a><span>感叹词，表示「算了、就这样吧」的妥协语气。</span></li>
-          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 16 个视频中共出现 32 次 — 点击查看全部用例">16视频</a><span>终助词，这里表示自言自语式的疑问/确认，带有「就这样吧」的放弃语气。</span></li>
+          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 17 个视频中共出现 33 次 — 点击查看全部用例">17视频</a><span>终助词，这里表示自言自语式的疑问/确认，带有「就这样吧」的放弃语气。</span></li>
         </ul>
       </div>
     </div>
@@ -2127,7 +2136,7 @@
         <div class="u-jp">どこ<ruby>行<rt>い</rt></ruby>くの、しずかくん。</div>
         <div class="u-cn"><span class="lbl">译</span>你去哪儿，静香？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 25 个视频中共出现 79 次 — 点击查看全部用例">25视频</a><span>终助词，表示疑问，口语中常用。相当于「〜のか」省略了「か」。</span></li>
+          <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 26 个视频中共出现 80 次 — 点击查看全部用例">26视频</a><span>终助词，表示疑问，口语中常用。相当于「〜のか」省略了「か」。</span></li>
         </ul>
       </div>
     </div>
@@ -2149,7 +2158,7 @@
         <div class="u-cn"><span class="lbl">译</span>作业还没做完呢。</div>
         <ul class="u-points">
           <li><span class="chip goi">途中</span><span>中途、半途。「宿題が途中だ」意为作业做到一半、还没完成。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 37 个视频中共出现 168 次 — 点击查看全部用例">37视频</a><span>终助词，提醒、告知对方。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 38 个视频中共出现 171 次 — 点击查看全部用例">38视频</a><span>终助词，提醒、告知对方。</span></li>
         </ul>
       </div>
     </div>
@@ -2159,7 +2168,7 @@
         <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>、<ruby>宿題<rt>しゅくだい</rt></ruby>は<ruby>卒業<rt>そつぎょう</rt></ruby>したの。</div>
         <div class="u-cn"><span class="lbl">译</span>我已经从作业毕业了。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 25 个视频中共出现 79 次 — 点击查看全部用例">25视频</a><span>终助词，女性常用的说明、强调语气。这里带有撒娇或辩解的感觉。</span></li>
+          <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 26 个视频中共出现 80 次 — 点击查看全部用例">26视频</a><span>终助词，女性常用的说明、强调语气。这里带有撒娇或辩解的感觉。</span></li>
         </ul>
       </div>
     </div>
@@ -2169,7 +2178,7 @@
         <div class="u-jp">おはようございます。</div>
         <div class="u-cn"><span class="lbl">译</span>早上好。</div>
         <ul class="u-points">
-          <li><span class="chip keigo">おはようございます</span><a class="xref" href="concordance.html#q=おはようございます" title="这个语法点在 13 个视频中共出现 26 次 — 点击查看全部用例">13视频</a><span>礼貌的「早上好」。</span></li>
+          <li><span class="chip keigo">おはようございます</span><a class="xref" href="concordance.html#q=おはようございます" title="这个语法点在 14 个视频中共出现 28 次 — 点击查看全部用例">14视频</a><span>礼貌的「早上好」。</span></li>
         </ul>
       </div>
     </div>
@@ -2198,7 +2207,7 @@
         <div class="u-jp"><ruby>見<rt>み</rt></ruby>つけたぞ。</div>
         <div class="u-cn"><span class="lbl">译</span>找到你了！</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ぞ</span><a class="xref" href="concordance.html#q=ぞ" title="这个语法点在 17 个视频中共出现 27 次 — 点击查看全部用例">17视频</a><span>终助词，男性用语，表示强烈的断言或决心。老人/胖虎等常用。</span></li>
+          <li><span class="chip joshi">ぞ</span><a class="xref" href="concordance.html#q=ぞ" title="这个语法点在 18 个视频中共出现 30 次 — 点击查看全部用例">18视频</a><span>终助词，男性用语，表示强烈的断言或决心。老人/胖虎等常用。</span></li>
         </ul>
       </div>
     </div>
@@ -4102,15 +4111,64 @@
         return { x: cx, y: cy + a * ch, w: cw, h: (b - a) * ch };
       }
       var cover = band(zh[0], zh[1]);          // mode 1: mask the translation band only
-      var coverAll = band(zh[0], ja[1]);       // mode 2: mask both bands, one enlarged line
+      // mode 2: mask both bands, one enlarged line. The UNION, whichever band is on top — releases
+      // stack them either way, and `zh top -> ja bottom` is a zero-height (or negative) rectangle
+      // on a ja-over-zh source, i.e. a 全遮 that masks nothing.
+      var coverAll = band(Math.min(zh[0], ja[0]), Math.max(zh[1], ja[1]));
       var src = band(ja[0], ja[1]);
       return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, coverAll: coverAll,
                src: src, magnify: cover.h > src.h + 0.5, magnifyAll: coverAll.h > src.h + 0.5 };
     }
 
+    // #cnBand -> [{s, e, box:[x0,x1]|null}] in seconds and width fractions, sorted by start. Pure.
+    // An entry is [startMs, durMs] (a display the bake could not measure) or
+    // [startMs, durMs, x0, x1] with x in 1/10000 of the frame width. Malformed entries are dropped.
+    function parseBandTrack(raw){
+      var out = [];
+      (Array.isArray(raw) ? raw : []).forEach(function(r){
+        if (!Array.isArray(r) || r.length < 2 || !(r[0] >= 0) || !(r[1] > 0)) return;
+        var s = r[0] / 1000, box = null;
+        if (r.length >= 4 && r[2] >= 0 && r[3] > r[2] && r[3] <= 10000) box = [r[2] / 10000, r[3] / 10000];
+        out.push({ s: s, e: s + r[1] / 1000, box: box });
+      });
+      out.sort(function(a, b){ return a.s - b.s; });
+      return out.length ? out : null;
+    }
+
+    // The crop at time t: the UNION of the boxes of every display within +-slack of t. A display's
+    // edges are known only to a sample interval, and a crop that is right for the line leaving and
+    // wrong for the line arriving cuts words off the arriving one — so near a boundary both lines
+    // fit. null (draw the full band, uncropped) when any display in reach has no box, or none is in
+    // reach. Pure.
+    function cropBox(track, t, slack){
+      if (!track) return null;
+      var lo = t - slack, hi = t + slack, x0 = 1, x1 = 0, any = false;
+      for (var i = 0; i < track.length && track[i].s <= hi; i++){
+        var e = track[i];
+        if (e.e < lo) continue;
+        if (!e.box) return null;
+        any = true;
+        if (e.box[0] < x0) x0 = e.box[0];
+        if (e.box[1] > x1) x1 = e.box[1];
+      }
+      return any ? [x0, x1] : null;
+    }
+
+    // Where to draw a crop: ONE scale for both axes (the full-width draw could only enlarge by
+    // stretching vertically), centred in the overlay, capped at `mmax` CSS px per NATIVE px. The cap
+    // is against the source on purpose — the retired lens capped the displayed video's scale
+    // instead, and since the dock already shows the video at ~0.4x that pinned every line at 1.28x
+    // when it could reach 1.90x. `src` in native px, `dst` in CSS px. Pure.
+    function fitCrop(src, dst, mmax){
+      var m = Math.min(dst.w / src.w, dst.h / src.h, mmax);
+      var w = src.w * m, h = src.h * m;
+      return { m: m, x: (dst.w - w) / 2, y: (dst.h - h) / 2, w: w, h: h };
+    }
+
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
              matchSentence: matchSentence, cardText: cardText, bandRects: bandRects,
+             parseBandTrack: parseBandTrack, cropBox: cropBox, fitCrop: fitCrop,
              TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
   }
   /*<</page-tools-pure>>*/
@@ -4123,11 +4181,29 @@
   //   original ja line, leaving one enlarged line where both bands were.
   // On a native <video> the overlay DRAWS the Japanese band (that is the magnification); the thing
   // concealing the Chinese is the thing being magnified, so the two cannot drift. Not a cursor
-  // lens and not a second mask element. Revealed only when the build emitted band geometry
-  // (build_page.py's `bands` config). On cross-origin embeds the pixels cannot be read, so the
-  // same rectangles are opaque covers — same control, no magnification.
-  // The enlargement is vertical (the source is already full-width); a uniform zoom would have to
-  // crop the line's ends horizontally, which loses words.
+  // lens and not a second mask element. Revealed only when the page carries band geometry
+  // (build_page.py's `bands` config, or a pages.json retrofit that propagate.py writes). On
+  // cross-origin embeds the pixels cannot be read, so the same rectangles are opaque covers —
+  // same control, no magnification.
+  //
+  // CROPPED TO THE SENTENCE WHERE THE PAGE KNOWS IT. A burned-in line is centred and narrow — a
+  // median 24% of the frame on shosen-taningoto-01 — so the full-width band scaled into the cover
+  // is mostly empty picture, and the only way that draw could enlarge it into a band of fixed
+  // height was to stretch it vertically. Where the page carries a #cnBand track
+  // (tools/bake_band_track.py: each display's span plus the measured extent of its ink), the
+  // overlay draws just that extent, scaled UNIFORMLY to fit (fitCrop). The box is the sentence's
+  // own ink plus padding, so this does not cut the line's ends — the objection that kept the
+  // enlargement vertical. With no box in reach (no track, a gap, a display the bake could not
+  // measure) it draws exactly what it drew before: the full-width line, stretched vertically.
+  //
+  // IT REDRAWS ONLY WHILE THE PICTURE MOVES: every frame while playing, once on seek / pause /
+  // resize / state change, never while paused. Layout is measured on resize, not per frame; the
+  // canvas backing store is reallocated only when its size changes; and the loop stops if the
+  // <video> is swapped out for the takedown embed.
+  var CN_SLACK = 0.35;   // s: a 4 fps bake knows a display edge to 0.25 s, plus margin
+  var CN_MMAX = 3.0;     // CSS px per native px — past this a two-kana line fills the screen
+  var CN_PEEK_ZONE = 0.30;       // lower share of the frame, where <video controls> draws its bar
+  var CN_PEEK_TOUCH_MS = 3000;   // how long a touch on the picture keeps the bar visible
   function wireCnMask(){
     var frameEl = document.querySelector('.video-frame');
     var btn = document.getElementById('cnMaskToggle');
@@ -4141,11 +4217,15 @@
     if (!zh || !ja) return;
     var clip = document.getElementById('clip');
     var isVideo = !!clip && clip.tagName === 'VIDEO';
+    var track = null;
+    var tb = isVideo && document.getElementById('cnBand');
+    if (tb){ try { track = P.parseBandTrack(JSON.parse(tb.textContent)); } catch (e) { track = null; } }
     btn.hidden = false;
     var el = document.createElement(isVideo ? 'canvas' : 'div');
     el.className = 'cn-mask'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
     frameEl.appendChild(el);
     var ctx = null, raf = 0, state = 0;   // 0 off · 1 mask the zh band · 2 mask zh AND the small ja line
+    var geom = null, bw = 0, bh = 0, bdpr = 0, draws = 0;
     var TITLE = [
       '遮住中文字幕带：日文带放大到中文位置（点按循环：遮中文 → 全遮 → 关闭）',
       '只遮中文：日文放大到中文位置，下方原日文仍在（点按切到「全遮」）',
@@ -4163,20 +4243,38 @@
       return g;
     }
     function draw(){
-      raf = 0;
       if (!state) return;
-      var g = place();
+      if (!geom) geom = place();
       if (!isVideo) return;
       var vw = clip.videoWidth, vh = clip.videoHeight;
       if (!ctx || !vw || clip.readyState < 2) return;
-      var t = target(g);
+      var t = target(geom);
       var dpr = window.devicePixelRatio || 1;
-      el.width = Math.max(1, Math.round(t.w * dpr));
-      el.height = Math.max(1, Math.round(t.h * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, t.w, t.h);
+      var W = Math.max(1, Math.round(t.w * dpr)), H = Math.max(1, Math.round(t.h * dpr));
+      if (W !== bw || H !== bh || dpr !== bdpr){
+        el.width = W; el.height = H; bw = W; bh = H; bdpr = dpr;   // reallocates: only on change
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      ctx.clearRect(0, 0, t.w, t.h);          // .cn-mask's own background is the opaque black
+      var sy = ja[0] * vh, sh = (ja[1] - ja[0]) * vh;
+      var box = track ? P.cropBox(track, clip.currentTime, CN_SLACK) : null;
+      var d;
+      if (box){
+        var sx = box[0] * vw, sw = (box[1] - box[0]) * vw;
+        var f = P.fitCrop({ w: sw, h: sh }, { w: t.w, h: t.h }, CN_MMAX);
+        ctx.drawImage(clip, sx, sy, sw, sh, f.x, f.y, f.w, f.h);
+        d = { crop: true, sx: sx, sw: sw, m: f.m, dx: f.x, dy: f.y, dw: f.w, dh: f.h };
+      } else {
+        ctx.drawImage(clip, 0, sy, vw, sh, 0, 0, t.w, t.h);
+        d = { crop: false, sx: 0, sw: vw, m: t.h / sh, dx: 0, dy: 0, dw: t.w, dh: t.h };
+      }
+      d.sy = sy; d.sh = sh; d.ow = t.w; d.oh = t.h; d.at = clip.currentTime; d.draws = ++draws;
+      el._cn = d;   // read by tools/cdp_offline.mjs — a property, so the per-frame path never writes the DOM
     }
-    function loop(){ if (!state) return; draw(); raf = requestAnimationFrame(loop); }
+    function relayout(){ geom = null; draw(); }
+    function moving(){ return isVideo && clip.isConnected && !clip.paused && !clip.ended; }
+    function loop(){ raf = 0; if (!state || !moving()) return; draw(); raf = requestAnimationFrame(loop); }
+    function kick(){ if (state && !raf && moving()) raf = requestAnimationFrame(loop); }
     // The dots INSIDE the button are the state indicator AND a direct jump: clicking a dot sets
     // that state, clicking anywhere else on the button cycles (so Space/Enter/C on the control
     // still just cycle). One element, one id, three states — the dots are spans, not nested
@@ -4198,8 +4296,9 @@
       try { localStorage.setItem('lang:cn-mask', String(state)); } catch (e) {}
       if (state){
         if (isVideo && !ctx) ctx = el.getContext('2d');
+        geom = null;                      // the target rect differs between the two states
         draw();
-        if (isVideo && !raf) raf = requestAnimationFrame(loop);
+        kick();
       } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
     }
     btn.addEventListener('click', function(ev){
@@ -4207,10 +4306,35 @@
       set(d == null ? (state + 1) % 3 : parseInt(d, 10));
     });
     if (isVideo){
-      clip.addEventListener('seeked', draw);
-      clip.addEventListener('loadedmetadata', draw);
+      ['seeked', 'loadeddata', 'pause'].forEach(function(ev){ clip.addEventListener(ev, draw); });
+      clip.addEventListener('loadedmetadata', relayout);   // the aspect (letterbox) is known from here
+      clip.addEventListener('play', kick);
+      clip.addEventListener('playing', kick);
     }
-    window.addEventListener('resize', draw);
+    window.addEventListener('resize', relayout);
+    if (window.ResizeObserver) new ResizeObserver(relayout).observe(frameEl);   // dock fold/unfold
+    // THE NATIVE SCRUB BAR LIVES IN THE SAME STRIP. <video controls> draws its bar across the bottom
+    // of the picture — where burned-in subtitles sit — and nothing can be layered between a video and
+    // its own controls, so with the lens on the bar was hidden under it; and paused, Chrome keeps the
+    // controls up, which is exactly when a learner is reading the magnified line. So the lens PEEKS:
+    // while a mouse is in the lower CN_PEEK_ZONE of the frame, or for CN_PEEK_TOUCH_MS after a touch
+    // on the picture (the gesture that brings touch controls up), the overlay fades out and the bar
+    // can be seen. Clicks always went through (pointer-events:none); this is about SEEING it. An
+    // embed cannot peek — a cross-origin player keeps its pointer events to itself.
+    var peekT = 0;
+    function peek(on){ el.classList.toggle('cn-peek', !!on); }
+    frameEl.addEventListener('pointermove', function(ev){
+      if (!state || ev.pointerType === 'touch') return;
+      var r = frameEl.getBoundingClientRect();
+      peek(ev.clientY - r.top > r.height * (1 - CN_PEEK_ZONE));
+    });
+    frameEl.addEventListener('pointerleave', function(ev){ if (ev.pointerType !== 'touch') peek(false); });
+    frameEl.addEventListener('pointerdown', function(ev){
+      if (!state || ev.pointerType !== 'touch') return;
+      peek(true);
+      clearTimeout(peekT);
+      peekT = setTimeout(function(){ peek(false); }, CN_PEEK_TOUCH_MS);
+    });
     render();                       // dots must exist even in the off state (all hollow)
     var saved = 0;
     try { var v = localStorage.getItem('lang:cn-mask'); saved = v === '2' ? 2 : (v === '1' ? 1 : 0); } catch (e) {}

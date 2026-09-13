@@ -122,7 +122,10 @@
      element, so the mask cannot drift from what it magnifies. On a cross-origin player the pixels
      cannot be read, so the same rectangle becomes an opaque cover: still the only mask, just
      without magnification. Geometry: data-band-zh / data-band-ja on .video-frame. */
-  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;}
+  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;
+    transition:opacity .15s ease;}
+  /* peeking: the pointer is over the native controls strip, which the overlay covers (page_tools.js) */
+  .cn-mask.cn-peek{opacity:0;}
   .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
@@ -149,6 +152,12 @@
     border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
   .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
   .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+  /* The hint under each category may be ONE unbreakable Latin token — the en profile's
+     「relative/conditional/cleft…」 is 166px with no break opportunity (browsers do not wrap at '/'),
+     and as a flex/grid item's min-content it pushed gaffigan-teenagers 7px past a 390px phone.
+     `anywhere` (not break-word) is the value that also lowers min-content, so the cell can shrink
+     and the token wraps only when it has to. */
+  .lg > span:last-child{min-width:0;overflow-wrap:anywhere;}
 
   /* ---------- section label ---------- */
   .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
@@ -761,6 +770,7 @@
           <source src="https://pub-0cee7c9d32b64194aa94b50146493453.r2.dev/crayon-shinchan-100-1.mp4" type="video/mp4">
           无法播放本地视频文件 <code>crayon-shinchan-100-1.mp4</code>（请确认它与本网页在同一目录）。
         </video>
+        <script type="application/json" id="cnBand">[[0,5625],[5625,500],[6125,5000,3380,7207],[11125,500,3369,7218],[11625,2500,4073,8838],[14125,250,4073,5141],[14375,250,4085,5164],[14625,2250,3462,6467],[16875,1750,3380,6538],[18625,250,3380,6538],[18875,1250],[20125,250],[20375,1750,3955,6033],[22125,250,3803,8756],[22375,3250,2441,8756],[25625,1500,3815,8756],[27125,3250,2582,8756],[30375,750,4073,8838],[31125,250,4073,8838],[31375,1750,3803,8838],[33125,500,4073,8838],[33625,4500,2981,8838],[38125,250,3850,8838],[38375,750,3850,8838],[39125,250,3826,5352],[39375,250,4883,6021],[39625,250,3169,6021],[39875,250,2688,6150],[40125,250,3838,8838],[40375,2250,3838,8838],[42625,500],[43125,250],[43375,500],[43875,750,3744,6232],[44625,250,3744,6244],[44875,750,3744,6244],[45625,250,3592,8838],[45875,250,4343,5106],[46125,1250,4131,5845],[47375,500,4131,5845],[47875,250,4343,5106],[48125,1750,3920,6056],[49875,250,3920,6056],[50125,2500,3016,6362],[52625,2000,4331,5622],[54625,750],[55375,500,4742,5141],[55875,750,4542,5434],[56625,250],[56875,250,4601,5106],[57125,2500,4308,8838],[59625,250,4906,8838],[59875,250,4636,5822],[60125,2000,4049,5962],[62125,1000,4648,5833],[63125,2500,3298,6761],[65625,250,3298,6808],[65875,250],[66125,250,3674,8838],[66375,250,3697,8838],[66625,500,3697,8838],[67125,1000,3697,8838],[68125,250,3756,8838],[68375,5250,4354,8838],[73625,250],[73875,1250],[75125,1000,4472,5505],[76125,250],[76375,2000,3685,8838],[78375,500],[78875,2000,3474,8838],[80875,2000],[82875,1250],[84125,1500,4143,8838],[85625,250],[85875,1250,4366,8838],[87125,1750],[88875,750],[89625,750,4636,5329],[90375,3250,2488,7523],[93625,1500,4190,5798],[95125,250],[95375,1500,4085,5915],[96875,1000,2242,8838],[97875,250,2242,8838],[98125,750,2242,8838],[98875,1500,2242,8838],[100375,250,2242,8838],[100625,250,3944,5669],[100875,750,4660,5857],[101625,1000,4472,5857],[102625,250,4660,5857],[102875,1000,4284,5857],[103875,500,4624,5845],[104375,3250,2864,7136],[107625,1000,4648,6056],[108625,250,4284,8838],[108875,250],[109125,2000,4261,5739],[111125,250,4190,5763],[111375,500,4096,5376],[111875,500,4096,5446],[112375,500,4096,5446],[113125,250,4073,8838],[113625,250,4073,8838],[113875,250],[114125,500],[114625,250],[114875,1000,4178,5822],[115875,500],[116375,750],[117125,2500,3603,8838],[119625,250],[119875,250,3768,8838],[120125,1750,3768,8838],[121875,500],[122375,2000,2746,8838],[124375,250],[124625,250],[124875,1750,3756,6303],[126625,2000,3122,8838],[128625,250,4542,5340],[132125,250],[132375,250,4143,6878],[132625,1500,4143,7183],[134125,1000,4143,6878],[135125,1500,4073,6878],[136625,250,4073,6784],[138875,750,4425,5552],[142625,500,3885,8838],[143125,1750,3873,8838],[144875,1000,3873,8838],[145875,1750,3873,8838],[155625,1750,4038,5939],[158875,500],[159375,2500,3991,8838],[161875,750,4624,5106],[162625,750,4425,5575],[163375,500,4906,5575],[163875,500,4624,5587],[164375,250,4566,5681],[164625,1000,4085,8838],[165625,250,4085,8838],[165875,2750,3169,8838],[168625,250,3239,6749],[168875,500],[169375,2500,3427,6526],[171875,250],[172125,750,4624,5364],[172875,500],[173375,1500,2453,7547],[174875,2000,2453,7523],[176875,500],[177375,1500,3768,6221],[178875,2000,3486,6502],[180875,250,2969,6502],[181125,250,4143,5106],[181375,250,4143,5282],[181625,250,4155,5939],[181875,250,4155,7488],[182125,500,4143,8333],[182625,250,4143,8345],[182875,3000],[185875,1250],[187125,1250],[188375,3000,4589,8744],[191375,1750],[193125,1250,4906,8768],[194375,2250,4460,8779],[196625,250,4237,5106],[196875,1250,2864,8521],[198125,2000,2864,8521],[200125,250,2864,7242],[200375,500,4085,8838],[200875,250,4085,8838],[201125,250,4073,8838],[201375,3250,2758,8838],[204625,250,1174,8838],[204875,750,4073,8838],[205625,3000,4073,8838],[208625,500,4073,8838],[209125,1500,4073,8838],[210875,250],[211125,1250,4460,5528],[212375,1000,4906,5329],[213375,1750,4073,8838],[215125,250,4096,8838],[215375,250],[215625,250],[215875,250],[216125,500],[216625,2000,3580,6397],[218625,1250],[219875,250],[220125,3750,4648,5516],[223875,2250,3146,6890],[226125,250,3146,8838],[226375,250,4906,7007],[226625,500,4906,6843],[227125,250,4906,5270],[227375,2750,3662,6385],[230125,1250],[231375,1250,4460,8310],[232625,500],[233125,250],[233375,7250,4906,5446],[240625,250,4906,5446],[240875,2000,3862,8838],[242875,1000,3862,6127],[243875,500,4671,8110],[244375,750,4660,8169],[245125,1000,4507,5681],[246125,250,4507,5786],[246375,250,4742,5786],[246625,3000,3521,6854],[249625,500,4765,5775],[250125,750,4085,5857],[250875,250,4624,6573],[251125,250,4096,8838],[251375,2500,4906,8838],[254375,250],[254625,1250,4249,5739],[255875,1500],[257375,1500,3991,6690],[258875,250],[259125,2000,3427,6608],[261125,1500],[262625,1500,4261,5728],[264125,250],[264375,500,3169,8838],[264875,2000,3181,7324],[266875,1250],[268125,250],[268375,3750,3169,6831],[272125,500,3885,5106],[272625,250,3732,5704],[272875,250],[273125,250],[273375,250],[273625,1250,4472,5516],[274875,250],[275125,3250,3040,6937],[278375,1000,4542,5446],[279375,500,3768,5106],[279875,250,3862,5458],[280125,250,4096,5786],[280375,250,3850,5528],[280625,500,3768,5423],[281125,1000,3826,5646],[282125,750,3826,5646],[282875,250,3826,5493],[283125,1250,3756,5704],[284375,250,2688,5505],[284625,500,2547,5493],[285125,250,3826,5505],[285375,750,3826,5493],[286125,2250,3838,5516],[288375,1000,3838,5552],[289375,500,3838,5528],[289875,1250],[291125,500],[291625,750],[292375,1250],[293625,1250,4049,5927],[294875,500],[295375,1250,4284,5704],[296625,750],[297375,1000,4308,5681],[298375,2250],[300625,250,4085,5106],[300875,1250,3873,8838],[302125,750,3873,8838],[302875,250,3873,8838],[303125,250,4085,8838],[303375,250,4085,8838],[303625,1500,3732,8838],[305125,250,3803,6174],[305375,250],[305625,1500,3791,6209],[307125,1250,3791,6209],[308375,250,4073,5106],[308625,250,4073,5610],[308875,1000,3521,6479],[309875,1000,3521,6455],[310875,250,4085,5610],[311125,1250,4014,5951],[312375,250,4073,5915],[312625,250,4061,6150],[312875,250,4085,8838],[313125,250,4073,5129],[318875,250,4085,5129],[319125,1250,3791,6843],[320375,500,3791,6843],[320875,250,2770,6854],[321125,250,2770,6843],[321375,250,2770,8838],[321625,750,3897,8838],[322375,250,3908,8838],[322625,250,3897,8838],[322875,500,4413,5258],[323375,1500,3709,6268],[324875,1500,4425,5340],[326375,250],[326625,250,4073,8838],[326875,250,4073,5106],[327125,250,4073,8838],[327375,500,4073,8838],[327875,750,4073,8838],[328625,250,4073,8838],[328875,750,4073,8838],[329625,750,4073,8838],[330375,1250,4073,8838],[331625,500,4073,8838],[332125,500,4073,8838],[332625,1750,3744,8838],[334375,500,4073,8838],[334875,250,4073,8838],[335125,1000,4073,8838],[336125,250,4073,8838],[336375,1750],[338125,250,4096,5258],[338375,250,4073,7559],[338625,1750,3427,8040],[340375,500,3462,8838],[340875,500,4085,8838],[341375,1000,4085,8838],[342375,250,4085,8838],[342625,250,3674,8838],[342875,1000,3862,8838],[343875,500,3615,8838],[344375,250,3016,7160],[344625,1000],[345625,250],[345875,250,2887,7031],[346125,1750,2876,6984],[347875,2000,4613,5106],[349875,750,4390,5657],[350625,1500,4906,8838],[352125,1750,3873,8838],[353875,1250,4085,8838],[355125,250,4085,8838],[355375,250,4085,8838],[355625,250,4085,8838],[355875,250,4085,8838],[356125,500,4085,8838],[356625,250,4085,8838],[356875,750,4085,8838],[357625,250,4085,8838],[357875,250,4085,8838],[358125,250,4085,8838],[358375,250,4085,8838],[358625,250,4085,8838],[358875,250,4085,8838],[359125,250,4085,8838],[359375,250,4085,8838],[359625,250,4085,8838],[359875,250],[360125,2000],[362125,3500,2570,7606],[365625,250,3815,7136],[365875,2250],[368125,250,4906,6761],[368375,2250],[370625,250,4624,5106],[370875,250,4085,7876],[371125,1000,4085,7876],[372125,500,4085,7876],[372625,2500,4073,7864],[375125,250,4085,8838],[375375,250,2934,8838],[375625,3250,2183,8838],[378875,250,3005,6984],[379125,1000],[380125,3750,2500,7512],[383875,2250,3815,6725],[386125,500],[387125,250],[387375,1000,2746,6197],[388375,500,3310,6197],[388875,250,2676,6197],[389125,500,3779,6197],[389625,250,2758,6197],[389875,1500,4343,5646],[391625,250,4648,5106],[391875,750],[392625,2000,3603,6620],[394625,500],[395125,1250,3732,6620],[396375,750,3732,6620],[397125,250],[397375,250,3380,5106],[397625,250,3263,5106],[397875,2500,3275,6819],[400375,750,3474,5106],[401125,2250,3146,6784],[403375,250,3545,5106],[403625,1750,3052,7042],[405375,1000,3063,7054],[406375,250,3286,5106],[406625,250,1174,8838],[406875,2750,3732,6268],[409625,250],[409875,2500,3685,6714],[412375,1500],[413875,250],[414125,250,3275,5106],[414375,250,3298,5106],[414625,500],[415125,500],[415625,1500,4225,8838],[417125,250,4225,8838],[417375,1000],[418375,500],[418875,250],[419125,750],[427125,250],[427375,250],[427625,750],[430375,500],[431375,250],[431625,250],[431875,500],[432375,250],[433125,500],[435125,250],[435625,500],[443875,250,4906,5516],[444125,250,4906,5293],[444375,250,4906,5446],[449375,250],[449625,250],[459625,250],[459875,250],[460125,250,3169,5106],[460375,250],[460625,500,3850,6690],[471125,250,4906,5505],[471375,250],[471625,250],[471875,250],[472125,500],[472625,250],[473125,250],[473625,250],[475875,250,4589,5106],[476125,250,4354,5340],[476375,250,4824,5258],[476625,250,4343,6115],[476875,250],[477125,250,4906,5399],[482125,250],[483125,250],[483375,250,4507,5106],[483625,500],[485625,250,4613,5106],[485875,250],[487625,250],[488375,250],[499875,250,4906,6232],[500125,250,4906,5387],[500375,250],[500625,250],[503625,250],[505125,500,4636,5106],[505625,500,4660,5106],[506125,250,4589,5106],[532625,250,4847,5258],[553625,250],[560125,500],[560625,250,4214,6444],[561375,250],[586375,250],[590125,250],[600125,250,4601,5106],[600375,250],[600625,250]]</script>
       </div>
     </div>
   </div>
@@ -831,7 +841,7 @@
         <div class="u-cn"><span class="lbl">译</span>小新，我说过把玩具收拾好再去玩吧。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>合并了 00:14 和 00:16 两行。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 10 个视频中共出现 16 次 — 点击查看全部用例">10视频</a><span>表示动作先后顺序，「做完前项再做后项」。此处「片付けてから遊びに行く」即「收拾完再去玩」。</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 11 个视频中共出现 17 次 — 点击查看全部用例">11视频</a><span>表示动作先后顺序，「做完前项再做后项」。此处「片付けてから遊びに行く」即「收拾完再去玩」。</span></li>
           <li><span class="chip joshi">〜なさい</span><a class="xref" href="concordance.html#q=〜なさい" title="这个语法点在 9 个视频中共出现 25 次 — 点击查看全部用例">9视频</a><span>对晚辈或孩子的命令表达，语气比「〜て」更正式、带有训诫感。母亲对孩子常用。</span></li>
           <li><span class="chip goi">〜って言ったでしょ</span><a class="xref" href="concordance.html#q=〜って言ったでしょ" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「我不是说过〜吗」的常用口语表达，带有责备语气。「でしょ」是「でしょう」的口语缩约。</span></li>
         </ul>
@@ -891,7 +901,7 @@
         <ul class="u-points">
           <li><span class="chip goi">ああ言えばこう言う</span><span>惯用表达，字面意思是「我那样说你就这样说」，即「我说一句你顶一句、强词夺理」。</span></li>
           <li><span class="chip goi">勝手</span><span>「任性、自作主张」。此处「勝手なんだから」是母亲对小新顶嘴行为的抱怨。</span></li>
-          <li><span class="chip joshi">〜んだから</span><a class="xref" href="concordance.html#q=〜んだから" title="这个语法点在 11 个视频中共出现 16 次 — 点击查看全部用例">11视频</a><span>「〜のだから」的口语形，用于表达原因、理由，带有撒娇或抱怨的语气。</span></li>
+          <li><span class="chip joshi">〜んだから</span><a class="xref" href="concordance.html#q=〜んだから" title="这个语法点在 12 个视频中共出现 17 次 — 点击查看全部用例">12视频</a><span>「〜のだから」的口语形，用于表达原因、理由，带有撒娇或抱怨的语气。</span></li>
         </ul>
       </div>
     </div>
@@ -914,8 +924,8 @@
         <div class="u-cn"><span class="lbl">译</span>喂喂，外面都听得见哦。</div>
         <ul class="u-points">
           <li><span class="chip goi">おいおい</span><a class="xref" href="concordance.html#q=おいおい" title="这个语法点在 6 个视频中共出现 7 次 — 点击查看全部用例">6视频</a><span>感叹词，用于提醒或制止对方，带有「喂喂」的无奈语气。</span></li>
-          <li><span class="chip joshi">〜てる</span><a class="xref" href="concordance.html#q=〜てる" title="这个语法点在 27 个视频中共出现 53 次 — 点击查看全部用例">27视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ている</span><span>「〜ている」的口语缩约形，表示动作正在进行或状态持续。</span></li>
-          <li><span class="chip joshi">ぞ</span><a class="xref" href="concordance.html#q=ぞ" title="这个语法点在 17 个视频中共出现 27 次 — 点击查看全部用例">17视频</a><span>男性用语尾，加强提醒或断定的语气。父亲用来提醒家人声音太大。</span></li>
+          <li><span class="chip joshi">〜てる</span><a class="xref" href="concordance.html#q=〜てる" title="这个语法点在 28 个视频中共出现 54 次 — 点击查看全部用例">28视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ている</span><span>「〜ている」的口语缩约形，表示动作正在进行或状态持续。</span></li>
+          <li><span class="chip joshi">ぞ</span><a class="xref" href="concordance.html#q=ぞ" title="这个语法点在 18 个视频中共出现 30 次 — 点击查看全部用例">18视频</a><span>男性用语尾，加强提醒或断定的语气。父亲用来提醒家人声音太大。</span></li>
         </ul>
       </div>
     </div>
@@ -1010,7 +1020,7 @@
         <div class="u-cn"><span class="lbl">译</span>摆好了哦。</div>
         <ul class="u-points">
           <li><span class="chip goi">そろえる</span><span>「把〜摆整齐、对齐」。此处指把脱下的鞋摆放整齐。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 37 个视频中共出现 168 次 — 点击查看全部用例">37视频</a><span>句末语气词，用于告知对方新信息，带有强调或提醒的语气。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 38 个视频中共出现 171 次 — 点击查看全部用例">38视频</a><span>句末语气词，用于告知对方新信息，带有强调或提醒的语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1139,7 +1149,7 @@
         <div class="u-cn"><span class="lbl">译</span>就是所谓的第一个叛逆期吧。</div>
         <ul class="u-points">
           <li><span class="chip goi">〜とかってやつ</span><span>「〜とかいうやつ」的口语说法，表示「所谓…的东西」。</span></li>
-          <li><span class="chip joshi">だろ</span><a class="xref" href="concordance.html#q=だろ" title="这个语法点在 15 个视频中共出现 20 次 — 点击查看全部用例">15视频</a><span>推量、确认的语气，男性口语。</span></li>
+          <li><span class="chip joshi">だろ</span><a class="xref" href="concordance.html#q=だろ" title="这个语法点在 16 个视频中共出现 22 次 — 点击查看全部用例">16视频</a><span>推量、确认的语气，男性口语。</span></li>
         </ul>
       </div>
     </div>
@@ -1211,7 +1221,7 @@
         <div class="u-jp">ジュースみたいな。</div>
         <div class="u-cn"><span class="lbl">译</span>像果汁一样的。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜みたいな</span><a class="xref" href="concordance.html#q=〜みたいな" title="这个语法点在 20 个视频中共出现 49 次 — 点击查看全部用例">20视频</a><span>比况助动词「みたいだ」的连体形，表「像…一样的」。</span></li>
+          <li><span class="chip katsu">〜みたいな</span><a class="xref" href="concordance.html#q=〜みたいな" title="这个语法点在 21 个视频中共出现 50 次 — 点击查看全部用例">21视频</a><span>比况助动词「みたいだ」的连体形，表「像…一样的」。</span></li>
         </ul>
       </div>
     </div>
@@ -1734,7 +1744,7 @@
         <div class="u-jp">ママって<ruby>奇麗<rt>きれい</rt></ruby></div>
         <div class="u-cn"><span class="lbl">译</span>妈妈真漂亮</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜って <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 34 个视频中共出现 106 次 — 点击查看全部用例">34视频</a><span>提示主题的口语助词，相当于「は」，此处「说到妈妈的话」。</span></li>
+          <li><span class="chip joshi">〜って <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 35 个视频中共出现 110 次 — 点击查看全部用例">35视频</a><span>提示主题的口语助词，相当于「は」，此处「说到妈妈的话」。</span></li>
           <li><span class="chip goi">奇麗</span><span>形容动词，表示漂亮、美丽。</span></li>
         </ul>
       </div>
@@ -1767,7 +1777,7 @@
         <div class="u-jp">あら いいわよ ママがやってあげる</div>
         <div class="u-cn"><span class="lbl">译</span>哎呀，好啦，妈妈来帮你做</div>
         <ul class="u-points">
-          <li><span class="chip keigo">〜てあげる <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てあげる" title="这个语法点在 6 个视频中共出现 8 次 — 点击查看全部用例">6视频</a><span>授受补助动词，表示「为（别人）做某事」，此处妈妈替小新做。</span></li>
+          <li><span class="chip keigo">〜てあげる <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てあげる" title="这个语法点在 7 个视频中共出现 9 次 — 点击查看全部用例">7视频</a><span>授受补助动词，表示「为（别人）做某事」，此处妈妈替小新做。</span></li>
           <li><span class="chip joshi">〜わよ</span><a class="xref" href="concordance.html#q=〜わよ" title="这个语法点在 7 个视频中共出现 7 次 — 点击查看全部用例">7视频</a><span>女性终助词，带柔和断定语气。</span></li>
         </ul>
       </div>
@@ -1832,7 +1842,7 @@
         <div class="u-cn"><span class="lbl">译</span>厕所也要去。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>原字幕作「おトイレ」，保留幼儿语前缀「お」。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">も</span><a class="xref" href="concordance.html#q=も" title="这个语法点在 38 个视频中共出现 91 次 — 点击查看全部用例">38视频</a><span>提示追加，意为「也」，此处表示除了刷牙还要上厕所。</span></li>
+          <li><span class="chip joshi">も</span><a class="xref" href="concordance.html#q=も" title="这个语法点在 39 个视频中共出现 93 次 — 点击查看全部用例">39视频</a><span>提示追加，意为「也」，此处表示除了刷牙还要上厕所。</span></li>
         </ul>
       </div>
     </div>
@@ -1852,7 +1862,7 @@
         <div class="u-jp">ああ <ruby>良<rt>よ</rt></ruby>い<ruby>子<rt>こ</rt></ruby>を<ruby>持<rt>も</rt></ruby>った<ruby>母親<rt>ははおや</rt></ruby>って こういう<ruby>気分<rt>きぶん</rt></ruby>なのね。</div>
         <div class="u-cn"><span class="lbl">译</span>啊，有个好孩子的母亲，原来是这种心情啊。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜って <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 34 个视频中共出现 106 次 — 点击查看全部用例">34视频</a><span>提示主题，相当于「〜というのは」，用于下定义或感叹，口语常用。</span></li>
+          <li><span class="chip joshi">〜って <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 35 个视频中共出现 110 次 — 点击查看全部用例">35视频</a><span>提示主题，相当于「〜というのは」，用于下定义或感叹，口语常用。</span></li>
           <li><span class="chip joshi">〜なのね</span><span>「のだ」＋终助词「ね」，表示恍然领悟并寻求共鸣。</span></li>
         </ul>
       </div>
@@ -2000,7 +2010,7 @@
         <div class="u-cn"><span class="lbl">译</span>还是平时那个精神满满的小新最好。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>句末省略了「だ／いい」，口语中常见。</div>
         <ul class="u-points">
-          <li><span class="chip goi">やっぱり</span><a class="xref" href="concordance.html#q=やっぱり" title="这个语法点在 22 个视频中共出现 39 次 — 点击查看全部用例">22视频</a><span>「やはり」的口语形，表示「果然、还是」。</span></li>
+          <li><span class="chip goi">やっぱり</span><a class="xref" href="concordance.html#q=やっぱり" title="这个语法点在 23 个视频中共出现 40 次 — 点击查看全部用例">23视频</a><span>「やはり」的口语形，表示「果然、还是」。</span></li>
           <li><span class="chip goi">〜が一番</span><span>「〜是最好的」，句末常省略判断词。</span></li>
         </ul>
       </div>
@@ -2022,7 +2032,7 @@
         <div class="u-cn"><span class="lbl">译</span>哦，恢复得差不多了嘛。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>说话人此处应为みさえ（或ひろし），原字幕未标注，按上下文归为みさえ。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てきた <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てきた" title="这个语法点在 23 个视频中共出现 30 次 — 点击查看全部用例">23视频</a><span>表示状态逐渐变化、朝说话时点发展，「渐渐……起来」。</span></li>
+          <li><span class="chip katsu">〜てきた <span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てきた" title="这个语法点在 24 个视频中共出现 31 次 — 点击查看全部用例">24视频</a><span>表示状态逐渐变化、朝说话时点发展，「渐渐……起来」。</span></li>
           <li><span class="chip goi">だいぶ</span><span>副词，表示程度相当大，「相当、差不多」。</span></li>
         </ul>
       </div>
@@ -3720,15 +3730,64 @@
         return { x: cx, y: cy + a * ch, w: cw, h: (b - a) * ch };
       }
       var cover = band(zh[0], zh[1]);          // mode 1: mask the translation band only
-      var coverAll = band(zh[0], ja[1]);       // mode 2: mask both bands, one enlarged line
+      // mode 2: mask both bands, one enlarged line. The UNION, whichever band is on top — releases
+      // stack them either way, and `zh top -> ja bottom` is a zero-height (or negative) rectangle
+      // on a ja-over-zh source, i.e. a 全遮 that masks nothing.
+      var coverAll = band(Math.min(zh[0], ja[0]), Math.max(zh[1], ja[1]));
       var src = band(ja[0], ja[1]);
       return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, coverAll: coverAll,
                src: src, magnify: cover.h > src.h + 0.5, magnifyAll: coverAll.h > src.h + 0.5 };
     }
 
+    // #cnBand -> [{s, e, box:[x0,x1]|null}] in seconds and width fractions, sorted by start. Pure.
+    // An entry is [startMs, durMs] (a display the bake could not measure) or
+    // [startMs, durMs, x0, x1] with x in 1/10000 of the frame width. Malformed entries are dropped.
+    function parseBandTrack(raw){
+      var out = [];
+      (Array.isArray(raw) ? raw : []).forEach(function(r){
+        if (!Array.isArray(r) || r.length < 2 || !(r[0] >= 0) || !(r[1] > 0)) return;
+        var s = r[0] / 1000, box = null;
+        if (r.length >= 4 && r[2] >= 0 && r[3] > r[2] && r[3] <= 10000) box = [r[2] / 10000, r[3] / 10000];
+        out.push({ s: s, e: s + r[1] / 1000, box: box });
+      });
+      out.sort(function(a, b){ return a.s - b.s; });
+      return out.length ? out : null;
+    }
+
+    // The crop at time t: the UNION of the boxes of every display within +-slack of t. A display's
+    // edges are known only to a sample interval, and a crop that is right for the line leaving and
+    // wrong for the line arriving cuts words off the arriving one — so near a boundary both lines
+    // fit. null (draw the full band, uncropped) when any display in reach has no box, or none is in
+    // reach. Pure.
+    function cropBox(track, t, slack){
+      if (!track) return null;
+      var lo = t - slack, hi = t + slack, x0 = 1, x1 = 0, any = false;
+      for (var i = 0; i < track.length && track[i].s <= hi; i++){
+        var e = track[i];
+        if (e.e < lo) continue;
+        if (!e.box) return null;
+        any = true;
+        if (e.box[0] < x0) x0 = e.box[0];
+        if (e.box[1] > x1) x1 = e.box[1];
+      }
+      return any ? [x0, x1] : null;
+    }
+
+    // Where to draw a crop: ONE scale for both axes (the full-width draw could only enlarge by
+    // stretching vertically), centred in the overlay, capped at `mmax` CSS px per NATIVE px. The cap
+    // is against the source on purpose — the retired lens capped the displayed video's scale
+    // instead, and since the dock already shows the video at ~0.4x that pinned every line at 1.28x
+    // when it could reach 1.90x. `src` in native px, `dst` in CSS px. Pure.
+    function fitCrop(src, dst, mmax){
+      var m = Math.min(dst.w / src.w, dst.h / src.h, mmax);
+      var w = src.w * m, h = src.h * m;
+      return { m: m, x: (dst.w - w) / 2, y: (dst.h - h) / 2, w: w, h: h };
+    }
+
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
              matchSentence: matchSentence, cardText: cardText, bandRects: bandRects,
+             parseBandTrack: parseBandTrack, cropBox: cropBox, fitCrop: fitCrop,
              TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
   }
   /*<</page-tools-pure>>*/
@@ -3741,11 +3800,29 @@
   //   original ja line, leaving one enlarged line where both bands were.
   // On a native <video> the overlay DRAWS the Japanese band (that is the magnification); the thing
   // concealing the Chinese is the thing being magnified, so the two cannot drift. Not a cursor
-  // lens and not a second mask element. Revealed only when the build emitted band geometry
-  // (build_page.py's `bands` config). On cross-origin embeds the pixels cannot be read, so the
-  // same rectangles are opaque covers — same control, no magnification.
-  // The enlargement is vertical (the source is already full-width); a uniform zoom would have to
-  // crop the line's ends horizontally, which loses words.
+  // lens and not a second mask element. Revealed only when the page carries band geometry
+  // (build_page.py's `bands` config, or a pages.json retrofit that propagate.py writes). On
+  // cross-origin embeds the pixels cannot be read, so the same rectangles are opaque covers —
+  // same control, no magnification.
+  //
+  // CROPPED TO THE SENTENCE WHERE THE PAGE KNOWS IT. A burned-in line is centred and narrow — a
+  // median 24% of the frame on shosen-taningoto-01 — so the full-width band scaled into the cover
+  // is mostly empty picture, and the only way that draw could enlarge it into a band of fixed
+  // height was to stretch it vertically. Where the page carries a #cnBand track
+  // (tools/bake_band_track.py: each display's span plus the measured extent of its ink), the
+  // overlay draws just that extent, scaled UNIFORMLY to fit (fitCrop). The box is the sentence's
+  // own ink plus padding, so this does not cut the line's ends — the objection that kept the
+  // enlargement vertical. With no box in reach (no track, a gap, a display the bake could not
+  // measure) it draws exactly what it drew before: the full-width line, stretched vertically.
+  //
+  // IT REDRAWS ONLY WHILE THE PICTURE MOVES: every frame while playing, once on seek / pause /
+  // resize / state change, never while paused. Layout is measured on resize, not per frame; the
+  // canvas backing store is reallocated only when its size changes; and the loop stops if the
+  // <video> is swapped out for the takedown embed.
+  var CN_SLACK = 0.35;   // s: a 4 fps bake knows a display edge to 0.25 s, plus margin
+  var CN_MMAX = 3.0;     // CSS px per native px — past this a two-kana line fills the screen
+  var CN_PEEK_ZONE = 0.30;       // lower share of the frame, where <video controls> draws its bar
+  var CN_PEEK_TOUCH_MS = 3000;   // how long a touch on the picture keeps the bar visible
   function wireCnMask(){
     var frameEl = document.querySelector('.video-frame');
     var btn = document.getElementById('cnMaskToggle');
@@ -3759,11 +3836,15 @@
     if (!zh || !ja) return;
     var clip = document.getElementById('clip');
     var isVideo = !!clip && clip.tagName === 'VIDEO';
+    var track = null;
+    var tb = isVideo && document.getElementById('cnBand');
+    if (tb){ try { track = P.parseBandTrack(JSON.parse(tb.textContent)); } catch (e) { track = null; } }
     btn.hidden = false;
     var el = document.createElement(isVideo ? 'canvas' : 'div');
     el.className = 'cn-mask'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
     frameEl.appendChild(el);
     var ctx = null, raf = 0, state = 0;   // 0 off · 1 mask the zh band · 2 mask zh AND the small ja line
+    var geom = null, bw = 0, bh = 0, bdpr = 0, draws = 0;
     var TITLE = [
       '遮住中文字幕带：日文带放大到中文位置（点按循环：遮中文 → 全遮 → 关闭）',
       '只遮中文：日文放大到中文位置，下方原日文仍在（点按切到「全遮」）',
@@ -3781,20 +3862,38 @@
       return g;
     }
     function draw(){
-      raf = 0;
       if (!state) return;
-      var g = place();
+      if (!geom) geom = place();
       if (!isVideo) return;
       var vw = clip.videoWidth, vh = clip.videoHeight;
       if (!ctx || !vw || clip.readyState < 2) return;
-      var t = target(g);
+      var t = target(geom);
       var dpr = window.devicePixelRatio || 1;
-      el.width = Math.max(1, Math.round(t.w * dpr));
-      el.height = Math.max(1, Math.round(t.h * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, t.w, t.h);
+      var W = Math.max(1, Math.round(t.w * dpr)), H = Math.max(1, Math.round(t.h * dpr));
+      if (W !== bw || H !== bh || dpr !== bdpr){
+        el.width = W; el.height = H; bw = W; bh = H; bdpr = dpr;   // reallocates: only on change
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      ctx.clearRect(0, 0, t.w, t.h);          // .cn-mask's own background is the opaque black
+      var sy = ja[0] * vh, sh = (ja[1] - ja[0]) * vh;
+      var box = track ? P.cropBox(track, clip.currentTime, CN_SLACK) : null;
+      var d;
+      if (box){
+        var sx = box[0] * vw, sw = (box[1] - box[0]) * vw;
+        var f = P.fitCrop({ w: sw, h: sh }, { w: t.w, h: t.h }, CN_MMAX);
+        ctx.drawImage(clip, sx, sy, sw, sh, f.x, f.y, f.w, f.h);
+        d = { crop: true, sx: sx, sw: sw, m: f.m, dx: f.x, dy: f.y, dw: f.w, dh: f.h };
+      } else {
+        ctx.drawImage(clip, 0, sy, vw, sh, 0, 0, t.w, t.h);
+        d = { crop: false, sx: 0, sw: vw, m: t.h / sh, dx: 0, dy: 0, dw: t.w, dh: t.h };
+      }
+      d.sy = sy; d.sh = sh; d.ow = t.w; d.oh = t.h; d.at = clip.currentTime; d.draws = ++draws;
+      el._cn = d;   // read by tools/cdp_offline.mjs — a property, so the per-frame path never writes the DOM
     }
-    function loop(){ if (!state) return; draw(); raf = requestAnimationFrame(loop); }
+    function relayout(){ geom = null; draw(); }
+    function moving(){ return isVideo && clip.isConnected && !clip.paused && !clip.ended; }
+    function loop(){ raf = 0; if (!state || !moving()) return; draw(); raf = requestAnimationFrame(loop); }
+    function kick(){ if (state && !raf && moving()) raf = requestAnimationFrame(loop); }
     // The dots INSIDE the button are the state indicator AND a direct jump: clicking a dot sets
     // that state, clicking anywhere else on the button cycles (so Space/Enter/C on the control
     // still just cycle). One element, one id, three states — the dots are spans, not nested
@@ -3816,8 +3915,9 @@
       try { localStorage.setItem('lang:cn-mask', String(state)); } catch (e) {}
       if (state){
         if (isVideo && !ctx) ctx = el.getContext('2d');
+        geom = null;                      // the target rect differs between the two states
         draw();
-        if (isVideo && !raf) raf = requestAnimationFrame(loop);
+        kick();
       } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
     }
     btn.addEventListener('click', function(ev){
@@ -3825,10 +3925,35 @@
       set(d == null ? (state + 1) % 3 : parseInt(d, 10));
     });
     if (isVideo){
-      clip.addEventListener('seeked', draw);
-      clip.addEventListener('loadedmetadata', draw);
+      ['seeked', 'loadeddata', 'pause'].forEach(function(ev){ clip.addEventListener(ev, draw); });
+      clip.addEventListener('loadedmetadata', relayout);   // the aspect (letterbox) is known from here
+      clip.addEventListener('play', kick);
+      clip.addEventListener('playing', kick);
     }
-    window.addEventListener('resize', draw);
+    window.addEventListener('resize', relayout);
+    if (window.ResizeObserver) new ResizeObserver(relayout).observe(frameEl);   // dock fold/unfold
+    // THE NATIVE SCRUB BAR LIVES IN THE SAME STRIP. <video controls> draws its bar across the bottom
+    // of the picture — where burned-in subtitles sit — and nothing can be layered between a video and
+    // its own controls, so with the lens on the bar was hidden under it; and paused, Chrome keeps the
+    // controls up, which is exactly when a learner is reading the magnified line. So the lens PEEKS:
+    // while a mouse is in the lower CN_PEEK_ZONE of the frame, or for CN_PEEK_TOUCH_MS after a touch
+    // on the picture (the gesture that brings touch controls up), the overlay fades out and the bar
+    // can be seen. Clicks always went through (pointer-events:none); this is about SEEING it. An
+    // embed cannot peek — a cross-origin player keeps its pointer events to itself.
+    var peekT = 0;
+    function peek(on){ el.classList.toggle('cn-peek', !!on); }
+    frameEl.addEventListener('pointermove', function(ev){
+      if (!state || ev.pointerType === 'touch') return;
+      var r = frameEl.getBoundingClientRect();
+      peek(ev.clientY - r.top > r.height * (1 - CN_PEEK_ZONE));
+    });
+    frameEl.addEventListener('pointerleave', function(ev){ if (ev.pointerType !== 'touch') peek(false); });
+    frameEl.addEventListener('pointerdown', function(ev){
+      if (!state || ev.pointerType !== 'touch') return;
+      peek(true);
+      clearTimeout(peekT);
+      peekT = setTimeout(function(){ peek(false); }, CN_PEEK_TOUCH_MS);
+    });
     render();                       // dots must exist even in the off state (all hollow)
     var saved = 0;
     try { var v = localStorage.getItem('lang:cn-mask'); saved = v === '2' ? 2 : (v === '1' ? 1 : 0); } catch (e) {}

@@ -122,7 +122,10 @@
      element, so the mask cannot drift from what it magnifies. On a cross-origin player the pixels
      cannot be read, so the same rectangle becomes an opaque cover: still the only mask, just
      without magnification. Geometry: data-band-zh / data-band-ja on .video-frame. */
-  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;}
+  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;
+    transition:opacity .15s ease;}
+  /* peeking: the pointer is over the native controls strip, which the overlay covers (page_tools.js) */
+  .cn-mask.cn-peek{opacity:0;}
   .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
@@ -149,6 +152,12 @@
     border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
   .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
   .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+  /* The hint under each category may be ONE unbreakable Latin token — the en profile's
+     「relative/conditional/cleft…」 is 166px with no break opportunity (browsers do not wrap at '/'),
+     and as a flex/grid item's min-content it pushed gaffigan-teenagers 7px past a 390px phone.
+     `anywhere` (not break-word) is the value that also lowers min-content, so the cell can shrink
+     and the token wraps only when it has to. */
+  .lg > span:last-child{min-width:0;overflow-wrap:anywhere;}
 
   /* ---------- section label ---------- */
   .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
@@ -1019,7 +1028,7 @@
         <div class="u-jp">すごいんですけど</div>
         <div class="u-cn"><span class="lbl">译</span>真的很厉害呢。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜んですけど<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですけど" title="这个语法点在 20 个视频中共出现 67 次 — 点击查看全部用例">20视频</a><span>「〜んです」+「けど」，用委婉、留有余地的语气陈述感想，常见于日常口语中不把话说死的表达方式。</span></li>
+          <li><span class="chip joshi">〜んですけど<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜んですけど" title="这个语法点在 21 个视频中共出现 69 次 — 点击查看全部用例">21视频</a><span>「〜んです」+「けど」，用委婉、留有余地的语气陈述感想，常见于日常口语中不把话说死的表达方式。</span></li>
         </ul>
       </div>
     </div>
@@ -1495,7 +1504,7 @@
         <div class="u-cn"><span class="lbl">译</span>当您觉得和猫头鹰对上眼的时候，请短促而用力地「哔」地吹一下哨子。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「袋」还原为「フクロウ」；原字幕重复出现两次，合并为一条。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜たら<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 39 个视频中共出现 91 次 — 点击查看全部用例">39视频</a><span>条件形，「〜と思ったら」=「一觉得〜的话」，表示前项动作／状态成立后紧接后项。</span></li>
+          <li><span class="chip katsu">〜たら<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 40 个视频中共出现 92 次 — 点击查看全部用例">40视频</a><span>条件形，「〜と思ったら」=「一觉得〜的话」，表示前项动作／状态成立后紧接后项。</span></li>
           <li><span class="chip keigo">〜ていただきたいです<span class="star">★</span></span><span>「〜ていただく」+「たい」，比「〜てください」更委婉客气的请求表达，常用于主持人指导嘉宾。</span></li>
         </ul>
       </div>
@@ -1804,7 +1813,7 @@
         <div class="u-jp">だって<ruby>規制<rt>きせい</rt></ruby>されてるんでしょ</div>
         <div class="u-cn"><span class="lbl">译</span>可是不是说受管制吗</div>
         <ul class="u-points">
-          <li><span class="chip joshi">だって<span class="star">★</span></span><a class="xref" href="concordance.html#q=だって" title="这个语法点在 29 个视频中共出现 73 次 — 点击查看全部用例">29视频</a><span>口语接续词，用来反驳或找理由，「可是…」</span></li>
+          <li><span class="chip joshi">だって<span class="star">★</span></span><a class="xref" href="concordance.html#q=だって" title="这个语法点在 30 个视频中共出现 74 次 — 点击查看全部用例">30视频</a><span>口语接续词，用来反驳或找理由，「可是…」</span></li>
           <li><span class="chip joshi">〜んでしょ</span><a class="xref" href="concordance.html#q=〜んでしょ" title="这个语法点在 7 个视频中共出现 8 次 — 点击查看全部用例">7视频</a><span>「〜のでしょう」的口语缩略，带确认语气，「不是…吗」</span></li>
         </ul>
       </div>
@@ -1825,7 +1834,7 @@
         <div class="u-jp">え、<ruby>30万<rt>さんじゅうまん</rt></ruby>とか</div>
         <div class="u-cn"><span class="lbl">译</span>诶，30万左右吧</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 30 个视频中共出现 65 次 — 点击查看全部用例">30视频</a><span>口语中「とか」用于举例或模糊化说法，降低断言的语气，避免说得太绝对</span></li>
+          <li><span class="chip joshi">〜とか<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜とか" title="这个语法点在 31 个视频中共出现 67 次 — 点击查看全部用例">31视频</a><span>口语中「とか」用于举例或模糊化说法，降低断言的语气，避免说得太绝对</span></li>
         </ul>
       </div>
     </div>
@@ -2147,7 +2156,7 @@
         <div class="u-cn"><span class="lbl">译</span>好，这位是淡水魟鱼哦。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>ASR原文作「淡水泳」，结合后文「ポルカドットスティングレイ（圆点魟）」判断应为「淡水エイ」（淡水魟鱼）。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ですね</span><a class="xref" href="concordance.html#q=ですね" title="这个语法点在 11 个视频中共出现 12 次 — 点击查看全部用例">11视频</a><span>終助詞「ね」で軽く確認・同意を求める説明口調。</span></li>
+          <li><span class="chip joshi">ですね</span><a class="xref" href="concordance.html#q=ですね" title="这个语法点在 12 个视频中共出现 13 次 — 点击查看全部用例">12视频</a><span>終助詞「ね」で軽く確認・同意を求める説明口調。</span></li>
         </ul>
       </div>
     </div>
@@ -2177,7 +2186,7 @@
         <div class="u-jp">ドット<ruby>柄<rt>がら</rt></ruby>ね、すごい。</div>
         <div class="u-cn"><span class="lbl">译</span>圆点花纹呢，好厉害。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 33 个视频中共出现 129 次 — 点击查看全部用例">33视频</a><span>終助詞。確認・軽い感嘆を添える。</span></li>
+          <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 34 个视频中共出现 132 次 — 点击查看全部用例">34视频</a><span>終助詞。確認・軽い感嘆を添える。</span></li>
         </ul>
       </div>
     </div>
@@ -2229,7 +2238,7 @@
         <div class="u-jp">この<ruby>子<rt>こ</rt></ruby>まだ<ruby>全然<rt>ぜんぜん</rt></ruby><ruby>経<rt>た</rt></ruby>ってないと<ruby>思<rt>おも</rt></ruby>います。1<ruby>年<rt>ねん</rt></ruby>も<ruby>経<rt>た</rt></ruby>ってないと<ruby>思<rt>おも</rt></ruby>います。</div>
         <div class="u-cn"><span class="lbl">译</span>这孩子应该还完全没过多久。应该连一年都还没到。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">も<span class="star">★</span></span><a class="xref" href="concordance.html#q=も" title="这个语法点在 38 个视频中共出现 91 次 — 点击查看全部用例">38视频</a><span>「1年も経ってない」の「も」は数量を強調し「〜さえ／〜すら」に近いニュアンスを添える。</span></li>
+          <li><span class="chip joshi">も<span class="star">★</span></span><a class="xref" href="concordance.html#q=も" title="这个语法点在 39 个视频中共出现 93 次 — 点击查看全部用例">39视频</a><span>「1年も経ってない」の「も」は数量を強調し「〜さえ／〜すら」に近いニュアンスを添える。</span></li>
         </ul>
       </div>
     </div>
@@ -2316,7 +2325,7 @@
         <div class="u-cn"><span class="lbl">译</span>（针）直挺挺地立着（？）。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>ASR原文「ピンって中」语意不明，结合前后文（说明毒针）推测为「ピンと立ってる」（直挺挺地立着），用(?)标注。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">って<span class="star">★</span></span><a class="xref" href="concordance.html#q=って" title="这个语法点在 40 个视频中共出现 187 次 — 点击查看全部用例">40视频</a><span>＝と。口語で副詞（ピン）の後に続けて状態を説明する用法。</span></li>
+          <li><span class="chip joshi">って<span class="star">★</span></span><a class="xref" href="concordance.html#q=って" title="这个语法点在 41 个视频中共出现 189 次 — 点击查看全部用例">41视频</a><span>＝と。口語で副詞（ピン）の後に続けて状態を説明する用法。</span></li>
         </ul>
       </div>
     </div>
@@ -2440,7 +2449,7 @@
         <div class="u-cn"><span class="lbl">译</span>所以基本上性格温顺又很亲人，因为嘴巴刚好长在下面，所以应该能拍到牠们进食的样子。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>原文は「ので」で3つの節がゆるくつながる口語の言い回しを、意味のまとまりごとに1文に整理した。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=ので" title="这个语法点在 18 个视频中共出现 33 次 — 点击查看全部用例">18视频</a><span>理由を表す接続助詞。ここでは3回連続で使われ、口語的に理由を重ねて説明している。</span></li>
+          <li><span class="chip joshi">ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=ので" title="这个语法点在 19 个视频中共出现 35 次 — 点击查看全部用例">19视频</a><span>理由を表す接続助詞。ここでは3回連続で使われ、口語的に理由を重ねて説明している。</span></li>
           <li><span class="chip katsu">大人しくて</span><span>形容詞のて形。「大人しい」＋「人懐っこい」を並列に接続。</span></li>
           <li><span class="chip goi">〜かなと思います</span><a class="xref" href="concordance.html#q=〜かなと思います" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「かな」で軽い推量・独り言のニュアンスを添え、断定を避ける丁寧な言い方。</span></li>
         </ul>
@@ -4994,15 +5003,64 @@
         return { x: cx, y: cy + a * ch, w: cw, h: (b - a) * ch };
       }
       var cover = band(zh[0], zh[1]);          // mode 1: mask the translation band only
-      var coverAll = band(zh[0], ja[1]);       // mode 2: mask both bands, one enlarged line
+      // mode 2: mask both bands, one enlarged line. The UNION, whichever band is on top — releases
+      // stack them either way, and `zh top -> ja bottom` is a zero-height (or negative) rectangle
+      // on a ja-over-zh source, i.e. a 全遮 that masks nothing.
+      var coverAll = band(Math.min(zh[0], ja[0]), Math.max(zh[1], ja[1]));
       var src = band(ja[0], ja[1]);
       return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, coverAll: coverAll,
                src: src, magnify: cover.h > src.h + 0.5, magnifyAll: coverAll.h > src.h + 0.5 };
     }
 
+    // #cnBand -> [{s, e, box:[x0,x1]|null}] in seconds and width fractions, sorted by start. Pure.
+    // An entry is [startMs, durMs] (a display the bake could not measure) or
+    // [startMs, durMs, x0, x1] with x in 1/10000 of the frame width. Malformed entries are dropped.
+    function parseBandTrack(raw){
+      var out = [];
+      (Array.isArray(raw) ? raw : []).forEach(function(r){
+        if (!Array.isArray(r) || r.length < 2 || !(r[0] >= 0) || !(r[1] > 0)) return;
+        var s = r[0] / 1000, box = null;
+        if (r.length >= 4 && r[2] >= 0 && r[3] > r[2] && r[3] <= 10000) box = [r[2] / 10000, r[3] / 10000];
+        out.push({ s: s, e: s + r[1] / 1000, box: box });
+      });
+      out.sort(function(a, b){ return a.s - b.s; });
+      return out.length ? out : null;
+    }
+
+    // The crop at time t: the UNION of the boxes of every display within +-slack of t. A display's
+    // edges are known only to a sample interval, and a crop that is right for the line leaving and
+    // wrong for the line arriving cuts words off the arriving one — so near a boundary both lines
+    // fit. null (draw the full band, uncropped) when any display in reach has no box, or none is in
+    // reach. Pure.
+    function cropBox(track, t, slack){
+      if (!track) return null;
+      var lo = t - slack, hi = t + slack, x0 = 1, x1 = 0, any = false;
+      for (var i = 0; i < track.length && track[i].s <= hi; i++){
+        var e = track[i];
+        if (e.e < lo) continue;
+        if (!e.box) return null;
+        any = true;
+        if (e.box[0] < x0) x0 = e.box[0];
+        if (e.box[1] > x1) x1 = e.box[1];
+      }
+      return any ? [x0, x1] : null;
+    }
+
+    // Where to draw a crop: ONE scale for both axes (the full-width draw could only enlarge by
+    // stretching vertically), centred in the overlay, capped at `mmax` CSS px per NATIVE px. The cap
+    // is against the source on purpose — the retired lens capped the displayed video's scale
+    // instead, and since the dock already shows the video at ~0.4x that pinned every line at 1.28x
+    // when it could reach 1.90x. `src` in native px, `dst` in CSS px. Pure.
+    function fitCrop(src, dst, mmax){
+      var m = Math.min(dst.w / src.w, dst.h / src.h, mmax);
+      var w = src.w * m, h = src.h * m;
+      return { m: m, x: (dst.w - w) / 2, y: (dst.h - h) / 2, w: w, h: h };
+    }
+
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
              matchSentence: matchSentence, cardText: cardText, bandRects: bandRects,
+             parseBandTrack: parseBandTrack, cropBox: cropBox, fitCrop: fitCrop,
              TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
   }
   /*<</page-tools-pure>>*/
@@ -5015,11 +5073,29 @@
   //   original ja line, leaving one enlarged line where both bands were.
   // On a native <video> the overlay DRAWS the Japanese band (that is the magnification); the thing
   // concealing the Chinese is the thing being magnified, so the two cannot drift. Not a cursor
-  // lens and not a second mask element. Revealed only when the build emitted band geometry
-  // (build_page.py's `bands` config). On cross-origin embeds the pixels cannot be read, so the
-  // same rectangles are opaque covers — same control, no magnification.
-  // The enlargement is vertical (the source is already full-width); a uniform zoom would have to
-  // crop the line's ends horizontally, which loses words.
+  // lens and not a second mask element. Revealed only when the page carries band geometry
+  // (build_page.py's `bands` config, or a pages.json retrofit that propagate.py writes). On
+  // cross-origin embeds the pixels cannot be read, so the same rectangles are opaque covers —
+  // same control, no magnification.
+  //
+  // CROPPED TO THE SENTENCE WHERE THE PAGE KNOWS IT. A burned-in line is centred and narrow — a
+  // median 24% of the frame on shosen-taningoto-01 — so the full-width band scaled into the cover
+  // is mostly empty picture, and the only way that draw could enlarge it into a band of fixed
+  // height was to stretch it vertically. Where the page carries a #cnBand track
+  // (tools/bake_band_track.py: each display's span plus the measured extent of its ink), the
+  // overlay draws just that extent, scaled UNIFORMLY to fit (fitCrop). The box is the sentence's
+  // own ink plus padding, so this does not cut the line's ends — the objection that kept the
+  // enlargement vertical. With no box in reach (no track, a gap, a display the bake could not
+  // measure) it draws exactly what it drew before: the full-width line, stretched vertically.
+  //
+  // IT REDRAWS ONLY WHILE THE PICTURE MOVES: every frame while playing, once on seek / pause /
+  // resize / state change, never while paused. Layout is measured on resize, not per frame; the
+  // canvas backing store is reallocated only when its size changes; and the loop stops if the
+  // <video> is swapped out for the takedown embed.
+  var CN_SLACK = 0.35;   // s: a 4 fps bake knows a display edge to 0.25 s, plus margin
+  var CN_MMAX = 3.0;     // CSS px per native px — past this a two-kana line fills the screen
+  var CN_PEEK_ZONE = 0.30;       // lower share of the frame, where <video controls> draws its bar
+  var CN_PEEK_TOUCH_MS = 3000;   // how long a touch on the picture keeps the bar visible
   function wireCnMask(){
     var frameEl = document.querySelector('.video-frame');
     var btn = document.getElementById('cnMaskToggle');
@@ -5033,11 +5109,15 @@
     if (!zh || !ja) return;
     var clip = document.getElementById('clip');
     var isVideo = !!clip && clip.tagName === 'VIDEO';
+    var track = null;
+    var tb = isVideo && document.getElementById('cnBand');
+    if (tb){ try { track = P.parseBandTrack(JSON.parse(tb.textContent)); } catch (e) { track = null; } }
     btn.hidden = false;
     var el = document.createElement(isVideo ? 'canvas' : 'div');
     el.className = 'cn-mask'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
     frameEl.appendChild(el);
     var ctx = null, raf = 0, state = 0;   // 0 off · 1 mask the zh band · 2 mask zh AND the small ja line
+    var geom = null, bw = 0, bh = 0, bdpr = 0, draws = 0;
     var TITLE = [
       '遮住中文字幕带：日文带放大到中文位置（点按循环：遮中文 → 全遮 → 关闭）',
       '只遮中文：日文放大到中文位置，下方原日文仍在（点按切到「全遮」）',
@@ -5055,20 +5135,38 @@
       return g;
     }
     function draw(){
-      raf = 0;
       if (!state) return;
-      var g = place();
+      if (!geom) geom = place();
       if (!isVideo) return;
       var vw = clip.videoWidth, vh = clip.videoHeight;
       if (!ctx || !vw || clip.readyState < 2) return;
-      var t = target(g);
+      var t = target(geom);
       var dpr = window.devicePixelRatio || 1;
-      el.width = Math.max(1, Math.round(t.w * dpr));
-      el.height = Math.max(1, Math.round(t.h * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, t.w, t.h);
+      var W = Math.max(1, Math.round(t.w * dpr)), H = Math.max(1, Math.round(t.h * dpr));
+      if (W !== bw || H !== bh || dpr !== bdpr){
+        el.width = W; el.height = H; bw = W; bh = H; bdpr = dpr;   // reallocates: only on change
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      ctx.clearRect(0, 0, t.w, t.h);          // .cn-mask's own background is the opaque black
+      var sy = ja[0] * vh, sh = (ja[1] - ja[0]) * vh;
+      var box = track ? P.cropBox(track, clip.currentTime, CN_SLACK) : null;
+      var d;
+      if (box){
+        var sx = box[0] * vw, sw = (box[1] - box[0]) * vw;
+        var f = P.fitCrop({ w: sw, h: sh }, { w: t.w, h: t.h }, CN_MMAX);
+        ctx.drawImage(clip, sx, sy, sw, sh, f.x, f.y, f.w, f.h);
+        d = { crop: true, sx: sx, sw: sw, m: f.m, dx: f.x, dy: f.y, dw: f.w, dh: f.h };
+      } else {
+        ctx.drawImage(clip, 0, sy, vw, sh, 0, 0, t.w, t.h);
+        d = { crop: false, sx: 0, sw: vw, m: t.h / sh, dx: 0, dy: 0, dw: t.w, dh: t.h };
+      }
+      d.sy = sy; d.sh = sh; d.ow = t.w; d.oh = t.h; d.at = clip.currentTime; d.draws = ++draws;
+      el._cn = d;   // read by tools/cdp_offline.mjs — a property, so the per-frame path never writes the DOM
     }
-    function loop(){ if (!state) return; draw(); raf = requestAnimationFrame(loop); }
+    function relayout(){ geom = null; draw(); }
+    function moving(){ return isVideo && clip.isConnected && !clip.paused && !clip.ended; }
+    function loop(){ raf = 0; if (!state || !moving()) return; draw(); raf = requestAnimationFrame(loop); }
+    function kick(){ if (state && !raf && moving()) raf = requestAnimationFrame(loop); }
     // The dots INSIDE the button are the state indicator AND a direct jump: clicking a dot sets
     // that state, clicking anywhere else on the button cycles (so Space/Enter/C on the control
     // still just cycle). One element, one id, three states — the dots are spans, not nested
@@ -5090,8 +5188,9 @@
       try { localStorage.setItem('lang:cn-mask', String(state)); } catch (e) {}
       if (state){
         if (isVideo && !ctx) ctx = el.getContext('2d');
+        geom = null;                      // the target rect differs between the two states
         draw();
-        if (isVideo && !raf) raf = requestAnimationFrame(loop);
+        kick();
       } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
     }
     btn.addEventListener('click', function(ev){
@@ -5099,10 +5198,35 @@
       set(d == null ? (state + 1) % 3 : parseInt(d, 10));
     });
     if (isVideo){
-      clip.addEventListener('seeked', draw);
-      clip.addEventListener('loadedmetadata', draw);
+      ['seeked', 'loadeddata', 'pause'].forEach(function(ev){ clip.addEventListener(ev, draw); });
+      clip.addEventListener('loadedmetadata', relayout);   // the aspect (letterbox) is known from here
+      clip.addEventListener('play', kick);
+      clip.addEventListener('playing', kick);
     }
-    window.addEventListener('resize', draw);
+    window.addEventListener('resize', relayout);
+    if (window.ResizeObserver) new ResizeObserver(relayout).observe(frameEl);   // dock fold/unfold
+    // THE NATIVE SCRUB BAR LIVES IN THE SAME STRIP. <video controls> draws its bar across the bottom
+    // of the picture — where burned-in subtitles sit — and nothing can be layered between a video and
+    // its own controls, so with the lens on the bar was hidden under it; and paused, Chrome keeps the
+    // controls up, which is exactly when a learner is reading the magnified line. So the lens PEEKS:
+    // while a mouse is in the lower CN_PEEK_ZONE of the frame, or for CN_PEEK_TOUCH_MS after a touch
+    // on the picture (the gesture that brings touch controls up), the overlay fades out and the bar
+    // can be seen. Clicks always went through (pointer-events:none); this is about SEEING it. An
+    // embed cannot peek — a cross-origin player keeps its pointer events to itself.
+    var peekT = 0;
+    function peek(on){ el.classList.toggle('cn-peek', !!on); }
+    frameEl.addEventListener('pointermove', function(ev){
+      if (!state || ev.pointerType === 'touch') return;
+      var r = frameEl.getBoundingClientRect();
+      peek(ev.clientY - r.top > r.height * (1 - CN_PEEK_ZONE));
+    });
+    frameEl.addEventListener('pointerleave', function(ev){ if (ev.pointerType !== 'touch') peek(false); });
+    frameEl.addEventListener('pointerdown', function(ev){
+      if (!state || ev.pointerType !== 'touch') return;
+      peek(true);
+      clearTimeout(peekT);
+      peekT = setTimeout(function(){ peek(false); }, CN_PEEK_TOUCH_MS);
+    });
     render();                       // dots must exist even in the off state (all hollow)
     var saved = 0;
     try { var v = localStorage.getItem('lang:cn-mask'); saved = v === '2' ? 2 : (v === '1' ? 1 : 0); } catch (e) {}

@@ -122,7 +122,10 @@
      element, so the mask cannot drift from what it magnifies. On a cross-origin player the pixels
      cannot be read, so the same rectangle becomes an opaque cover: still the only mask, just
      without magnification. Geometry: data-band-zh / data-band-ja on .video-frame. */
-  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;}
+  .cn-mask{position:absolute;z-index:3;pointer-events:none;background:#000;display:block;
+    transition:opacity .15s ease;}
+  /* peeking: the pointer is over the native controls strip, which the overlay covers (page_tools.js) */
+  .cn-mask.cn-peek{opacity:0;}
   .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
@@ -149,6 +152,12 @@
     border:1px solid var(--line);border-radius:.5rem;padding:.55rem .7rem;background:var(--card);}
   .swatch{width:.72rem;height:.72rem;border-radius:.2rem;flex:none;transform:translateY(.05rem);}
   .lg b{color:var(--ink);font-weight:600;font-family:var(--font-gothic);}
+  /* The hint under each category may be ONE unbreakable Latin token — the en profile's
+     「relative/conditional/cleft…」 is 166px with no break opportunity (browsers do not wrap at '/'),
+     and as a flex/grid item's min-content it pushed gaffigan-teenagers 7px past a 390px phone.
+     `anywhere` (not break-word) is the value that also lowers min-content, so the cell can shrink
+     and the token wraps only when it has to. */
+  .lg > span:last-child{min-width:0;overflow-wrap:anywhere;}
 
   /* ---------- section label ---------- */
   .sec{font-family:var(--font-latin);font-size:.74rem;letter-spacing:.2em;
@@ -1352,7 +1361,7 @@
         <div class="u-jp">よし、<ruby>次<rt>つぎ</rt></ruby>はニナ、お<ruby>前<rt>まえ</rt></ruby>だ。</div>
         <div class="u-cn"><span class="lbl">译</span>好，下一个，妮娜，是你。</div>
         <ul class="u-points">
-          <li><span class="chip goi">お前</span><a class="xref" href="concordance.html#q=お前" title="这个语法点在 18 个视频中共出现 57 次 — 点击查看全部用例">18视频</a> <span class="dialect" title="方言 → 标准语">→ あなた</span><span>第二人称「你」的粗鲁说法，剑神对弟子使用。</span></li>
+          <li><span class="chip goi">お前</span><a class="xref" href="concordance.html#q=お前" title="这个语法点在 19 个视频中共出现 58 次 — 点击查看全部用例">19视频</a> <span class="dialect" title="方言 → 标准语">→ あなた</span><span>第二人称「你」的粗鲁说法，剑神对弟子使用。</span></li>
         </ul>
       </div>
     </div>
@@ -1495,7 +1504,7 @@
         <div class="u-jp"><ruby>俺<rt>おれ</rt></ruby>が<ruby>相手<rt>あいて</rt></ruby>してやるよ</div>
         <div class="u-cn"><span class="lbl">译</span>我来做你的对手。</div>
         <ul class="u-points">
-          <li><span class="chip goi">俺</span><a class="xref" href="concordance.html#q=俺" title="这个语法点在 25 个视频中共出现 42 次 — 点击查看全部用例">25视频</a><span>第一人称，男性用语。艾莉丝使用「俺」，体现其粗野、男性化的语体特征。</span></li>
+          <li><span class="chip goi">俺</span><a class="xref" href="concordance.html#q=俺" title="这个语法点在 26 个视频中共出现 43 次 — 点击查看全部用例">26视频</a><span>第一人称，男性用语。艾莉丝使用「俺」，体现其粗野、男性化的语体特征。</span></li>
           <li><span class="chip keigo">〜てやる<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜てやる" title="这个语法点在 14 个视频中共出现 21 次 — 点击查看全部用例">14视频</a> <span class="dialect" title="方言 → 标准语">→ 〜てあげる</span><span>「〜てあげる」的粗俗说法，表示「为对方做某事」，带有居高临下的施恩感。</span></li>
         </ul>
       </div>
@@ -1530,7 +1539,7 @@
           <li><span class="chip joshi">〜よ</span><a class="xref" href="concordance.html#q=〜よ" title="这个语法点在 21 个视频中共出现 44 次 — 点击查看全部用例">21视频</a><span>句末终助词，用于提醒或告知。</span></li>
           <li><span class="chip goi">手加減をする</span><span>惯用表达，意为「手下留情、放水」。</span></li>
           <li><span class="chip keigo">〜てやる</span><a class="xref" href="concordance.html#q=〜てやる" title="这个语法点在 14 个视频中共出现 21 次 — 点击查看全部用例">14视频</a> <span class="dialect" title="方言 → 标准语">→ 〜てあげる</span><span>再次使用「〜てやる」，艾莉丝对吉诺的居高临下态度。</span></li>
-          <li><span class="chip joshi">〜から</span><a class="xref" href="concordance.html#q=〜から" title="这个语法点在 28 个视频中共出现 52 次 — 点击查看全部用例">28视频</a><span>终助词用法，表示理由或安慰，意为「因为我会…所以别担心」。</span></li>
+          <li><span class="chip joshi">〜から</span><a class="xref" href="concordance.html#q=〜から" title="这个语法点在 29 个视频中共出现 55 次 — 点击查看全部用例">29视频</a><span>终助词用法，表示理由或安慰，意为「因为我会…所以别担心」。</span></li>
         </ul>
       </div>
     </div>
@@ -1542,7 +1551,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「って」是引起话题的用法，相当于「ねえ」。「持ってんな」是「持っているな」的口语缩约形。</div>
         <ul class="u-points">
           <li><span class="chip katsu">持ってんな<span class="star">★</span></span> <span class="dialect" title="方言 → 标准语">→ 持っているな</span><span>「持っているな」的口语缩约形。「〜てる」→「〜てん」、「な」→「な」的连音。男性对同辈或晚辈的随意说法。</span></li>
-          <li><span class="chip joshi">って</span><a class="xref" href="concordance.html#q=って" title="这个语法点在 40 个视频中共出现 187 次 — 点击查看全部用例">40视频</a><span>此处是呼唤对方以引起注意的用法，相当于「ねえ」「おい」。口语中常见。</span></li>
+          <li><span class="chip joshi">って</span><a class="xref" href="concordance.html#q=って" title="这个语法点在 41 个视频中共出现 189 次 — 点击查看全部用例">41视频</a><span>此处是呼唤对方以引起注意的用法，相当于「ねえ」「おい」。口语中常见。</span></li>
         </ul>
       </div>
     </div>
@@ -1626,7 +1635,7 @@
         <div class="u-jp"><ruby>今日<rt>きょう</rt></ruby>からあいつは<ruby>剣聖<rt>けんせい</rt></ruby>だ。</div>
         <div class="u-cn"><span class="lbl">译</span>从今天起，那家伙就是剑圣了。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜から</span><a class="xref" href="concordance.html#q=〜から" title="这个语法点在 28 个视频中共出现 52 次 — 点击查看全部用例">28视频</a><span>表示起点，「从〜起」。</span></li>
+          <li><span class="chip joshi">〜から</span><a class="xref" href="concordance.html#q=〜から" title="这个语法点在 29 个视频中共出现 55 次 — 点击查看全部用例">29视频</a><span>表示起点，「从〜起」。</span></li>
           <li><span class="chip goi">剣聖</span><span>剑之圣地授予的称号。艾莉丝因击败吉诺而被剑神认可为「剣聖」。</span></li>
         </ul>
       </div>
@@ -1734,7 +1743,7 @@
           <li><span class="chip goi">俺様<span class="star">★</span></span><span>第一人称「俺」的强调形，自大、傲慢的说法。剑神自称「俺様」体现其狂妄性格。</span></li>
           <li><span class="chip joshi">〜ですら</span><span>「连……都」，强调极端例子。此处「特別な俺様ですら」＝「连特别的我（都没被特别对待）」。</span></li>
           <li><span class="chip katsu">されてねえ<span class="star">★</span></span> <span class="dialect" title="方言 → 标准语">→ されていない</span><span>「されていない」的口语缩约（て＋い→て＋ねえ）。粗鲁男性语体。</span></li>
-          <li><span class="chip joshi">〜のに</span><a class="xref" href="concordance.html#q=〜のに" title="这个语法点在 26 个视频中共出现 53 次 — 点击查看全部用例">26视频</a><span>此处「のに」不是逆接，而是「のに（なあ）」的省略，表示不满、抱怨的语气。</span></li>
+          <li><span class="chip joshi">〜のに</span><a class="xref" href="concordance.html#q=〜のに" title="这个语法点在 27 个视频中共出现 55 次 — 点击查看全部用例">27视频</a><span>此处「のに」不是逆接，而是「のに（なあ）」的省略，表示不满、抱怨的语气。</span></li>
         </ul>
       </div>
     </div>
@@ -1795,7 +1804,7 @@
         <div class="u-cn"><span class="lbl">译</span>心无杂念地挥剑，累了就坐下来休息思考。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜て考えろ<span class="star">★</span></span> <span class="dialect" title="方言 → 标准语">→ 考えなさい</span><span>「考えろ」是「考える」的命令形。基列奴说话简短生硬，几乎不用终助词，直接用命令形，体现其严厉的指导者语气。</span></li>
-          <li><span class="chip katsu">〜たら</span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 39 个视频中共出现 91 次 — 点击查看全部用例">39视频</a><span>「疲れたら」是「疲れる」的假定形+「たら」，表示「如果累了的话」。口语中常见的条件表达。</span></li>
+          <li><span class="chip katsu">〜たら</span><a class="xref" href="concordance.html#q=〜たら" title="这个语法点在 40 个视频中共出现 92 次 — 点击查看全部用例">40视频</a><span>「疲れたら」是「疲れる」的假定形+「たら」，表示「如果累了的话」。口语中常见的条件表达。</span></li>
         </ul>
       </div>
     </div>
@@ -1806,7 +1815,7 @@
         <div class="u-cn"><span class="lbl">译</span>思考累了，就再站起来挥剑。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>质检意见成立：此处「のに」表示「在…方面」，非目的用法，不宜用「ために」替换。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜のに</span><a class="xref" href="concordance.html#q=〜のに" title="这个语法点在 26 个视频中共出现 53 次 — 点击查看全部用例">26视频</a> <span class="dialect" title="方言 → 标准语">→ 〜するのに</span><span>这里的「のに」不是逆接（明明…却），而是接在动词基本形后，表示「在…方面、在…这件事上」。相当于「〜するのに」。注意与目的用法「〜するために」区分。</span></li>
+          <li><span class="chip katsu">〜のに</span><a class="xref" href="concordance.html#q=〜のに" title="这个语法点在 27 个视频中共出现 55 次 — 点击查看全部用例">27视频</a> <span class="dialect" title="方言 → 标准语">→ 〜するのに</span><span>这里的「のに」不是逆接（明明…却），而是接在动词基本形后，表示「在…方面、在…这件事上」。相当于「〜するのに」。注意与目的用法「〜するために」区分。</span></li>
           <li><span class="chip katsu">〜振れ</span> <span class="dialect" title="方言 → 标准语">→ 振りなさい</span><span>「振れ」是「振る」的命令形。与上一句的「考えろ」呼应，基列奴的指导语全部用命令形，简洁有力。</span></li>
         </ul>
       </div>
@@ -1817,7 +1826,7 @@
         <div class="u-jp">え？ ギレーヌさんが<ruby>字<rt>じ</rt></ruby>を<ruby>書<rt>か</rt></ruby>けるって<ruby>本当<rt>ほんとう</rt></ruby>？</div>
         <div class="u-cn"><span class="lbl">译</span>诶？基列奴小姐会写字是真的吗？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜って</span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 34 个视频中共出现 106 次 — 点击查看全部用例">34视频</a> <span class="dialect" title="方言 → 标准语">→ というのは</span><span>口语中「って」相当于「というのは／ということは」，用于引用或提示话题。这里「字を書けるって」=「字を書けるというのは」。</span></li>
+          <li><span class="chip joshi">〜って</span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 35 个视频中共出现 110 次 — 点击查看全部用例">35视频</a> <span class="dialect" title="方言 → 标准语">→ というのは</span><span>口语中「って」相当于「というのは／ということは」，用于引用或提示话题。这里「字を書けるって」=「字を書けるというのは」。</span></li>
           <li><span class="chip goi">書ける</span><span>「書く」的可能形，表示「会写、能写」。</span></li>
         </ul>
       </div>
@@ -1876,7 +1885,7 @@
         <div class="u-cn"><span class="lbl">译</span>确实。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>少年被艾莉丝怼后，反而承认她说得对（自己确实欠揍）。</div>
         <ul class="u-points">
-          <li><span class="chip goi">確かに</span><a class="xref" href="concordance.html#q=確かに" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>副词「確かに」单独使用，表示「确实如此、说得对」。口语中常用来附和对方。</span></li>
+          <li><span class="chip goi">確かに</span><a class="xref" href="concordance.html#q=確かに" title="这个语法点在 18 个视频中共出现 27 次 — 点击查看全部用例">18视频</a><span>副词「確かに」单独使用，表示「确实如此、说得对」。口语中常用来附和对方。</span></li>
         </ul>
       </div>
     </div>
@@ -2007,7 +2016,7 @@
         <div class="u-cn"><span class="lbl">译</span>挥剑这件事，真难啊。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「剣を振るって」是「剣を振る」+「って」的口语形式，表示「挥剑这件事」。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜って</span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 34 个视频中共出现 106 次 — 点击查看全部用例">34视频</a> <span class="dialect" title="方言 → 标准语">→ というのは</span><span>这里的「って」相当于「というのは」，提示话题，「剣を振るって」=「说到挥剑这件事」。</span></li>
+          <li><span class="chip joshi">〜って</span><a class="xref" href="concordance.html#q=〜って" title="这个语法点在 35 个视频中共出现 110 次 — 点击查看全部用例">35视频</a> <span class="dialect" title="方言 → 标准语">→ というのは</span><span>这里的「って」相当于「というのは」，提示话题，「剣を振るって」=「说到挥剑这件事」。</span></li>
           <li><span class="chip joshi">〜わな</span> <span class="dialect" title="方言 → 标准语">→ 〜だな</span><span>「わ」+「な」的组合。女性用「わ」加上男性用「な」，艾莉丝在独白时混用了男女语气，体现其粗野的性格。</span></li>
         </ul>
       </div>
@@ -2151,7 +2160,7 @@
         <div class="u-cn"><span class="lbl">译</span>有人在吗？</div>
         <ul class="u-points">
           <li><span class="chip katsu">おらぬ</span> <span class="dialect" title="方言 → 标准语">→ いない</span><span>古风否定表达。'おる'（居る的古形/方言）的未然形'おら'+否定助动词'ぬ'，相当于现代标准语的'いない'。'ぬ'是文语否定，连体形/终止形同形。</span></li>
-          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 16 个视频中共出现 32 次 — 点击查看全部用例">16视频</a><span>终助词，表疑问。'〜ぬか'是古风疑问句式，相当于现代'〜ないか'。</span></li>
+          <li><span class="chip joshi">か</span><a class="xref" href="concordance.html#q=か" title="这个语法点在 17 个视频中共出现 33 次 — 点击查看全部用例">17视频</a><span>终助词，表疑问。'〜ぬか'是古风疑问句式，相当于现代'〜ないか'。</span></li>
         </ul>
       </div>
     </div>
@@ -2214,7 +2223,7 @@
         <div class="u-jp"><ruby>邪魔<rt>じゃま</rt></ruby>よ。</div>
         <div class="u-cn"><span class="lbl">译</span>碍事。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 37 个视频中共出现 168 次 — 点击查看全部用例">37视频</a><span>终助词「よ」在这里加强断定的语气，艾莉丝用「〜わ」「〜よ」混合，体现她粗野的女性语体。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 38 个视频中共出现 171 次 — 点击查看全部用例">38视频</a><span>终助词「よ」在这里加强断定的语气，艾莉丝用「〜わ」「〜よ」混合，体现她粗野的女性语体。</span></li>
         </ul>
       </div>
     </div>
@@ -2463,7 +2472,7 @@
         <div class="u-cn"><span class="lbl">译</span>都过了好几年了，还是连光之太刀都用不出来。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜てもまだ〜ない</span><span>「即使〜也仍然不〜」的句式。强调经过长时间仍无进展。</span></li>
-          <li><span class="chip joshi">も</span><a class="xref" href="concordance.html#q=も" title="这个语法点在 38 个视频中共出现 91 次 — 点击查看全部用例">38视频</a><span>这里「光の太刀も」的「も」带有「连〜都（不）」的强调语气，暗示光之太刀是最基本的招式。</span></li>
+          <li><span class="chip joshi">も</span><a class="xref" href="concordance.html#q=も" title="这个语法点在 39 个视频中共出现 93 次 — 点击查看全部用例">39视频</a><span>这里「光の太刀も」的「も」带有「连〜都（不）」的强调语气，暗示光之太刀是最基本的招式。</span></li>
         </ul>
       </div>
     </div>
@@ -2487,7 +2496,7 @@
         <ul class="u-points">
           <li><span class="chip goi">面倒くせえ<span class="star">★</span></span> <span class="dialect" title="方言 → 标准语">→ 面倒くさい</span><span>「面倒くさい」（麻烦的）的男性粗俗口语形。由「くさい」→「くせえ」的元音变化而来。</span></li>
           <li><span class="chip katsu">〜ようになった</span><a class="xref" href="concordance.html#q=〜ようになった" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>表示「变得〜了」，强调从过去到现在的变化。这里剑神在讽刺基列奴以前不是这样爱说教的。</span></li>
-          <li><span class="chip goi">お前</span><a class="xref" href="concordance.html#q=お前" title="这个语法点在 18 个视频中共出现 57 次 — 点击查看全部用例">18视频</a><span>第二人称「你」的粗鲁说法，通常用于对地位低于自己或关系亲密的人。剑神对基列奴使用，体现其居高临下的态度。</span></li>
+          <li><span class="chip goi">お前</span><a class="xref" href="concordance.html#q=お前" title="这个语法点在 19 个视频中共出现 58 次 — 点击查看全部用例">19视频</a><span>第二人称「你」的粗鲁说法，通常用于对地位低于自己或关系亲密的人。剑神对基列奴使用，体现其居高临下的态度。</span></li>
         </ul>
       </div>
     </div>
@@ -2686,7 +2695,7 @@
           <li><span class="chip goi">はいはい聞く</span><span>「はいはい」是敷衍或顺从的应答声，这里指不加思考地全盘接受、照单全收。</span></li>
           <li><span class="chip joshi">たって</span><a class="xref" href="concordance.html#q=たって" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a> <span class="dialect" title="方言 → 标准语">→ 〜ても</span><span>「〜ても」的口语变体，表示逆接假定条件，相当于「即使〜也」。</span></li>
           <li><span class="chip joshi">ねえ</span><a class="xref" href="concordance.html#q=ねえ" title="这个语法点在 19 个视频中共出现 30 次 — 点击查看全部用例">19视频</a> <span class="dialect" title="方言 → 标准语">→ ない</span><span>「ない」的口语变体，男性粗犷语体常用。</span></li>
-          <li><span class="chip joshi">だろ</span><a class="xref" href="concordance.html#q=だろ" title="这个语法点在 15 个视频中共出现 20 次 — 点击查看全部用例">15视频</a> <span class="dialect" title="方言 → 标准语">→ だろう</span><span>「だろう」的口语缩约，男性语体，表示推量或确认。</span></li>
+          <li><span class="chip joshi">だろ</span><a class="xref" href="concordance.html#q=だろ" title="这个语法点在 16 个视频中共出现 22 次 — 点击查看全部用例">16视频</a> <span class="dialect" title="方言 → 标准语">→ だろう</span><span>「だろう」的口语缩约，男性语体，表示推量或确认。</span></li>
         </ul>
       </div>
     </div>
@@ -2697,7 +2706,7 @@
         <div class="u-cn"><span class="lbl">译</span>师父总是说些难懂的话。我不明白。</div>
         <ul class="u-points">
           <li><span class="chip goi">師匠</span><a class="xref" href="concordance.html#q=師匠" title="这个语法点在 5 个视频中共出现 9 次 — 点击查看全部用例">5视频</a><span>对传授技艺的师父的尊称。基列奴虽是剑王，仍称剑神为「師匠」。</span></li>
-          <li><span class="chip joshi">には</span><a class="xref" href="concordance.html#q=には" title="这个语法点在 20 个视频中共出现 25 次 — 点击查看全部用例">20视频</a><span>「に」表示评价的基准，「は」提示主题。整句意为「对我来说（是）不明白的」。这是日语中表达能力/理解范围的典型句式。</span></li>
+          <li><span class="chip joshi">には</span><a class="xref" href="concordance.html#q=には" title="这个语法点在 21 个视频中共出现 26 次 — 点击查看全部用例">21视频</a><span>「に」表示评价的基准，「は」提示主题。整句意为「对我来说（是）不明白的」。这是日语中表达能力/理解范围的典型句式。</span></li>
         </ul>
       </div>
     </div>
@@ -2768,7 +2777,7 @@
         <ul class="u-points">
           <li><span class="chip keigo">剣神様</span><span>「様」是最高敬称。北帝对剑神使用，体现流派间的礼数。</span></li>
           <li><span class="chip keigo">頼まれ申した</span> <span class="dialect" title="方言 → 标准语">→ 頼まれました</span><span>「頼まれた」的古风谦让语形式。「申す」是「言う」的谦让语，此处作为补助动词「〜申した」相当于「〜ました」，武家语体的郑重表达。</span></li>
-          <li><span class="chip joshi">より</span><a class="xref" href="concordance.html#q=より" title="这个语法点在 10 个视频中共出现 12 次 — 点击查看全部用例">10视频</a> <span class="dialect" title="方言 → 标准语">→ から</span><span>表示动作来源的格助词，古风用法，相当于现代语的「から」。武家/时代剧语体的特征。</span></li>
+          <li><span class="chip joshi">より</span><a class="xref" href="concordance.html#q=より" title="这个语法点在 11 个视频中共出现 13 次 — 点击查看全部用例">11视频</a> <span class="dialect" title="方言 → 标准语">→ から</span><span>表示动作来源的格助词，古风用法，相当于现代语的「から」。武家/时代剧语体的特征。</span></li>
         </ul>
       </div>
     </div>
@@ -2862,7 +2871,7 @@
         <ul class="u-points">
           <li><span class="chip joshi">使っても</span><span>「使う」的テ形 + 「も」，表示逆接假定——「即使用了也〜」。</span></li>
           <li><span class="chip keigo">対処される</span><span>「対処する」的被动态，表示「被对方应对/破解」。此处非敬语，而是被动含义。</span></li>
-          <li><span class="chip joshi">し</span><a class="xref" href="concordance.html#q=し" title="这个语法点在 23 个视频中共出现 53 次 — 点击查看全部用例">23视频</a><span>并列助词，连接两个并列的说明事项——「会被破解」和「对方也会用」。</span></li>
+          <li><span class="chip joshi">し</span><a class="xref" href="concordance.html#q=し" title="这个语法点在 24 个视频中共出现 54 次 — 点击查看全部用例">24视频</a><span>并列助词，连接两个并列的说明事项——「会被破解」和「对方也会用」。</span></li>
         </ul>
       </div>
     </div>
@@ -3032,7 +3041,7 @@
         <div class="u-cn"><span class="lbl">译</span>鲁迪乌斯他…</div>
         <div class="u-asr"><span class="tag-asr">还原</span>艾莉丝欲言又止，话未说完。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">は</span><a class="xref" href="concordance.html#q=は" title="这个语法点在 21 个视频中共出现 37 次 — 点击查看全部用例">21视频</a><span>「は」为提示主题的助词。此处艾莉丝以「ルーデウスは…」开头，但话未说完便停顿，为欲言又止的表达。</span></li>
+          <li><span class="chip joshi">は</span><a class="xref" href="concordance.html#q=は" title="这个语法点在 22 个视频中共出现 38 次 — 点击查看全部用例">22视频</a><span>「は」为提示主题的助词。此处艾莉丝以「ルーデウスは…」开头，但话未说完便停顿，为欲言又止的表达。</span></li>
         </ul>
       </div>
     </div>
@@ -3236,7 +3245,7 @@
         <div class="u-cn"><span class="lbl">译</span>你看，轻松地接受吧</div>
         <div class="u-asr"><span class="tag-asr">还原</span>疑似 ASR 误听。原歌词可能为「ほら、楽を受ける」或「ほら、楽をして」等，但按现有文本分析。「楽を受ける」＝「接受轻松/安逸」，歌词中可理解为「放下负担」。</div>
         <ul class="u-points">
-          <li><span class="chip goi">ほら</span><a class="xref" href="concordance.html#q=ほら" title="这个语法点在 17 个视频中共出现 36 次 — 点击查看全部用例">17视频</a><span>感叹词，用于引起对方注意：「你看」「喂」。口语中常见。</span></li>
+          <li><span class="chip goi">ほら</span><a class="xref" href="concordance.html#q=ほら" title="这个语法点在 18 个视频中共出现 37 次 — 点击查看全部用例">18视频</a><span>感叹词，用于引起对方注意：「你看」「喂」。口语中常见。</span></li>
           <li><span class="chip goi">楽を受ける</span><a class="xref" href="concordance.html#q=楽を受ける" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>「楽」＋「を受ける」＝「接受轻松」。非惯用搭配，歌词中为创造性表达，意为「接纳安逸/放下重负」。</span></li>
         </ul>
       </div>
@@ -3249,7 +3258,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「伝えます」此处为「沿着…流下」之意，非「传达」。</div>
         <ul class="u-points">
           <li><span class="chip goi">頬を伝う<span class="star">★</span></span><span>「伝う」＝「沿着…移动」。此处「頬を伝う」＝「顺着脸颊流下」，是泪水/汗水的常用搭配。原文「伝えます」为「伝える」的ます形，但「涙が頬を伝える」同样表示「泪水沿脸颊流下」，与「伝う」语义相通。</span></li>
-          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 37 个视频中共出现 168 次 — 点击查看全部用例">37视频</a><span>句末助词，此处带有柔和的告知/叮咛语气。</span></li>
+          <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 38 个视频中共出现 171 次 — 点击查看全部用例">38视频</a><span>句末助词，此处带有柔和的告知/叮咛语气。</span></li>
         </ul>
       </div>
     </div>
@@ -4935,15 +4944,64 @@
         return { x: cx, y: cy + a * ch, w: cw, h: (b - a) * ch };
       }
       var cover = band(zh[0], zh[1]);          // mode 1: mask the translation band only
-      var coverAll = band(zh[0], ja[1]);       // mode 2: mask both bands, one enlarged line
+      // mode 2: mask both bands, one enlarged line. The UNION, whichever band is on top — releases
+      // stack them either way, and `zh top -> ja bottom` is a zero-height (or negative) rectangle
+      // on a ja-over-zh source, i.e. a 全遮 that masks nothing.
+      var coverAll = band(Math.min(zh[0], ja[0]), Math.max(zh[1], ja[1]));
       var src = band(ja[0], ja[1]);
       return { content: { x: cx, y: cy, w: cw, h: ch }, cover: cover, coverAll: coverAll,
                src: src, magnify: cover.h > src.h + 0.5, magnifyAll: coverAll.h > src.h + 0.5 };
     }
 
+    // #cnBand -> [{s, e, box:[x0,x1]|null}] in seconds and width fractions, sorted by start. Pure.
+    // An entry is [startMs, durMs] (a display the bake could not measure) or
+    // [startMs, durMs, x0, x1] with x in 1/10000 of the frame width. Malformed entries are dropped.
+    function parseBandTrack(raw){
+      var out = [];
+      (Array.isArray(raw) ? raw : []).forEach(function(r){
+        if (!Array.isArray(r) || r.length < 2 || !(r[0] >= 0) || !(r[1] > 0)) return;
+        var s = r[0] / 1000, box = null;
+        if (r.length >= 4 && r[2] >= 0 && r[3] > r[2] && r[3] <= 10000) box = [r[2] / 10000, r[3] / 10000];
+        out.push({ s: s, e: s + r[1] / 1000, box: box });
+      });
+      out.sort(function(a, b){ return a.s - b.s; });
+      return out.length ? out : null;
+    }
+
+    // The crop at time t: the UNION of the boxes of every display within +-slack of t. A display's
+    // edges are known only to a sample interval, and a crop that is right for the line leaving and
+    // wrong for the line arriving cuts words off the arriving one — so near a boundary both lines
+    // fit. null (draw the full band, uncropped) when any display in reach has no box, or none is in
+    // reach. Pure.
+    function cropBox(track, t, slack){
+      if (!track) return null;
+      var lo = t - slack, hi = t + slack, x0 = 1, x1 = 0, any = false;
+      for (var i = 0; i < track.length && track[i].s <= hi; i++){
+        var e = track[i];
+        if (e.e < lo) continue;
+        if (!e.box) return null;
+        any = true;
+        if (e.box[0] < x0) x0 = e.box[0];
+        if (e.box[1] > x1) x1 = e.box[1];
+      }
+      return any ? [x0, x1] : null;
+    }
+
+    // Where to draw a crop: ONE scale for both axes (the full-width draw could only enlarge by
+    // stretching vertically), centred in the overlay, capped at `mmax` CSS px per NATIVE px. The cap
+    // is against the source on purpose — the retired lens capped the displayed video's scale
+    // instead, and since the dock already shows the video at ~0.4x that pinned every line at 1.28x
+    // when it could reach 1.90x. `src` in native px, `dst` in CSS px. Pure.
+    function fitCrop(src, dst, mmax){
+      var m = Math.min(dst.w / src.w, dst.h / src.h, mmax);
+      var w = src.w * m, h = src.h * m;
+      return { m: m, x: (dst.w - w) / 2, y: (dst.h - h) / 2, w: w, h: h };
+    }
+
     return { tsToSec: tsToSec, secToMmss: secToMmss, sentenceId: sentenceId, pageKey: pageKey,
              assignIds: assignIds, parseHash: parseHash, stripFuri: stripFuri,
              matchSentence: matchSentence, cardText: cardText, bandRects: bandRects,
+             parseBandTrack: parseBandTrack, cropBox: cropBox, fitCrop: fitCrop,
              TELOP_KEY: TELOP_KEY, telopHidden: telopHidden, telopClass: telopClass };
   }
   /*<</page-tools-pure>>*/
@@ -4956,11 +5014,29 @@
   //   original ja line, leaving one enlarged line where both bands were.
   // On a native <video> the overlay DRAWS the Japanese band (that is the magnification); the thing
   // concealing the Chinese is the thing being magnified, so the two cannot drift. Not a cursor
-  // lens and not a second mask element. Revealed only when the build emitted band geometry
-  // (build_page.py's `bands` config). On cross-origin embeds the pixels cannot be read, so the
-  // same rectangles are opaque covers — same control, no magnification.
-  // The enlargement is vertical (the source is already full-width); a uniform zoom would have to
-  // crop the line's ends horizontally, which loses words.
+  // lens and not a second mask element. Revealed only when the page carries band geometry
+  // (build_page.py's `bands` config, or a pages.json retrofit that propagate.py writes). On
+  // cross-origin embeds the pixels cannot be read, so the same rectangles are opaque covers —
+  // same control, no magnification.
+  //
+  // CROPPED TO THE SENTENCE WHERE THE PAGE KNOWS IT. A burned-in line is centred and narrow — a
+  // median 24% of the frame on shosen-taningoto-01 — so the full-width band scaled into the cover
+  // is mostly empty picture, and the only way that draw could enlarge it into a band of fixed
+  // height was to stretch it vertically. Where the page carries a #cnBand track
+  // (tools/bake_band_track.py: each display's span plus the measured extent of its ink), the
+  // overlay draws just that extent, scaled UNIFORMLY to fit (fitCrop). The box is the sentence's
+  // own ink plus padding, so this does not cut the line's ends — the objection that kept the
+  // enlargement vertical. With no box in reach (no track, a gap, a display the bake could not
+  // measure) it draws exactly what it drew before: the full-width line, stretched vertically.
+  //
+  // IT REDRAWS ONLY WHILE THE PICTURE MOVES: every frame while playing, once on seek / pause /
+  // resize / state change, never while paused. Layout is measured on resize, not per frame; the
+  // canvas backing store is reallocated only when its size changes; and the loop stops if the
+  // <video> is swapped out for the takedown embed.
+  var CN_SLACK = 0.35;   // s: a 4 fps bake knows a display edge to 0.25 s, plus margin
+  var CN_MMAX = 3.0;     // CSS px per native px — past this a two-kana line fills the screen
+  var CN_PEEK_ZONE = 0.30;       // lower share of the frame, where <video controls> draws its bar
+  var CN_PEEK_TOUCH_MS = 3000;   // how long a touch on the picture keeps the bar visible
   function wireCnMask(){
     var frameEl = document.querySelector('.video-frame');
     var btn = document.getElementById('cnMaskToggle');
@@ -4974,11 +5050,15 @@
     if (!zh || !ja) return;
     var clip = document.getElementById('clip');
     var isVideo = !!clip && clip.tagName === 'VIDEO';
+    var track = null;
+    var tb = isVideo && document.getElementById('cnBand');
+    if (tb){ try { track = P.parseBandTrack(JSON.parse(tb.textContent)); } catch (e) { track = null; } }
     btn.hidden = false;
     var el = document.createElement(isVideo ? 'canvas' : 'div');
     el.className = 'cn-mask'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
     frameEl.appendChild(el);
     var ctx = null, raf = 0, state = 0;   // 0 off · 1 mask the zh band · 2 mask zh AND the small ja line
+    var geom = null, bw = 0, bh = 0, bdpr = 0, draws = 0;
     var TITLE = [
       '遮住中文字幕带：日文带放大到中文位置（点按循环：遮中文 → 全遮 → 关闭）',
       '只遮中文：日文放大到中文位置，下方原日文仍在（点按切到「全遮」）',
@@ -4996,20 +5076,38 @@
       return g;
     }
     function draw(){
-      raf = 0;
       if (!state) return;
-      var g = place();
+      if (!geom) geom = place();
       if (!isVideo) return;
       var vw = clip.videoWidth, vh = clip.videoHeight;
       if (!ctx || !vw || clip.readyState < 2) return;
-      var t = target(g);
+      var t = target(geom);
       var dpr = window.devicePixelRatio || 1;
-      el.width = Math.max(1, Math.round(t.w * dpr));
-      el.height = Math.max(1, Math.round(t.h * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.drawImage(clip, 0, ja[0] * vh, vw, (ja[1] - ja[0]) * vh, 0, 0, t.w, t.h);
+      var W = Math.max(1, Math.round(t.w * dpr)), H = Math.max(1, Math.round(t.h * dpr));
+      if (W !== bw || H !== bh || dpr !== bdpr){
+        el.width = W; el.height = H; bw = W; bh = H; bdpr = dpr;   // reallocates: only on change
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      ctx.clearRect(0, 0, t.w, t.h);          // .cn-mask's own background is the opaque black
+      var sy = ja[0] * vh, sh = (ja[1] - ja[0]) * vh;
+      var box = track ? P.cropBox(track, clip.currentTime, CN_SLACK) : null;
+      var d;
+      if (box){
+        var sx = box[0] * vw, sw = (box[1] - box[0]) * vw;
+        var f = P.fitCrop({ w: sw, h: sh }, { w: t.w, h: t.h }, CN_MMAX);
+        ctx.drawImage(clip, sx, sy, sw, sh, f.x, f.y, f.w, f.h);
+        d = { crop: true, sx: sx, sw: sw, m: f.m, dx: f.x, dy: f.y, dw: f.w, dh: f.h };
+      } else {
+        ctx.drawImage(clip, 0, sy, vw, sh, 0, 0, t.w, t.h);
+        d = { crop: false, sx: 0, sw: vw, m: t.h / sh, dx: 0, dy: 0, dw: t.w, dh: t.h };
+      }
+      d.sy = sy; d.sh = sh; d.ow = t.w; d.oh = t.h; d.at = clip.currentTime; d.draws = ++draws;
+      el._cn = d;   // read by tools/cdp_offline.mjs — a property, so the per-frame path never writes the DOM
     }
-    function loop(){ if (!state) return; draw(); raf = requestAnimationFrame(loop); }
+    function relayout(){ geom = null; draw(); }
+    function moving(){ return isVideo && clip.isConnected && !clip.paused && !clip.ended; }
+    function loop(){ raf = 0; if (!state || !moving()) return; draw(); raf = requestAnimationFrame(loop); }
+    function kick(){ if (state && !raf && moving()) raf = requestAnimationFrame(loop); }
     // The dots INSIDE the button are the state indicator AND a direct jump: clicking a dot sets
     // that state, clicking anywhere else on the button cycles (so Space/Enter/C on the control
     // still just cycle). One element, one id, three states — the dots are spans, not nested
@@ -5031,8 +5129,9 @@
       try { localStorage.setItem('lang:cn-mask', String(state)); } catch (e) {}
       if (state){
         if (isVideo && !ctx) ctx = el.getContext('2d');
+        geom = null;                      // the target rect differs between the two states
         draw();
-        if (isVideo && !raf) raf = requestAnimationFrame(loop);
+        kick();
       } else if (raf){ cancelAnimationFrame(raf); raf = 0; }
     }
     btn.addEventListener('click', function(ev){
@@ -5040,10 +5139,35 @@
       set(d == null ? (state + 1) % 3 : parseInt(d, 10));
     });
     if (isVideo){
-      clip.addEventListener('seeked', draw);
-      clip.addEventListener('loadedmetadata', draw);
+      ['seeked', 'loadeddata', 'pause'].forEach(function(ev){ clip.addEventListener(ev, draw); });
+      clip.addEventListener('loadedmetadata', relayout);   // the aspect (letterbox) is known from here
+      clip.addEventListener('play', kick);
+      clip.addEventListener('playing', kick);
     }
-    window.addEventListener('resize', draw);
+    window.addEventListener('resize', relayout);
+    if (window.ResizeObserver) new ResizeObserver(relayout).observe(frameEl);   // dock fold/unfold
+    // THE NATIVE SCRUB BAR LIVES IN THE SAME STRIP. <video controls> draws its bar across the bottom
+    // of the picture — where burned-in subtitles sit — and nothing can be layered between a video and
+    // its own controls, so with the lens on the bar was hidden under it; and paused, Chrome keeps the
+    // controls up, which is exactly when a learner is reading the magnified line. So the lens PEEKS:
+    // while a mouse is in the lower CN_PEEK_ZONE of the frame, or for CN_PEEK_TOUCH_MS after a touch
+    // on the picture (the gesture that brings touch controls up), the overlay fades out and the bar
+    // can be seen. Clicks always went through (pointer-events:none); this is about SEEING it. An
+    // embed cannot peek — a cross-origin player keeps its pointer events to itself.
+    var peekT = 0;
+    function peek(on){ el.classList.toggle('cn-peek', !!on); }
+    frameEl.addEventListener('pointermove', function(ev){
+      if (!state || ev.pointerType === 'touch') return;
+      var r = frameEl.getBoundingClientRect();
+      peek(ev.clientY - r.top > r.height * (1 - CN_PEEK_ZONE));
+    });
+    frameEl.addEventListener('pointerleave', function(ev){ if (ev.pointerType !== 'touch') peek(false); });
+    frameEl.addEventListener('pointerdown', function(ev){
+      if (!state || ev.pointerType !== 'touch') return;
+      peek(true);
+      clearTimeout(peekT);
+      peekT = setTimeout(function(){ peek(false); }, CN_PEEK_TOUCH_MS);
+    });
     render();                       // dots must exist even in the off state (all hollow)
     var saved = 0;
     try { var v = localStorage.getItem('lang:cn-mask'); saved = v === '2' ? 2 : (v === '1' ? 1 : 0); } catch (e) {}
