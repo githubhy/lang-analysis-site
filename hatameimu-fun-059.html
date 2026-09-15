@@ -502,12 +502,12 @@
      shadow.js + page_tools.js (pure cores unit-tested). plans/in-page-study-ux.md
      ============================================================ */
   /* shadow toggle in the dock bar (sits next to 跟随) */
-  .dock-shadow-toggle, .dock-hl-toggle, .dock-dict-toggle, .dock-cn-toggle, .dock-pin-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
+  .dock-shadow-toggle, .dock-hl-toggle, .dock-dict-toggle, .dock-cn-toggle, .dock-layout-toggle, .dock-pin-toggle{font-family:var(--font-gothic);font-size:.75rem;font-weight:600;cursor:pointer;
     color:var(--ink-soft);background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
     padding:.24rem .7rem;white-space:nowrap;flex:none;transition:color .15s,border-color .15s,background .15s;}
-  .dock-shadow-toggle:hover, .dock-hl-toggle:hover, .dock-dict-toggle:hover, .dock-cn-toggle:hover, .dock-pin-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
-  .dock-shadow-toggle.on, .dock-hl-toggle.on, .dock-dict-toggle.on, .dock-cn-toggle.on, .dock-pin-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
-  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible, .dock-dict-toggle:focus-visible, .dock-cn-toggle:focus-visible, .dock-pin-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
+  .dock-shadow-toggle:hover, .dock-hl-toggle:hover, .dock-dict-toggle:hover, .dock-cn-toggle:hover, .dock-layout-toggle:hover, .dock-pin-toggle:hover{color:var(--keigo);border-color:var(--keigo);}
+  .dock-shadow-toggle.on, .dock-hl-toggle.on, .dock-dict-toggle.on, .dock-cn-toggle.on, .dock-layout-toggle.on, .dock-pin-toggle.on{color:var(--keigo);border-color:var(--keigo);background:var(--keigo-t);}
+  .dock-shadow-toggle:focus-visible, .dock-hl-toggle:focus-visible, .dock-dict-toggle:focus-visible, .dock-cn-toggle:focus-visible, .dock-layout-toggle:focus-visible, .dock-pin-toggle:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   .dock-shadow-toggle[disabled]{opacity:.45;cursor:progress;}
   /* 目录 jump menu (回到开头 + chapters) — button matches the dock toggles; page_tools.js builds it. */
   .dock-bar{position:relative;}
@@ -590,7 +590,7 @@
   .dock-shadow .sh-mode button.on,.dock-shadow .sh-rate-cycle.on{color:var(--paper);background:var(--keigo);border-color:var(--keigo);}
   .dock-shadow button:focus-visible,.dock-dict button:focus-visible{outline:2px solid var(--keigo);outline-offset:2px;}
   @media (hover:none) and (pointer:coarse){
-    .dock-shadow-toggle,.dock-cn-toggle{min-height:44px;padding:.5rem .9rem;}
+    .dock-shadow-toggle,.dock-cn-toggle,.dock-layout-toggle{min-height:44px;padding:.5rem .9rem;}
     .dock-shadow .sh-step,.dock-shadow .sh-mode button,.dock-shadow .sh-rate-cycle,.dock-dict .d-step{min-height:44px;padding:.5rem .8rem;}
   }
 
@@ -605,7 +605,7 @@
        full-size and un-clipped either way. Covers 320/375/390/430 phones; tablets/desktop are untouched. */
     .dock-bar{ gap:.3rem; padding-left:.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .dock-bar::-webkit-scrollbar{ display:none; }
-    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-cn-toggle,.dock-pin-toggle,.dock-toc-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
+    .dock-follow,.dock-shadow-toggle,.dock-hl-toggle,.dock-dict-toggle,.dock-cn-toggle,.dock-layout-toggle,.dock-pin-toggle,.dock-toc-toggle,.dock-min{ padding-left:.5rem; padding-right:.5rem; flex:0 0 auto; }
     .dock-play{ padding-left:.4rem; padding-right:.4rem; flex:0 0 auto; }
     /* The 跟读 / 听写 control bars must stay ONE row on a phone — a wrapped 2nd row steals ~30px of
        transcript under a sticky dock. Same adaptive-scroll trick as .dock-bar: nowrap + overflow-x
@@ -644,6 +644,10 @@
   .dock-cn-toggle .cn-dot{display:inline-block;width:.42rem;height:.42rem;border-radius:50%;
     border:1px solid currentColor;margin-left:.15rem;vertical-align:.02em;opacity:.45;}
   .dock-cn-toggle .cn-dot.on{background:currentColor;opacity:1;}
+  .dock-layout-toggle .lay-dot{display:inline-block;width:.42rem;height:.42rem;border-radius:50%;
+    border:1px solid currentColor;margin-left:.15rem;vertical-align:.02em;opacity:.45;}
+  .dock-layout-toggle .lay-dot.on{background:currentColor;opacity:1;}
+  .dock-layout-toggle .lay-dot.na{background:transparent;box-shadow:inset 0 0 0 1px currentColor;opacity:.7;}
   #filterEmpty{margin:1.2rem 0 0;padding:.9rem 1.15rem;font-size:.88rem;color:var(--ink-soft);
     background:var(--card);border:1px dashed var(--line-strong);border-radius:.5rem;}
   body.filtering .u.nomatch{display:none;}
@@ -716,6 +720,81 @@
     color:var(--ink-faint);background:transparent;border:0;padding:.2rem .4rem;}
   .keys-close:hover{color:var(--shu);}
   @media (max-width:420px){ .keys-row{display:block;} .keys-k{margin-bottom:.15rem;} }
+
+  /* ============================================================
+     LAYOUTS — top / side / theater (layout.js; plans/page-layouts-design.md).
+     html[data-layout] is the EFFECTIVE layout. Nothing here may move the dock in the DOM:
+     a removed <video> pauses and a moved <iframe> reloads.
+     ============================================================ */
+  .lay-grip{display:none;font-family:var(--font-gothic);font-size:.8rem;line-height:1.2;
+    cursor:ns-resize;touch-action:none;user-select:none;-webkit-user-select:none;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;
+    padding:.24rem .55rem;flex:none;}
+  .lay-grip:hover{color:var(--shu);border-color:var(--shu);}
+  html[data-layout="top"] .lay-grip, html[data-layout="theater"] .lay-grip{display:inline-block;}
+  .video-dock.min .lay-grip{display:none;}
+  /* on a phone the tuned height budget decides the size (the UX suite's room checks) */
+  @media (max-width:560px), (max-height:480px){ .lay-grip{display:none !important;} }
+  @media (max-width:440px){ .dock-layout-toggle .lay-lbl{display:none;} }
+  .lay-split{display:none;}
+  html.lay-dragging, html.lay-dragging *{user-select:none;-webkit-user-select:none;}
+  /* an embed would swallow the pointer mid-drag */
+  html.lay-dragging iframe, html.lay-dragging video{pointer-events:none;}
+
+  /* sized top / theater: the height budget is the viewer's and the width follows it (h·16/9),
+     so it may outgrow the 46rem text column. The DOCK breaks out of .wrap (it is overflow:hidden,
+     a wider child would be clipped) — with margins, never transform (a transformed ancestor
+     becomes the containing block for fixed descendants). */
+  html[data-dock-sized] .video-dock{
+    --dock-w:max(100%, min(100vw - 2rem, calc(var(--dock-max) * 16 / 9)));
+    width:var(--dock-w);margin-left:calc((100% - var(--dock-w)) / 2);}
+  html[data-dock-sized] .dock-video{max-width:min(100%, calc(var(--dock-max) * 16 / 9));}
+
+  /* side: the dock is a fixed left column (video first), the page scrolls beside it */
+  html[data-layout="side"] body{padding-left:var(--side-w);}
+  html[data-layout="side"] .video-dock{position:fixed;top:0;left:0;bottom:0;width:var(--side-w);
+    margin:0;border-radius:0;border-width:0 1px 0 0;box-shadow:none;overflow-y:auto;
+    display:flex;flex-direction:column;}
+  html[data-layout="side"] .dock-video{order:-1;width:100%;max-width:none;margin:0;}
+  html[data-layout="side"] .video-frame{max-height:calc(100vh - 3.5rem);}
+  @supports (height:100dvh){ html[data-layout="side"] .video-frame{max-height:calc(100dvh - 3.5rem);} }
+  html[data-layout="side"] .dock-bar{flex-wrap:wrap;}
+  html[data-layout="side"] .lay-split{display:block;position:fixed;top:0;bottom:0;z-index:31;
+    left:calc(var(--side-w) - 4px);width:8px;cursor:col-resize;touch-action:none;}
+  html[data-layout="side"] .lay-split:hover, html.lay-dragging .lay-split{background:var(--line-strong);}
+
+  /* theater: the big video, the dock bars under it, then previous · current · next only.
+     (In a flex column an auto-margined box shrinks to its content, and an aspect-ratio frame
+     has none — hence width:100% on .dock-video.)
+     overflow-anchor:none — the rows change on EVERY line (previous hides, next appears, current
+     grows), and the browser's scroll anchoring answered that with a scroll of its own, which
+     follow read as the user's and switched itself off. Follow seats the rows instead. */
+  html[data-layout="theater"]{overflow-anchor:none;}
+  html[data-layout="theater"] .video-dock{display:flex;flex-direction:column;}
+  html[data-layout="theater"] .dock-video{order:-1;width:100%;}
+  /* :not(:focus-within) on the row hide and the neighbour trim — a row holding focus (an open
+     笔记 editor) stays live whatever the window does: hiding it dropped focus to <body> and the
+     next keystroke ran a page shortcut (a typed m folded the dock). */
+  html[data-layout="theater"] .wrap > :not(.video-dock):not(.resume-banner):not(.chapter):not(.u),
+  /* :not(.chapter) here too: a pre-fix page never closes a <section class="chapter"> but the
+     last (build_page.py used to rely on the NEXT chapter's open to implicitly close it), so the
+     browser nests chapter 2 inside chapter 1, chapter 3 inside chapter 2, and so on — this rule
+     must still hide only each chapter's OWN non-.u children (its .chapter-h heading, and any
+     reference/footer content an unclosed last chapter swallowed), never a NESTED <section
+     class="chapter">, or the whole nested chapter (and whichever row is active inside it) goes
+     dark. The :has() rule below is what keeps a nested chapter's ANCESTOR chapters visible. */
+  html[data-layout="theater"] .chapter > :not(.u):not(.chapter),
+  html[data-layout="theater"] .u:not(.lay-prev):not(.lay-cur):not(.lay-next):not(:focus-within){display:none !important;}
+  /* the :has() trim sits in a rule OF ITS OWN: an engine without :has() drops the whole rule a
+     :has() appears in, and inside the list above that took the row hide with it (theater showed
+     every row). Alone, such an engine loses only this chapter trim. */
+  html[data-layout="theater"] .chapter:not(:has(.lay-prev, .lay-cur, .lay-next, :focus-within)){display:none !important;}
+  /* shown even if a filter (重点 …) had hidden them: theater follows the video's real order */
+  html[data-layout="theater"] .u.lay-prev, html[data-layout="theater"] .u.lay-cur,
+  html[data-layout="theater"] .u.lay-next{display:grid !important;}
+  html[data-layout="theater"] .u.lay-prev:not(:focus-within) .u-body > :not(.u-jp),
+  html[data-layout="theater"] .u.lay-next:not(:focus-within) .u-body > :not(.u-jp){display:none;}
+  html[data-layout="theater"] .u.lay-prev, html[data-layout="theater"] .u.lay-next{opacity:.62;}
 </style>
 </head>
 <body>
@@ -5759,6 +5838,7 @@
       clip.addEventListener('playing', kick);
     }
     window.addEventListener('resize', relayout);
+    document.addEventListener('lang:layout', relayout);   // a move without a resize leaves the overlay behind
     if (window.ResizeObserver) new ResizeObserver(relayout).observe(frameEl);   // dock fold/unfold
     // THE NATIVE SCRUB BAR LIVES IN THE SAME STRIP. <video controls> draws its bar across the bottom
     // of the picture — where burned-in subtitles sit — and nothing can be layered between a video and
@@ -6028,7 +6108,12 @@
     var bar = dockEl && dockEl.querySelector('.dock-bar');
     var rows = [].slice.call(document.querySelectorAll('.u'));
     if (!bar || !rows.length) return;
-    function dockH(){ return dockEl ? dockEl.offsetHeight : 0; }
+    // How much of the viewport's top the dock covers — the SAME rule as player_auto.html's dockH()
+    // (keep the two in step; neither page script can import the other): a position:fixed dock —
+    // the side layout's column — covers nothing above the text and counts 0. offsetHeight there
+    // is the whole column's height, so a side-layout jump landed a full viewport too far (824 on an
+    // 800px window) and nothing re-seated it (final review I3; row layout-toc-dockh).
+    function dockH(){ return !dockEl ? 0 : (getComputedStyle(dockEl).position === 'fixed' ? 0 : dockEl.offsetHeight); }
     function close(){ panel.hidden = true; btn.classList.remove('on'); btn.setAttribute('aria-expanded', 'false'); }
     function place(){
       // The panel lives on <body> as position:fixed (so no dock overflow can clip it); anchor it just
@@ -6046,6 +6131,14 @@
     }
     function open(){ panel.hidden = false; place(); btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true'); }
     function jumpTo(row, toTop){
+      var ts = row.querySelector('.ts');
+      // ARM, SCROLL, CLICK — keys.js goRow's order, for its race: a `scroll` event is delivered
+      // asynchronously, so this jump's own scroll landed AFTER the click below re-armed follow, read
+      // as the user's, and suspended it — leaving theater's rows unseated. LangPlayer.seek arms the
+      // scroll guard (the timestamp click path does not). __sec is the clamped start player_auto
+      // publishes; a player that publishes none keeps the old path.
+      var lp = window.LangPlayer;
+      if (lp && lp.seek && ts && ts.__sec != null) lp.seek(ts.__sec);
       // INSTANT, not smooth: a jump is a teleport, and on a full-episode page the target can be tens
       // of thousands of px away — a smooth scroll there is a multi-second animation nobody wants.
       if (toTop) { window.scrollTo(0, 0); }
@@ -6053,7 +6146,7 @@
         var r = row.getBoundingClientRect();
         window.scrollTo(0, Math.max(0, window.pageYOffset + r.top - dockH() - 24));
       }
-      var ts = row.querySelector('.ts'); if (ts) ts.click();   // seek + arm follow + flash (player handler)
+      if (ts) ts.click();   // seek + arm follow + flash (player handler)
       close();
     }
     var entries = [{ label: '↑ 回到开头', row: rows[0], top: true }];
@@ -6327,7 +6420,7 @@
     // ruby both revealed the reading and toggled playback. Match on the ROLE too.
     var ACTIVATION = { BUTTON: 1, A: 1, RUBY: 1, SUMMARY: 1 };
     var LENS = { f: 'follow', r: 'furi', s: 'shadow', d: 'dict',
-                 h: 'highlights', o: 'overlap', m: 'fold', c: 'cnmask' };
+                 h: 'highlights', o: 'overlap', m: 'fold', c: 'cnmask', l: 'layout' };
 
     function isTyping(t){ return !!t && (TYPING[t.tag] === 1 || t.editable === true); }
     function isActivation(t){ return !!t && (ACTIVATION[t.tag] === 1 || t.role === 'button'); }
@@ -6430,7 +6523,9 @@
   // Recomputed per keypress: the filter bar and the lens toggles change this constantly.
   function visible(){
     var o = [];
-    for (var i = 0; i < rows.length; i++) if (rows[i].el.offsetParent !== null) o.push(i);
+    // Theater hides rows for LAYOUT, not as a filter: stepping still walks every line.
+    var all = document.documentElement.getAttribute('data-layout') === 'theater';
+    for (var i = 0; i < rows.length; i++) if (all || rows[i].el.offsetParent !== null) o.push(i);
     return o;
   }
 
@@ -6476,7 +6571,8 @@
   // and this overlay is the only place they are written down for the reader.
   var LENS_BTN = { follow: 'dockFollow', furi: 'furiToggle', shadow: 'shadowToggle',
                    dict: 'dictToggle', highlights: 'highlightsToggle',
-                   overlap: 'overlapToggle', fold: 'dockMin', cnmask: 'cnMaskToggle' };
+                   overlap: 'overlapToggle', fold: 'dockMin', cnmask: 'cnMaskToggle',
+                   layout: 'layoutToggle' };
   var help = null;
   function row(keys, what){
     var ks = '';
@@ -6504,6 +6600,8 @@
         row(['O'], '被插话') +
         (document.getElementById('cnMaskToggle') && !document.getElementById('cnMaskToggle').hidden
           ? row(['C'], '遮中文（循环：遮中文 → 全遮 → 关；按钮上的圆点可直接选状态）') : '') +
+        (document.getElementById('layoutToggle') && !document.getElementById('layoutToggle').hidden
+          ? row(['L'], '布局：上方 → 并排 → 影院') : '') +
         row(['M'], '收起 / 展开播放器') +
         '<h3>其他</h3>' +
         row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
@@ -6530,7 +6628,19 @@
     'scrub-fwd':  function(){ scrub(5); },
     'scrub-back': function(){ scrub(-5); },
     replay:       replay,
-    search:       function(){ var el = document.getElementById('filterInput'); if (el) el.focus(); },
+    search:       function(){
+      // Search lives in the filter bar, which theater hides: click the Top dot first (a shortcut
+      // clicks the control, never reimplements it).
+      var theater = document.documentElement.getAttribute('data-layout') === 'theater';
+      var topDot = theater && document.querySelector('#layoutToggle [data-lay="top"]');
+      if (topDot) topDot.click();
+      var el = document.getElementById('filterInput'); if (el) el.focus();
+      // From THEATER only, then suspend follow — click 跟随 if it is on. The Top click's re-seat
+      // armed follow's scroll guard just before the focus, so with follow on, the next line change
+      // scrolled the page away from the search box the viewer had just asked for. Top's behaviour
+      // is deliberately left as it was.
+      if (theater && el){ var f = document.getElementById('dockFollow'); if (f && f.classList.contains('on')) f.click(); }
+    },
     blur:         function(){ var a = document.activeElement; if (a && a.blur) a.blur(); },
     help:         function(){ toggleHelp(!helpOpen()); }
   };
