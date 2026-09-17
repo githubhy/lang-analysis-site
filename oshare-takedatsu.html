@@ -4557,20 +4557,55 @@
     // THEATER'S CAP. Theater promises two things: a big (~70%) video AND previous · current ·
     // next on screen. On a laptop they conflict: 70% of 800px leaves ~190px under the dock for
     // ~450px of rows. So the chosen size (stored, else 0.70) is the UPPER bound, and the video
-    // gives way to keep `reserve` px (the dock bar + THEATER_ROOM_REM) for the rows: it binds
-    // only on shorter screens (~58% at 1280x800) and a tall screen keeps its 70%. Floored at
-    // RANGE.theater's minimum so a landscape phone still gets a picture.
+    // gives way to keep `reserve` px for the rows: it binds only on shorter screens and a tall
+    // screen keeps its 70%. Floored at RANGE.theater's minimum so a landscape phone still gets
+    // a picture.
     var THEATER_ROOM_REM = 18;
+    var THEATER_SEAT_PX = 24;   // scrollToActive seats the first row this far under the dock
+    var THEATER_PAD_PX  = 8;    // a hair of breathing room under the last row
+    // THE RESERVE IS MEASURED, NOT ASSUMED — and a constant provably cannot do this job.
+    // previous and next are ONE line each (~28px); the current row is FULLY EXPANDED (furigana,
+    // translation, grammar notes), measured at 159–451px. A constant big enough for the worst
+    // case is ~32rem, and 32rem on an 800px laptop drives the video to 30% — under its own 40%
+    // floor — so it would pay height on EVERY page and still fail on the one page it was raised
+    // for. Measured instead: a 1440px screen fits all three at ~61%, and an 800px one clamps at
+    // the floor, which is the most the geometry allows. `trio` is prev.top → next.bottom (so it
+    // carries the inter-row gaps for free); 0 means nothing is marked yet — the very first stamp,
+    // before any line has played — and only there does the old 18rem constant still apply.
+    function theaterReserve(bar, trio, seat, pad, fallbackPx){
+      var b = bar > 0 ? bar : 0;
+      if (!(trio > 0)) return b + (fallbackPx > 0 ? fallbackPx : 0);
+      return b + (seat > 0 ? seat : 0) + trio + (pad > 0 ? pad : 0);
+    }
+    // THEATER HOLDS STILL WITHIN A SESSION: the measured cap may SHRINK, never grow back. Measuring
+    // the trio on every line change made the video resize on nearly EVERY line — 4 of 4 line changes
+    // in 20s of tomodachi at 1280x900 moved it, by up to 100px (360 / 456 / 474 / 374), where the
+    // old constant never moved it at all — and every dock control moved with it: offline.sh's L11
+    // aimed at the side dot, the video grew under the pointer in the 200ms before the click, and the
+    // click paused the video instead (6 of 9 runs against 0 of 12 on main). Shrinking at once keeps
+    // the promise — the cap is never larger than the CURRENT trio allows, so next stays on screen
+    // exactly as before; refusing to grow back is what ends the pumping. The price: after one long
+    // line the video stays at that size for the rest of the session. `low` is the session's
+    // smallest cap (null = none yet), `f` this measurement, `measured` false while no trio is
+    // marked — the 18rem fallback must never seed the session, or it would pin the whole session
+    // to a guess. Resets (low = null) are the caller's: entering theater, a resize, a ⇕ drag/reset.
+    function theaterSession(low, f, measured){
+      var have = low !== null && low !== undefined;
+      if (!measured) return { low: have ? low : null, cap: have ? low : f };
+      var next = have ? Math.min(low, f) : f;
+      return { low: next, cap: next };
+    }
     function theaterFrac(frac, h, reserve){
       var f = (frac === null || frac === undefined) ? DEFAULT.theater : clamp(frac, RANGE.theater[0], RANGE.theater[1]);
       if (!(h > 0) || !(reserve > 0)) return f;
       return clamp((h - reserve) / h, RANGE.theater[0], f);
     }
     return { LAYOUTS: LAYOUTS, SIDE_MIN_W: SIDE_MIN_W, RANGE: RANGE, DEFAULT: DEFAULT,
-             THEATER_ROOM_REM: THEATER_ROOM_REM,
+             THEATER_ROOM_REM: THEATER_ROOM_REM, THEATER_SEAT_PX: THEATER_SEAT_PX,
+             THEATER_PAD_PX: THEATER_PAD_PX, theaterReserve: theaterReserve,
              clamp: clamp, parseChoice: parseChoice, parseFrac: parseFrac, available: available,
              effective: effective, cycle: cycle, sideWidth: sideWidth, neighbours: neighbours,
-             dragFrac: dragFrac, theaterFrac: theaterFrac };
+             dragFrac: dragFrac, theaterFrac: theaterFrac, theaterSession: theaterSession };
   }
   /*<</layout-pure>>*/
   var P = LAYOUT_PURE();
@@ -4596,6 +4631,7 @@
   var rows = Array.prototype.slice.call(document.querySelectorAll('.u'));
   var marked = { prev: -1, cur: -1, next: -1 };
   var theaterF = null;          // theater's EFFECTIVE fraction (after the cap) — the ⇕ drag starts here
+  var theaterLow = null;        // this theater session's smallest measured cap — see P.theaterSession
   // The ⇕ handle is hidden under this query (template.html's `.lay-grip` @media — keep the two
   // strings identical). There the tuned phone budget decides the top size, so a STORED top size is
   // ignored: one chosen on a desktop would otherwise override it with no handle to reset it.
@@ -4620,6 +4656,47 @@
     clearMarks();
     for (var k in nb) if (nb[k] >= 0) rows[nb[k]].classList.add('lay-' + k);
     marked = nb;
+    // The rows just changed, so the room they need changed with them. Re-derive the cap from the
+    // NEW trio and resize HERE, synchronously, in this same lang:active turn: setActive has
+    // already armed the scroll guard (it does so whenever isTheater()) and has not yet called
+    // scrollToActive, so the seat that follows measures post-resize geometry and the resize can
+    // never read as the user's own scroll. Doing this asynchronously is precisely final-review C1.
+    sizeTheater(window.innerHeight);
+  }
+
+  // ---- theater's cap, MEASURED ----
+  // prev.top → next.bottom is the room previous · current · next actually occupy right now, with
+  // the inter-row gaps carried for free. 0 when nothing is marked yet (the first stamp, before any
+  // line has played) — the only case where the old 18rem constant still decides.
+  function trioPx(){
+    var first = marked.prev >= 0 ? rows[marked.prev] : (marked.cur >= 0 ? rows[marked.cur] : null);
+    var last  = marked.next >= 0 ? rows[marked.next] : (marked.cur >= 0 ? rows[marked.cur] : null);
+    if (!first || !last) return 0;
+    var a = first.getBoundingClientRect(), b = last.getBoundingClientRect();
+    return Math.max(0, b.bottom - a.top);
+  }
+  function theaterCap(h){
+    var bar = dock.querySelector('.dock-bar');
+    return P.theaterFrac(size.theater, h, P.theaterReserve(
+      bar ? bar.offsetHeight : 0, trioPx(), P.THEATER_SEAT_PX, P.THEATER_PAD_PX,
+      P.THEATER_ROOM_REM * remPx()));
+  }
+  // Writes --dock-max only when the cap actually MOVED. The write changes the dock's height, not
+  // any row's, so re-measuring cannot feed itself a new answer — but the tolerance makes that a
+  // fact of the code rather than of the CSS, and keeps a sub-pixel wobble from churning the style.
+  // The cap theater may show NOW: this measurement folded into the session's low-water mark.
+  function capNow(h){
+    var r = P.theaterSession(theaterLow, theaterCap(h), trioPx() > 0);
+    theaterLow = r.low;
+    return r.cap;
+  }
+  function sizeTheater(h){
+    var f = capNow(h);
+    if (theaterF !== null && Math.abs(f - theaterF) < 0.005) return false;
+    theaterF = f;
+    root.style.setProperty('--dock-max', (f * 100).toFixed(2) + VH);
+    root.setAttribute('data-dock-sized', '');
+    return true;
   }
 
   // ---- the control ----
@@ -4644,20 +4721,24 @@
     root.setAttribute('data-layout', next);
     if (next === 'side') st.setProperty('--side-w', P.sideWidth(size.side, e.w, 26 * remPx()) + 'px');
     else st.removeProperty('--side-w');
-    var frac = null;
+    var prevCap = theaterF, changed = next !== eff, frac = null;
+    if (next !== 'theater' || changed) theaterLow = null;      // a new theater session starts fresh
     if (next === 'theater'){
-      // the chosen size is the upper bound; the rows keep the dock bar + 18rem (P.theaterFrac)
-      var bar = dock.querySelector('.dock-bar');
-      frac = theaterF = P.theaterFrac(size.theater, e.h, (bar ? bar.offsetHeight : 0) + P.THEATER_ROOM_REM * remPx());
-    } else if (next === 'top' && !e.folded && !phone()) frac = size.top;
+      // the chosen size is only the UPPER bound; the rows keep the room they MEASURE. On the way
+      // INTO theater the trio is not marked yet (leaving theater cleared it), so this first pass
+      // falls back to the constant and markTheater() below re-derives it once the rows are known.
+      frac = theaterF = capNow(e.h);
+    } else { theaterF = null; if (next === 'top' && !e.folded && !phone()) frac = size.top; }
     if (frac !== null){ st.setProperty('--dock-max', (frac * 100).toFixed(2) + VH); root.setAttribute('data-dock-sized', ''); }
     else { st.removeProperty('--dock-max'); root.removeAttribute('data-dock-sized'); }
-    var changed = next !== eff;
     eff = next;
     markTheater();
     render(e);
-    // not on the initial stamp: a forced re-seat at load would jump a page that has not played
-    if (changed && ready){
+    // not on the initial stamp: a forced re-seat at load would jump a page that has not played.
+    // A cap that MOVED while we were already in theater (a window resize) re-seats through the
+    // same event: player_auto's lang:layout handler arms the guard before it scrolls, which is
+    // why layout.js never scrolls the page itself.
+    if (ready && (changed || (eff === 'theater' && prevCap !== null && theaterF !== prevCap))){
       try { document.dispatchEvent(new CustomEvent('lang:layout', { detail: { layout: eff } })); } catch (err){}
     }
   }
@@ -4707,7 +4788,7 @@
             : (size.top !== null ? size.top : frameH() / window.innerHeight);
       return { which: w, y: ev.clientY, f: f };
     },
-    function(s, e){ size[s.which] = P.dragFrac(s.f, e.clientY - s.y, window.innerHeight, s.which); apply(); },
+    function(s, e){ size[s.which] = P.dragFrac(s.f, e.clientY - s.y, window.innerHeight, s.which); theaterLow = null; apply(); },
     function(s){ save(KEY[s.which], size[s.which]); });
   drag(split,
     function(){ return {}; },
@@ -4715,14 +4796,14 @@
     function(){ save(KEY.side, size.side); });
   grip.addEventListener('dblclick', function(){
     var w = eff === 'theater' ? 'theater' : 'top';
-    size[w] = null; save(KEY[w], null); apply();
+    size[w] = null; save(KEY[w], null); theaterLow = null; apply();
   });
   split.addEventListener('dblclick', function(){ size.side = null; save(KEY.side, null); apply(); });
 
   // ---- re-evaluate on everything that can change the effective layout ----
   var raf = 0;
   window.addEventListener('resize', function(){
-    if (!raf) raf = requestAnimationFrame(function(){ raf = 0; apply(); });
+    if (!raf) raf = requestAnimationFrame(function(){ raf = 0; theaterLow = null; apply(); });   // new geometry, new session
   });
   new MutationObserver(function(){ apply(); }).observe(dock, { attributes: true, attributeFilter: ['class'] }); // 收起/展开
   document.addEventListener('lang:transport', function(){ apply(); });   // a seek-only fallback leaves theater
