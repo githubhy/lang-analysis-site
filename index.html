@@ -839,6 +839,20 @@
      (computed display, in a real browser) — no unit test could see it. */
   a.idx-row[hidden]{display:none;}
   .idx-recent[hidden]{display:none;}
+  /* ...and the same trap again for the recent cards: the strip now bakes the top N under BOTH sort
+     orders and hides the extras, and `a.idx-card{display:flex}` would render every one of them. */
+  a.idx-card[hidden]{display:none;}
+  /* 排序: 发布日期 (the content's first air/publish date — what the list is baked in) or 收录日期 (the
+     date the page was built here). Its own class, NOT .idx-chip: index_filter.js binds the genre
+     handler to every .idx-chip, and a sort button there would also clear the genre filter. */
+  .idx-sort{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;font-family:var(--font-gothic);
+    font-size:.8rem;color:var(--ink-faint);}
+  /* .idx-chip's declarations exactly — `font:inherit` also inherits the body's line-height and
+     made these 3px taller than the chips beside them (33 vs 30, measured with no emulation) */
+  .idx-sort-b{font-family:var(--font-gothic);font-size:.8rem;cursor:pointer;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;padding:.28rem .8rem;}
+  .idx-sort-b.on{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  @media (hover:none) and (pointer:coarse){ .idx-sort-b{min-height:44px;min-width:44px;} }
   .idx-resume-link{display:inline-block;font-family:var(--font-gothic);font-weight:600;font-size:.9rem;
     text-decoration:none;color:var(--shu);background:var(--card);border:1px solid var(--line);
     border-left:3px solid var(--shu);border-radius:.5rem;padding:.55rem .9rem;}
@@ -864,6 +878,7 @@
       <button class="idx-chip" data-genre="biz" type="button" style="color:#a0522d">ビジネス</button>
       <button class="idx-chip" data-genre="dra" type="button" style="color:#8c3a5a">ドラマ</button>
       <button class="idx-chip" data-genre="ani" type="button" style="color:#4a7ab5">アニメ</button></div>
+    <div class="idx-sort" role="group" aria-label="排序"><span class="idx-sort-l">排序</span><button class="idx-sort-b on" data-sort="date" type="button" aria-pressed="true" title="按视频首播 / 发布日期">发布日期</button><button class="idx-sort-b" data-sort="processed" type="button" aria-pressed="false" title="按本站制作收录的日期">收录日期</button></div>
   </div>
 
   <p><a class="cc-link home-link" href="home.html">今日学习 · 到期的语法卡 / 词汇 / 继续学习，集中在一处 →</a></p>
@@ -873,105 +888,105 @@
   <div id="idxResume" class="idx-resume" hidden></div>
 
   <div class="sec idx-recent-h">最近更新</div>
-  <div class="idx-recent"><a class="idx-card" href="tian-cai-wei-zhuang-nv-you-ep01.html"><span class="idx-card-eb" style="color:#c0442c">恋愛短剧 · 09-19</span><span class="idx-card-jp">その天才様は偽装彼女に執着する 第1話</span><span class="idx-card-src">CBCテレビ</span><span class="idx-card-pills"><span class="idx-pill">306 句</span><span class="idx-pill">23:25</span><span class="idx-pill idx-fav-n" data-yt="BV1B97T6cEGh" hidden></span></span></a><a class="idx-card" href="yanagisawa-suimin-01.html"><span class="idx-card-eb" style="color:#1f7a63">ニュース · 09-13</span><span class="idx-card-jp">「睡眠へのこだわり」ラスカー賞・柳沢正史教授</span><span class="idx-card-src">日テレNEWS</span><span class="idx-card-pills"><span class="idx-pill">369 句</span><span class="idx-pill">26:39</span><span class="idx-pill idx-fav-n" data-yt="-ZMNHupNQks" hidden></span></span></a><a class="idx-card" href="kenryoku-hakaba-01.html"><span class="idx-card-eb" style="color:#8c3a5a">ドラマ · 08-26</span><span class="idx-card-jp">権力の墓場 1〜5話 · 逐句精讲</span><span class="idx-card-src">BUMP</span><span class="idx-card-pills"><span class="idx-pill">270 句</span><span class="idx-pill">14:56</span><span class="idx-pill idx-fav-n" data-yt="Bv3sj-D5VUU" hidden></span></span></a></div>
+  <div class="idx-recent"><a class="idx-card" href="tian-cai-wei-zhuang-nv-you-ep01.html" data-slug="tian-cai-wei-zhuang-nv-you-ep01" data-date="2026-09-19" data-processed="2026-09-19"><span class="idx-card-eb" style="color:#c0442c">恋愛短剧 · <span class="idx-card-d">09-19</span></span><span class="idx-card-jp">その天才様は偽装彼女に執着する 第1話</span><span class="idx-card-src">CBCテレビ</span><span class="idx-card-pills"><span class="idx-pill">306 句</span><span class="idx-pill">23:25</span><span class="idx-pill idx-fav-n" data-yt="BV1B97T6cEGh" hidden></span></span></a><a class="idx-card" href="yanagisawa-suimin-01.html" data-slug="yanagisawa-suimin-01" data-date="2026-09-13" data-processed="2026-09-21"><span class="idx-card-eb" style="color:#1f7a63">ニュース · <span class="idx-card-d">09-13</span></span><span class="idx-card-jp">「睡眠へのこだわり」ラスカー賞・柳沢正史教授</span><span class="idx-card-src">日テレNEWS</span><span class="idx-card-pills"><span class="idx-pill">369 句</span><span class="idx-pill">26:39</span><span class="idx-pill idx-fav-n" data-yt="-ZMNHupNQks" hidden></span></span></a><a class="idx-card" href="kenryoku-hakaba-01.html" data-slug="kenryoku-hakaba-01" data-date="2026-08-26" data-processed="2026-09-06"><span class="idx-card-eb" style="color:#8c3a5a">ドラマ · <span class="idx-card-d">08-26</span></span><span class="idx-card-jp">権力の墓場 1〜5話 · 逐句精讲</span><span class="idx-card-src">BUMP</span><span class="idx-card-pills"><span class="idx-pill">270 句</span><span class="idx-pill">14:56</span><span class="idx-pill idx-fav-n" data-yt="Bv3sj-D5VUU" hidden></span></span></a><a class="idx-card" href="shiranakute-ii-koto-01.html" data-slug="shiranakute-ii-koto-01" data-date="2020-01-08" data-processed="2026-09-20" hidden><span class="idx-card-eb" style="color:#8c3a5a">ドラマ · <span class="idx-card-d">01-08</span></span><span class="idx-card-jp">知らなくていいコト 第1話</span><span class="idx-card-src">日本テレビ</span><span class="idx-card-pills"><span class="idx-pill">617 句</span><span class="idx-pill">50:55</span><span class="idx-pill idx-fav-n" data-yt="BV17xZjBXEkD" hidden></span></span></a></div>
 
   <div class="sec idx-all-h">全部 · 全 65 篇</div>
   <div class="idx-list">
     <div class="idx-month">2026 年 9 月</div>
-    <a class="idx-row" href="tian-cai-wei-zhuang-nv-you-ep01.html" data-genre="koi" data-search="その天才様は偽装彼女に執着する 第1話 cbcテレビ tian-cai-wei-zhuang-nv-you-ep01 恋愛短剧"><span class="idx-date">09-19</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">その天才様は偽装彼女に執着する 第1話</span><span class="idx-n">306 句</span><span class="idx-dur">23:25</span></a>
-    <a class="idx-row" href="yanagisawa-suimin-01.html" data-genre="news" data-search="「睡眠へのこだわり」ラスカー賞・柳沢正史教授 日テレnews yanagisawa-suimin-01 ニュース"><span class="idx-date">09-13</span><span class="idx-gtag" style="color:#1f7a63">ニュース</span><span class="idx-title">「睡眠へのこだわり」ラスカー賞・柳沢正史教授</span><span class="idx-n">369 句</span><span class="idx-dur">26:39</span></a>
+    <a class="idx-row" href="tian-cai-wei-zhuang-nv-you-ep01.html" data-genre="koi" data-search="その天才様は偽装彼女に執着する 第1話 cbcテレビ tian-cai-wei-zhuang-nv-you-ep01 恋愛短剧" data-slug="tian-cai-wei-zhuang-nv-you-ep01" data-date="2026-09-19" data-processed="2026-09-19"><span class="idx-date" title="发布 2026-09-19 · 收录 2026-09-19">09-19</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">その天才様は偽装彼女に執着する 第1話</span><span class="idx-n">306 句</span><span class="idx-dur">23:25</span></a>
+    <a class="idx-row" href="yanagisawa-suimin-01.html" data-genre="news" data-search="「睡眠へのこだわり」ラスカー賞・柳沢正史教授 日テレnews yanagisawa-suimin-01 ニュース" data-slug="yanagisawa-suimin-01" data-date="2026-09-13" data-processed="2026-09-21"><span class="idx-date" title="发布 2026-09-13 · 收录 2026-09-21">09-13</span><span class="idx-gtag" style="color:#1f7a63">ニュース</span><span class="idx-title">「睡眠へのこだわり」ラスカー賞・柳沢正史教授</span><span class="idx-n">369 句</span><span class="idx-dur">26:39</span></a>
     <div class="idx-month">2026 年 8 月</div>
-    <a class="idx-row" href="kenryoku-hakaba-01.html" data-genre="dra" data-search="権力の墓場 1〜5話 · 逐句精讲 bump kenryoku-hakaba-01 ドラマ"><span class="idx-date">08-26</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">権力の墓場 1〜5話 · 逐句精讲</span><span class="idx-n">270 句</span><span class="idx-dur">14:56</span></a>
-    <a class="idx-row" href="gaffigan-teenagers.html" data-genre="var" data-search="why teenagers are so embarrassing · line by line jim gaffigan gaffigan-teenagers バラエティ"><span class="idx-date">08-12</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">Why Teenagers Are So Embarrassing · line by line</span><span class="idx-n">115 句</span><span class="idx-dur">9:27</span></a>
-    <a class="idx-row" href="okada-stretch.html" data-genre="var" data-search="全力ストレッチに“ストレッチ目的”で行ってるふりする男 岡田を追え!! 【緑】 okada-stretch バラエティ"><span class="idx-date">08-11</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">全力ストレッチに“ストレッチ目的”で行ってるふりする男</span><span class="idx-n">416 句</span><span class="idx-dur">24:37</span></a>
-    <a class="idx-row" href="mushoku-tensei-s3-01.html" data-genre="ani" data-search="無職転生 第3期 第1話「エリス、剣の聖地へ」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-01 アニメ"><span class="idx-date">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第1話「エリス、剣の聖地へ」</span><span class="idx-n">221 句</span><span class="idx-dur">23:41</span></a>
-    <a class="idx-row" href="mushoku-tensei-s3-02.html" data-genre="ani" data-search="無職転生 第3期 第2話「吠えよ狂犬」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-02 アニメ"><span class="idx-date">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第2話「吠えよ狂犬」</span><span class="idx-n">275 句</span><span class="idx-dur">23:14</span></a>
-    <a class="idx-row" href="mushoku-tensei-s3-03.html" data-genre="ani" data-search="無職転生 第3期 第3話「帰ってきた日常」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-03 アニメ"><span class="idx-date">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第3話「帰ってきた日常」</span><span class="idx-n">299 句</span><span class="idx-dur">23:21</span></a>
-    <a class="idx-row" href="mushoku-tensei-s3-04.html" data-genre="ani" data-search="無職転生 第3期 第4話「水王級魔術師」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-04 アニメ"><span class="idx-date">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第4話「水王級魔術師」</span><span class="idx-n">344 句</span><span class="idx-dur">23:21</span></a>
-    <a class="idx-row" href="mushoku-tensei-s3-05.html" data-genre="ani" data-search="無職転生 第3期 第5話「お祝い」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-05 アニメ"><span class="idx-date">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第5話「お祝い」</span><span class="idx-n">314 句</span><span class="idx-dur">23:24</span></a>
-    <a class="idx-row" href="mushoku-tensei-s3-06.html" data-genre="ani" data-search="無職転生 第3期 第6話「修羅場再び？」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-06 アニメ"><span class="idx-date">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第6話「修羅場再び？」</span><span class="idx-n">340 句</span><span class="idx-dur">23:29</span></a>
-    <a class="idx-row" href="mushoku-tensei-s3-07.html" data-genre="ani" data-search="無職転生 第3期 第7話「第四段階」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-07 アニメ"><span class="idx-date">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第7話「第四段階」</span><span class="idx-n">349 句</span><span class="idx-dur">23:25</span></a>
+    <a class="idx-row" href="kenryoku-hakaba-01.html" data-genre="dra" data-search="権力の墓場 1〜5話 · 逐句精讲 bump kenryoku-hakaba-01 ドラマ" data-slug="kenryoku-hakaba-01" data-date="2026-08-26" data-processed="2026-09-06"><span class="idx-date" title="发布 2026-08-26 · 收录 2026-09-06">08-26</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">権力の墓場 1〜5話 · 逐句精讲</span><span class="idx-n">270 句</span><span class="idx-dur">14:56</span></a>
+    <a class="idx-row" href="gaffigan-teenagers.html" data-genre="var" data-search="why teenagers are so embarrassing · line by line jim gaffigan gaffigan-teenagers バラエティ" data-slug="gaffigan-teenagers" data-date="2026-08-12" data-processed="2026-09-06"><span class="idx-date" title="发布 2026-08-12 · 收录 2026-09-06">08-12</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">Why Teenagers Are So Embarrassing · line by line</span><span class="idx-n">115 句</span><span class="idx-dur">9:27</span></a>
+    <a class="idx-row" href="okada-stretch.html" data-genre="var" data-search="全力ストレッチに“ストレッチ目的”で行ってるふりする男 岡田を追え!! 【緑】 okada-stretch バラエティ" data-slug="okada-stretch" data-date="2026-08-11" data-processed="2026-08-16"><span class="idx-date" title="发布 2026-08-11 · 收录 2026-08-16">08-11</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">全力ストレッチに“ストレッチ目的”で行ってるふりする男</span><span class="idx-n">416 句</span><span class="idx-dur">24:37</span></a>
+    <a class="idx-row" href="mushoku-tensei-s3-01.html" data-genre="ani" data-search="無職転生 第3期 第1話「エリス、剣の聖地へ」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-01 アニメ" data-slug="mushoku-tensei-s3-01" data-date="2026-08-08" data-processed="2026-08-11"><span class="idx-date" title="发布 2026-08-08 · 收录 2026-08-11">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第1話「エリス、剣の聖地へ」</span><span class="idx-n">221 句</span><span class="idx-dur">23:41</span></a>
+    <a class="idx-row" href="mushoku-tensei-s3-02.html" data-genre="ani" data-search="無職転生 第3期 第2話「吠えよ狂犬」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-02 アニメ" data-slug="mushoku-tensei-s3-02" data-date="2026-08-08" data-processed="2026-08-12"><span class="idx-date" title="发布 2026-08-08 · 收录 2026-08-12">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第2話「吠えよ狂犬」</span><span class="idx-n">275 句</span><span class="idx-dur">23:14</span></a>
+    <a class="idx-row" href="mushoku-tensei-s3-03.html" data-genre="ani" data-search="無職転生 第3期 第3話「帰ってきた日常」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-03 アニメ" data-slug="mushoku-tensei-s3-03" data-date="2026-08-08" data-processed="2026-08-12"><span class="idx-date" title="发布 2026-08-08 · 收录 2026-08-12">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第3話「帰ってきた日常」</span><span class="idx-n">299 句</span><span class="idx-dur">23:21</span></a>
+    <a class="idx-row" href="mushoku-tensei-s3-04.html" data-genre="ani" data-search="無職転生 第3期 第4話「水王級魔術師」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-04 アニメ" data-slug="mushoku-tensei-s3-04" data-date="2026-08-08" data-processed="2026-08-12"><span class="idx-date" title="发布 2026-08-08 · 收录 2026-08-12">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第4話「水王級魔術師」</span><span class="idx-n">344 句</span><span class="idx-dur">23:21</span></a>
+    <a class="idx-row" href="mushoku-tensei-s3-05.html" data-genre="ani" data-search="無職転生 第3期 第5話「お祝い」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-05 アニメ" data-slug="mushoku-tensei-s3-05" data-date="2026-08-08" data-processed="2026-08-12"><span class="idx-date" title="发布 2026-08-08 · 收录 2026-08-12">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第5話「お祝い」</span><span class="idx-n">314 句</span><span class="idx-dur">23:24</span></a>
+    <a class="idx-row" href="mushoku-tensei-s3-06.html" data-genre="ani" data-search="無職転生 第3期 第6話「修羅場再び？」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-06 アニメ" data-slug="mushoku-tensei-s3-06" data-date="2026-08-08" data-processed="2026-08-12"><span class="idx-date" title="发布 2026-08-08 · 收录 2026-08-12">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第6話「修羅場再び？」</span><span class="idx-n">340 句</span><span class="idx-dur">23:29</span></a>
+    <a class="idx-row" href="mushoku-tensei-s3-07.html" data-genre="ani" data-search="無職転生 第3期 第7話「第四段階」 テレビアニメ『無職転生』第3期 mushoku-tensei-s3-07 アニメ" data-slug="mushoku-tensei-s3-07" data-date="2026-08-08" data-processed="2026-08-12"><span class="idx-date" title="发布 2026-08-08 · 收录 2026-08-12">08-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">無職転生 第3期 第7話「第四段階」</span><span class="idx-n">349 句</span><span class="idx-dur">23:25</span></a>
     <div class="idx-month">2026 年 7 月</div>
-    <a class="idx-row" href="bizkon-01.html" data-genre="koi" data-search="ビジネス婚 第1話 ビジネス婚（漫画改编） bizkon-01 恋愛短剧"><span class="idx-date">07-30</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">ビジネス婚 第1話</span><span class="idx-n">332 句</span><span class="idx-dur">54:17</span></a>
-    <a class="idx-row" href="sakura-ayane-atama.html" data-genre="int" data-search="「ちゃおっ子のままトップ声優になった」佐倉綾音の頭の中 players official sakura-ayane-atama インタビュー"><span class="idx-date">07-24</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「ちゃおっ子のままトップ声優になった」佐倉綾音の頭の中</span><span class="idx-n">516 句</span><span class="idx-dur">47:11</span></a>
-    <a class="idx-row" href="doraemon-3gatsu.html" data-genre="ani" data-search="ドラえもん「いつでも卒業証書」 テレビ朝日 ドラえもん doraemon-3gatsu アニメ"><span class="idx-date">07-18</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">ドラえもん「いつでも卒業証書」</span><span class="idx-n">148 句</span><span class="idx-dur">08:02</span></a>
-    <a class="idx-row" href="fruits-takkyuubin-01.html" data-genre="dra" data-search="フルーツ宅配便 第1話 テレビ東京 fruits-takkyuubin-01 ドラマ"><span class="idx-date">07-17</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">フルーツ宅配便 第1話</span><span class="idx-n">414 句</span><span class="idx-dur">30:12</span></a>
-    <a class="idx-row" href="fruits-takkyuubin-02.html" data-genre="dra" data-search="フルーツ宅配便 第2話 テレビ東京 fruits-takkyuubin-02 ドラマ"><span class="idx-date">07-17</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">フルーツ宅配便 第2話</span><span class="idx-n">459 句</span><span class="idx-dur">30:12</span></a>
-    <a class="idx-row" href="kayanomi-mushoku.html" data-genre="var" data-search="かやのみ#190「愛が溢れかえった 無職転生コラボ第3弾！後半」 かやのみ（茅野愛衣） kayanomi-mushoku バラエティ"><span class="idx-date">07-17</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">かやのみ#190「愛が溢れかえった 無職転生コラボ第3弾！後半」</span><span class="idx-n">432 句</span><span class="idx-dur">30:31</span></a>
-    <a class="idx-row" href="bukuro-tenshoku.html" data-genre="var" data-search="「勝手に転職先を探そう！」 さらば青春のテレビ大阪チャンネル bukuro-tenshoku バラエティ"><span class="idx-date">07-14</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「勝手に転職先を探そう！」</span><span class="idx-n">624 句</span><span class="idx-dur">32:43</span></a>
-    <a class="idx-row" href="hatameimu-fun-059.html" data-genre="var" data-search="「ついに福本莉子さんが登場！」 tmeic presents 畑芽育とfun time hatameimu-fun-059 バラエティ"><span class="idx-date">07-14</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「ついに福本莉子さんが登場！」</span><span class="idx-n">306 句</span><span class="idx-dur">26:00</span></a>
-    <a class="idx-row" href="business-model-9.html" data-genre="biz" data-search="「なぜモノを売ると儲からないのか」ビジネスモデル9分類 pivot 公式チャンネル business-model-9 ビジネス"><span class="idx-date">07-12</span><span class="idx-gtag" style="color:#a0522d">ビジネス</span><span class="idx-title">「なぜモノを売ると儲からないのか」ビジネスモデル9分類</span><span class="idx-n">436 句</span><span class="idx-dur">31:20</span></a>
-    <a class="idx-row" href="honne-talk.html" data-genre="var" data-search="「芸能界引退考えたことある？」 でしょでしょ‼（テレ朝） honne-talk バラエティ"><span class="idx-date">07-12</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「芸能界引退考えたことある？」</span><span class="idx-n">374 句</span><span class="idx-dur">21:09</span></a>
-    <a class="idx-row" href="mushoku-sugita.html" data-genre="int" data-search="「豪華声優陣が登壇！」 シネマトゥデイ mushoku-sugita インタビュー"><span class="idx-date">07-12</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「豪華声優陣が登壇！」</span><span class="idx-n">168 句</span><span class="idx-dur">10:05</span></a>
-    <a class="idx-row" href="shoten-date.html" data-genre="int" data-search="「マジで私の庭！」 三宅書店（三宅香帆） shoten-date インタビュー"><span class="idx-date">07-12</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「マジで私の庭！」</span><span class="idx-n">1028 句</span><span class="idx-dur">56:43</span></a>
-    <a class="idx-row" href="iginari-fureai.html" data-genre="var" data-search="「動物ふれあいsp」 いぎなり放送中！ iginari-fureai バラエティ"><span class="idx-date">07-11</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「動物ふれあいSP」</span><span class="idx-n">275 句</span><span class="idx-dur">11:20</span></a>
-    <a class="idx-row" href="oshare-takedatsu.html" data-genre="int" data-search="「泣いて帰ってきた日」 おしゃれクリップ oshare-takedatsu インタビュー"><span class="idx-date">07-11</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「泣いて帰ってきた日」</span><span class="idx-n">38 句</span><span class="idx-dur">2:59</span></a>
-    <a class="idx-row" href="sqex-pm.html" data-genre="int" data-search="「ゲームと仕事は似ている」 スクウェア・エニックス sqex-pm インタビュー"><span class="idx-date">07-11</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「ゲームと仕事は似ている」</span><span class="idx-n">191 句</span><span class="idx-dur">23:13</span></a>
-    <a class="idx-row" href="kachikan.html" data-genre="var" data-search="「恋人との価値観のズレ」 あざとくて何が悪いの? kachikan バラエティ"><span class="idx-date">07-08</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「恋人との価値観のズレ」</span><span class="idx-n">81 句</span><span class="idx-dur">3:18</span></a>
-    <a class="idx-row" href="tonari-otayori-182.html" data-genre="var" data-search="「お便り&#x27;26夏」 となりの雑談 tonari-otayori-182 バラエティ"><span class="idx-date">07-07</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「お便り'26夏」</span><span class="idx-n">362 句</span><span class="idx-dur">38:46</span></a>
-    <a class="idx-row" href="konkatsu.html" data-genre="kon" data-search="「会話が続かないんですよ」 婚活お見合い実践編 konkatsu 婚活"><span class="idx-date">07-05</span><span class="idx-gtag" style="color:#8a4fa8">婚活</span><span class="idx-title">「会話が続かないんですよ」</span><span class="idx-n">315 句</span><span class="idx-dur">13:09</span></a>
+    <a class="idx-row" href="bizkon-01.html" data-genre="koi" data-search="ビジネス婚 第1話 ビジネス婚（漫画改编） bizkon-01 恋愛短剧" data-slug="bizkon-01" data-date="2026-07-30" data-processed="2026-09-05"><span class="idx-date" title="发布 2026-07-30 · 收录 2026-09-05">07-30</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">ビジネス婚 第1話</span><span class="idx-n">332 句</span><span class="idx-dur">54:17</span></a>
+    <a class="idx-row" href="sakura-ayane-atama.html" data-genre="int" data-search="「ちゃおっ子のままトップ声優になった」佐倉綾音の頭の中 players official sakura-ayane-atama インタビュー" data-slug="sakura-ayane-atama" data-date="2026-07-24" data-processed="2026-08-02"><span class="idx-date" title="发布 2026-07-24 · 收录 2026-08-02">07-24</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「ちゃおっ子のままトップ声優になった」佐倉綾音の頭の中</span><span class="idx-n">516 句</span><span class="idx-dur">47:11</span></a>
+    <a class="idx-row" href="doraemon-3gatsu.html" data-genre="ani" data-search="ドラえもん「いつでも卒業証書」 テレビ朝日 ドラえもん doraemon-3gatsu アニメ" data-slug="doraemon-3gatsu" data-date="2026-07-18" data-processed="2026-08-10"><span class="idx-date" title="发布 2026-07-18 · 收录 2026-08-10">07-18</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">ドラえもん「いつでも卒業証書」</span><span class="idx-n">148 句</span><span class="idx-dur">08:02</span></a>
+    <a class="idx-row" href="fruits-takkyuubin-01.html" data-genre="dra" data-search="フルーツ宅配便 第1話 テレビ東京 fruits-takkyuubin-01 ドラマ" data-slug="fruits-takkyuubin-01" data-date="2026-07-17" data-processed="2026-09-12"><span class="idx-date" title="发布 2026-07-17 · 收录 2026-09-12">07-17</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">フルーツ宅配便 第1話</span><span class="idx-n">414 句</span><span class="idx-dur">30:12</span></a>
+    <a class="idx-row" href="fruits-takkyuubin-02.html" data-genre="dra" data-search="フルーツ宅配便 第2話 テレビ東京 fruits-takkyuubin-02 ドラマ" data-slug="fruits-takkyuubin-02" data-date="2026-07-17" data-processed="2026-09-13"><span class="idx-date" title="发布 2026-07-17 · 收录 2026-09-13">07-17</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">フルーツ宅配便 第2話</span><span class="idx-n">459 句</span><span class="idx-dur">30:12</span></a>
+    <a class="idx-row" href="kayanomi-mushoku.html" data-genre="var" data-search="かやのみ#190「愛が溢れかえった 無職転生コラボ第3弾！後半」 かやのみ（茅野愛衣） kayanomi-mushoku バラエティ" data-slug="kayanomi-mushoku" data-date="2026-07-17" data-processed="2026-07-17"><span class="idx-date" title="发布 2026-07-17 · 收录 2026-07-17">07-17</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">かやのみ#190「愛が溢れかえった 無職転生コラボ第3弾！後半」</span><span class="idx-n">432 句</span><span class="idx-dur">30:31</span></a>
+    <a class="idx-row" href="bukuro-tenshoku.html" data-genre="var" data-search="「勝手に転職先を探そう！」 さらば青春のテレビ大阪チャンネル bukuro-tenshoku バラエティ" data-slug="bukuro-tenshoku" data-date="2026-07-14" data-processed="2026-07-22"><span class="idx-date" title="发布 2026-07-14 · 收录 2026-07-22">07-14</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「勝手に転職先を探そう！」</span><span class="idx-n">624 句</span><span class="idx-dur">32:43</span></a>
+    <a class="idx-row" href="hatameimu-fun-059.html" data-genre="var" data-search="「ついに福本莉子さんが登場！」 tmeic presents 畑芽育とfun time hatameimu-fun-059 バラエティ" data-slug="hatameimu-fun-059" data-date="2026-07-14" data-processed="2026-07-18"><span class="idx-date" title="发布 2026-07-14 · 收录 2026-07-18">07-14</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「ついに福本莉子さんが登場！」</span><span class="idx-n">306 句</span><span class="idx-dur">26:00</span></a>
+    <a class="idx-row" href="business-model-9.html" data-genre="biz" data-search="「なぜモノを売ると儲からないのか」ビジネスモデル9分類 pivot 公式チャンネル business-model-9 ビジネス" data-slug="business-model-9" data-date="2026-07-12" data-processed="2026-07-24"><span class="idx-date" title="发布 2026-07-12 · 收录 2026-07-24">07-12</span><span class="idx-gtag" style="color:#a0522d">ビジネス</span><span class="idx-title">「なぜモノを売ると儲からないのか」ビジネスモデル9分類</span><span class="idx-n">436 句</span><span class="idx-dur">31:20</span></a>
+    <a class="idx-row" href="honne-talk.html" data-genre="var" data-search="「芸能界引退考えたことある？」 でしょでしょ‼（テレ朝） honne-talk バラエティ" data-slug="honne-talk" data-date="2026-07-12" data-processed="2026-07-12"><span class="idx-date" title="发布 2026-07-12 · 收录 2026-07-12">07-12</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「芸能界引退考えたことある？」</span><span class="idx-n">374 句</span><span class="idx-dur">21:09</span></a>
+    <a class="idx-row" href="mushoku-sugita.html" data-genre="int" data-search="「豪華声優陣が登壇！」 シネマトゥデイ mushoku-sugita インタビュー" data-slug="mushoku-sugita" data-date="2026-07-12" data-processed="2026-07-12"><span class="idx-date" title="发布 2026-07-12 · 收录 2026-07-12">07-12</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「豪華声優陣が登壇！」</span><span class="idx-n">168 句</span><span class="idx-dur">10:05</span></a>
+    <a class="idx-row" href="shoten-date.html" data-genre="int" data-search="「マジで私の庭！」 三宅書店（三宅香帆） shoten-date インタビュー" data-slug="shoten-date" data-date="2026-07-12" data-processed="2026-07-12"><span class="idx-date" title="发布 2026-07-12 · 收录 2026-07-12">07-12</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「マジで私の庭！」</span><span class="idx-n">1028 句</span><span class="idx-dur">56:43</span></a>
+    <a class="idx-row" href="iginari-fureai.html" data-genre="var" data-search="「動物ふれあいsp」 いぎなり放送中！ iginari-fureai バラエティ" data-slug="iginari-fureai" data-date="2026-07-11" data-processed="2026-07-11"><span class="idx-date" title="发布 2026-07-11 · 收录 2026-07-11">07-11</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「動物ふれあいSP」</span><span class="idx-n">275 句</span><span class="idx-dur">11:20</span></a>
+    <a class="idx-row" href="oshare-takedatsu.html" data-genre="int" data-search="「泣いて帰ってきた日」 おしゃれクリップ oshare-takedatsu インタビュー" data-slug="oshare-takedatsu" data-date="2026-07-11" data-processed="2026-07-11"><span class="idx-date" title="发布 2026-07-11 · 收录 2026-07-11">07-11</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「泣いて帰ってきた日」</span><span class="idx-n">38 句</span><span class="idx-dur">2:59</span></a>
+    <a class="idx-row" href="sqex-pm.html" data-genre="int" data-search="「ゲームと仕事は似ている」 スクウェア・エニックス sqex-pm インタビュー" data-slug="sqex-pm" data-date="2026-07-11" data-processed="2026-07-11"><span class="idx-date" title="发布 2026-07-11 · 收录 2026-07-11">07-11</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「ゲームと仕事は似ている」</span><span class="idx-n">191 句</span><span class="idx-dur">23:13</span></a>
+    <a class="idx-row" href="kachikan.html" data-genre="var" data-search="「恋人との価値観のズレ」 あざとくて何が悪いの? kachikan バラエティ" data-slug="kachikan" data-date="2026-07-08" data-processed="2026-07-08"><span class="idx-date" title="发布 2026-07-08 · 收录 2026-07-08">07-08</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「恋人との価値観のズレ」</span><span class="idx-n">81 句</span><span class="idx-dur">3:18</span></a>
+    <a class="idx-row" href="tonari-otayori-182.html" data-genre="var" data-search="「お便り&#x27;26夏」 となりの雑談 tonari-otayori-182 バラエティ" data-slug="tonari-otayori-182" data-date="2026-07-07" data-processed="2026-07-19"><span class="idx-date" title="发布 2026-07-07 · 收录 2026-07-19">07-07</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「お便り'26夏」</span><span class="idx-n">362 句</span><span class="idx-dur">38:46</span></a>
+    <a class="idx-row" href="konkatsu.html" data-genre="kon" data-search="「会話が続かないんですよ」 婚活お見合い実践編 konkatsu 婚活" data-slug="konkatsu" data-date="2026-07-05" data-processed="2026-07-05"><span class="idx-date" title="发布 2026-07-05 · 收录 2026-07-05">07-05</span><span class="idx-gtag" style="color:#8a4fa8">婚活</span><span class="idx-title">「会話が続かないんですよ」</span><span class="idx-n">315 句</span><span class="idx-dur">13:09</span></a>
     <div class="idx-month">2026 年 6 月</div>
-    <a class="idx-row" href="sashinomi.html" data-genre="koi" data-search="「帰りたくないっていったら…」 憧れの先輩とサシ飲み sashinomi 恋愛短剧"><span class="idx-date">06-30</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">「帰りたくないっていったら…」</span><span class="idx-n">60 句</span><span class="idx-dur">4:27</span></a>
-    <a class="idx-row" href="tomodachi.html" data-genre="koi" data-search="「付き合ったってことでok？」 友達が恋人になる日 tomodachi 恋愛短剧"><span class="idx-date">06-28</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">「付き合ったってことでOK？」</span><span class="idx-n">96 句</span><span class="idx-dur">4:25</span></a>
-    <a class="idx-row" href="bunpou.html" data-genre="int" data-search="「口を開けばマウントを取ってくる」 しくじり学園放送室 bunpou インタビュー"><span class="idx-date">06-25</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「口を開けばマウントを取ってくる」</span><span class="idx-n">117 句</span><span class="idx-dur">7:49</span></a>
+    <a class="idx-row" href="sashinomi.html" data-genre="koi" data-search="「帰りたくないっていったら…」 憧れの先輩とサシ飲み sashinomi 恋愛短剧" data-slug="sashinomi" data-date="2026-06-30" data-processed="2026-07-04"><span class="idx-date" title="发布 2026-06-30 · 收录 2026-07-04">06-30</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">「帰りたくないっていったら…」</span><span class="idx-n">60 句</span><span class="idx-dur">4:27</span></a>
+    <a class="idx-row" href="tomodachi.html" data-genre="koi" data-search="「付き合ったってことでok？」 友達が恋人になる日 tomodachi 恋愛短剧" data-slug="tomodachi" data-date="2026-06-28" data-processed="2026-07-04"><span class="idx-date" title="发布 2026-06-28 · 收录 2026-07-04">06-28</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">「付き合ったってことでOK？」</span><span class="idx-n">96 句</span><span class="idx-dur">4:25</span></a>
+    <a class="idx-row" href="bunpou.html" data-genre="int" data-search="「口を開けばマウントを取ってくる」 しくじり学園放送室 bunpou インタビュー" data-slug="bunpou" data-date="2026-06-25" data-processed="2026-07-04"><span class="idx-date" title="发布 2026-06-25 · 收录 2026-07-04">06-25</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「口を開けばマウントを取ってくる」</span><span class="idx-n">117 句</span><span class="idx-dur">7:49</span></a>
     <div class="idx-month">2026 年 1 月</div>
-    <a class="idx-row" href="tokui-yakiniku-nashiko.html" data-genre="var" data-search="台所焼肉に初めてのお客様がやってきた【桃月なしこ】 tokui video tokui-yakiniku-nashiko バラエティ"><span class="idx-date">01-08</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">台所焼肉に初めてのお客様がやってきた【桃月なしこ】</span><span class="idx-n">625 句</span><span class="idx-dur">45:02</span></a>
+    <a class="idx-row" href="tokui-yakiniku-nashiko.html" data-genre="var" data-search="台所焼肉に初めてのお客様がやってきた【桃月なしこ】 tokui video tokui-yakiniku-nashiko バラエティ" data-slug="tokui-yakiniku-nashiko" data-date="2026-01-08" data-processed="2026-08-05"><span class="idx-date" title="发布 2026-01-08 · 收录 2026-08-05">01-08</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">台所焼肉に初めてのお客様がやってきた【桃月なしこ】</span><span class="idx-n">625 句</span><span class="idx-dur">45:02</span></a>
     <div class="idx-month">2025 年 11 月</div>
-    <a class="idx-row" href="renai-tetsugaku.html" data-genre="koi" data-search="私の恋愛哲学「会いたいが先に来る時はダメ」 ポテトピクチャーズ renai-tetsugaku 恋愛短剧"><span class="idx-date">11-14</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">私の恋愛哲学「会いたいが先に来る時はダメ」</span><span class="idx-n">65 句</span><span class="idx-dur">3:24</span></a>
-    <a class="idx-row" href="morikasumi-mitame.html" data-genre="var" data-search="森香澄・岡田紗佳・東ブクロ「男性に注意する見た目」 【公式】厳選切り抜きバラエティ【abema / テレ朝】 morikasumi-mitame バラエティ"><span class="idx-date">11-13</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">森香澄・岡田紗佳・東ブクロ「男性に注意する見た目」</span><span class="idx-n">133 句</span><span class="idx-dur">6:14</span></a>
+    <a class="idx-row" href="renai-tetsugaku.html" data-genre="koi" data-search="私の恋愛哲学「会いたいが先に来る時はダメ」 ポテトピクチャーズ renai-tetsugaku 恋愛短剧" data-slug="renai-tetsugaku" data-date="2025-11-14" data-processed="2026-08-16"><span class="idx-date" title="发布 2025-11-14 · 收录 2026-08-16">11-14</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">私の恋愛哲学「会いたいが先に来る時はダメ」</span><span class="idx-n">65 句</span><span class="idx-dur">3:24</span></a>
+    <a class="idx-row" href="morikasumi-mitame.html" data-genre="var" data-search="森香澄・岡田紗佳・東ブクロ「男性に注意する見た目」 【公式】厳選切り抜きバラエティ【abema / テレ朝】 morikasumi-mitame バラエティ" data-slug="morikasumi-mitame" data-date="2025-11-13" data-processed="2026-08-15"><span class="idx-date" title="发布 2025-11-13 · 收录 2026-08-15">11-13</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">森香澄・岡田紗佳・東ブクロ「男性に注意する見た目」</span><span class="idx-n">133 句</span><span class="idx-dur">6:14</span></a>
     <div class="idx-month">2025 年 8 月</div>
-    <a class="idx-row" href="crayon-shinchan-100-1.html" data-genre="ani" data-search="クレヨンしんちゃん 良い子のしんちゃんダゾ テレビ朝日 crayon-shinchan-100-1 アニメ"><span class="idx-date">08-11</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">クレヨンしんちゃん 良い子のしんちゃんダゾ</span><span class="idx-n">114 句</span><span class="idx-dur">10:32</span></a>
+    <a class="idx-row" href="crayon-shinchan-100-1.html" data-genre="ani" data-search="クレヨンしんちゃん 良い子のしんちゃんダゾ テレビ朝日 crayon-shinchan-100-1 アニメ" data-slug="crayon-shinchan-100-1" data-date="2025-08-11" data-processed="2026-09-13"><span class="idx-date" title="发布 2025-08-11 · 收录 2026-09-13">08-11</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">クレヨンしんちゃん 良い子のしんちゃんダゾ</span><span class="idx-n">114 句</span><span class="idx-dur">10:32</span></a>
     <div class="idx-month">2025 年 4 月</div>
-    <a class="idx-row" href="otona-ninattemo-01.html" data-genre="dra" data-search="おとなになっても 第1話 hulu オリジナル otona-ninattemo-01 ドラマ"><span class="idx-date">04-26</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">おとなになっても 第1話</span><span class="idx-n">433 句</span><span class="idx-dur">34:21</span></a>
+    <a class="idx-row" href="otona-ninattemo-01.html" data-genre="dra" data-search="おとなになっても 第1話 hulu オリジナル otona-ninattemo-01 ドラマ" data-slug="otona-ninattemo-01" data-date="2025-04-26" data-processed="2026-09-13"><span class="idx-date" title="发布 2025-04-26 · 收录 2026-09-13">04-26</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">おとなになっても 第1話</span><span class="idx-n">433 句</span><span class="idx-dur">34:21</span></a>
     <div class="idx-month">2025 年 2 月</div>
-    <a class="idx-row" href="fumikoeta-issen.html" data-genre="koi" data-search="踏み越えた一線「私はカップルに間違われてもいいよ」 ポテトピクチャーズ fumikoeta-issen 恋愛短剧"><span class="idx-date">02-28</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">踏み越えた一線「私はカップルに間違われてもいいよ」</span><span class="idx-n">80 句</span><span class="idx-dur">4:40</span></a>
+    <a class="idx-row" href="fumikoeta-issen.html" data-genre="koi" data-search="踏み越えた一線「私はカップルに間違われてもいいよ」 ポテトピクチャーズ fumikoeta-issen 恋愛短剧" data-slug="fumikoeta-issen" data-date="2025-02-28" data-processed="2026-08-16"><span class="idx-date" title="发布 2025-02-28 · 收录 2026-08-16">02-28</span><span class="idx-gtag" style="color:#c0442c">恋愛短剧</span><span class="idx-title">踏み越えた一線「私はカップルに間違われてもいいよ」</span><span class="idx-n">80 句</span><span class="idx-dur">4:40</span></a>
     <div class="idx-month">2025 年 1 月</div>
-    <a class="idx-row" href="alice-irori-01.html" data-genre="dra" data-search="アリスさんちの囲炉裏端 第1話 bs-tbs alice-irori-01 ドラマ"><span class="idx-date">01-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">アリスさんちの囲炉裏端 第1話</span><span class="idx-n">209 句</span><span class="idx-dur">23:45</span></a>
+    <a class="idx-row" href="alice-irori-01.html" data-genre="dra" data-search="アリスさんちの囲炉裏端 第1話 bs-tbs alice-irori-01 ドラマ" data-slug="alice-irori-01" data-date="2025-01-07" data-processed="2026-08-22"><span class="idx-date" title="发布 2025-01-07 · 收录 2026-08-22">01-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">アリスさんちの囲炉裏端 第1話</span><span class="idx-n">209 句</span><span class="idx-dur">23:45</span></a>
     <div class="idx-month">2024 年 12 月</div>
-    <a class="idx-row" href="kareshi-karada-01.html" data-genre="dra" data-search="亡くなった彼氏が、人の体で生きていた · 逐句精讲 映画少女 kareshi-karada-01 ドラマ"><span class="idx-date">12-12</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">亡くなった彼氏が、人の体で生きていた · 逐句精讲</span><span class="idx-n">317 句</span><span class="idx-dur">16:09</span></a>
+    <a class="idx-row" href="kareshi-karada-01.html" data-genre="dra" data-search="亡くなった彼氏が、人の体で生きていた · 逐句精讲 映画少女 kareshi-karada-01 ドラマ" data-slug="kareshi-karada-01" data-date="2024-12-12" data-processed="2026-09-07"><span class="idx-date" title="发布 2024-12-12 · 收录 2026-09-07">12-12</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">亡くなった彼氏が、人の体で生きていた · 逐句精讲</span><span class="idx-n">317 句</span><span class="idx-dur">16:09</span></a>
     <div class="idx-month">2024 年 7 月</div>
-    <a class="idx-row" href="shosen-taningoto-01.html" data-genre="dra" data-search="しょせん他人事ですから ～とある弁護士の本音の仕事~ 第1話 テレビ東京 shosen-taningoto-01 ドラマ"><span class="idx-date">07-19</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">しょせん他人事ですから ～とある弁護士の本音の仕事~ 第1話</span><span class="idx-n">710 句</span><span class="idx-dur">57:44</span></a>
+    <a class="idx-row" href="shosen-taningoto-01.html" data-genre="dra" data-search="しょせん他人事ですから ～とある弁護士の本音の仕事~ 第1話 テレビ東京 shosen-taningoto-01 ドラマ" data-slug="shosen-taningoto-01" data-date="2024-07-19" data-processed="2026-09-08"><span class="idx-date" title="发布 2024-07-19 · 收录 2026-09-08">07-19</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">しょせん他人事ですから ～とある弁護士の本音の仕事~ 第1話</span><span class="idx-n">710 句</span><span class="idx-dur">57:44</span></a>
     <div class="idx-month">2024 年 4 月</div>
-    <a class="idx-row" href="yoshitaka-oguri.html" data-genre="int" data-search="「ショルダーバッグがショルダーしちゃって」 めざましmedia yoshitaka-oguri インタビュー"><span class="idx-date">04-23</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「ショルダーバッグがショルダーしちゃって」</span><span class="idx-n">52 句</span><span class="idx-dur">3:34</span></a>
+    <a class="idx-row" href="yoshitaka-oguri.html" data-genre="int" data-search="「ショルダーバッグがショルダーしちゃって」 めざましmedia yoshitaka-oguri インタビュー" data-slug="yoshitaka-oguri" data-date="2024-04-23" data-processed="2026-07-21"><span class="idx-date" title="发布 2024-04-23 · 收录 2026-07-21">04-23</span><span class="idx-gtag" style="color:#2f5fa6">インタビュー</span><span class="idx-title">「ショルダーバッグがショルダーしちゃって」</span><span class="idx-n">52 句</span><span class="idx-dur">3:34</span></a>
     <div class="idx-month">2024 年 3 月</div>
-    <a class="idx-row" href="shinonome-gravure.html" data-genre="var" data-search="「愛理ちゃんの写真集を解説」 動画、はじめてみました【テレビ朝日公式】 shinonome-gravure バラエティ"><span class="idx-date">03-30</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「愛理ちゃんの写真集を解説」</span><span class="idx-n">358 句</span><span class="idx-dur">23:17</span></a>
+    <a class="idx-row" href="shinonome-gravure.html" data-genre="var" data-search="「愛理ちゃんの写真集を解説」 動画、はじめてみました【テレビ朝日公式】 shinonome-gravure バラエティ" data-slug="shinonome-gravure" data-date="2024-03-30" data-processed="2026-07-23"><span class="idx-date" title="发布 2024-03-30 · 收录 2026-07-23">03-30</span><span class="idx-gtag" style="color:#b8860b">バラエティ</span><span class="idx-title">「愛理ちゃんの写真集を解説」</span><span class="idx-n">358 句</span><span class="idx-dur">23:17</span></a>
     <div class="idx-month">2023 年 7 月</div>
-    <a class="idx-row" href="kake-sayonara-01.html" data-genre="dra" data-search="賭けからはじまるサヨナラの恋 第1話 u-next オリジナル kake-sayonara-01 ドラマ"><span class="idx-date">07-20</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">賭けからはじまるサヨナラの恋 第1話</span><span class="idx-n">409 句</span><span class="idx-dur">30:20</span></a>
-    <a class="idx-row" href="iyashi-otonari-01.html" data-genre="dra" data-search="癒やしのお隣さんには秘密がある 第1話 日本テレビ iyashi-otonari-01 ドラマ"><span class="idx-date">07-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">癒やしのお隣さんには秘密がある 第1話</span><span class="idx-n">246 句</span><span class="idx-dur">21:48</span></a>
+    <a class="idx-row" href="kake-sayonara-01.html" data-genre="dra" data-search="賭けからはじまるサヨナラの恋 第1話 u-next オリジナル kake-sayonara-01 ドラマ" data-slug="kake-sayonara-01" data-date="2023-07-20" data-processed="2026-08-23"><span class="idx-date" title="发布 2023-07-20 · 收录 2026-08-23">07-20</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">賭けからはじまるサヨナラの恋 第1話</span><span class="idx-n">409 句</span><span class="idx-dur">30:20</span></a>
+    <a class="idx-row" href="iyashi-otonari-01.html" data-genre="dra" data-search="癒やしのお隣さんには秘密がある 第1話 日本テレビ iyashi-otonari-01 ドラマ" data-slug="iyashi-otonari-01" data-date="2023-07-07" data-processed="2026-09-13"><span class="idx-date" title="发布 2023-07-07 · 收录 2026-09-13">07-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">癒やしのお隣さんには秘密がある 第1話</span><span class="idx-n">246 句</span><span class="idx-dur">21:48</span></a>
     <div class="idx-month">2022 年 6 月</div>
-    <a class="idx-row" href="animals-01.html" data-genre="dra" data-search="animals 第1話（拡大初回） abema animals-01 ドラマ"><span class="idx-date">06-23</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">ANIMALS 第1話（拡大初回）</span><span class="idx-n">1034 句</span><span class="idx-dur">132:19</span></a>
+    <a class="idx-row" href="animals-01.html" data-genre="dra" data-search="animals 第1話（拡大初回） abema animals-01 ドラマ" data-slug="animals-01" data-date="2022-06-23" data-processed="2026-09-05"><span class="idx-date" title="发布 2022-06-23 · 收录 2026-09-05">06-23</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">ANIMALS 第1話（拡大初回）</span><span class="idx-n">1034 句</span><span class="idx-dur">132:19</span></a>
     <div class="idx-month">2021 年 7 月</div>
-    <a class="idx-row" href="hakozume-01.html" data-genre="dra" data-search="ハコヅメ〜たたかう!交番女子〜 第1話 日本テレビ hakozume-01 ドラマ"><span class="idx-date">07-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">ハコヅメ〜たたかう!交番女子〜 第1話</span><span class="idx-n">849 句</span><span class="idx-dur">51:31</span></a>
+    <a class="idx-row" href="hakozume-01.html" data-genre="dra" data-search="ハコヅメ〜たたかう!交番女子〜 第1話 日本テレビ hakozume-01 ドラマ" data-slug="hakozume-01" data-date="2021-07-07" data-processed="2026-09-17"><span class="idx-date" title="发布 2021-07-07 · 收录 2026-09-17">07-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">ハコヅメ〜たたかう!交番女子〜 第1話</span><span class="idx-n">849 句</span><span class="idx-dur">51:31</span></a>
     <div class="idx-month">2020 年 10 月</div>
-    <a class="idx-row" href="shichinin-hisho-01.html" data-genre="dra" data-search="七人の秘書 第1話 テレビ朝日 shichinin-hisho-01 ドラマ"><span class="idx-date">10-22</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">七人の秘書 第1話</span><span class="idx-n">744 句</span><span class="idx-dur">63:00</span></a>
+    <a class="idx-row" href="shichinin-hisho-01.html" data-genre="dra" data-search="七人の秘書 第1話 テレビ朝日 shichinin-hisho-01 ドラマ" data-slug="shichinin-hisho-01" data-date="2020-10-22" data-processed="2026-09-14"><span class="idx-date" title="发布 2020-10-22 · 收录 2026-09-14">10-22</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">七人の秘書 第1話</span><span class="idx-n">744 句</span><span class="idx-dur">63:00</span></a>
     <div class="idx-month">2020 年 8 月</div>
-    <a class="idx-row" href="watadou-01.html" data-genre="dra" data-search="私たちはどうかしている 第1話「運命の再会」 日本テレビ watadou-01 ドラマ"><span class="idx-date">08-12</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">私たちはどうかしている 第1話「運命の再会」</span><span class="idx-n">583 句</span><span class="idx-dur">50:56</span></a>
+    <a class="idx-row" href="watadou-01.html" data-genre="dra" data-search="私たちはどうかしている 第1話「運命の再会」 日本テレビ watadou-01 ドラマ" data-slug="watadou-01" data-date="2020-08-12" data-processed="2026-09-05"><span class="idx-date" title="发布 2020-08-12 · 收录 2026-09-05">08-12</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">私たちはどうかしている 第1話「運命の再会」</span><span class="idx-n">583 句</span><span class="idx-dur">50:56</span></a>
     <div class="idx-month">2020 年 1 月</div>
-    <a class="idx-row" href="shiranakute-ii-koto-01.html" data-genre="dra" data-search="知らなくていいコト 第1話 日本テレビ shiranakute-ii-koto-01 ドラマ"><span class="idx-date">01-08</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">知らなくていいコト 第1話</span><span class="idx-n">617 句</span><span class="idx-dur">50:55</span></a>
+    <a class="idx-row" href="shiranakute-ii-koto-01.html" data-genre="dra" data-search="知らなくていいコト 第1話 日本テレビ shiranakute-ii-koto-01 ドラマ" data-slug="shiranakute-ii-koto-01" data-date="2020-01-08" data-processed="2026-09-20"><span class="idx-date" title="发布 2020-01-08 · 收录 2026-09-20">01-08</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">知らなくていいコト 第1話</span><span class="idx-n">617 句</span><span class="idx-dur">50:55</span></a>
     <div class="idx-month">2019 年 4 月</div>
-    <a class="idx-row" href="teiji-kaerimasu-01.html" data-genre="dra" data-search="わたし、定時で帰ります。 第1話 tbs teiji-kaerimasu-01 ドラマ"><span class="idx-date">04-16</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">わたし、定時で帰ります。 第1話</span><span class="idx-n">877 句</span><span class="idx-dur">56:50</span></a>
+    <a class="idx-row" href="teiji-kaerimasu-01.html" data-genre="dra" data-search="わたし、定時で帰ります。 第1話 tbs teiji-kaerimasu-01 ドラマ" data-slug="teiji-kaerimasu-01" data-date="2019-04-16" data-processed="2026-09-17"><span class="idx-date" title="发布 2019-04-16 · 收录 2026-09-17">04-16</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">わたし、定時で帰ります。 第1話</span><span class="idx-n">877 句</span><span class="idx-dur">56:50</span></a>
     <div class="idx-month">2019 年 1 月</div>
-    <a class="idx-row" href="queen-scandal-02.html" data-genre="dra" data-search="スキャンダル専門弁護士 queen 第2話 関西テレビ・フジテレビ系 queen-scandal-02 ドラマ"><span class="idx-date">01-23</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">スキャンダル専門弁護士 QUEEN 第2話</span><span class="idx-n">662 句</span><span class="idx-dur">46:10</span></a>
-    <a class="idx-row" href="queen-scandal-01.html" data-genre="dra" data-search="スキャンダル専門弁護士 queen 第1話 関西テレビ・フジテレビ系 queen-scandal-01 ドラマ"><span class="idx-date">01-16</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">スキャンダル専門弁護士 QUEEN 第1話</span><span class="idx-n">897 句</span><span class="idx-dur">57:10</span></a>
-    <a class="idx-row" href="hajimete-koi-01.html" data-genre="dra" data-search="初めて恋をした日に読む話 第1話 tbs系 火曜ドラマ hajimete-koi-01 ドラマ"><span class="idx-date">01-15</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">初めて恋をした日に読む話 第1話</span><span class="idx-n">715 句</span><span class="idx-dur">56:50</span></a>
+    <a class="idx-row" href="queen-scandal-02.html" data-genre="dra" data-search="スキャンダル専門弁護士 queen 第2話 関西テレビ・フジテレビ系 queen-scandal-02 ドラマ" data-slug="queen-scandal-02" data-date="2019-01-23" data-processed="2026-08-20"><span class="idx-date" title="发布 2019-01-23 · 收录 2026-08-20">01-23</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">スキャンダル専門弁護士 QUEEN 第2話</span><span class="idx-n">662 句</span><span class="idx-dur">46:10</span></a>
+    <a class="idx-row" href="queen-scandal-01.html" data-genre="dra" data-search="スキャンダル専門弁護士 queen 第1話 関西テレビ・フジテレビ系 queen-scandal-01 ドラマ" data-slug="queen-scandal-01" data-date="2019-01-16" data-processed="2026-08-19"><span class="idx-date" title="发布 2019-01-16 · 收录 2026-08-19">01-16</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">スキャンダル専門弁護士 QUEEN 第1話</span><span class="idx-n">897 句</span><span class="idx-dur">57:10</span></a>
+    <a class="idx-row" href="hajimete-koi-01.html" data-genre="dra" data-search="初めて恋をした日に読む話 第1話 tbs系 火曜ドラマ hajimete-koi-01 ドラマ" data-slug="hajimete-koi-01" data-date="2019-01-15" data-processed="2026-08-23"><span class="idx-date" title="发布 2019-01-15 · 收录 2026-08-23">01-15</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">初めて恋をした日に読む話 第1話</span><span class="idx-n">715 句</span><span class="idx-dur">56:50</span></a>
     <div class="idx-month">2018 年 10 月</div>
-    <a class="idx-row" href="dame-koi-zukan-01.html" data-genre="dra" data-search="深夜のダメ恋図鑑 第1話 朝日放送テレビ dame-koi-zukan-01 ドラマ"><span class="idx-date">10-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">深夜のダメ恋図鑑 第1話</span><span class="idx-n">325 句</span><span class="idx-dur">23:44</span></a>
+    <a class="idx-row" href="dame-koi-zukan-01.html" data-genre="dra" data-search="深夜のダメ恋図鑑 第1話 朝日放送テレビ dame-koi-zukan-01 ドラマ" data-slug="dame-koi-zukan-01" data-date="2018-10-07" data-processed="2026-09-17"><span class="idx-date" title="发布 2018-10-07 · 收录 2026-09-17">10-07</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">深夜のダメ恋図鑑 第1話</span><span class="idx-n">325 句</span><span class="idx-dur">23:44</span></a>
     <div class="idx-month">2018 年 1 月</div>
-    <a class="idx-row" href="tonakazo-01.html" data-genre="dra" data-search="隣の家族は青く見える 第1話 フジテレビ tonakazo-01 ドラマ"><span class="idx-date">01-18</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">隣の家族は青く見える 第1話</span><span class="idx-n">937 句</span><span class="idx-dur">102:16</span></a>
+    <a class="idx-row" href="tonakazo-01.html" data-genre="dra" data-search="隣の家族は青く見える 第1話 フジテレビ tonakazo-01 ドラマ" data-slug="tonakazo-01" data-date="2018-01-18" data-processed="2026-09-06"><span class="idx-date" title="发布 2018-01-18 · 收录 2026-09-06">01-18</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">隣の家族は青く見える 第1話</span><span class="idx-n">937 句</span><span class="idx-dur">102:16</span></a>
     <div class="idx-month">2015 年 10 月</div>
-    <a class="idx-row" href="siren-keiji-01.html" data-genre="dra" data-search="サイレーン 刑事×彼女×完全悪女 第1話 フジテレビ系 siren-keiji-01 ドラマ"><span class="idx-date">10-20</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">サイレーン 刑事×彼女×完全悪女 第1話</span><span class="idx-n">1002 句</span><span class="idx-dur">92:56</span></a>
+    <a class="idx-row" href="siren-keiji-01.html" data-genre="dra" data-search="サイレーン 刑事×彼女×完全悪女 第1話 フジテレビ系 siren-keiji-01 ドラマ" data-slug="siren-keiji-01" data-date="2015-10-20" data-processed="2026-08-22"><span class="idx-date" title="发布 2015-10-20 · 收录 2026-08-22">10-20</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">サイレーン 刑事×彼女×完全悪女 第1話</span><span class="idx-n">1002 句</span><span class="idx-dur">92:56</span></a>
     <div class="idx-month">2014 年 10 月</div>
-    <a class="idx-row" href="onna-yurusanai-01.html" data-genre="dra" data-search="女はそれを許さない 第1話 tbs系 火曜ドラマ onna-yurusanai-01 ドラマ"><span class="idx-date">10-21</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">女はそれを許さない 第1話</span><span class="idx-n">586 句</span><span class="idx-dur">57:58</span></a>
+    <a class="idx-row" href="onna-yurusanai-01.html" data-genre="dra" data-search="女はそれを許さない 第1話 tbs系 火曜ドラマ onna-yurusanai-01 ドラマ" data-slug="onna-yurusanai-01" data-date="2014-10-21" data-processed="2026-08-22"><span class="idx-date" title="发布 2014-10-21 · 收录 2026-08-22">10-21</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">女はそれを許さない 第1話</span><span class="idx-n">586 句</span><span class="idx-dur">57:58</span></a>
     <div class="idx-month">2014 年 4 月</div>
-    <a class="idx-row" href="silent-poor-01.html" data-genre="dra" data-search="サイレント・プア 第1回「その手を離さない」 nhk ドラマ10 silent-poor-01 ドラマ"><span class="idx-date">04-08</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">サイレント・プア 第1回「その手を離さない」</span><span class="idx-n">470 句</span><span class="idx-dur">48:00</span></a>
+    <a class="idx-row" href="silent-poor-01.html" data-genre="dra" data-search="サイレント・プア 第1回「その手を離さない」 nhk ドラマ10 silent-poor-01 ドラマ" data-slug="silent-poor-01" data-date="2014-04-08" data-processed="2026-08-09"><span class="idx-date" title="发布 2014-04-08 · 收录 2026-08-09">04-08</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">サイレント・プア 第1回「その手を離さない」</span><span class="idx-n">470 句</span><span class="idx-dur">48:00</span></a>
     <div class="idx-month">2012 年 10 月</div>
-    <a class="idx-row" href="doctorx-s1-01.html" data-genre="dra" data-search="ドクターx 第1話「私、失敗しないので」 テレビ朝日 doctorx-s1-01 ドラマ"><span class="idx-date">10-18</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">ドクターX 第1話「私、失敗しないので」</span><span class="idx-n">759 句</span><span class="idx-dur">58:22</span></a>
+    <a class="idx-row" href="doctorx-s1-01.html" data-genre="dra" data-search="ドクターx 第1話「私、失敗しないので」 テレビ朝日 doctorx-s1-01 ドラマ" data-slug="doctorx-s1-01" data-date="2012-10-18" data-processed="2026-09-05"><span class="idx-date" title="发布 2012-10-18 · 收录 2026-09-05">10-18</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">ドクターX 第1話「私、失敗しないので」</span><span class="idx-n">759 句</span><span class="idx-dur">58:22</span></a>
     <div class="idx-month">2012 年 4 月</div>
-    <a class="idx-row" href="toshi-densetsu-01.html" data-genre="dra" data-search="都市伝説の女 第1話 テレビ朝日系 toshi-densetsu-01 ドラマ"><span class="idx-date">04-13</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">都市伝説の女 第1話</span><span class="idx-n">623 句</span><span class="idx-dur">48:50</span></a>
+    <a class="idx-row" href="toshi-densetsu-01.html" data-genre="dra" data-search="都市伝説の女 第1話 テレビ朝日系 toshi-densetsu-01 ドラマ" data-slug="toshi-densetsu-01" data-date="2012-04-13" data-processed="2026-08-21"><span class="idx-date" title="发布 2012-04-13 · 收录 2026-08-21">04-13</span><span class="idx-gtag" style="color:#8c3a5a">ドラマ</span><span class="idx-title">都市伝説の女 第1話</span><span class="idx-n">623 句</span><span class="idx-dur">48:50</span></a>
     <div class="idx-month">1996 年 1 月</div>
-    <a class="idx-row" href="conan-003.html" data-genre="ani" data-search="名探偵コナン 第3話「アイドル密室殺人事件」 テレビアニメ『名探偵コナン』 conan-003 アニメ"><span class="idx-date">01-22</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">名探偵コナン 第3話「アイドル密室殺人事件」</span><span class="idx-n">317 句</span><span class="idx-dur">24:53</span></a>
-    <a class="idx-row" href="conan-002.html" data-genre="ani" data-search="名探偵コナン 第2話「社長令嬢誘拐事件」 テレビアニメ『名探偵コナン』 conan-002 アニメ"><span class="idx-date">01-15</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">名探偵コナン 第2話「社長令嬢誘拐事件」</span><span class="idx-n">328 句</span><span class="idx-dur">24:49</span></a>
-    <a class="idx-row" href="conan-001.html" data-genre="ani" data-search="名探偵コナン 第1話「ジェットコースター殺人事件」 テレビアニメ『名探偵コナン』 conan-001 アニメ"><span class="idx-date">01-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">名探偵コナン 第1話「ジェットコースター殺人事件」</span><span class="idx-n">314 句</span><span class="idx-dur">24:53</span></a>
+    <a class="idx-row" href="conan-003.html" data-genre="ani" data-search="名探偵コナン 第3話「アイドル密室殺人事件」 テレビアニメ『名探偵コナン』 conan-003 アニメ" data-slug="conan-003" data-date="1996-01-22" data-processed="2026-08-23"><span class="idx-date" title="发布 1996-01-22 · 收录 2026-08-23">01-22</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">名探偵コナン 第3話「アイドル密室殺人事件」</span><span class="idx-n">317 句</span><span class="idx-dur">24:53</span></a>
+    <a class="idx-row" href="conan-002.html" data-genre="ani" data-search="名探偵コナン 第2話「社長令嬢誘拐事件」 テレビアニメ『名探偵コナン』 conan-002 アニメ" data-slug="conan-002" data-date="1996-01-15" data-processed="2026-08-23"><span class="idx-date" title="发布 1996-01-15 · 收录 2026-08-23">01-15</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">名探偵コナン 第2話「社長令嬢誘拐事件」</span><span class="idx-n">328 句</span><span class="idx-dur">24:49</span></a>
+    <a class="idx-row" href="conan-001.html" data-genre="ani" data-search="名探偵コナン 第1話「ジェットコースター殺人事件」 テレビアニメ『名探偵コナン』 conan-001 アニメ" data-slug="conan-001" data-date="1996-01-08" data-processed="2026-08-15"><span class="idx-date" title="发布 1996-01-08 · 收录 2026-08-15">01-08</span><span class="idx-gtag" style="color:#4a7ab5">アニメ</span><span class="idx-title">名探偵コナン 第1話「ジェットコースター殺人事件」</span><span class="idx-n">314 句</span><span class="idx-dur">24:53</span></a>
   </div>
   <p class="idx-empty" hidden>无匹配 — 换个关键词或点「全部」。</p>
 
@@ -1515,7 +1530,9 @@
 </script>
 <script>
 /* Index filter: search + genre chips toggle row visibility; recent strip hides while
-   filtering; empty months hide; ★fav counts come from window.LangFav at runtime. */
+   filtering; empty months hide; ★fav counts come from window.LangFav at runtime.
+   排序 re-orders the list (and the recent strip) by 发布日期 or 收录日期 from the rows' own
+   data-date / data-processed, and remembers the choice per browser. */
 /*<<index-pure>>*/
 function INDEX_PURE(){
   function matchRow(dataSearch, dataGenre, query, genre){
@@ -1532,7 +1549,38 @@ function INDEX_PURE(){
     }
     return out;
   }
-  return { matchRow: matchRow, countByVideo: countByVideo };
+  // The two list orders. 'date' = the content's first air/publish date (manifest.effective_date —
+  // the order the list is BAKED in); 'processed' = the date the page was built here. Both break ties
+  // by slug ASCENDING, which is exactly manifest.load()'s tie-break, so sorting back to 'date'
+  // reproduces the baked list; test_index.mjs pins that parity against site/index.html itself.
+  function sortKey(k){ return k === 'processed' ? 'processed' : 'date'; }
+  function order(items, key){
+    key = sortKey(key);
+    return items.slice().sort(function(a, b){
+      var x = a[key] || '', y = b[key] || '';
+      if (x !== y) return x < y ? 1 : -1;
+      return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
+    });
+  }
+  // manifest.group_by_month's label, character for character: '2026 年 7 月' (month unpadded; a
+  // missing date buckets as '0000 年 0 月', as the Python does).
+  function monthLabel(d){
+    d = d || '0000-00';
+    return d.slice(0, 4) + ' 年 ' + (parseInt(d.slice(5, 7), 10) || 0) + ' 月';
+  }
+  // [{label, items}] in first-seen order, deduped by label like the Python (not merely by run).
+  function group(items, key){
+    key = sortKey(key);
+    var out = [], at = {};
+    items.forEach(function(it){
+      var l = monthLabel(it[key]);
+      if (!Object.prototype.hasOwnProperty.call(at, l)){ at[l] = out.length; out.push({label: l, items: []}); }
+      out[at[l]].items.push(it);
+    });
+    return out;
+  }
+  return { matchRow: matchRow, countByVideo: countByVideo, sortKey: sortKey, order: order,
+           monthLabel: monthLabel, group: group };
 }
 /*<</index-pure>>*/
 (function(){
@@ -1540,10 +1588,16 @@ function INDEX_PURE(){
   var search = document.getElementById('idxSearch');
   var chips  = [].slice.call(document.querySelectorAll('.idx-chip'));
   var rows   = [].slice.call(document.querySelectorAll('.idx-row'));
-  var months = [].slice.call(document.querySelectorAll('.idx-month'));
+  var list   = document.querySelector('.idx-list');
+  var cards  = [].slice.call(document.querySelectorAll('.idx-card'));
+  var sorts  = [].slice.call(document.querySelectorAll('.idx-sort-b'));
   var recentH = document.querySelector('.idx-recent-h');
   var recent  = document.querySelector('.idx-recent');
   var empty   = document.querySelector('.idx-empty');
+  var SORT_STORE = 'lang:index-sort';
+  // The strip's size is whatever the build showed — the extras it baked for the other order are
+  // the hidden ones — so there is no second copy of build_index.RECENT_N to drift.
+  var nRecent = cards.filter(function(c){ return !c.hidden; }).length;
   var genre = '';
   function apply(){
     var q = ((search && search.value) || '').trim().toLowerCase();
@@ -1552,7 +1606,9 @@ function INDEX_PURE(){
       var on = P.matchRow(r.getAttribute('data-search'), r.getAttribute('data-genre'), q, genre);
       r.hidden = !on; if (on) shown++;
     });
-    months.forEach(function(h){
+    // Re-queried every time: a re-sort REPLACES the month headers, so a list captured at load
+    // would go on hiding headers that are no longer in the document.
+    [].slice.call(document.querySelectorAll('.idx-month')).forEach(function(h){
       var any = false, el = h.nextElementSibling;
       while (el && el.classList.contains('idx-row')){ if (!el.hidden){ any = true; break; } el = el.nextElementSibling; }
       h.hidden = !any;
@@ -1560,6 +1616,45 @@ function INDEX_PURE(){
     if (recentH) recentH.hidden = filtering;
     if (recent)  recent.hidden  = filtering;
     if (empty)   empty.hidden   = shown !== 0;
+  }
+  function item(el){
+    return { el: el, slug: el.getAttribute('data-slug') || '',
+             date: el.getAttribute('data-date') || '', processed: el.getAttribute('data-processed') || '' };
+  }
+  function sortBy(key){
+    key = P.sortKey(key);
+    if (list){
+      // Rows are MOVED, never re-created, so their listeners and ★ badges survive; only the month
+      // headers are rebuilt, because under the other order they are different months.
+      var groups = P.group(P.order(rows.map(item), key), key);
+      [].slice.call(list.querySelectorAll('.idx-month')).forEach(function(h){ h.parentNode.removeChild(h); });
+      groups.forEach(function(g){
+        var h = document.createElement('div');
+        h.className = 'idx-month'; h.textContent = g.label;
+        list.appendChild(h);
+        g.items.forEach(function(it){
+          // the date shown is the date sorted on — a row under 2026 年 9 月 must not read 01-08
+          var d = it.el.querySelector('.idx-date'); if (d) d.textContent = it[key].slice(5);
+          list.appendChild(it.el);
+        });
+      });
+    }
+    if (cards.length){
+      // the build baked the top N under BOTH orders, so either order's top N is already here
+      var box = cards[0].parentNode;
+      var top = P.order(cards.map(item), key).slice(0, nRecent);
+      cards.forEach(function(c){ c.hidden = true; });
+      top.forEach(function(it){
+        var d = it.el.querySelector('.idx-card-d'); if (d) d.textContent = it[key].slice(5);
+        it.el.hidden = false; box.appendChild(it.el);
+      });
+    }
+    sorts.forEach(function(b){
+      var on = b.getAttribute('data-sort') === key;
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    try { localStorage.setItem(SORT_STORE, key); } catch (e) {}
+    apply();
   }
   if (search) search.addEventListener('input', apply);
   chips.forEach(function(c){
@@ -1570,7 +1665,12 @@ function INDEX_PURE(){
       apply();
     });
   });
+  sorts.forEach(function(b){ b.addEventListener('click', function(){ sortBy(b.getAttribute('data-sort')); }); });
   apply();
+  // The baked list IS the 'date' order, so only a remembered 'processed' touches the DOM at load.
+  var saved = null;
+  try { saved = localStorage.getItem(SORT_STORE); } catch (e) {}
+  if (saved === 'processed') sortBy('processed');
   function badges(){
     var LF = window.LangFav; if (!LF) return;
     var by = P.countByVideo(LF.all());
