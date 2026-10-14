@@ -827,19 +827,192 @@
 /* lang-nav live badge: 收藏 count + honest sync dot, from window.LangFav.
    No-op where LangFav is absent (offline file:// deliverables). */
 (function(){
+  /*<<account-ui-pure>>*/
+  function ACCOUNT_UI_PURE(){
+    function encode(buffer){
+      var bytes = new Uint8Array(buffer), s = '';
+      for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function decode(s){
+      if (typeof s !== 'string' || !/^[A-Za-z0-9_-]*$/.test(s)) throw new Error('Invalid credential encoding');
+      var bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+      return Uint8Array.from(bin, function(c){ return c.charCodeAt(0); }).buffer;
+    }
+    function creation(o){
+      var out = Object.assign({}, o, { challenge: decode(o.challenge), user: Object.assign({}, o.user, { id: decode(o.user.id) }) });
+      if (o.excludeCredentials) out.excludeCredentials = o.excludeCredentials.map(function(c){ return Object.assign({}, c, {id: decode(c.id)}); });
+      return out;
+    }
+    function authentication(o){
+      var out = Object.assign({}, o, {challenge: decode(o.challenge)});
+      if (o.allowCredentials) out.allowCredentials = o.allowCredentials.map(function(c){ return Object.assign({}, c, {id: decode(c.id)}); });
+      return out;
+    }
+    function response(c){
+      var r = c.response, out = { id: c.id, rawId: encode(c.rawId), type: c.type,
+        clientExtensionResults: c.getClientExtensionResults(), response: { clientDataJSON: encode(r.clientDataJSON) } };
+      if (c.authenticatorAttachment) out.authenticatorAttachment = c.authenticatorAttachment;
+      if (r.attestationObject){ out.response.attestationObject = encode(r.attestationObject); out.response.transports = r.getTransports ? r.getTransports() : []; }
+      else { out.response.authenticatorData = encode(r.authenticatorData); out.response.signature = encode(r.signature); out.response.userHandle = r.userHandle ? encode(r.userHandle) : null; }
+      return out;
+    }
+    return {encode: encode, decode: decode, creation: creation, authentication: authentication, response: response};
+  }
+  /*<</account-ui-pure>>*/
   var nav = document.querySelector('.lang-nav'); if (!nav) return;
   var nEl = nav.querySelector('.ln-fav-n'), dot = nav.querySelector('.ln-dot');
   var DOT = { ok: ['ln-ok', '已同步'], wait: ['ln-wait', '待同步'],
-              off: ['ln-off', '未开启'], err: ['ln-err', '同步失败'] };
+              off: ['ln-off', '仅本机'], err: ['ln-err', '同步失败'], offline: ['ln-wait', '离线 · 已保存在本机'] };
+  var LF, button, dialog, message, busy = false, previousFocus, ui = ACCOUNT_UI_PURE();
   function refresh(){
-    var LF = window.LangFav; if (!LF) return;
+    LF = window.LangFav; if (!LF) return;
     if (nEl) nEl.textContent = LF.count();
-    if (dot){ var s = (LF.status && LF.status()) || 'off'; var d = DOT[s] || DOT.off;
-      dot.className = 'ln-dot ' + d[0]; dot.title = d[1]; }
+    var s = (LF.status && LF.status()) || 'off', d = DOT[s] || DOT.off;
+    if (dot){ dot.className = 'ln-dot ' + d[0]; dot.title = d[1]; }
+    if (LF.backendAvailable && LF.backendAvailable() && !button) setup();
+    if (button){ button.textContent = LF.account() ? '我的账号' : '登录同步'; button.title = d[1]; }
+    if (dialog && dialog.open) render();
+  }
+  function download(){
+    var blob = new Blob([JSON.stringify(LF.exportState(), null, 2)], {type: 'application/json'}), url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = 'lang-study-backup.json'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+  async function request(path, body){
+    var response = await fetch('/api/auth/' + path, {method: body === undefined ? 'GET' : 'POST',
+      credentials: 'same-origin', headers: body === undefined ? {} : {'Content-Type': 'application/json'},
+      body: body === undefined ? undefined : JSON.stringify(body)});
+    var data = await response.json().catch(function(){ return {}; });
+    if (!response.ok){
+      var error = new Error(response.status === 429 ? '操作太频繁，请稍后再试。' :
+        /otp|code|expired/i.test(data.code || '') ? '验证码无效或已过期，请重新获取。' :
+        response.status === 503 ? '邮件服务暂时不可用，请稍后再试。' : '操作未完成，请重试。');
+      error.status = response.status; throw error;
+    }
+    return data;
+  }
+  async function perform(fn){
+    if (busy) return; busy = true; message.textContent = '请稍候…'; render();
+    try { await fn(); }
+    catch(e){ message.textContent = e.name === 'NotAllowedError' ? '已取消，可以重试或使用邮箱登录。' : e.message || '操作未完成，请重试。'; }
+    finally { busy = false; render(); }
+  }
+  async function passkeySignIn(){
+    var o = await request('passkey/generate-authenticate-options');
+    var credential = await navigator.credentials.get({publicKey: ui.authentication(o)});
+    if (!credential) throw new Error('未选择通行密钥。');
+    await request('passkey/verify-authentication', {response: ui.response(credential)});
+    await LF.refreshSession(); await LF.pull(); message.textContent = '已登录。';
+  }
+  async function addPasskey(){
+    var o = await request('passkey/generate-register-options');
+    var credential = await navigator.credentials.create({publicKey: ui.creation(o)});
+    if (!credential) throw new Error('未创建通行密钥。');
+    await request('passkey/verify-registration', {response: ui.response(credential), name: '我的通行密钥'});
+    message.textContent = '通行密钥已设置。下次可用设备解锁登录。'; await loadPasskeys();
+  }
+  async function loadPasskeys(){
+    var list = dialog.querySelector('#accountPasskeys'); list.replaceChildren();
+    var keys = await request('passkey/list-user-passkeys');
+    if (!Array.isArray(keys)) return;
+    keys.forEach(function(key){
+      var row = document.createElement('li'), label = document.createElement('span'), remove = document.createElement('button');
+      label.textContent = key.name || '通行密钥'; remove.type = 'button'; remove.textContent = '移除';
+      remove.setAttribute('aria-label', '移除 ' + label.textContent);
+      remove.addEventListener('click', function(){ if (!confirm('移除此通行密钥？仍可使用邮箱登录。')) return;
+        perform(async function(){ await request('passkey/delete-passkey', {id: key.id}); await loadPasskeys(); message.textContent = '已移除通行密钥。'; }); });
+      row.append(label, remove); list.append(row);
+    });
+  }
+  function render(){
+    if (!dialog) return;
+    var user = LF.account(), s = LF.status(), signed = !!user;
+    dialog.querySelector('#accountSignedOut').hidden = signed;
+    dialog.querySelector('#accountSignedIn').hidden = !signed;
+    dialog.querySelector('#accountEmailLabel').textContent = user ? user.email : '';
+    dialog.querySelector('#accountState').textContent = DOT[s] ? DOT[s][1] : '仅本机';
+    dialog.querySelector('#accountPasskeySignIn').hidden = !window.PublicKeyCredential;
+    dialog.querySelector('#accountAddPasskey').hidden = !window.PublicKeyCredential;
+    dialog.querySelectorAll('button').forEach(function(b){ b.disabled = busy && b.id !== 'accountClose'; });
+  }
+  function setup(){
+    var style = document.createElement('style'); style.textContent =
+      '.ln-account{font:inherit;font-size:.78rem;border:1px solid var(--line-strong);border-radius:2rem;padding:.35rem .75rem;background:var(--card);color:var(--ink);cursor:pointer;min-height:44px;white-space:nowrap}' +
+      '.account-dialog{box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:24px;border:1px solid var(--line-strong);border-radius:16px;background:var(--paper);color:var(--ink);box-shadow:0 16px 60px #0003;font-family:var(--font-gothic);overflow:auto}' +
+      '.account-dialog::backdrop{background:#0007}.account-dialog [hidden]{display:none!important}' +
+      '.account-dialog h2{margin:0 0 8px;font-size:1.3rem}.account-dialog p{font-size:.9rem;line-height:1.7;margin:8px 0 16px;color:var(--ink-soft)}' +
+      '.account-dialog label{display:block;font-size:.85rem;margin:12px 0 6px}.account-dialog input{box-sizing:border-box;width:100%;min-height:44px;font:inherit;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink)}' +
+      '.account-dialog button{font:inherit;min-width:44px;min-height:44px;padding:9px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer}.account-dialog button:disabled{opacity:.55;cursor:wait}' +
+      '.account-dialog .account-primary{display:block;width:100%;background:var(--ink);color:var(--paper);margin:12px 0}.account-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}' +
+      '.account-dialog .account-close{float:right;padding:5px 12px;margin:-10px -10px 0 8px}.account-dialog a{color:var(--shu)}' +
+      '.account-dialog #accountMessage{min-height:1.6em;white-space:pre-wrap;overflow-wrap:anywhere}.account-dialog ul{padding:0;list-style:none}.account-dialog li{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0}' +
+      '.account-dialog details{margin-top:16px}.account-dialog summary{cursor:pointer;min-height:44px;display:flex;align-items:center}.account-dialog :focus-visible,.ln-account:focus-visible{outline:2px solid var(--shu);outline-offset:3px}';
+    document.head.appendChild(style);
+    button = document.createElement('button'); button.type = 'button'; button.className = 'ln-account'; button.id = 'accountOpen';
+    button.setAttribute('aria-haspopup', 'dialog'); nav.appendChild(button);
+    dialog = document.createElement('dialog'); dialog.className = 'account-dialog'; dialog.setAttribute('aria-labelledby', 'accountTitle');
+    dialog.innerHTML = '<button type="button" class="account-close" id="accountClose" aria-label="关闭账号窗口">×</button>' +
+      '<h2 id="accountTitle">学习账号</h2><p id="accountState"></p>' +
+      '<section id="accountSignedOut"><p>登录后，收藏、复习记录和笔记会自动同步到其他设备。</p>' +
+      '<button type="button" class="account-primary" id="accountPasskeySignIn">使用通行密钥登录</button>' +
+      '<details id="accountEmailFallback"><summary>使用邮箱登录或创建账号</summary>' +
+      '<form id="accountEmailForm"><label for="accountEmail">邮箱</label><input id="accountEmail" type="email" autocomplete="email" required maxlength="254">' +
+      '<button type="submit" class="account-primary" id="accountSendCode">发送验证码</button></form>' +
+      '<form id="accountCodeForm" hidden><label for="accountCode">邮箱验证码</label><input id="accountCode" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>' +
+      '<button type="submit" class="account-primary">验证并登录</button></form></details></section>' +
+      '<section id="accountSignedIn" hidden><p id="accountEmailLabel"></p>' +
+      '<button type="button" class="account-primary" id="accountAddPasskey">设置通行密钥</button><p>以后用设备解锁即可登录。更换设备时也可以用邮箱恢复账号。</p>' +
+      '<details><summary>管理通行密钥</summary><ul id="accountPasskeys"></ul></details>' +
+      '<div class="account-actions"><button type="button" id="accountImportGuest">导入本机学习记录</button><button type="button" id="accountSync">立即同步</button></div>' +
+      '<details><summary>备份与迁移</summary><p>导入会补充缺少的记录，保留账号里已有的内容。</p>' +
+      '<div class="account-actions"><button type="button" id="accountExport">导出完整备份</button><button type="button" id="accountImportFile">导入备份</button></div>' +
+      '<input type="file" id="accountBackupFile" accept="application/json,.json" hidden>' +
+      '<label for="accountGistToken">旧 Gist 的访问令牌（仅用于读取）</label><input id="accountGistToken" type="password" autocomplete="off">' +
+      '<button type="button" id="accountImportGist">从旧 Gist 导入</button><p><a id="accountOldOrigin" href="migrate.html" target="_blank" rel="noopener">从旧网址导出学习记录 ↗</a></p></details>' +
+      '<div class="account-actions"><button type="button" id="accountSignOut">退出账号</button></div></section>' +
+      '<p id="accountMessage" role="status" aria-live="polite"></p>';
+    document.body.appendChild(dialog); message = dialog.querySelector('#accountMessage');
+    dialog.querySelector('#accountOldOrigin').href = new URL('/migrate.html', location.origin.replace('://lang.', '://')).href;
+    dialog.querySelector('#accountClose').addEventListener('click', function(){ dialog.close(); });
+    dialog.addEventListener('close', function(){ if (previousFocus) previousFocus.focus(); });
+    dialog.addEventListener('click', function(e){ if (e.target === dialog){ var r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close(); } });
+    button.addEventListener('click', function(){ previousFocus = document.activeElement; message.textContent = ''; dialog.showModal(); render();
+      perform(async function(){ await LF.refreshSession(); if (LF.account()) await loadPasskeys(); message.textContent = ''; }); });
+    dialog.querySelector('#accountPasskeySignIn').addEventListener('click', function(){ perform(passkeySignIn); });
+    dialog.querySelector('#accountAddPasskey').addEventListener('click', function(){ perform(addPasskey); });
+    dialog.querySelector('#accountEmailForm').addEventListener('submit', function(e){ e.preventDefault(); perform(async function(){
+      var email = dialog.querySelector('#accountEmail').value.trim();
+      await request('email-otp/send-verification-otp', {email: email, type: 'sign-in'});
+      dialog.querySelector('#accountCodeForm').hidden = false; message.textContent = '验证码已发送，有效期 5 分钟。'; dialog.querySelector('#accountCode').focus();
+    }); });
+    dialog.querySelector('#accountCodeForm').addEventListener('submit', function(e){ e.preventDefault(); perform(async function(){
+      await request('sign-in/email-otp', {email: dialog.querySelector('#accountEmail').value.trim(), otp: dialog.querySelector('#accountCode').value.trim()});
+      dialog.querySelector('#accountCode').value = ''; await LF.refreshSession(); await LF.pull(); await loadPasskeys();
+      message.textContent = '已登录。可设置通行密钥，也可导入本机已有的学习记录。';
+    }); });
+    dialog.querySelector('#accountSync').addEventListener('click', function(){ perform(async function(){ var r = await LF.sync(); if (!r.ok) throw new Error('同步未完成，本机记录已保留。'); message.textContent = '已同步。'; }); });
+    dialog.querySelector('#accountImportGuest').addEventListener('click', function(){ perform(async function(){ await LF.importGuest(); var r = await LF.sync(); message.textContent = r.ok ? '本机记录已导入并同步。' : '已导入本机记录，联网后继续同步。'; }); });
+    dialog.querySelector('#accountExport').addEventListener('click', download);
+    dialog.querySelector('#accountImportFile').addEventListener('click', function(){ dialog.querySelector('#accountBackupFile').click(); });
+    dialog.querySelector('#accountBackupFile').addEventListener('change', function(e){ var file = e.target.files[0]; e.target.value = ''; if (!file) return;
+      perform(async function(){ if (file.size > 20 * 1024 * 1024) throw new Error('备份过大，请分批导入。'); await LF.importState(JSON.parse(await file.text())); await LF.sync(); message.textContent = '备份已导入。'; }); });
+    dialog.querySelector('#accountImportGist').addEventListener('click', function(){ perform(async function(){
+      var field = dialog.querySelector('#accountGistToken'), token = field.value.trim(); field.value = '';
+      await LF.importGist(token); var r = await LF.sync(); message.textContent = r.ok ? '旧 Gist 已导入。' : '已导入，联网后继续同步。';
+    }); });
+    dialog.querySelector('#accountSignOut').addEventListener('click', function(){ perform(async function(){
+      if (LF.pendingCount && LF.pendingCount() && !confirm('还有未同步的记录。退出后会保留在这台设备，重新登录同一账号可继续同步。确认退出？')) return;
+      await request('sign-out', {}); await LF.clearSession(); message.textContent = '已退出。现在使用本机访客记录。';
+    }); });
+    fetch('/api/account/config', {credentials: 'same-origin'}).then(function(r){ return r.json(); }).then(function(c){
+      if (!c.emailEnabled){ dialog.querySelector('#accountEmailForm').hidden = true; dialog.querySelector('#accountEmailFallback').insertAdjacentHTML('beforeend', '<p>邮箱登录暂未启用。</p>'); }
+    }).catch(function(){});
+    render();
   }
   (function wait(tries){
-    var LF = window.LangFav;
-    if (LF){ if (LF.onChange) LF.onChange(refresh); refresh(); return; }
+    var fav = window.LangFav;
+    if (fav){ if (fav.onChange) fav.onChange(refresh); if (fav.ready) fav.ready.then(refresh); refresh(); return; }
     if (tries < 30) setTimeout(function(){ wait(tries + 1); }, 80);
   })(0);
 })();

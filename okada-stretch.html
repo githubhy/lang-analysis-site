@@ -5699,9 +5699,9 @@
 <script>
 /* ============================================================================
    Study-state store (v2) — the shared synced substrate. Was single-purpose
-   favorites; now holds FOUR namespaced maps (items / srs / notes / progress) on
-   the same private-Gist backend. Store = localStorage cache; SOURCE OF TRUTH = a
-   private GitHub Gist (opt-in sync). Online-only (gated on https/localhost, NOT
+   favorites; now holds seven namespaced maps with an account-scoped IndexedDB cache and durable
+   operation queue. Verified session accounts sync to the study API; plain static
+   origins retain the legacy private-Gist adapter for backward compatibility. Online-only (gated on https/localhost, NOT
    file://) so offline file:// deliverables stay self-contained. The pure core
    below is unit-tested (tools/test_favorites.mjs). Exposes window.LangFav on EVERY
    page: study pages inject capture UI + notes + progress; favorites.html renders
@@ -5964,10 +5964,81 @@
   }
   /*<</fav-pure>>*/
 
+  /*<<account-pure>>*/
+  // Account replay keeps canonical server state separate from optimistic operations.
+  function ACCOUNT_PURE(){
+    var names = ['items', 'srs', 'notes', 'progress', 'vocab', 'vsrs', 'activity'];
+    function clone(x){ return JSON.parse(JSON.stringify(x)); }
+    function empty(){ var x = {}; names.forEach(function(n){ x[n] = {}; }); return x; }
+    function validKey(k){ return typeof k === 'string' && k.length > 0 && k.length <= 512 && ['__proto__','constructor','prototype'].indexOf(k) < 0; }
+    function isCard(v){
+      return !!(v&&typeof v==='object'&&['due','ivl','ease','reps','lapses'].every(function(k){return Number.isFinite(v[k]);})&&
+        v.due>=0&&v.ivl>=0&&v.ivl<=365000&&v.ease>=1.3&&v.ease<=3&&
+        Number.isInteger(v.reps)&&v.reps>=0&&Number.isInteger(v.lapses)&&v.lapses>=0);
+    }
+    function valid(o){
+      if (!o || names.indexOf(o.ns) < 0 || !validKey(o.key)) return false;
+      if (o.ns === 'progress' && !/^[a-zA-Z0-9_-]+\.html$/.test(o.key))return false;
+      if (o.op === 'review') return (o.ns === 'srs' || o.ns === 'vsrs') && ['again','hard','good','easy'].indexOf(o.grade) >= 0 && Number.isSafeInteger(o.at) && o.at >= 0 && o.at <= Math.floor(Date.now()/1000)+300;
+      if (o.op === 'del') return true;
+      if (o.op !== 'set' && o.op !== 'import') return false;
+      if((o.ns==='srs'||o.ns==='vsrs')&&!isCard(o.value))return false;
+      try { return o.value !== undefined && new TextEncoder().encode(JSON.stringify(o.value)).length <= 65536; } catch(e){ return false; }
+    }
+    // Identical scheduler to SRS_PURE; usable during boot before srs.js has loaded.
+    function schedule(card, grade, now){
+      var c = card || { due: now, ivl: 0, ease: 2.5, reps: 0, lapses: 0 };
+      var ease = c.ease, ivl = c.ivl, reps = c.reps, lapses = c.lapses;
+      function clamp(e){ return Math.max(1.3, Math.min(3.0, e)); }
+      if (grade === 'again') return { due: now, ivl: 0, ease: clamp(ease - .20), reps: 0, lapses: lapses + 1 };
+      var n;
+      if (grade === 'hard'){ ease = clamp(ease - .15); n = reps === 0 ? 1 : Math.max(ivl + 1, Math.round(ivl * 1.2)); }
+      else if (grade === 'easy'){ ease = clamp(ease + .15); n = reps === 0 ? 3 : Math.round(ivl * ease * 1.3); }
+      else { ease = clamp(ease); n = reps === 0 ? 1 : Math.round(ivl * ease); }
+      return { due: now + n * 86400, ivl: n, ease: ease, reps: reps + 1, lapses: lapses };
+    }
+    function replay(base, pending){
+      var x = clone(base || empty());
+      (pending || []).forEach(function(o){
+        if (!valid(o)) return;
+        var m = x[o.ns];
+        if (o.op === 'del') delete m[o.key];
+        else if (o.op === 'review') m[o.key] = schedule(m[o.key], o.grade, o.at);
+        else if (o.op === 'set' || !Object.prototype.hasOwnProperty.call(m,o.key)) m[o.key] = clone(o.value);
+      });
+      return x;
+    }
+    function applyReply(doc, reply, sent){
+      // A delayed response must never roll a newer shared base backwards.
+      if (reply.cursor >= doc.cursor){
+        (reply.changes || []).forEach(function(c){
+          if (names.indexOf(c.ns) < 0 || !validKey(c.key)) return;
+          if (c.deleted) delete doc.base[c.ns][c.key]; else doc.base[c.ns][c.key] = clone(c.value);
+        });
+        doc.cursor = reply.cursor;doc.complete = !reply.more;
+      }
+      var delivered = new Set(sent.map(function(o){return o.id;}));
+      var ack = new Set((reply.acked || []).filter(function(id){return delivered.has(id);}));
+      doc.ops = doc.ops.filter(function(o){return !ack.has(o.id);});
+      return doc;
+    }
+    function outbound(ops){
+      var out = [], bytes = 100;
+      for (var i=0;i<ops.length && out.length<4;i++){
+        var size = new TextEncoder().encode(JSON.stringify(ops[i])).length + 1;
+        if (bytes + size > 450000) break;
+        bytes += size; out.push(ops[i]);
+      }
+      return out;
+    }
+    return { empty: empty, clone: clone, valid: valid, replay: replay, schedule: schedule, applyReply: applyReply, outbound: outbound };
+  }
+  /*<</account-pure>>*/
+
   // ---- online-only: https or localhost; NOT file:// (Chrome reports file:// AS secure).
   var loc = window.location || {};
   if (!(loc.protocol === 'https:' || loc.hostname === 'localhost' || loc.hostname === '127.0.0.1')) return;
-  var P = FAV_PURE();
+  var P = FAV_PURE(), AP = ACCOUNT_PURE(), accountOrigin = loc.hostname.split('.')[0] === 'lang';
 
   var K = { store: 'langfav:v1', srs: 'langfav:srs', notes: 'langfav:notes',
             progress: 'langfav:progress', vocab: 'langfav:vocab', vsrs: 'langfav:vsrs',
@@ -5977,16 +6048,130 @@
   function readJSON(k, d){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e){ return d; } }
   function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 
+  function safeStudyHTML(html){
+    var template=document.createElement('template');template.innerHTML=String(html||'');
+    var out=document.createElement('div'),allowed=['ruby','rt','rp','span','em','strong','b','i','br'];
+    var discard=['script','style','iframe','object','embed','svg','math','img','video','audio','link','meta','base','form','input','button','textarea','select'];
+    function visit(node,parent){
+      if(node.nodeType===3){parent.appendChild(document.createTextNode(node.textContent));return;}
+      if(node.nodeType!==1)return;
+      var tag=node.localName.toLowerCase();if(discard.indexOf(tag)>=0)return;
+      var target=parent;
+      if(allowed.indexOf(tag)>=0){
+        target=document.createElement(tag);
+        var cls=node.getAttribute('class');
+        if(tag==='span'&&cls&&cls.length<=128&&/^[a-zA-Z0-9_ -]+$/.test(cls))target.setAttribute('class',cls);
+        parent.appendChild(target);
+      }
+      Array.from(node.childNodes).forEach(function(child){visit(child,target);});
+    }
+    Array.from(template.content.childNodes).forEach(function(node){visit(node,out);});return out.innerHTML;
+  }
+  function cleanValue(ns,value){
+    var x=AP.clone(value);
+    if(x&&typeof x==='object'&&!Array.isArray(x)){
+      if(ns==='items'&&x.jp_html!=null)x.jp_html=safeStudyHTML(String(x.jp_html));
+      if(ns==='vocab'&&x.src!=null)x.src=safeStudyHTML(String(x.src));
+      if((ns==='items'||ns==='vocab')&&(typeof x.page!=='string'||!/^[a-zA-Z0-9_-]+\.html$/.test(x.page)))x.page='';
+    }
+    return x;
+  }
+  function cleanState(input){
+    var x=AP.empty(),maps=P.migrate(input);
+    NS.forEach(function(ns){Object.keys(maps[ns]||{}).forEach(function(key){
+      if(AP.valid({ns:ns,key:key,op:'set',value:maps[ns][key]}))x[ns][key]=cleanValue(ns,maps[ns][key]);
+    });});return x;
+  }
   var state = { items: readJSON(K.store, {}), srs: readJSON(K.srs, {}),
                 notes: readJSON(K.notes, {}), progress: readJSON(K.progress, {}),
                 vocab: readJSON(K.vocab, {}), vsrs: readJSON(K.vsrs, {}),
                 activity: readJSON(K.activity, {}) };
+  state=cleanState(state);
   var favs = state.items;                // alias kept for the capture UI
   var ops  = readJSON(K.ops, []);        // pending, not-yet-synced ops
   var changeHooks = [];
+  var available = false, user = readJSON('langstudy:identity', null), owner = user && user.id;
+  if(typeof owner!=='string'||!owner){user=null;owner=null;}
+  var activeKey = 'langstudy:active', storageFailed = false, hydrated = !owner;
+  var durable = Promise.resolve(), optimistic = [], dbPromise = null;
+  if (owner){ setState(AP.empty()); ops = []; }
+  function active(){ return !owner || readJSON(activeKey, owner) === owner; }
+  function identityId(){
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    // UUID v4 uses cryptographic randomness, also available on older browsers.
+    var b = new Uint8Array(16); window.crypto.getRandomValues(b); b[6] = (b[6]&15)|64; b[8] = (b[8]&63)|128;
+    var h = Array.from(b,function(v){return ('0'+v.toString(16)).slice(-2);}).join('');
+    return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+  }
+  function freshDoc(){ return { base: AP.empty(), cursor: 0, ops: [], complete: false }; }
+  function openDB(){
+    if (!dbPromise) dbPromise = new Promise(function(resolve){
+      if (!window.indexedDB){ resolve(null); return; }
+      var r; try { r = window.indexedDB.open('lang-study',1); } catch(e){ resolve(null); return; }
+      r.onupgradeneeded = function(){ r.result.createObjectStore('accounts'); };
+      r.onsuccess = function(){ resolve(r.result); };
+      r.onerror = r.onblocked = function(){ resolve(null); };
+    });
+    return dbPromise;
+  }
+  function prefix(id){ return 'langstudy:account:'+encodeURIComponent(id)+':'; }
+  // Fallback writes immutable per-operation/per-cursor keys. A stale tab cannot
+  // replace another tab's queue or cached base with a whole localStorage snapshot.
+  function localDoc(id){
+    var p = prefix(id), doc = freshDoc();
+    for (var i=0;i<localStorage.length;i++){
+      var k = localStorage.key(i);
+      if (k && k.indexOf(p+'base:')===0){ var d = readJSON(k,null); if(d && d.cursor >= doc.cursor){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;} }
+      if (k && k.indexOf(p+'op:')===0){ var o=readJSON(k,null); if(o && !localStorage.getItem(p+'ack:'+o.id)) doc.ops.push(o); }
+    }
+    doc.ops.sort(function(a,b){ return a.order-b.order || a.id.localeCompare(b.id); });
+    return doc;
+  }
+  async function transaction(id, mutate){
+    var db = await openDB();
+    if (!db){
+      var old = localDoc(id), doc = mutate ? mutate(AP.clone(old)) : old;
+      if (mutate){
+        var p = prefix(id), keep = new Set(doc.ops.map(function(o){return o.id;}));
+        try {
+          // Retain only the newest canonical snapshot; immutable operation keys
+          // and acknowledgement markers remain independent of snapshot cleanup.
+          var stale=[];
+          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf(p+'base:')===0&&Number(k.slice((p+'base:').length))<old.cursor)stale.push(k);}
+          stale.forEach(function(k){localStorage.removeItem(k);});
+          localStorage.setItem(p+'base:'+doc.cursor,JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete}));
+          if(doc.cursor>old.cursor)localStorage.removeItem(p+'base:'+old.cursor);
+          old.ops.forEach(function(o){if(!keep.has(o.id)){localStorage.setItem(p+'ack:'+o.id,'1');localStorage.removeItem(p+'op:'+o.id);}});
+          doc.ops.forEach(function(o){ localStorage.setItem(p+'op:'+o.id,JSON.stringify(o)); });
+        } catch(e){ storageFailed = true; throw e; }
+      }
+      return doc;
+    }
+    return new Promise(function(resolve,reject){
+      var tx = db.transaction('accounts',mutate?'readwrite':'readonly'), store = tx.objectStore('accounts'), r = store.get(id), doc;
+      r.onsuccess = function(){ doc=r.result||freshDoc(); if(mutate){ doc=mutate(doc);store.put(doc,id); } };
+      tx.oncomplete = function(){ resolve(doc); };
+      tx.onerror = tx.onabort = function(){ storageFailed=true;reject(tx.error||new Error('study storage unavailable')); };
+    });
+  }
+  function useDoc(id, doc){
+    if (owner!==id || !active()) return;
+    hydrated=!!doc.complete;ops = doc.ops; var ids = new Set(ops.map(function(o){return o.id;}));
+    setState(AP.replay(cleanState(doc.base),ops.concat(optimistic.filter(function(o){return !ids.has(o.id);})).map(function(o){
+      var x=AP.clone(o);if(x.value!==undefined)x.value=cleanValue(x.ns,x.value);return x;
+    })));
+  }
+  function persistAccount(op){
+    var id = owner; optimistic.push(op);
+    durable = durable.then(function(){ return transaction(id,function(doc){if(!doc.ops.some(function(o){return o.id===op.id;}))doc.ops.push(op);return doc;}); }).then(function(doc){
+      optimistic = optimistic.filter(function(o){return o.id!==op.id;}); useDoc(id,doc);
+      try { localStorage.setItem('langstudy:changed',identityId()); } catch(e){}
+    }).catch(function(){storageFailed=true;lastErr=true;fireChange();});
+  }
   var lastErr = false;
 
   function persist(){
+    if (owner) return;
     writeJSON(K.store, state.items); writeJSON(K.srs, state.srs);
     writeJSON(K.notes, state.notes); writeJSON(K.progress, state.progress);
     writeJSON(K.vocab, state.vocab); writeJSON(K.vsrs, state.vsrs);
@@ -5994,18 +6179,23 @@
   }
   function setState(next){ state = next; favs = state.items; }
   function queueOp(op){
+    if (owner){
+      op = AP.clone(op); op.id=identityId(); op.order=sequence=Math.max(sequence+1,Date.now()*1000);
+      persistAccount(op); return;
+    }
+    if(op.op==='import')op.op='set'; // guest imports use the legacy operation vocabulary
     if (op && op.ns && op.key != null){                  // coalesce same ns+key: a key's synced state = its last op (bounds a long session's queue)
       for (var i = ops.length - 1; i >= 0; i--) if (ops[i].ns === op.ns && ops[i].key === op.key) ops.splice(i, 1);
     }
     ops.push(op); writeJSON(K.ops, ops);
   }
   function fireChange(){ reflect(); for (var i = 0; i < changeHooks.length; i++){ try { changeHooks[i](); } catch (e){} } }
-  var batching = false;
+  var batching = false, sequence = 0;
   // batch: apply many writes, then fire ONE change + ONE flush (avoids O(N) render/flush storms, e.g. srs reconcile).
   function batch(fn){ batching = true; try { fn(); } finally { batching = false; } fireChange(); scheduleFlush(); }
 
-  function addFav(record){ state.items[record.id] = record; queueOp({ ns: 'items', op: 'set', key: record.id, value: record }); persist(); fireChange(); scheduleFlush(); }
-  function removeFav(id){ if (!state.items[id]) return; delete state.items[id]; queueOp({ ns: 'items', op: 'del', key: id }); persist(); fireChange(); scheduleFlush(); }
+  function addFav(record){ if(record) setKey('items',record.id,record); }
+  function removeFav(id){ delKey('items',id); }
   // generic namespace API for srs.js / notes.js / progress.js
   function getNS(ns){ return state[ns] || {}; }
   // record that the user reviewed TODAY (local date) — the streak signal for the 今日学习 home.
@@ -6014,8 +6204,24 @@
   function todayStr(){ var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
   function stampToday(){ var s = todayStr(); setKey('activity', s, (getNS('activity')[s] || 0) + 1); }
-  function setKey(ns, key, value, opts){ if (NS.indexOf(ns) < 0) return; if (!state[ns]) state[ns] = {}; state[ns][key] = value; queueOp({ ns: ns, op: 'set', key: key, value: value }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
-  function delKey(ns, key, opts){ if (NS.indexOf(ns) < 0) return; if (state[ns][key] == null) return; delete state[ns][key]; queueOp({ ns: ns, op: 'del', key: key }); persist(); if (batching) return; fireChange(); if (!(opts && opts.defer)) scheduleFlush(); }
+  function setKey(ns, key, value, opts){
+    var op = { ns: ns, op: opts && opts.import ? 'import' : 'set', key: key, value: value };
+    if (!AP.valid(op) || !active()) return false;
+    if (owner && (ns==='srs'||ns==='vsrs') && !state[ns][key]) op.op='import';
+    op.value=cleanValue(ns,value);state[ns][key] = AP.clone(op.value); queueOp(op); persist();
+    if (!batching){fireChange();if(!(opts&&opts.defer))scheduleFlush();} return true;
+  }
+  function delKey(ns, key, opts){
+    var op = { ns: ns, op: 'del', key: key };
+    if (!AP.valid(op) || !active() || state[ns][key] == null) return false;
+    delete state[ns][key]; queueOp(op); persist();if(!batching){fireChange();if(!(opts&&opts.defer))scheduleFlush();}return true;
+  }
+  function review(ns,key,grade,at){
+    var op = { ns: ns, key: key, op: 'review', grade: grade, at: at == null ? Math.floor(Date.now()/1000) : at };
+    if(!AP.valid(op)||!active())return false;
+    if(!owner){setKey(ns,key,AP.schedule(state[ns][key],grade,op.at));return true;}
+    state[ns][key]=AP.schedule(state[ns][key],grade,op.at);queueOp(op);fireChange();scheduleFlush();return true;
+  }
 
   // ---------- sync (opt-in): localStorage cache ⇄ private Gist (source of truth) ----------
   var FILE = 'lang-favorites.json';
@@ -6074,7 +6280,7 @@
   function engine(){ return P.makeSyncEngine({ resolve: resolveGid, makeReq: makeRequest }); }
 
   var flushing = false, dirtyAgain = false, timer = null;
-  async function doFlush(){
+  async function legacyFlush(){
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
     if (flushing){ dirtyAgain = true; return { ok: false, reason: 'busy' }; }
@@ -6083,7 +6289,8 @@
       var pending = readJSON(K.ops, []);
       if (!pending.length) return { ok: true, count: favCount(), pushed: 0 };
       var out = await engine().push(pending);              // self-heals a stale gid on 404
-      setState(out.state); persist(); writeJSON(K.ops, []); ops = [];
+      var remaining=readJSON(K.ops,[]).filter(function(o){return !pending.some(function(p){return JSON.stringify(p)===JSON.stringify(o);});});
+      setState(cleanState(P.applyOps(out.state,remaining))); persist(); writeJSON(K.ops, remaining); ops = remaining;
       lastErr = false; fireChange();
       return { ok: true, count: favCount(), pushed: pending.length };
     } catch (e){                                            // keep ops queued; retry on next trigger
@@ -6093,16 +6300,141 @@
     } finally { flushing = false; if (dirtyAgain){ dirtyAgain = false; scheduleFlush(); } }
   }
   function scheduleFlush(){ if (timer) clearTimeout(timer); timer = setTimeout(doFlush, 1200); }
-  async function pullOnLoad(){
+  async function legacyPull(){
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
     try {
       var r = await engine().pull();                        // self-heals a stale gid on 404
-      setState(P.applyOps(r.body, readJSON(K.ops, [])));     // gist truth + our un-pushed ops
+      setState(cleanState(P.applyOps(r.body, readJSON(K.ops, []))));     // gist truth + our un-pushed ops
       persist(); lastErr = false; fireChange();
       if (ops.length) scheduleFlush();
       return { ok: true, count: favCount() };
     } catch (e){ if (e && e.status) lastErr = true; fireChange(); return { ok: false, status: e && e.status, error: String((e && e.message) || e) }; }
+  }
+
+  // ---------- account API: verified identity, durable queue and canonical deltas ----------
+  async function detectBackend(){
+    if(available)return true;
+    try {var r=await fetch('/api/account/config',{credentials:'same-origin',cache:'no-store'});
+      if(r.ok){var cfg=await r.json();available=!!(cfg&&typeof cfg.passkeysEnabled==='boolean'&&typeof cfg.emailEnabled==='boolean');}
+    } catch(e){}
+    if(!available && owner)lastErr=true;
+    return available;
+  }
+  async function refreshSession(){
+    if(!await detectBackend()) return user;
+    var marker=readJSON(activeKey,null);
+    try {
+      var r = await fetch('/api/auth/get-session',{credentials:'same-origin',cache:'no-store'});
+      if(!r.ok) throw new Error('session unavailable');
+      var session = await r.json();
+      if(session!==null && (!session || !session.user || !session.session))throw new Error('invalid session');
+      var next = session && session.user;
+      if(next && (typeof next.id!=='string'||!next.id)) throw new Error('invalid session');
+      await durable;
+      var currentMarker=readJSON(activeKey,null),verifiedOwner=next&&next.id;
+      if(currentMarker!==marker && currentMarker!==verifiedOwner){lastErr=true;fireChange();return user;}
+      user = next ? {id:next.id,email:next.email||''} : null;
+      var nextOwner=user&&user.id;
+      if(owner!==nextOwner){setState(AP.empty());ops=[];hydrated=!nextOwner;}
+      owner=nextOwner;optimistic=[];
+      writeJSON('langstudy:identity',user);writeJSON(activeKey,owner);
+      if(owner){useDoc(owner,await transaction(owner));}
+      else {setState(guestState());ops=readJSON(K.ops,[]);}
+      lastErr=false;fireChange();return user;
+    } catch(e){ lastErr=true;fireChange();return user; } // offline keeps cached identity
+  }
+  // Only call after a successful server sign-out; an ordinary failed session
+  // lookup must keep the cached offline identity instead.
+  async function clearSession(){
+    await durable;user=null;owner=null;hydrated=true;optimistic=[];
+    writeJSON('langstudy:identity',null);writeJSON(activeKey,null);
+    setState(guestState());ops=readJSON(K.ops,[]);lastErr=false;fireChange();return null;
+  }
+  function guestState(){
+    return cleanState({ items:readJSON(K.store,{}),srs:readJSON(K.srs,{}),notes:readJSON(K.notes,{}),progress:readJSON(K.progress,{}),vocab:readJSON(K.vocab,{}),vsrs:readJSON(K.vsrs,{}),activity:readJSON(K.activity,{}) });
+  }
+  function result(ok,reason,status){return {ok:ok,reason:reason||'',status:status||storeStatus()};}
+  function pendingCount(){return owner?new Set(ops.concat(optimistic).map(function(o){return o.id;})).size:readJSON(K.ops,[]).length;}
+  function storeStatus(){
+    if((owner||token()) && navigator.onLine===false)return 'offline';
+    if(!active()||storageFailed||lastErr)return 'err';
+    if(owner)return pendingCount()?'wait':'ok';
+    if(available)return 'off';
+    return P.syncStatus({hasToken:!!token(),lastErr:lastErr,pending:pendingCount()});
+  }
+  async function doFlush(){
+    if(!available && (owner||accountOrigin)){if(await detectBackend())await refreshSession();}
+    if(!available){ if(owner||accountOrigin)return result(false,'backend-unavailable');return legacyFlush(); }
+    if(!owner)return result(false,'signed-out');
+    if(!active())return result(false,'account-changed');
+    if(navigator.onLine===false)return result(false,'offline');
+    if(flushing){dirtyAgain=true;return result(false,'busy');}
+    flushing=true;var id=owner;
+    try {
+      await durable;if(storageFailed)return result(false,'storage-unavailable');
+      var doc=await transaction(id), snapshot=new Set(doc.ops.map(function(o){return o.id;})), sent=AP.outbound(doc.ops), pages=0, more, remaining;
+      // Only this snapshot's immutable IDs can be acknowledged; later writes survive.
+      do {
+        if(owner!==id||!active())return result(false,'account-changed');
+        var r=await fetch('/api/study/sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Study-Owner':id},body:JSON.stringify({cursor:doc.cursor,ops:sent})});
+        if(!r.ok){lastErr=true;fireChange();return result(false,r.status===409?'account-changed':'server-error',r.status);}
+        var reply=await r.json();
+        if(!Number.isSafeInteger(reply.cursor)||reply.cursor<0||!Array.isArray(reply.changes)||!Array.isArray(reply.acked))throw new Error('invalid sync reply');
+        reply.changes=reply.changes.map(function(c){var x=AP.clone(c);if(!x.deleted&&x.value!==undefined)x.value=cleanValue(x.ns,x.value);return x;});
+        doc=await transaction(id,function(latest){return AP.applyReply(latest,reply,sent);});
+        if(owner!==id||!active())return result(false,'account-changed');
+        useDoc(id,doc);more=reply.more;remaining=doc.ops.filter(function(o){return snapshot.has(o.id);});
+        if(sent.length && !reply.acked.some(function(ack){return sent.some(function(o){return o.id===ack;});}))throw new Error('sync did not acknowledge operations');
+        sent=more?[]:AP.outbound(remaining);pages++;
+        if(pages>1000)throw new Error('too many sync pages');
+      } while(more||sent.length);
+      lastErr=false;fireChange();if(doc.ops.length)scheduleFlush();return result(true);
+    } catch(e){lastErr=true;fireChange();return result(false,'network-error');}
+    finally{flushing=false;if(dirtyAgain){dirtyAgain=false;scheduleFlush();}}
+  }
+  async function pullOnLoad(){return available||owner||accountOrigin?doFlush():legacyPull();}
+  async function importState(data){
+    if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('invalid backup');
+    if(!active())throw new Error('account changed');
+    var x=P.migrate(data),incoming=AP.empty(),count=0;
+    // Validate and sanitize every record before queuing any part of a backup.
+    NS.forEach(function(ns){
+      if(!x[ns]||typeof x[ns]!=='object'||Array.isArray(x[ns]))throw new Error('invalid namespace');
+      Object.keys(x[ns]).forEach(function(k){
+        if(!AP.valid({ns:ns,key:k,op:'import',value:x[ns][k]}))throw new Error('invalid backup record: '+ns);
+        incoming[ns][k]=cleanValue(ns,x[ns][k]);
+      });
+    });
+    batch(function(){NS.forEach(function(ns){Object.keys(incoming[ns]).forEach(function(k){
+      if(!Object.prototype.hasOwnProperty.call(state[ns],k)&&setKey(ns,k,incoming[ns][k],{import:true}))count++;
+    });});});
+    await durable;return {ok:!storageFailed,count:count};
+  }
+  async function importGuest(){return importState(P.serialize(P.applyOps(guestState(),readJSON(K.ops,[]))));}
+  async function importGist(tok){
+    var t=tok||token();if(!t)throw new Error('GitHub token required for import');
+    async function read(path){var r=await fetch('https://api.github.com'+path,{headers:{Authorization:'Bearer '+t,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});if(!r.ok)throw new Error('GitHub import failed ('+r.status+')');return r.json();}
+    var hit=null;
+    for(var page=1;page<=100&&!hit;page++){
+      var list=await read('/gists?per_page=100&page='+page);
+      hit=list.filter(function(g){return g.files&&g.files[FILE];})[0];if(list.length<100)break;
+    }
+    if(!hit)throw new Error('No lang-favorites.json backup found');
+    var gist=await read('/gists/'+encodeURIComponent(hit.id)),file=gist.files&&gist.files[FILE];
+    if(!file)throw new Error('Gist backup missing');
+    var text=file.content;
+    if(file.truncated){
+      var url=new URL(file.raw_url);if(url.protocol!=='https:'||url.hostname!=='gist.githubusercontent.com')throw new Error('Invalid Gist backup URL');
+      var raw=await fetch(url.href);if(!raw.ok)throw new Error('Gist backup unavailable');text=await raw.text();
+    }
+    return importState(JSON.parse(text)); // read only: never creates or patches a Gist
+  }
+  async function initialize(){
+    if(owner){try{useDoc(owner,await transaction(owner));fireChange();}catch(e){storageFailed=true;}}
+    await detectBackend();
+    if(available){await refreshSession();if(owner)await doFlush();}
+    else if(!owner&&!accountOrigin)await legacyPull();
   }
 
   // ---------- capture UI (study pages only: where .u cards exist) ----------
@@ -6192,13 +6524,22 @@
   window.addEventListener('online', scheduleFlush);
   document.addEventListener('visibilitychange', function(){ if (document.hidden) doFlush(); });
   window.addEventListener('pagehide', function(){ doFlush(); });
-  pullOnLoad();
+  window.addEventListener('storage',function(e){
+    if(e.key===activeKey){fireChange();return;}
+    if(owner && active() && (e.key==='langstudy:changed'||(e.key&&e.key.indexOf(prefix(owner))===0))){
+      var id=owner;durable=durable.then(function(){return transaction(id);}).then(function(doc){useDoc(id,doc);fireChange();}).catch(function(){lastErr=true;});
+    }
+  });
+  document.addEventListener('visibilitychange',function(){if(!document.hidden && active()){refreshSession().then(pullOnLoad);}});
 
   // ---------- public surface ----------
   window.LangFav = {
     all: function(){ return favs; },
     count: favCount,
-    status: function(){ return P.syncStatus({ hasToken: !!token(), lastErr: lastErr, pending: readJSON(K.ops, []).length }); },
+    status: storeStatus, pendingCount: pendingCount,
+    account: function(){return user;}, hydrated: function(){return !owner||hydrated;}, backendAvailable: function(){return available;},
+    refreshSession: refreshSession, clearSession: clearSession, importGuest: importGuest, importState: importState, importGist: importGist,
+    exportState: function(){return AP.clone(P.serialize(state));}, review: review,
     remove: removeFav,
     add: addFav,
     getNS: getNS, setKey: setKey, delKey: delKey, batch: batch, stampToday: stampToday,
@@ -6208,6 +6549,7 @@
     sync: doFlush, pull: pullOnLoad, pure: P,
     onChange: function(fn){ if (typeof fn === 'function') changeHooks.push(fn); }
   };
+  window.LangFav.ready = initialize();
 })();
 </script>
 
@@ -6215,19 +6557,192 @@
 /* lang-nav live badge: 收藏 count + honest sync dot, from window.LangFav.
    No-op where LangFav is absent (offline file:// deliverables). */
 (function(){
+  /*<<account-ui-pure>>*/
+  function ACCOUNT_UI_PURE(){
+    function encode(buffer){
+      var bytes = new Uint8Array(buffer), s = '';
+      for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function decode(s){
+      if (typeof s !== 'string' || !/^[A-Za-z0-9_-]*$/.test(s)) throw new Error('Invalid credential encoding');
+      var bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+      return Uint8Array.from(bin, function(c){ return c.charCodeAt(0); }).buffer;
+    }
+    function creation(o){
+      var out = Object.assign({}, o, { challenge: decode(o.challenge), user: Object.assign({}, o.user, { id: decode(o.user.id) }) });
+      if (o.excludeCredentials) out.excludeCredentials = o.excludeCredentials.map(function(c){ return Object.assign({}, c, {id: decode(c.id)}); });
+      return out;
+    }
+    function authentication(o){
+      var out = Object.assign({}, o, {challenge: decode(o.challenge)});
+      if (o.allowCredentials) out.allowCredentials = o.allowCredentials.map(function(c){ return Object.assign({}, c, {id: decode(c.id)}); });
+      return out;
+    }
+    function response(c){
+      var r = c.response, out = { id: c.id, rawId: encode(c.rawId), type: c.type,
+        clientExtensionResults: c.getClientExtensionResults(), response: { clientDataJSON: encode(r.clientDataJSON) } };
+      if (c.authenticatorAttachment) out.authenticatorAttachment = c.authenticatorAttachment;
+      if (r.attestationObject){ out.response.attestationObject = encode(r.attestationObject); out.response.transports = r.getTransports ? r.getTransports() : []; }
+      else { out.response.authenticatorData = encode(r.authenticatorData); out.response.signature = encode(r.signature); out.response.userHandle = r.userHandle ? encode(r.userHandle) : null; }
+      return out;
+    }
+    return {encode: encode, decode: decode, creation: creation, authentication: authentication, response: response};
+  }
+  /*<</account-ui-pure>>*/
   var nav = document.querySelector('.lang-nav'); if (!nav) return;
   var nEl = nav.querySelector('.ln-fav-n'), dot = nav.querySelector('.ln-dot');
   var DOT = { ok: ['ln-ok', '已同步'], wait: ['ln-wait', '待同步'],
-              off: ['ln-off', '未开启'], err: ['ln-err', '同步失败'] };
+              off: ['ln-off', '仅本机'], err: ['ln-err', '同步失败'], offline: ['ln-wait', '离线 · 已保存在本机'] };
+  var LF, button, dialog, message, busy = false, previousFocus, ui = ACCOUNT_UI_PURE();
   function refresh(){
-    var LF = window.LangFav; if (!LF) return;
+    LF = window.LangFav; if (!LF) return;
     if (nEl) nEl.textContent = LF.count();
-    if (dot){ var s = (LF.status && LF.status()) || 'off'; var d = DOT[s] || DOT.off;
-      dot.className = 'ln-dot ' + d[0]; dot.title = d[1]; }
+    var s = (LF.status && LF.status()) || 'off', d = DOT[s] || DOT.off;
+    if (dot){ dot.className = 'ln-dot ' + d[0]; dot.title = d[1]; }
+    if (LF.backendAvailable && LF.backendAvailable() && !button) setup();
+    if (button){ button.textContent = LF.account() ? '我的账号' : '登录同步'; button.title = d[1]; }
+    if (dialog && dialog.open) render();
+  }
+  function download(){
+    var blob = new Blob([JSON.stringify(LF.exportState(), null, 2)], {type: 'application/json'}), url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = 'lang-study-backup.json'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+  async function request(path, body){
+    var response = await fetch('/api/auth/' + path, {method: body === undefined ? 'GET' : 'POST',
+      credentials: 'same-origin', headers: body === undefined ? {} : {'Content-Type': 'application/json'},
+      body: body === undefined ? undefined : JSON.stringify(body)});
+    var data = await response.json().catch(function(){ return {}; });
+    if (!response.ok){
+      var error = new Error(response.status === 429 ? '操作太频繁，请稍后再试。' :
+        /otp|code|expired/i.test(data.code || '') ? '验证码无效或已过期，请重新获取。' :
+        response.status === 503 ? '邮件服务暂时不可用，请稍后再试。' : '操作未完成，请重试。');
+      error.status = response.status; throw error;
+    }
+    return data;
+  }
+  async function perform(fn){
+    if (busy) return; busy = true; message.textContent = '请稍候…'; render();
+    try { await fn(); }
+    catch(e){ message.textContent = e.name === 'NotAllowedError' ? '已取消，可以重试或使用邮箱登录。' : e.message || '操作未完成，请重试。'; }
+    finally { busy = false; render(); }
+  }
+  async function passkeySignIn(){
+    var o = await request('passkey/generate-authenticate-options');
+    var credential = await navigator.credentials.get({publicKey: ui.authentication(o)});
+    if (!credential) throw new Error('未选择通行密钥。');
+    await request('passkey/verify-authentication', {response: ui.response(credential)});
+    await LF.refreshSession(); await LF.pull(); message.textContent = '已登录。';
+  }
+  async function addPasskey(){
+    var o = await request('passkey/generate-register-options');
+    var credential = await navigator.credentials.create({publicKey: ui.creation(o)});
+    if (!credential) throw new Error('未创建通行密钥。');
+    await request('passkey/verify-registration', {response: ui.response(credential), name: '我的通行密钥'});
+    message.textContent = '通行密钥已设置。下次可用设备解锁登录。'; await loadPasskeys();
+  }
+  async function loadPasskeys(){
+    var list = dialog.querySelector('#accountPasskeys'); list.replaceChildren();
+    var keys = await request('passkey/list-user-passkeys');
+    if (!Array.isArray(keys)) return;
+    keys.forEach(function(key){
+      var row = document.createElement('li'), label = document.createElement('span'), remove = document.createElement('button');
+      label.textContent = key.name || '通行密钥'; remove.type = 'button'; remove.textContent = '移除';
+      remove.setAttribute('aria-label', '移除 ' + label.textContent);
+      remove.addEventListener('click', function(){ if (!confirm('移除此通行密钥？仍可使用邮箱登录。')) return;
+        perform(async function(){ await request('passkey/delete-passkey', {id: key.id}); await loadPasskeys(); message.textContent = '已移除通行密钥。'; }); });
+      row.append(label, remove); list.append(row);
+    });
+  }
+  function render(){
+    if (!dialog) return;
+    var user = LF.account(), s = LF.status(), signed = !!user;
+    dialog.querySelector('#accountSignedOut').hidden = signed;
+    dialog.querySelector('#accountSignedIn').hidden = !signed;
+    dialog.querySelector('#accountEmailLabel').textContent = user ? user.email : '';
+    dialog.querySelector('#accountState').textContent = DOT[s] ? DOT[s][1] : '仅本机';
+    dialog.querySelector('#accountPasskeySignIn').hidden = !window.PublicKeyCredential;
+    dialog.querySelector('#accountAddPasskey').hidden = !window.PublicKeyCredential;
+    dialog.querySelectorAll('button').forEach(function(b){ b.disabled = busy && b.id !== 'accountClose'; });
+  }
+  function setup(){
+    var style = document.createElement('style'); style.textContent =
+      '.ln-account{font:inherit;font-size:.78rem;border:1px solid var(--line-strong);border-radius:2rem;padding:.35rem .75rem;background:var(--card);color:var(--ink);cursor:pointer;min-height:44px;white-space:nowrap}' +
+      '.account-dialog{box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:24px;border:1px solid var(--line-strong);border-radius:16px;background:var(--paper);color:var(--ink);box-shadow:0 16px 60px #0003;font-family:var(--font-gothic);overflow:auto}' +
+      '.account-dialog::backdrop{background:#0007}.account-dialog [hidden]{display:none!important}' +
+      '.account-dialog h2{margin:0 0 8px;font-size:1.3rem}.account-dialog p{font-size:.9rem;line-height:1.7;margin:8px 0 16px;color:var(--ink-soft)}' +
+      '.account-dialog label{display:block;font-size:.85rem;margin:12px 0 6px}.account-dialog input{box-sizing:border-box;width:100%;min-height:44px;font:inherit;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink)}' +
+      '.account-dialog button{font:inherit;min-width:44px;min-height:44px;padding:9px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer}.account-dialog button:disabled{opacity:.55;cursor:wait}' +
+      '.account-dialog .account-primary{display:block;width:100%;background:var(--ink);color:var(--paper);margin:12px 0}.account-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}' +
+      '.account-dialog .account-close{float:right;padding:5px 12px;margin:-10px -10px 0 8px}.account-dialog a{color:var(--shu)}' +
+      '.account-dialog #accountMessage{min-height:1.6em;white-space:pre-wrap;overflow-wrap:anywhere}.account-dialog ul{padding:0;list-style:none}.account-dialog li{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0}' +
+      '.account-dialog details{margin-top:16px}.account-dialog summary{cursor:pointer;min-height:44px;display:flex;align-items:center}.account-dialog :focus-visible,.ln-account:focus-visible{outline:2px solid var(--shu);outline-offset:3px}';
+    document.head.appendChild(style);
+    button = document.createElement('button'); button.type = 'button'; button.className = 'ln-account'; button.id = 'accountOpen';
+    button.setAttribute('aria-haspopup', 'dialog'); nav.appendChild(button);
+    dialog = document.createElement('dialog'); dialog.className = 'account-dialog'; dialog.setAttribute('aria-labelledby', 'accountTitle');
+    dialog.innerHTML = '<button type="button" class="account-close" id="accountClose" aria-label="关闭账号窗口">×</button>' +
+      '<h2 id="accountTitle">学习账号</h2><p id="accountState"></p>' +
+      '<section id="accountSignedOut"><p>登录后，收藏、复习记录和笔记会自动同步到其他设备。</p>' +
+      '<button type="button" class="account-primary" id="accountPasskeySignIn">使用通行密钥登录</button>' +
+      '<details id="accountEmailFallback"><summary>使用邮箱登录或创建账号</summary>' +
+      '<form id="accountEmailForm"><label for="accountEmail">邮箱</label><input id="accountEmail" type="email" autocomplete="email" required maxlength="254">' +
+      '<button type="submit" class="account-primary" id="accountSendCode">发送验证码</button></form>' +
+      '<form id="accountCodeForm" hidden><label for="accountCode">邮箱验证码</label><input id="accountCode" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>' +
+      '<button type="submit" class="account-primary">验证并登录</button></form></details></section>' +
+      '<section id="accountSignedIn" hidden><p id="accountEmailLabel"></p>' +
+      '<button type="button" class="account-primary" id="accountAddPasskey">设置通行密钥</button><p>以后用设备解锁即可登录。更换设备时也可以用邮箱恢复账号。</p>' +
+      '<details><summary>管理通行密钥</summary><ul id="accountPasskeys"></ul></details>' +
+      '<div class="account-actions"><button type="button" id="accountImportGuest">导入本机学习记录</button><button type="button" id="accountSync">立即同步</button></div>' +
+      '<details><summary>备份与迁移</summary><p>导入会补充缺少的记录，保留账号里已有的内容。</p>' +
+      '<div class="account-actions"><button type="button" id="accountExport">导出完整备份</button><button type="button" id="accountImportFile">导入备份</button></div>' +
+      '<input type="file" id="accountBackupFile" accept="application/json,.json" hidden>' +
+      '<label for="accountGistToken">旧 Gist 的访问令牌（仅用于读取）</label><input id="accountGistToken" type="password" autocomplete="off">' +
+      '<button type="button" id="accountImportGist">从旧 Gist 导入</button><p><a id="accountOldOrigin" href="migrate.html" target="_blank" rel="noopener">从旧网址导出学习记录 ↗</a></p></details>' +
+      '<div class="account-actions"><button type="button" id="accountSignOut">退出账号</button></div></section>' +
+      '<p id="accountMessage" role="status" aria-live="polite"></p>';
+    document.body.appendChild(dialog); message = dialog.querySelector('#accountMessage');
+    dialog.querySelector('#accountOldOrigin').href = new URL('/migrate.html', location.origin.replace('://lang.', '://')).href;
+    dialog.querySelector('#accountClose').addEventListener('click', function(){ dialog.close(); });
+    dialog.addEventListener('close', function(){ if (previousFocus) previousFocus.focus(); });
+    dialog.addEventListener('click', function(e){ if (e.target === dialog){ var r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close(); } });
+    button.addEventListener('click', function(){ previousFocus = document.activeElement; message.textContent = ''; dialog.showModal(); render();
+      perform(async function(){ await LF.refreshSession(); if (LF.account()) await loadPasskeys(); message.textContent = ''; }); });
+    dialog.querySelector('#accountPasskeySignIn').addEventListener('click', function(){ perform(passkeySignIn); });
+    dialog.querySelector('#accountAddPasskey').addEventListener('click', function(){ perform(addPasskey); });
+    dialog.querySelector('#accountEmailForm').addEventListener('submit', function(e){ e.preventDefault(); perform(async function(){
+      var email = dialog.querySelector('#accountEmail').value.trim();
+      await request('email-otp/send-verification-otp', {email: email, type: 'sign-in'});
+      dialog.querySelector('#accountCodeForm').hidden = false; message.textContent = '验证码已发送，有效期 5 分钟。'; dialog.querySelector('#accountCode').focus();
+    }); });
+    dialog.querySelector('#accountCodeForm').addEventListener('submit', function(e){ e.preventDefault(); perform(async function(){
+      await request('sign-in/email-otp', {email: dialog.querySelector('#accountEmail').value.trim(), otp: dialog.querySelector('#accountCode').value.trim()});
+      dialog.querySelector('#accountCode').value = ''; await LF.refreshSession(); await LF.pull(); await loadPasskeys();
+      message.textContent = '已登录。可设置通行密钥，也可导入本机已有的学习记录。';
+    }); });
+    dialog.querySelector('#accountSync').addEventListener('click', function(){ perform(async function(){ var r = await LF.sync(); if (!r.ok) throw new Error('同步未完成，本机记录已保留。'); message.textContent = '已同步。'; }); });
+    dialog.querySelector('#accountImportGuest').addEventListener('click', function(){ perform(async function(){ await LF.importGuest(); var r = await LF.sync(); message.textContent = r.ok ? '本机记录已导入并同步。' : '已导入本机记录，联网后继续同步。'; }); });
+    dialog.querySelector('#accountExport').addEventListener('click', download);
+    dialog.querySelector('#accountImportFile').addEventListener('click', function(){ dialog.querySelector('#accountBackupFile').click(); });
+    dialog.querySelector('#accountBackupFile').addEventListener('change', function(e){ var file = e.target.files[0]; e.target.value = ''; if (!file) return;
+      perform(async function(){ if (file.size > 20 * 1024 * 1024) throw new Error('备份过大，请分批导入。'); await LF.importState(JSON.parse(await file.text())); await LF.sync(); message.textContent = '备份已导入。'; }); });
+    dialog.querySelector('#accountImportGist').addEventListener('click', function(){ perform(async function(){
+      var field = dialog.querySelector('#accountGistToken'), token = field.value.trim(); field.value = '';
+      await LF.importGist(token); var r = await LF.sync(); message.textContent = r.ok ? '旧 Gist 已导入。' : '已导入，联网后继续同步。';
+    }); });
+    dialog.querySelector('#accountSignOut').addEventListener('click', function(){ perform(async function(){
+      if (LF.pendingCount && LF.pendingCount() && !confirm('还有未同步的记录。退出后会保留在这台设备，重新登录同一账号可继续同步。确认退出？')) return;
+      await request('sign-out', {}); await LF.clearSession(); message.textContent = '已退出。现在使用本机访客记录。';
+    }); });
+    fetch('/api/account/config', {credentials: 'same-origin'}).then(function(r){ return r.json(); }).then(function(c){
+      if (!c.emailEnabled){ dialog.querySelector('#accountEmailForm').hidden = true; dialog.querySelector('#accountEmailFallback').insertAdjacentHTML('beforeend', '<p>邮箱登录暂未启用。</p>'); }
+    }).catch(function(){});
+    render();
   }
   (function wait(tries){
-    var LF = window.LangFav;
-    if (LF){ if (LF.onChange) LF.onChange(refresh); refresh(); return; }
+    var fav = window.LangFav;
+    if (fav){ if (fav.onChange) fav.onChange(refresh); if (fav.ready) fav.ready.then(refresh); refresh(); return; }
     if (tries < 30) setTimeout(function(){ wait(tries + 1); }, 80);
   })(0);
 })();
@@ -7418,7 +7933,10 @@
   /*<</notes-pure>>*/
 
   if (!window.LangFav) return;                         // online-only (favorites.js sets LangFav)
-  var LF = window.LangFav, NP = NOTES_PURE();
+  var LF = window.LangFav, NP = NOTES_PURE(),controls=[];
+  function ownerId(){return LF.account&&LF.account()?LF.account().id:null;}
+  function refreshControls(){controls=controls.filter(function(c){if(c.body.isConnected===false){c.cancel();return false;}c.refresh();return true;});}
+  LF.onChange(refreshControls);if(LF.ready)LF.ready.then(refreshControls);
 
   // one 📝 toggle + inline editor for a sentence id.
   //   cluster = element the 📝 button is appended to
@@ -7437,19 +7955,30 @@
     ta.placeholder = '写点笔记…（跨设备同步）';
     editor.appendChild(ta); body.appendChild(editor);
 
-    var timer = null;
+    var timer = null,owner=ownerId(),editOwner=owner,dirty=false;
+    function cancel(){if(timer)clearTimeout(timer);timer=null;dirty=false;}
+    function refresh(){
+      if(owner!==ownerId()){owner=ownerId();editOwner=owner;cancel();ta.value='';editor.style.display='none';}
+      setDot();
+    }
+    controls.push({body:body,cancel:cancel,refresh:refresh});
     function commit(){
-      var text = ta.value;
+      if(!dirty||editOwner!==ownerId()){refresh();return;}
+      dirty=false;var text = ta.value;
       if (NP.isBlank(text)) LF.delKey('notes', id);
       else LF.setKey('notes', id, { text: text, at: Date.now() });
       setDot();
     }
     if (commitOn === 'blur') ta.addEventListener('blur', commit);
-    else ta.addEventListener('input', function(){ if (timer) clearTimeout(timer); timer = setTimeout(commit, 500); });
+    ta.addEventListener('input',function(){
+      if(editor.style.display==='none')return;
+      dirty=true;editOwner=owner;
+      if(commitOn!=='blur'){if(timer)clearTimeout(timer);timer=setTimeout(commit,500);}
+    });
 
     btn.addEventListener('click', function(){
       var open = editor.style.display === 'none';
-      if (open) ta.value = (LF.getNS('notes')[id] || {}).text || '';
+      if (open){editOwner=ownerId();dirty=false;ta.value=(LF.getNS('notes')[id]||{}).text||'';}
       editor.style.display = open ? '' : 'none';
       if (open) ta.focus();
     });
@@ -7522,6 +8051,8 @@
   if (!window.LangFav) return;                         // online-only (favorites.js sets LangFav)
   var LF = window.LangFav, PP = PROGRESS_PURE(), FP = LF.pure;
   function pageName(){ return (location.pathname.split('/').pop() || ''); }
+  function ownerId(){return LF.account&&LF.account()?LF.account().id:null;}
+  function validPage(s){return /^[a-zA-Z0-9_-]+\.html$/.test(s||'');}
   function cssEsc(s){ return (window.CSS && CSS.escape) ? CSS.escape(s) : s; }
 
   // ---------- surface A: study pages (recorder + resume banner) ----------
@@ -7543,55 +8074,57 @@
     document.addEventListener('visibilitychange', function(){ if (document.hidden){ record(true); if (LF.sync) LF.sync(); } });
     window.addEventListener('pagehide', function(){ record(true); if (LF.sync) LF.sync(); });
 
-    var prog = LF.getNS('progress')[pg], banner = document.getElementById('resumeBanner');
-    if (prog && prog.id && banner){
-      var top = cards[0], topId = top ? (top.dataset.sid || top.dataset.favId) : '';
-      if (prog.id !== topId){                          // only if not already at the top row
-        banner.innerHTML = '<button class="resume-go" type="button">↩ 回到上次 ' + FP.secToMmss(prog.sec || 0) + '</button>' +
-          '<button class="resume-x" type="button" aria-label="关闭">✕</button>';
-        banner.hidden = false;
-        banner.querySelector('.resume-go').addEventListener('click', function(){
-          location.hash = '#s=' + encodeURIComponent(prog.id);          // page_tools jump: scroll + highlight (no-ops on a missing id)
-          var sec = prog.sec || 0, tries = 0;
-          (function seek(){
-            if (window.LangPlayer && LangPlayer.ready && LangPlayer.ready()){ LangPlayer.seek(sec); return; }
-            if (++tries < 40) setTimeout(seek, 150);                     // embed mode never readies → scroll-only
-          })();
-        });
-        banner.querySelector('.resume-x').addEventListener('click', function(){ banner.hidden = true; });
-      }
+    var banner = document.getElementById('resumeBanner'),dismissed=false,seenOwner=ownerId();
+    function refreshResume(){
+      var current=ownerId();if(current!==seenOwner){seenOwner=current;dismissed=false;lastId=null;lastWrite=0;}
+      if(!banner)return;
+      var prog=LF.getNS('progress')[pg],top=cards[0],topId=top?(top.dataset.sid||top.dataset.favId):'';
+      banner.hidden=true;banner.innerHTML='';
+      if(dismissed||!prog||!prog.id||prog.id===topId)return;
+      banner.innerHTML = '<button class="resume-go" type="button">↩ 回到上次 ' + FP.secToMmss(prog.sec || 0) + '</button>' +
+        '<button class="resume-x" type="button" aria-label="关闭">✕</button>';
+      banner.hidden=false;
+      banner.querySelector('.resume-go').addEventListener('click',function(){
+        location.hash='#s='+encodeURIComponent(prog.id);
+        var sec=prog.sec||0,tries=0,seekOwner=ownerId();
+        (function seek(){
+          if(ownerId()!==seekOwner)return;
+          if(window.LangPlayer&&LangPlayer.ready&&LangPlayer.ready()){LangPlayer.seek(sec);return;}
+          if(++tries<40)setTimeout(seek,150);
+        })();
+      });
+      banner.querySelector('.resume-x').addEventListener('click',function(){dismissed=true;banner.hidden=true;});
     }
+    LF.onChange(refreshResume);if(LF.ready)LF.ready.then(refreshResume);refreshResume();
     return;
   }
 
   // ---------- surface B: index.html (继续学习 + per-card recency) ----------
-  var progress = LF.getNS('progress');
   function findLink(key){
+    if(!validPage(key))return null;
     return document.querySelector('a.idx-card[href="' + cssEsc(key) + '"], a.idx-row[href="' + cssEsc(key) + '"]');
   }
-  var resumeBox = document.getElementById('idxResume');
-  if (resumeBox){
-    var mr = PP.mostRecent(progress);
-    if (mr && progress[mr]){
-      var e = progress[mr], link = findLink(mr);
-      var titleEl = link ? link.querySelector('.idx-card-jp, .idx-title') : null;
-      var title = titleEl ? titleEl.textContent : mr;
-      var a = document.createElement('a');
-      a.className = 'idx-resume-link'; a.href = mr + '#s=' + encodeURIComponent(e.id || '');
-      a.textContent = '继续学习 → ' + title;
-      resumeBox.innerHTML = ''; resumeBox.appendChild(a); resumeBox.hidden = false;
+  function refreshIndex(){
+    var progress=LF.getNS('progress'),resumeBox=document.getElementById('idxResume'),safe={};
+    Object.keys(progress).forEach(function(key){if(validPage(key))safe[key]=progress[key];});
+    if(resumeBox){
+      resumeBox.hidden=true;resumeBox.innerHTML='';
+      var mr=PP.mostRecent(safe);
+      if(mr&&safe[mr]){
+        var e=safe[mr],link=findLink(mr),titleEl=link?link.querySelector('.idx-card-jp, .idx-title'):null;
+        var a=document.createElement('a');a.className='idx-resume-link';a.href=mr+'#s='+encodeURIComponent(e.id||'');
+        a.textContent='继续学习 → '+(titleEl?titleEl.textContent:mr);resumeBox.appendChild(a);resumeBox.hidden=false;
+      }
     }
+    [].slice.call(document.querySelectorAll('.idx-recency')).forEach(function(el){el.remove();});
+    var now=Date.now();
+    Object.keys(safe).forEach(function(key){
+      var link=findLink(key),e=safe[key];if(!link||!e||typeof e.at!=='number')return;
+      var host=link.querySelector('.idx-title')||link.querySelector('.idx-card-src')||link;
+      var span=document.createElement('span');span.className='idx-recency';span.textContent='上次 '+PP.relTime(e.at,now);host.appendChild(span);
+    });
   }
-  var now = Date.now();
-  for (var key in progress) if (Object.prototype.hasOwnProperty.call(progress, key)){
-    var link2 = findLink(key); if (!link2) continue;
-    var e2 = progress[key]; if (!e2 || typeof e2.at !== 'number') continue;
-    var host = link2.querySelector('.idx-title') || link2.querySelector('.idx-card-src') || link2;
-    if (host.querySelector('.idx-recency')) continue;
-    var span = document.createElement('span'); span.className = 'idx-recency';
-    span.textContent = '上次 ' + PP.relTime(e2.at, now);
-    host.appendChild(span);
-  }
+  LF.onChange(refreshIndex);if(LF.ready)LF.ready.then(refreshIndex);refreshIndex();
 })();
 </script>
 
@@ -7858,6 +8391,8 @@
   };
 
   document.addEventListener('keydown', function(e){
+    if (document.querySelector('dialog[open]')) return; // native account dialog owns focus and keys
+
     // Escape closes the cheat sheet first — it is the only overlay this file owns, and the
     // pure resolver deliberately hands Escape back to whoever else is listening.
     if (e.key === 'Escape' && helpOpen()){ e.preventDefault(); toggleHelp(false); return; }
@@ -8155,10 +8690,11 @@
     // Backfill FIRST, in the same batch: records saved before `src` existed gain it here, and the
     // reconcile below then creates their 填空 card in the same op flush rather than one load later.
     var bf = VP.backfillSrc(LF.getNS('vocab'), srcOnThisPage()), bk;
-    if (bf.setVocab) LF.batch(function(){
+    if (bf.setVocab && Object.keys(bf.setVocab).length) LF.batch(function(){
       for (bk in bf.setVocab) if (Object.prototype.hasOwnProperty.call(bf.setVocab, bk)) LF.setKey('vocab', bk, bf.setVocab[bk]);
     });
     var r = VP.vocabReconcile(LF.getNS('vocab'), LF.getNS('vsrs'), nowSec()), k;
+    if(!Object.keys(r.setVocab).length&&!Object.keys(r.setVsrs).length&&!r.delVocab.length&&!r.delVsrs.length)return;
     LF.batch(function(){
       for (k in r.setVocab) if (Object.prototype.hasOwnProperty.call(r.setVocab, k)) LF.setKey('vocab', k, r.setVocab[k]);
       for (k in r.setVsrs)  if (Object.prototype.hasOwnProperty.call(r.setVsrs, k))  LF.setKey('vsrs',  k, r.setVsrs[k]);
@@ -8166,7 +8702,22 @@
       r.delVsrs.forEach(function(x){ LF.delKey('vsrs',  x); });
     });
   }
-  applyReconcile();
+  var initialized=!LF.ready,reconciling=false,seenOwner=LF.account&&LF.account()?LF.account().id:null;
+  function updateDerived(){
+    if(reconciling)return;
+    var current=LF.account&&LF.account()?LF.account().id:null;
+    if(current!==seenOwner){seenOwner=current;snap=[];pos=0;if(ov){ov.hidden=true;document.body.classList.remove('srs-open');}}
+    if(!initialized)return;
+    reconciling=true;
+    try {
+      if(!LF.hydrated||LF.hydrated())applyReconcile();
+      chips.forEach(function(chip){chip.classList.toggle('saved',!!LF.getNS('vocab')[VP.termId(VP.stripStarOf(chip.textContent))]);});
+      if(section)renderList();
+    }finally{reconciling=false;}
+  }
+  LF.onChange(updateDerived);
+  if(LF.ready)LF.ready.then(function(){initialized=true;updateDerived();});
+  if(initialized)updateDerived();
 
   // ---------- REVIEW PAGE (favorites.html): 词汇 deck + review ----------
   var listEl = document.getElementById('favList');
@@ -8190,7 +8741,7 @@
       var r = vocab[id];
       return '<li class="vrow"><span class="chip ' + esc(r.cat || 'goi') + '">' + esc(r.term) + '</span>' +
         '<span class="vgloss">' + esc(r.gloss || '') + '</span>' +
-        '<a class="vsrc" href="' + esc(r.page || '#') + '">' + esc(r.mmss || '↗') + '</a>' +
+        '<a class="vsrc" href="' + esc(/^[a-zA-Z0-9_-]+\.html$/.test(r.page||'')?r.page:'#') + '">' + esc(r.mmss || '↗') + '</a>' +
         '<button class="vdel" type="button" data-id="' + esc(id) + '" aria-label="移除">✕</button></li>';
     }).join('');
     [].slice.call(vList.querySelectorAll('.vdel')).forEach(function(b){
@@ -8200,7 +8751,7 @@
       });
     });
   }
-  LF.onChange(renderList); renderList();
+  renderList();
 
   // review overlay
   var ov = document.createElement('div');
@@ -8267,7 +8818,7 @@
   function grade(g){
     var key = snap[pos], card = LF.getNS('vsrs')[key];
     // The schedule lives in `vsrs` now, keyed per TYPE — grading 产出 must not move 识别.
-    if (card && window.LangSRS) LF.setKey('vsrs', key, window.LangSRS.schedule(card, g, nowSec()));
+    if (card && window.LangSRS){ if(LF.review) LF.review('vsrs', key, g, nowSec()); else LF.setKey('vsrs', key, window.LangSRS.schedule(card, g, nowSec())); }
     if (card) LF.stampToday();                          // log today's activity (streak)
     if (g === 'again' && card) snap.push(key);
     pos++; show();
