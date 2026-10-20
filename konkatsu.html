@@ -7304,24 +7304,49 @@
   var cards = [].slice.call(document.querySelectorAll('.u'));
   if (cards.length){
     var pg = pageName();
-    var lastId = null, lastWrite = 0;
+    var lastId = null, lastSec = null, lastWrite = 0;
+    var watched = false, wasPlaying = false, dirty = false, syncing = false, lastSync = Date.now();
     function activeCard(){ return document.querySelector('.u.active'); }
     function record(force){
+      // Opening a page must not replace a hydrated account checkpoint with zero.
+      if (!watched) return;
       var c = activeCard(); if (!c) return;
       var id = c.dataset.sid || c.dataset.favId; if (!id) return;
       var t = (window.LangPlayer && LangPlayer.getTime) ? Math.floor(LangPlayer.getTime()) : 0;
       var now = Date.now();
+      if (id === lastId && t === lastSec) return;          // paused/idle polls are not new visits
       if (!force && id === lastId && (now - lastWrite) < 3000) return;   // throttle steady playback
-      lastId = id; lastWrite = now;
-      LF.setKey('progress', pg, { id: id, sec: t, at: now }, { defer: true });   // never flush per-record; terminal handlers flush once (avoids the rate-limit storm)
+      if (LF.setKey('progress', pg, { id: id, sec: t, at: now }, { defer: true }) === false) return;
+      lastId = id; lastSec = t; lastWrite = now; dirty = true;
     }
-    if (window.LangPlayer && LangPlayer.onTick) LangPlayer.onTick(function(){ record(false); });
-    document.addEventListener('visibilitychange', function(){ if (document.hidden){ record(true); if (LF.sync) LF.sync(); } });
-    window.addEventListener('pagehide', function(){ record(true); if (LF.sync) LF.sync(); });
+    function flushProgress(){
+      if (!dirty || syncing || !LF.sync) return;
+      var syncOwner = ownerId();
+      dirty = false; syncing = true; lastSync = Date.now();
+      function retry(){ if (ownerId() === syncOwner) dirty = true; }
+      Promise.resolve(LF.sync()).then(function(result){ if (!result || !result.ok) retry(); }, retry)
+        .then(function(){ syncing = false; });
+    }
+    function checkpoint(){ record(true); flushProgress(); }
+    function pulse(){
+      var lp = window.LangPlayer;
+      if (!lp || !lp.ready || !lp.ready() || (lp.seekOnly && lp.seekOnly())) return;
+      var playing = lp.paused ? !lp.paused() : false;
+      if (playing){ watched = true; record(false); }
+      if (wasPlaying && !playing) checkpoint();
+      wasPlaying = playing;
+      // Account progress must reach the server during a long visit, rather than
+      // relying on a request started while the browser is unloading the page.
+      if (ownerId() && dirty && Date.now() - lastSync >= 30000) checkpoint();
+    }
+    if (window.LangPlayer && LangPlayer.onTick) LangPlayer.onTick(pulse);
+    setInterval(pulse, 1000);                             // also observes native/YT pause and ended
+    document.addEventListener('visibilitychange', function(){ if (document.hidden) checkpoint(); });
+    window.addEventListener('pagehide', checkpoint);
 
     var banner = document.getElementById('resumeBanner'),dismissed=false,seenOwner=ownerId();
     function refreshResume(){
-      var current=ownerId();if(current!==seenOwner){seenOwner=current;dismissed=false;lastId=null;lastWrite=0;}
+      var current=ownerId();if(current!==seenOwner){seenOwner=current;dismissed=false;lastId=null;lastSec=null;lastWrite=0;watched=false;wasPlaying=false;dirty=false;lastSync=Date.now();}
       if(!banner)return;
       var prog=LF.getNS('progress')[pg],top=cards[0],topId=top?(top.dataset.sid||top.dataset.favId):'';
       banner.hidden=true;banner.innerHTML='';
