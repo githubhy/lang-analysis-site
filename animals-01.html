@@ -105,6 +105,7 @@
     transition:color .15s,border-color .15s,background .15s;}
   .dock-follow:hover{color:var(--shu);border-color:var(--shu);}
   .dock-follow.on{color:var(--shu);border-color:var(--shu);background:var(--joshi-t);}
+  .dock-follow.sticky{border-style:double;box-shadow:inset 0 0 0 1px var(--shu);}
   .dock-follow:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
   /* The sticky video must never crowd out the sentence it exists to explain. The frame is an
      aspect-ratio box, so its HEIGHT follows its WIDTH — bounding the height therefore means bounding
@@ -11445,7 +11446,7 @@
     if (tsEl) tsEl.__sec = units[cj].sec;
   }
 
-  var following = true, activeIdx = -1;
+  var following = true, stickyFollow = false, activeIdx = -1;
   function dockH(){
     // dock.offsetHeight is the true sticky footprint in every state: minimized it
     // already excludes the display:none .dock-video and still INCLUDES a visible
@@ -11481,10 +11482,17 @@
   }
   function setFollow(on, silent){
     following = on;
+    // Explicit off releases sticky mode; timestamp jumps preserve it while on.
+    if (!on) stickyFollow = false;
     if (followBtn){
       followBtn.classList.toggle('on', on);
       followBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      followBtn.textContent = on ? '● 跟随' : '○ 跟随';
+      followBtn.classList.toggle('sticky', on && stickyFollow);
+      followBtn.dataset.followMode = on ? (stickyFollow ? 'sticky' : 'on') : 'off';
+      followBtn.textContent = on ? (stickyFollow ? '🔒 跟随' : '● 跟随') : '○ 跟随';
+      var label = on ? (stickyFollow ? '锁定跟随：滚动后下一句自动返回；点击关闭' : '普通跟随：滚动时暂停；点击锁定') : '跟随已关闭；点击开启普通跟随';
+      followBtn.setAttribute('aria-label', label);
+      followBtn.title = label + '（F）';
     }
     if (fab) fab.classList.toggle('show', !on && activeIdx >= 0);
     if (on && !silent) scrollToActive(true);
@@ -11517,7 +11525,7 @@
     // it is ours; unguarded, it read as the user's and switched follow off (final review C1).
     if (isTheater()) guard.begin(nowms());
     try { document.dispatchEvent(new CustomEvent('lang:active', { detail: { idx: activeIdx } })); } catch (e){}
-    if (following) scrollToActive(false);
+    if (following) scrollToActive(stickyFollow);
     else if (fab) fab.classList.toggle('show', activeIdx >= 0);
   }
   function highlight(tt){
@@ -11528,7 +11536,7 @@
   // one scroll listener drives BOTH follow-suspend and mobile auto-minimize.
   // the guard makes our own auto-scroll invisible here, so follow never self-cancels
   // and (unlike the old wheel/touchmove pair) touch scrolling behaves the same.
-  function suspend(){ if (following) setFollow(false, true); }
+  function suspend(){ if (following && !stickyFollow) setFollow(false, true); }
   var lastY = window.pageYOffset;
   window.addEventListener('scroll', function(){
     var y = window.pageYOffset;
@@ -11579,7 +11587,13 @@
     })(stamps[j]);
   }
   if (minBtn)    minBtn.addEventListener('click', function(){ setMin(!dock.classList.contains('min')); rememberFold(); });
-  if (followBtn) followBtn.addEventListener('click', function(){ setFollow(!following); });
+  // Off → normal → sticky → off. Sticky follows the next sentence even after a
+  // manual scroll, without interrupting the scroll while this sentence is active.
+  if (followBtn) followBtn.addEventListener('click', function(){
+    if (following && !stickyFollow){ stickyFollow = true; setFollow(true, true); }
+    else setFollow(!following);
+  });
+  setFollow(true, true);
   if (pinBtn)    pinBtn.addEventListener('click', function(){ setAutoMinOverride(!autoMinOverride); rememberFold(); });
   setAutoMinOverride(autoMinOverride);   // reflect the remembered lock (no snapshot — see rememberFold)
   if (autoMinOverride){                  // a locked dock also restores WHERE it was locked
@@ -14444,7 +14458,7 @@
         row(['⇧←', '⇧→'], '后退 / 前进 5 秒') +
         row([','], '重听当前句') +
         '<h3>显示</h3>' +
-        row(['F'], '跟随') + row(['R'], '全部读音') + row(['S'], '跟读') +
+        row(['F'], '跟随：关 → 普通 → 锁定（滚动后下一句自动返回）') + row(['R'], '全部读音') + row(['S'], '跟读') +
         row(['D'], '听写') +
         (document.getElementById('highlightsToggle') ? row(['H'], '重点') : '') +
         row(['O'], '被插话') +
@@ -14456,7 +14470,7 @@
         '<h3>其他</h3>' +
         row(['/'], '搜索') + row(['Esc'], '退出输入框') + row(['?'], '本表') +
         '<p class="keys-note">竖向移动视线，横向移动播放位置：' +
-          '<kbd>↑</kbd><kbd>↓</kbd> 滚动页面并暂停跟随，<kbd>←</kbd><kbd>→</kbd> 移动播放位置。</p>' +
+          '<kbd>↑</kbd><kbd>↓</kbd> 滚动页面（普通跟随会暂停，锁定跟随保留），<kbd>←</kbd><kbd>→</kbd> 移动播放位置。</p>' +
       '</div>';
     document.body.appendChild(help);
     help.addEventListener('click', function(e){ if (e.target === help) toggleHelp(false); });
@@ -14489,7 +14503,7 @@
       // armed follow's scroll guard just before the focus, so with follow on, the next line change
       // scrolled the page away from the search box the viewer had just asked for. Top's behaviour
       // is deliberately left as it was.
-      if (theater && el){ var f = document.getElementById('dockFollow'); if (f && f.classList.contains('on')) f.click(); }
+      if (theater && el){ var f = document.getElementById('dockFollow'); if (f && f.classList.contains('on')){ f.click(); if (f.classList.contains('on')) f.click(); } }
     },
     blur:         function(){ var a = document.activeElement; if (a && a.blur) a.blur(); },
     help:         function(){ toggleHelp(!helpOpen()); }
