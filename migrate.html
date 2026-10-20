@@ -99,6 +99,7 @@
     transition:color .15s,border-color .15s,background .15s;}
   .dock-follow:hover{color:var(--shu);border-color:var(--shu);}
   .dock-follow.on{color:var(--shu);border-color:var(--shu);background:var(--joshi-t);}
+  .dock-follow.sticky{border-style:double;box-shadow:inset 0 0 0 1px var(--shu);}
   .dock-follow:focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
   /* The sticky video must never crowd out the sentence it exists to explain. The frame is an
      aspect-ratio box, so its HEIGHT follows its WIDTH — bounding the height therefore means bounding
@@ -126,6 +127,11 @@
   .play-hint b{color:var(--ink);font-weight:600;}
 
   /* furigana control bar */
+  .hide-translations .u-cn{display:none}
+  .study-state-bar{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+  .study-state-bar button{min-height:44px;padding:.5rem .8rem;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;cursor:pointer}
+  .study-state-bar button[aria-pressed="true"]{border-color:currentColor}
+  .idx-completion{display:inline-block;margin:.3rem .5rem;color:var(--ink-soft);font-size:.8rem}
   .furi-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem 1rem;
     flex-wrap:wrap;margin:1.5rem 0 0;padding:.7rem .5rem .7rem 1rem;background:var(--card);
     border:1px solid var(--line);border-left:3px solid var(--goi);border-radius:.55rem;font-size:.85rem;}
@@ -794,12 +800,12 @@
 <p id="migrationStatus" role="status" aria-live="polite"></p>
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin:24px 0">
 <button id="migrationExport" type="button">导出本机完整备份</button><button id="migrationGist" type="button">读取旧 Gist 并导出</button>
-</div><p>备份包括收藏、句子和词汇复习进度、笔记、播放进度以及学习活动，不包含账号令牌。</p>
+</div><p>备份包括收藏、词汇、句子和词汇复习进度、笔记、播放进度、学习活动、学习设置、阅读位置和学完标记，不包含账号令牌。</p>
 <p><a href="https://lang.asher.place/favorites.html">前往新版收藏与复习 →</a></p></div><script>
 (function(){
   /*<<migration-pure>>*/
   function MIGRATION_PURE(){
-    var pairs = {items:'langfav:v1',srs:'langfav:srs',notes:'langfav:notes',progress:'langfav:progress',vocab:'langfav:vocab',vsrs:'langfav:vsrs',activity:'langfav:activity'};
+    var pairs = {items:'langfav:v1',srs:'langfav:srs',notes:'langfav:notes',progress:'langfav:progress',vocab:'langfav:vocab',vsrs:'langfav:vsrs',activity:'langfav:activity',preferences:'langfav:preferences',reading:'langfav:reading',completed:'langfav:completed'};
     function safeMap(value){
       if (value == null) return {};
       if (typeof value !== 'object' || Array.isArray(value)) throw new Error('记录格式无效，请先保留旧数据。');
@@ -817,7 +823,7 @@
         var ns = o.ns || 'items', key = o.key || o.id;
         if (!Object.prototype.hasOwnProperty.call(pairs,ns) || !key || /^(?:__proto__|constructor|prototype)$/.test(key)) return;
         if (o.op === 'del') delete out[ns][key];
-        else if (o.op === 'set' || o.op === 'add') out[ns][key] = o.value || o.record;
+        else if (o.op === 'set' || o.op === 'add') out[ns][key] = Object.prototype.hasOwnProperty.call(o,'value') ? o.value : o.record;
       });
       return out;
     }
@@ -830,7 +836,7 @@
   function summary(){
     backup = P.read(get);
     status.textContent = '本机记录：' + Object.keys(backup.items).length + ' 个收藏 · ' +
-      Object.keys(backup.vocab).length + ' 个词汇 · ' + Object.keys(backup.notes).length + ' 条笔记。复习和进度也会包含在备份中。';
+      Object.keys(backup.vocab).length + ' 个词汇 · ' + Object.keys(backup.notes).length + ' 条笔记。复习、播放进度、学习活动、学习设置、阅读位置和学完标记也会包含在备份中。';
   }
   function download(){
     var data = backup || P.read(get), url = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
