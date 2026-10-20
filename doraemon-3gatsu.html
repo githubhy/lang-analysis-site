@@ -137,6 +137,10 @@
   .study-state-bar{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
   .study-state-bar button{min-height:44px;padding:.5rem .8rem;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;cursor:pointer}
   .study-state-bar button[aria-pressed="true"]{border-color:currentColor}
+  .media-status{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;font-size:.85rem;color:var(--ink-soft)}
+  .media-status[hidden],.media-status button[hidden]{display:none}
+  .media-status button{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;min-height:44px;padding:.4rem .7rem;cursor:pointer}
+  .media-status button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
   .idx-completion{display:inline-block;margin:.3rem .5rem;color:var(--ink-soft);font-size:.8rem}
   .furi-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem 1rem;
     flex-wrap:wrap;margin:1.5rem 0 0;padding:.7rem .5rem .7rem 1rem;background:var(--card);
@@ -2561,11 +2565,9 @@
 <script>
 (function(){
   // Unified player: ONE page that works offline AND online, no mode to choose.
-  // The dock ships a native <video src="clip.mp4"> carrying the YouTube id in
-  // data-youtube-id. On load we probe the local file: if it loads → native
-  // <video> (offline, timeupdate follow-along); if it's missing/404 (e.g. on
-  // GitHub Pages) → swap to the YouTube IFrame Player API (poll follow-along).
-  // One follow-along engine, two transports, auto-selected.
+  // The browser tries the adjacent MP4, then its R2 copy. Slow loading remains
+  // native; genuine errors or sustained stalls use the original embed. Keep the
+  // native element mounted so a later recovery can restore it without a reload.
   //
   // THIRD, DEGRADED transport: data-bilibili-id, used only when there is no YouTube
   // id. Bilibili's 外链播放器 is LOAD-TIME SEEK ONLY — the official parameter list
@@ -2615,7 +2617,8 @@
   var boffset   = video ? (parseInt(video.getAttribute('data-bilibili-offset'), 10) || 0) : 0;
   var SMOOTH = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 
-  var transport = null;   // { seek(sec) }  — set once local/youtube is chosen
+  var transport = null, backend = null, handoff = null, pendingSeek = null,
+      desiredRate = 1, lastCommand = null, announcedBackend = null;
   var fab = null;         // floating re-follow button (created below)
 
   /*<<follow-guard>>*/
@@ -2632,9 +2635,13 @@
   /*<</follow-guard>>*/
   var guard = makeScrollGuard(900);
   function nowms(){ return Date.now(); }
-  // Fired once the transport is decided (local / YouTube / Bilibili) — layout.js listens for it,
-  // because a seek-only fallback (Bilibili) leaves theater the moment it takes over.
-  function announceTransport(){ try { document.dispatchEvent(new Event('lang:transport')); } catch (e){} }
+  // Readiness can change without replacing the backend. Consumers stop old
+  // playback lenses only on an actual replacement, and suspend while unready.
+  function announceTransport(){
+    var previous = announcedBackend, changed = previous !== backend; announcedBackend = backend;
+    var rate = transport && transport.rate ? transport.rate() : desiredRate;
+    try { document.dispatchEvent(new CustomEvent('lang:transport', { detail: { source: backend, previousSource: previous, changed: changed, playbackRate: rate } })); } catch (e){}
+  }
 
   // ---------- stable player handle for shadow.js (window.LangPlayer) ----------
   // Unifies the two backends behind one interface so the shadow drill can seek /
@@ -2651,16 +2658,16 @@
   var shadowPrevMin = null;    // fold state to restore when the 跟读 drill turns off (mobile auto-fold)
   window.LangPlayer = {
     kind: 'video',
-    ready:    function(){ return !!transport; },
+    ready:    function(){ return !!(transport && !handoff && (!transport.ready || transport.ready())); },
     // TRUE when the chosen transport can seek but cannot be OBSERVED — no clock, no play state
     // (today: the Bilibili embed). Anything that drives the page from playback position must opt
     // out on this rather than run against a getTime() that never advances. shadow.js reads it to
     // leave the 跟读 toggle disabled: it independently re-enables that button once the adapter is
     // live, which silently undid the transport's own attempt to switch the drill off.
     seekOnly: function(){ return !!(transport && transport.limited); },
-    seek:     function(t){ if (transport){ guard.begin(nowms()); transport.seek(t); } },
+    seek:     function(t){ seekTo(t); },
     getTime:  function(){ return (transport && transport.getTime) ? transport.getTime() : 0; },
-    setRate:  function(r){ if (transport && transport.setRate) transport.setRate(clampRate(r)); },
+    setRate:  function(r){ if (typeof r !== 'number' || !isFinite(r) || r <= 0) return; desiredRate = r; if (transport && transport.setRate) transport.setRate(clampRate(r)); },
     play:     function(){ if (transport && transport.play) transport.play(); },
     pause:    function(){ if (transport && transport.pause) transport.pause(); },
     paused:   function(){ return (transport && transport.paused) ? transport.paused() : true; },
@@ -2886,7 +2893,7 @@
       el.setAttribute('role','button'); el.tabIndex = 0;
       el.title = '跳到 ' + el.textContent.trim() + ' 播放';
       function go(){
-        if (transport) transport.seek(sec);
+        seekTo(sec);
         setFollow(true, true);
         el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
       }
@@ -2912,7 +2919,7 @@
   // scroll suspension or timestamp rearming into an account preference.
   function applyFollowMode(mode){
     if (mode !== 'off' && mode !== 'on' && mode !== 'sticky') return;
-    if (followBtn && followBtn.disabled) return;
+    if (followBtn && followBtn.disabled){ if (limitedFollow !== null) limitedFollow = mode; return; }
     if (mode === followMode()) return;
     stickyFollow = mode === 'sticky';
     setFollow(mode !== 'off', true);
@@ -2990,153 +2997,348 @@
   document.body.appendChild(fab);
   fab.addEventListener('click', function(){ autoSetMin(false); setFollow(true); saveFollowPreference(); });
 
-  // ---------- transport A: native <video> (offline) ----------
-  function useLocal(){
-    transport = {
-      seek: function(sec){
-        autoSetMin(false);
-        try { video.currentTime = sec; } catch (e) {}
-        var p = video.play(); if (p && p.catch) p.catch(function(){});
-      },
-      getTime:  function(){ return video.currentTime || 0; },
-      setRate:  function(r){ try { video.playbackRate = r; } catch (e){} },
-      paused:   function(){ return !!video.paused; },
-      play:     function(){ var p = video.play(); if (p && p.catch) p.catch(function(){}); },
-      pause:    function(){ try { video.pause(); } catch (e){} },
-      rates:    function(){ return [0.5, 0.75, 1]; },
-      duration: function(){ return video.duration || 0; }
-    };
-    announceTransport();
-    video.addEventListener('loadedmetadata', announceTransport);
-    video.addEventListener('timeupdate', function(){ highlight(video.currentTime); emitTick(video.currentTime); });
-  }
+  // ---------- recoverable media selection ----------
+  var mode = 'loading', stopped = false, nativeAttached = false, embedEpoch = 0,
+      started = nowms(), progressed = started, lastClock = 0, clockMoved = started,
+      nativeWanted = false, probing = false, prepared = false, probeTarget = null,
+      retryIndex = 0, nextRetry = 0, fallbackAt = 0, limitedFollow = null,
+      limitedButtons = [], fallbackSnapshot = null, nativeAdapter = null;
+  var SOFT_WAIT = 4000, IDLE_WAIT = 15000, LOAD_BUDGET = 45000, RETURN_COOLDOWN = 5000;
+  var RETRIES = [5000, 15000, 30000, 60000];
+  var status = null, statusText = null, waitBtn = null, originalBtn = null,
+      retryBtn = null, returnBtn = null, statusKey = null;
 
-  // ---------- transport B: YouTube IFrame Player API (online) ----------
-  function useYouTube(){
-    var slot = document.createElement('div'); slot.id = 'clip';
-    if (video && video.parentNode) video.parentNode.replaceChild(slot, video);
-    var player = null, isReady = false, pending = null, poll = null;
-    transport = {
-      seek: function(sec){
-        autoSetMin(false);
-        if (isReady && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e) {} }
-        else pending = sec;
-      },
-      getTime:  function(){ try { return (isReady && player) ? (player.getCurrentTime() || 0) : 0; } catch (e){ return 0; } },
-      setRate:  function(r){ try { if (isReady && player) player.setPlaybackRate(r); } catch (e){} },
-      // YT.PlayerState.PLAYING === 1. Anything else (paused, buffering, cued, ended) is "not playing"
-      // for the purposes of a play/pause button — buffering shows as paused, which is honest.
-      paused:   function(){ try { return !(isReady && player && player.getPlayerState() === 1); }
-                            catch (e){ return true; } },
-      play:     function(){ try { if (isReady && player) player.playVideo(); } catch (e){} },
-      pause:    function(){ try { if (isReady && player) player.pauseVideo(); } catch (e){} },
-      rates:    function(){ try { return (isReady && player && player.getAvailablePlaybackRates) ? player.getAvailablePlaybackRates() : [0.5, 0.75, 1]; } catch (e){ return [0.5, 0.75, 1]; } },
-      duration: function(){ try { return (isReady && player && player.getDuration) ? (player.getDuration() || 0) : 0; } catch (e){ return 0; } }
+  function visibleOnline(){ return !stopped && !document.hidden && navigator.onLine !== false; }
+  function originalAvailable(){ return !!(ytid || bvid); }
+  function safePause(el){ try { if (el) el.pause(); } catch (e){} }
+  function show(el, on){ if (!el) return; el.hidden = !on; el.style.display = on ? '' : 'none'; }
+  function remove(el){ if (el && el.parentNode) el.parentNode.removeChild(el); }
+  function nativeUsable(){ return !!(video && video.readyState >= 1 && !video.error); }
+  function seekPoint(t){
+    var d = video && video.duration;
+    return Math.max(0, isFinite(d) && d > 0 ? Math.min(t, Math.max(0, d - 0.05)) : t);
+  }
+  function seekTo(sec){
+    if (typeof sec !== 'number' || !isFinite(sec) || sec < 0) return;
+    document.dispatchEvent(new CustomEvent('lang:seek-intent', { detail: { sec: sec } }));
+    guard.begin(nowms()); lastCommand = sec; autoSetMin(false);
+    if (handoff) cancelHandoff(false);
+    if (transport && (!transport.ready || transport.ready())) transport.seek(sec);
+    else pendingSeek = sec;
+  }
+  function applyPending(){
+    if (pendingSeek === null || !window.LangPlayer.ready()) return;
+    var sec = pendingSeek; pendingSeek = null; transport.seek(sec);
+  }
+  function nativePlay(){
+    nativeWanted = true;
+    try {
+      var p = video.play();
+      if (p && p.catch) p.catch(function(e){
+        if (backend !== 'native' || stopped) return;
+        nativeWanted = false;
+        if (e && e.name === 'NotAllowedError') message('点击播放继续视频', false, false, false, false);
+      });
+    } catch (e){ nativeWanted = false; }
+  }
+  function snapshot(){
+    var t = transport, sec = t && t.getTime ? t.getTime() : (video ? video.currentTime : 0);
+    var playing = t ? (t.playingIntent ? t.playingIntent() : !t.paused()) : nativeWanted;
+    if (backend === 'native' && video.error) playing = nativeWanted;
+    return { sec: isFinite(sec) && sec >= 0 ? sec : 0, playing: playing,
+      rate: t && t.rate ? t.rate() : desiredRate,
+      volume: t && t.volume ? t.volume() : (video && isFinite(video.volume) ? video.volume : 1),
+      muted: t && t.muted ? t.muted() : !!(video && video.muted) };
+  }
+  function message(text, waiting, original, retry, returning){
+    if (!status) return;
+    var key = [text, waiting, original, retry, returning].join('|'); if (key === statusKey) return;
+    statusKey = key;
+    // A hidden-to-hidden update cannot move the page. Guarding it would also
+    // suppress the viewer's first manual scroll after native metadata arrives.
+    if (!status.hidden || text){ guard.begin(nowms()); document.dispatchEvent(new Event('lang:follow-scroll')); }
+    status.hidden = !text; statusText.textContent = text;
+    waitBtn.hidden = !waiting; originalBtn.hidden = !original; retryBtn.hidden = !retry; returnBtn.hidden = !returning;
+    if (returning) returnBtn.textContent = backend === 'bilibili'
+      ? (lastCommand === null && !(fallbackSnapshot && fallbackSnapshot.sec) ? '从头切换到本站视频' : '从上次定位点切换')
+      : '切换回本站视频';
+  }
+  function fallbackMessage(){
+    if (prepared) message(backend === 'bilibili' ? '本站视频已恢复；切换将使用上次定位点。' : '本站视频已恢复', false, false, false, true);
+    else message(navigator.onLine === false ? '网络已断开，连接恢复后重试本站视频。' : '正在使用原站播放器', false, false, true, false);
+  }
+  function setupStatus(){
+    if (!video || !originalAvailable()) return;
+    status = document.createElement('div'); status.id = 'mediaStatus'; status.className = 'media-status'; status.hidden = true;
+    statusText = document.createElement('span'); statusText.setAttribute('role', 'status'); statusText.setAttribute('aria-live', 'polite'); status.appendChild(statusText);
+    function action(id, text, fn){ var b = document.createElement('button'); b.id = id; b.type = 'button'; b.textContent = text; b.hidden = true; b.addEventListener('click', fn); status.appendChild(b); return b; }
+    waitBtn = action('mediaWait', '继续等待', function(){ started = progressed = nowms(); message('正在继续加载视频…', true, true, false, false); });
+    originalBtn = action('mediaUseOriginal', '使用原站播放', function(){ fallback(); });
+    retryBtn = action('mediaRetry', '重试本站视频', function(){ if (visibleOnline()) startProbe(); });
+    returnBtn = action('mediaReturn', '切换回本站视频', function(){ beginHandoff(true); });
+    (dock || video.parentNode).appendChild(status);
+  }
+  function limitControls(){
+    limitedFollow = followMode();
+    [followBtn, playBtn, document.getElementById('shadowToggle')].forEach(function(el){
+      if (!el) return; limitedButtons.push({el:el,display:el.style.display,disabled:el.disabled}); el.style.display = 'none'; el.disabled = true;
+    });
+    if (fab) fab.style.display = 'none'; setFollow(false, true);
+  }
+  function restoreControls(){
+    limitedButtons.forEach(function(x){ x.el.style.display = x.display; x.el.disabled = x.disabled; }); limitedButtons = [];
+    if (limitedFollow !== null){ var saved = limitedFollow; limitedFollow = null; stickyFollow = saved === 'sticky'; setFollow(saved !== 'off', true); }
+    if (fab) fab.style.display = '';
+  }
+  function useLocal(state){
+    if (!video || stopped) return;
+    var previous = transport;
+    backend = 'native'; mode = 'native'; handoff = null; probing = prepared = false; retryIndex = 0;
+    video.id = 'clip'; show(video, true); restoreControls();
+    if (!nativeAdapter){
+      nativeAdapter = {
+        ready: nativeUsable,
+        seek: function(sec){ try { video.currentTime = seekPoint(sec); } catch (e){ pendingSeek = sec; return; } nativePlay(); },
+        getTime: function(){ return video.currentTime || 0; },
+        setRate: function(r){ try { video.playbackRate = r; } catch (e){} },
+        rate: function(){ return video.playbackRate || desiredRate; },
+        volume: function(){ return video.volume; }, muted: function(){ return video.muted; },
+        paused: function(){ return !!video.paused; }, play: nativePlay,
+        pause: function(){ nativeWanted = false; safePause(video); },
+        rates: function(){ return [0.5, 0.75, 1]; }, duration: function(){ return video.duration || 0; }
+      };
+    }
+    transport = nativeAdapter;
+    if (previous && previous !== nativeAdapter && previous.dispose) previous.dispose();
+    if (state){
+      try { video.playbackRate = state.rate; video.volume = state.volume; video.muted = state.muted; } catch (e){}
+    } else { try { video.playbackRate = desiredRate; } catch (e){} }
+    lastClock = video.currentTime || 0; clockMoved = progressed = started = nowms();
+    message('', false, false, false, false); announceTransport(); applyPending();
+    if (state && state.playing) nativePlay();
+  }
+  function useYouTube(state){
+    var epoch = ++embedEpoch, player = null, ready = false, poll = null, created = false, wantsPlay = state.playing, slot = document.createElement('div');
+    slot.id = 'clip'; video.parentNode.appendChild(slot);
+    var adapter = {
+      ready: function(){ return ready; },
+      seek: function(sec){ wantsPlay = true; if (ready && player){ try { player.seekTo(sec, true); player.playVideo(); } catch (e){} } else pendingSeek = sec; },
+      getTime: function(){ try { return ready && player ? player.getCurrentTime() || 0 : state.sec; } catch (e){ return state.sec; } },
+      setRate: function(r){ try { if (ready) player.setPlaybackRate(r); } catch (e){} },
+      rate: function(){ try { return ready && player.getPlaybackRate ? player.getPlaybackRate() : state.rate; } catch (e){ return state.rate; } },
+      volume: function(){ try { return ready && player.getVolume ? player.getVolume() / 100 : state.volume; } catch (e){ return state.volume; } },
+      muted: function(){ try { return ready && player.isMuted ? player.isMuted() : state.muted; } catch (e){ return state.muted; } },
+      paused: function(){ try { return !ready || player.getPlayerState() !== 1; } catch (e){ return true; } },
+      playingIntent: function(){ return wantsPlay; },
+      canReturn: function(){ try { var s = ready && player.getPlayerState(); return ready && (s === -1 || s === 0 || s === 2 || s === 5); } catch (e){ return false; } },
+      play: function(){ wantsPlay = true; try { if (ready) player.playVideo(); } catch (e){} },
+      pause: function(){ wantsPlay = false; if (poll) clearInterval(poll); poll = null; try { if (ready) player.pauseVideo(); } catch (e){} },
+      rates: function(){ try { return ready && player.getAvailablePlaybackRates ? player.getAvailablePlaybackRates() : [0.5, 0.75, 1]; } catch (e){ return [0.5, 0.75, 1]; } },
+      duration: function(){ try { return ready && player.getDuration ? player.getDuration() || 0 : 0; } catch (e){ return 0; } },
+      dispose: function(){
+        ready = false; embedEpoch++; if (poll) clearInterval(poll); poll = null;
+        try { if (player){ if (player.pauseVideo) player.pauseVideo(); if (player.destroy) player.destroy(); } } catch (e){}
+        remove(document.getElementById('mediaEmbed') || slot);
+      }
     };
-    announceTransport();
-    window.onYouTubeIframeAPIReady = function(){
+    transport = adapter; backend = 'youtube'; announceTransport();
+    function current(){ return !stopped && embedEpoch === epoch && transport === adapter; }
+    function tick(){ if (!current() || handoff || !ready || adapter.paused()) return; var t = adapter.getTime(); highlight(t); emitTick(t); }
+    function create(){
+      if (created || !current() || !window.YT || !YT.Player) return; created = true;
       player = new YT.Player('clip', {
-        width: '100%', height: '100%', videoId: ytid,
-        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
-        events: {
-          onReady: function(){ isReady = true; announceTransport(); if (pending != null){ var s = pending; pending = null; transport.seek(s); } },
-          onStateChange: function(e){
-            if (e.data === YT.PlayerState.PLAYING){
-              highlight(player.getCurrentTime()); emitTick(player.getCurrentTime());
-              if (!poll) poll = setInterval(function(){ if (player && player.getCurrentTime){ var tt = player.getCurrentTime(); highlight(tt); emitTick(tt); } }, 250);
-            } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED){
-              if (poll){ clearInterval(poll); poll = null; }
-            }
-          }
+        width:'100%', height:'100%', videoId:ytid,
+        playerVars:{rel:0,modestbranding:1,playsinline:1,start:Math.floor(state.sec)},
+        events:{
+          onReady:function(){
+            if (!current()) return; ready = true;
+            try {
+              if (state.sec) player.seekTo(state.sec, true);
+              if (player.setVolume) player.setVolume(state.volume * 100);
+              if (state.muted && player.mute) player.mute();
+              else if (player.unMute) player.unMute();
+              player.setPlaybackRate(state.rate);
+              if (wantsPlay) player.playVideo(); else player.pauseVideo();
+            } catch (e){}
+            announceTransport(); applyPending();
+          },
+          onStateChange:function(e){
+            if (!current()) return;
+            if (e.data === 1) wantsPlay = true;
+            else if (e.data === 0 || e.data === 2 || e.data === 5) wantsPlay = false;
+            if (e.data === 1){ tick(); if (!poll) poll = setInterval(tick, 250); }
+            else { if (poll) clearInterval(poll); poll = null; }
+          },
+          onError:function(){ if (current()) message('原站视频暂时无法播放，可重试本站视频。', false, false, true, prepared); }
         }
       });
-    };
-    var tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api';
-    var first = document.getElementsByTagName('script')[0]; first.parentNode.insertBefore(tag, first);
+    }
+    window.onYouTubeIframeAPIReady = create;
+    if (window.YT && YT.Player) create();
+    else if (!document.getElementById('mediaYouTubeApi')){
+      var tag = document.createElement('script'); tag.id = 'mediaYouTubeApi'; tag.src = 'https://www.youtube.com/iframe_api';
+      var first = document.getElementsByTagName('script')[0]; first.parentNode.insertBefore(tag, first);
+    }
   }
-
-  // ---------- transport C: Bilibili 外链播放器 (online, SEEK-ONLY) ----------
-  // Everything that needs a clock is switched off here rather than allowed to lie. See the
-  // header note: the embed exposes `t` (initial seek) and nothing else.
-  function useBilibili(){
-    var frame = document.createElement('iframe');
-    frame.id = 'clip';
-    frame.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
-    frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-    frame.setAttribute('allowfullscreen', '');
-    frame.setAttribute('scrolling', 'no');
-    frame.setAttribute('frameborder', '0');
-    frame.setAttribute('title', (video && video.getAttribute('title')) || '');
-    frame.style.border = '0';
-    // danmaku off: the whole point of the page is reading the line we annotated, and a
-    // scrolling comment track sits exactly on top of the subtitle.
-    var BASE = 'https://player.bilibili.com/player.html?bvid=' + encodeURIComponent(bvid) +
-               '&p=' + encodeURIComponent(bpage) + '&danmaku=0&hideCoverInfo=1';
-    frame.src = BASE + (boffset ? '&t=' + boffset : '') + '&autoplay=0';
-    if (video && video.parentNode) video.parentNode.replaceChild(frame, video);
-
-    // A seek RELOADS the player. `last` is the commanded position, not an observed one — it is
-    // what getTime() can honestly report, and it is used for nothing but the resume banner.
-    var last = 0;
+  function useBilibili(state){
+    // Commands from an earlier native session are older than this observed
+    // failure point. New Bilibili commands can subsequently replace it.
+    lastCommand = state.sec > 0 ? state.sec : null;
+    var frame = document.createElement('iframe'); frame.id = 'clip';
+    frame.setAttribute('allow','autoplay; fullscreen; encrypted-media; picture-in-picture');
+    frame.setAttribute('referrerpolicy','strict-origin-when-cross-origin'); frame.setAttribute('allowfullscreen','');
+    frame.setAttribute('scrolling','no'); frame.setAttribute('frameborder','0'); frame.setAttribute('title',video.getAttribute('title') || ''); frame.style.border = '0';
+    var base = 'https://player.bilibili.com/player.html?bvid=' + encodeURIComponent(bvid) + '&p=' + encodeURIComponent(bpage) + '&danmaku=0&hideCoverInfo=1';
+    frame.src = base + '&t=' + (Math.floor(state.sec) + boffset) + '&autoplay=' + (state.playing ? '1' : '0');
+    video.parentNode.appendChild(frame);
     transport = {
-      seek: function(sec){
-        autoSetMin(false);
-        last = Math.max(0, Math.floor(sec));
-        frame.src = BASE + '&t=' + (last + boffset) + '&autoplay=1';
-      },
-      getTime:  function(){ return last; },
-      setRate:  function(){},                        // no API
-      paused:   function(){ return true; },          // unknowable → report the honest default
-      play:     function(){},
-      pause:    function(){},
-      rates:    function(){ return [1]; },
-      duration: function(){ return 0; },
-      limited:  'bilibili'
+      ready:function(){ return true; }, limited:'bilibili',
+      seek:function(sec){ lastCommand = Math.max(0, Math.floor(sec)); frame.src = base + '&t=' + (lastCommand + boffset) + '&autoplay=1'; },
+      getTime:function(){ return lastCommand === null ? state.sec : lastCommand; },
+      setRate:function(){}, paused:function(){ return true; }, play:function(){}, pause:function(){},
+      rates:function(){ return [1]; }, duration:function(){ return 0; },
+      dispose:function(){ frame.src = 'about:blank'; remove(frame); }
     };
-    announceTransport();
-
-    // Hide AND disable the clock-dependent controls. Disabling matters on its own: keys.js
-    // implements every shortcut by clicking the control that owns the lens, and a `display:none`
-    // <button> still dispatches a click — only `disabled` makes F / S / Space genuine no-ops
-    // instead of silently arming an engine that will never receive a tick.
-    function kill(el){ if (!el) return; el.style.display = 'none'; el.disabled = true; }
-    kill(followBtn);
-    kill(playBtn);
-    // #shadowToggle is NOT inside #dock — scoping the lookup to the dock silently found nothing and
-    // left the 跟读 drill fully live on a transport with no clock. Caught by tools/bili.sh on its
-    // first run; look it up on `document`, the way shadow.js itself does.
-    kill(document.getElementById('shadowToggle'));
-    if (fab) fab.style.display = 'none';
-    setFollow(false);
+    backend = 'bilibili'; limitControls(); announceTransport(); applyPending();
   }
-
-  // ---------- auto-detect: does the local mp4 load? ----------
-  function decide(){
-    if (!video){ if (ytid) useYouTube(); else if (bvid) useBilibili(); return; }
-    if (!ytid && !bvid){ useLocal(); return; }    // no fallback available → local only
-    var online = ytid ? useYouTube : useBilibili;
-    var settled = false;
-    function local(){ if (settled) return; settled = true; useLocal(); }
-    function yt(){ if (settled) return; settled = true; online(); }
-    // any sign the local file is usable → play it natively (offline)
-    ['loadedmetadata', 'loadeddata', 'canplay'].forEach(function(ev){
-      video.addEventListener(ev, local, { once: true });
+  function scheduleRetry(){
+    probing = prepared = false; probeTarget = null;
+    nextRetry = nowms() + RETRIES[Math.min(retryIndex++, RETRIES.length - 1)];
+  }
+  function fallback(){
+    if (!originalAvailable() || mode === 'fallback' || stopped) return;
+    fallbackSnapshot = snapshot(); safePause(video); nativeWanted = false;
+    handoff = null; mode = 'fallback'; fallbackAt = nowms();
+    video.id = 'mediaNative'; show(video, false);
+    if (ytid) useYouTube(fallbackSnapshot); else useBilibili(fallbackSnapshot);
+    scheduleRetry(); fallbackMessage();
+  }
+  function startProbe(){
+    if (mode !== 'fallback' || !visibleOnline() || !video || location.protocol === 'file:') return;
+    probing = true; prepared = false; probeTarget = null; started = progressed = nowms();
+    safePause(video); try { video.load(); } catch (e){ scheduleRetry(); }
+    message('正在重新加载本站视频…', false, false, true, false);
+  }
+  function prepareNative(){
+    if (mode !== 'fallback' || !nativeUsable() || !visibleOnline()) return;
+    if (handoff){ finishHandoff(); return; }
+    if (!probing || prepared) return;
+    if (probeTarget === null){
+      probeTarget = seekPoint(transport && transport.ready() ? transport.getTime() : fallbackSnapshot.sec);
+      try { video.currentTime = probeTarget; } catch (e){ return; }
+    }
+    if (video.seeking || video.readyState < 3 || Math.abs(video.currentTime - probeTarget) > 0.25) return;
+    prepared = true; probing = false; retryIndex = 0; fallbackMessage(); maybeReturn();
+  }
+  function maybeReturn(){
+    if (!prepared || handoff || !visibleOnline() || nowms() - fallbackAt < RETURN_COOLDOWN || pinnedIdx >= 0) return;
+    var studying = ['shadowToggle','highlightsToggle','dictToggle'].some(function(id){
+      var button = document.getElementById(id); return button && button.getAttribute('aria-pressed') === 'true';
     });
-    // a genuine media error (EVERY <source> absent / 404) → embed the original.
-    // ONLY on the element, never on a <source>. The page ships two candidates — the local file,
-    // then the self-hosted copy — and a listener on the FIRST source fires when the local mp4
-    // 404s, which is exactly what happens online. That jumped straight to the embed and the CDN
-    // copy was never tried; a video still played, so nothing went red. The element's own error
-    // fires with MEDIA_ERR_SRC_NOT_SUPPORTED only once ALL candidates are exhausted, which is the
-    // real signal. (sabotage: source-error-first)
-    video.addEventListener('error', yt, { once: true });
-    if (video.readyState >= 1) local();           // metadata already available synchronously
-    else { try { video.load(); } catch (e) {} }
-    // if neither event fires (slow load): on file:// bias to LOCAL so offline never breaks;
-    // online, the 404 error fires fast so we rarely reach here.
-    setTimeout(function(){
-      if (!settled) (video.readyState >= 1 || location.protocol === 'file:' ? local : yt)();
-    }, 4000);
+    if (studying) return;
+    if (transport && !transport.limited && transport.canReturn && transport.canReturn()) beginHandoff(false);
+  }
+  function beginHandoff(explicit){
+    if (!prepared || handoff || mode !== 'fallback' || !visibleOnline()) return;
+    if (!explicit && (transport.limited || !transport.canReturn || !transport.canReturn())) return;
+    var state = snapshot();
+    // Bilibili's displayed position is unknowable. This explicit action uses
+    // the last commanded checkpoint (or the known native point before failure).
+    if (transport.limited){ state.sec = lastCommand === null ? fallbackSnapshot.sec : lastCommand; state.playing = false; state.rate = desiredRate; }
+    handoff = {state:state,started:nowms()}; transport.pause(); safePause(video); announceTransport();
+    try { video.currentTime = seekPoint(state.sec); } catch (e){ cancelHandoff(true); return; }
+    finishHandoff();
+  }
+  function finishHandoff(){
+    if (!handoff || !nativeUsable() || video.seeking || video.readyState < 3) return;
+    if (Math.abs(video.currentTime - seekPoint(handoff.state.sec)) > 0.25) return;
+    var state = handoff.state;
+    var embed = document.getElementById('clip'); if (embed && embed !== video) embed.id = 'mediaEmbed';
+    useLocal(state);
+  }
+  function cancelHandoff(resume){
+    if (!handoff) return; var state = handoff.state; handoff = null; safePause(video);
+    scheduleRetry(); announceTransport(); fallbackMessage(); if (resume && state.playing && transport.play) transport.play();
+  }
+  function watch(){
+    if (stopped || !video) return;
+    var now = nowms();
+    if (!visibleOnline()){ started = progressed = clockMoved = now; return; }
+    if (mode === 'loading'){
+      if (location.protocol === 'file:'){ if (now - started >= SOFT_WAIT) useLocal(); return; }
+      if (now - started >= SOFT_WAIT) message('视频加载较慢', true, originalAvailable(), false, false);
+      if (originalAvailable() && (now - progressed >= IDLE_WAIT || now - started >= LOAD_BUDGET)) fallback();
+    } else if (mode === 'native'){
+      if (video.paused || video.ended){ clockMoved = now; return; }
+      if (video.currentTime !== lastClock){ lastClock = video.currentTime; clockMoved = now; }
+      if (video.readyState < 3 && now - clockMoved >= IDLE_WAIT && location.protocol !== 'file:') fallback();
+    } else if (handoff){
+      finishHandoff(); if (handoff && now - handoff.started >= IDLE_WAIT) cancelHandoff(true);
+    } else if (prepared) maybeReturn();
+    else if (probing){
+      prepareNative();
+      if (probing && (now - progressed >= IDLE_WAIT || now - started >= LOAD_BUDGET)){ safePause(video); scheduleRetry(); fallbackMessage(); }
+    } else if (now >= nextRetry) startProbe();
+  }
+  function decide(){
+    if (!video) return;
+    setupStatus();
+    if (!nativeAttached){
+      nativeAttached = true;
+      ['loadedmetadata','loadeddata','canplay','seeked'].forEach(function(type){ video.addEventListener(type, function(){
+        if (stopped) return; progressed = nowms();
+        if (mode === 'loading' && nativeUsable()) useLocal();
+        else if (mode === 'fallback') prepareNative();
+        else if (backend === 'native' && type === 'loadedmetadata'){ announceTransport(); applyPending(); }
+      }); });
+      video.addEventListener('progress', function(){ if (!stopped) progressed = nowms(); });
+      video.addEventListener('play', function(){
+        if (backend === 'native' || mode === 'loading'){
+          nativeWanted = true; clockMoved = nowms();
+          if (backend === 'native' && statusKey && statusKey.indexOf('点击播放继续视频|') === 0) message('', false, false, false, false);
+        } else safePause(video);
+      });
+      video.addEventListener('pause', function(){ if (backend === 'native' && !handoff && !video.error) nativeWanted = false; });
+      video.addEventListener('timeupdate', function(){
+        if (stopped || backend !== 'native' || handoff) return;
+        if (video.currentTime !== lastClock){ lastClock = video.currentTime; clockMoved = nowms(); }
+        highlight(video.currentTime); emitTick(video.currentTime);
+      });
+      // A source error only means that candidate failed. The element-level error
+      // is authoritative after all MP4 candidates have been tried.
+      video.addEventListener('error', function(){
+        if (stopped || (!video.error && video.readyState >= 1)) return;
+        if (mode === 'fallback'){ if (handoff) cancelHandoff(true); else { scheduleRetry(); fallbackMessage(); } }
+        else fallback();
+      });
+    }
+    if (nativeUsable() || !originalAvailable()) useLocal();
+    else { try { video.load(); } catch (e){ fallback(); } }
+    setInterval(watch, 500);
+    function wake(){
+      if (!visibleOnline()) return;
+      started = progressed = clockMoved = nowms();
+      if (mode === 'fallback' && !handoff){ if (!prepared) startProbe(); else maybeReturn(); }
+    }
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden){ if (probing){ probing = prepared = false; safePause(video); } }
+      else wake();
+    });
+    window.addEventListener('online', wake);
+    window.addEventListener('pagehide', function(e){
+      stopped = true; safePause(video);
+      // Progress's pagehide checkpoint runs later in this dispatch. Retain its
+      // live clock until that checkpoint finishes; bfcache keeps the backend.
+      var leaving = transport;
+      if (e.persisted){ if (leaving && leaving.pause) leaving.pause(); return; }
+      // A microtask can run between listeners of a trusted browser event. A
+      // task leaves the entire dispatch available to the final checkpoint.
+      setTimeout(function(){ if (stopped && leaving && leaving.dispose) leaving.dispose(); }, 0);
+    });
+    window.addEventListener('pageshow', function(e){
+      if (!e.persisted) return;
+      stopped = false; started = progressed = clockMoved = nowms(); announceTransport(); wake();
+    });
   }
   decide();
 })();
@@ -4520,7 +4722,7 @@
   function setRate(r){
     var next = P.clampRate(r, LP.rates()), changed = next !== rate;
     rate = next;
-    if ((!LP.ready || LP.ready()) && appliedRate !== rate){ LP.setRate(rate); appliedRate = rate; }
+    if (!seekOnly() && (!LP.ready || LP.ready()) && appliedRate !== rate){ LP.setRate(rate); appliedRate = rate; }
     if (changed) reflect();
   }
   function applyDesiredRate(){ if (desiredRate !== null) setRate(desiredRate); }
@@ -4530,9 +4732,6 @@
     desiredRate = r;
     applyDesiredRate();
   });
-  // The auto adapter exists before YouTube's actual backend is ready. Replay the
-  // retained request when that backend arrives, including its supported-rate list.
-  document.addEventListener('lang:transport', function(){ appliedRate = null; applyDesiredRate(); });
   function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
 
   // ── 重点 (highlights) — mutually exclusive with the drill; one tick loop dispatches by hlOn. ──
@@ -4569,7 +4768,10 @@
     hlToggle.setAttribute('aria-pressed', hlOn ? 'true' : 'false');
     hlToggle.classList.toggle('on', hlOn);
   }
-  function tickAny(){ if (hlOn) hlTick(); else if (dOn) dTick(); else if (on) tick(); }
+  function tickAny(){
+    if (seekOnly() || (LP.ready && !LP.ready())) return;
+    if (hlOn) hlTick(); else if (dOn) dTick(); else if (on) tick();
+  }
   function setHl(v){
     hlOn = v;
     if (hlOn){
@@ -4726,18 +4928,43 @@
     });
   });
 
-  // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
-  toggle.disabled = true;
+  // A slow native load can recover after the initial bounded poll. Transport
+  // notifications keep controls aligned with the backend that is actually ready.
   // A SEEK-ONLY transport (Bilibili embed) can be told where to go but never says where it is, and
-  // the drill is a loop over observed position — it would arm, seek once and hang. Both exits below
-  // must honour it: this ran unconditionally and re-enabled a button the transport had already
+  // the drill is a loop over observed position — it would arm, seek once and hang. Readiness must
+  // honour it: this once ran unconditionally and re-enabled a button the transport had already
   // disabled, so 跟读 came back to life on a page with no clock. tools/bili.sh covers both orders
   // (shadow enabling before the transport is chosen, and after).
   function seekOnly(){ return !!(LP.seekOnly && LP.seekOnly()); }
+  function refreshTransport(event){
+    var limited = seekOnly(), ready = !limited && (!LP.ready || LP.ready());
+    var changed = !!(event && event.detail && event.detail.changed === true);
+    // Only an observed prior backend can transfer its actual speed. Initial
+    // loading and Bili recovery keep the preference retained by this controller.
+    var transferredRate = changed && event.detail.previousSource !== null && event.detail.previousSource !== 'bilibili' ? event.detail.playbackRate : null;
+    if (typeof transferredRate === 'number' && isFinite(transferredRate) && transferredRate > 0)
+      desiredRate = transferredRate;
+    [toggle, hlToggle, dToggle, loopBtn, runBtn, prevBtn, nextBtn, rateBtn,
+      dReplayBtn, dRevealBtn, dMissBtn, dGotBtn].forEach(function(button){ if (button) button.disabled = !ready; });
+    if (limited || changed){
+      if (on) setOn(false);
+      if (hlOn) setHl(false);
+      if (dOn) setDict(false);
+      active = -1; gapUntil = null; dSeekTo = null;
+      ++loopGen;                                     // invalidate every old playback pump
+      if (LP.unpin) LP.unpin();
+    }
+    // The auto adapter exists before the actual backend. Retain the requested
+    // speed until readiness supplies that backend's supported-rate list.
+    appliedRate = null;
+    applyDesiredRate();
+    if (ready) reflect();
+  }
+  document.addEventListener('lang:transport', refreshTransport);
+  refreshTransport();
   (function wait(tries){
-    if (LP.ready && LP.ready()){ applyDesiredRate(); if (!seekOnly()){ toggle.disabled = false; reflect(); } return; }
+    if (LP.ready && LP.ready()){ refreshTransport(); return; }
     if (tries < 40) setTimeout(function(){ wait(tries + 1); }, 100);
-    else if (!seekOnly()){ toggle.disabled = false; reflect(); }   // best-effort: enable anyway
   })(0);
   document.dispatchEvent(new Event('lang:study-controls'));
 })();
@@ -5590,10 +5817,27 @@
     var pg = pageName();
     var lastId = null, lastSec = null, lastWrite = 0;
     var watched = false, wasPlaying = false, dirty = false, syncing = false, lastSync = Date.now();
+    var pendingResume = null;
+    function cancelResume(){ pendingResume = null; }
+    function replayResume(){
+      var request = pendingResume, lp = window.LangPlayer;
+      if (!request) return false;
+      if (ownerId() !== request.owner){ cancelResume(); return false; }
+      if (!lp || !lp.ready || !lp.ready()) return false;
+      // Clear before seeking: readiness can synchronously announce another transport event.
+      pendingResume = null;
+      lp.seek(request.sec);
+      request.reveal();
+      return true;
+    }
+    document.addEventListener('lang:transport', replayResume);
+    document.addEventListener('lang:seek-intent', cancelResume);
     function activeCard(){ return document.querySelector('.u.active'); }
     function record(force){
       // Opening a page must not replace a hydrated account checkpoint with zero.
       if (!watched) return;
+      var lp = window.LangPlayer;
+      if (!lp || !lp.ready || !lp.ready() || (lp.seekOnly && lp.seekOnly())) return;
       var c = activeCard(); if (!c) return;
       var id = c.dataset.sid || c.dataset.favId; if (!id) return;
       var t = (window.LangPlayer && LangPlayer.getTime) ? Math.floor(LangPlayer.getTime()) : 0;
@@ -5630,7 +5874,7 @@
 
     var banner = document.getElementById('resumeBanner'),dismissed=false,seenOwner=ownerId();
     function refreshResume(){
-      var current=ownerId();if(current!==seenOwner){seenOwner=current;dismissed=false;lastId=null;lastSec=null;lastWrite=0;watched=false;wasPlaying=false;dirty=false;lastSync=Date.now();}
+      var current=ownerId();if(current!==seenOwner){cancelResume();seenOwner=current;dismissed=false;lastId=null;lastSec=null;lastWrite=0;watched=false;wasPlaying=false;dirty=false;lastSync=Date.now();}
       if(!banner)return;
       var prog=LF.getNS('progress')[pg],top=cards[0],topId=top?(top.dataset.sid||top.dataset.favId):'';
       banner.hidden=true;banner.innerHTML='';
@@ -5642,19 +5886,17 @@
         // Resume must reveal the sentence even when the fragment already matches.
         var hash='#s='+encodeURIComponent(prog.id);
         if(location.hash!==hash)history.pushState(null,'',hash);
-        var sec=prog.sec||0,tries=0,seekOwner=ownerId();
+        var sec=prog.sec||0,tries=0;
         function reveal(){
           document.dispatchEvent(new Event('lang:follow-scroll'));
           document.dispatchEvent(new CustomEvent('lang:sentence-jump',{detail:{id:prog.id}}));
         }
+        var request={sec:sec,owner:ownerId(),reveal:reveal};
+        pendingResume=request;
         if(!window.LangPlayer||!LangPlayer.ready||!LangPlayer.ready())reveal();
         (function seek(){
-          if(ownerId()!==seekOwner)return;
-          if(window.LangPlayer&&LangPlayer.ready&&LangPlayer.ready()){
-            LangPlayer.seek(sec);
-            reveal();
-            return;
-          }
+          if(pendingResume!==request)return;
+          if(replayResume())return;
           if(++tries<40)setTimeout(seek,150);
         })();
       });

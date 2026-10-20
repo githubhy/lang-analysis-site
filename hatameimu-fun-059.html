@@ -137,6 +137,10 @@
   .study-state-bar{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
   .study-state-bar button{min-height:44px;padding:.5rem .8rem;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;cursor:pointer}
   .study-state-bar button[aria-pressed="true"]{border-color:currentColor}
+  .media-status{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;font-size:.85rem;color:var(--ink-soft)}
+  .media-status[hidden],.media-status button[hidden]{display:none}
+  .media-status button{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;min-height:44px;padding:.4rem .7rem;cursor:pointer}
+  .media-status button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
   .idx-completion{display:inline-block;margin:.3rem .5rem;color:var(--ink-soft);font-size:.8rem}
   .furi-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem 1rem;
     flex-wrap:wrap;margin:1.5rem 0 0;padding:.7rem .5rem .7rem 1rem;background:var(--card);
@@ -5923,7 +5927,7 @@
   function setRate(r){
     var next = P.clampRate(r, LP.rates()), changed = next !== rate;
     rate = next;
-    if ((!LP.ready || LP.ready()) && appliedRate !== rate){ LP.setRate(rate); appliedRate = rate; }
+    if (!seekOnly() && (!LP.ready || LP.ready()) && appliedRate !== rate){ LP.setRate(rate); appliedRate = rate; }
     if (changed) reflect();
   }
   function applyDesiredRate(){ if (desiredRate !== null) setRate(desiredRate); }
@@ -5933,9 +5937,6 @@
     desiredRate = r;
     applyDesiredRate();
   });
-  // The auto adapter exists before YouTube's actual backend is ready. Replay the
-  // retained request when that backend arrives, including its supported-rate list.
-  document.addEventListener('lang:transport', function(){ appliedRate = null; applyDesiredRate(); });
   function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
 
   // ── 重点 (highlights) — mutually exclusive with the drill; one tick loop dispatches by hlOn. ──
@@ -5972,7 +5973,10 @@
     hlToggle.setAttribute('aria-pressed', hlOn ? 'true' : 'false');
     hlToggle.classList.toggle('on', hlOn);
   }
-  function tickAny(){ if (hlOn) hlTick(); else if (dOn) dTick(); else if (on) tick(); }
+  function tickAny(){
+    if (seekOnly() || (LP.ready && !LP.ready())) return;
+    if (hlOn) hlTick(); else if (dOn) dTick(); else if (on) tick();
+  }
   function setHl(v){
     hlOn = v;
     if (hlOn){
@@ -6129,18 +6133,43 @@
     });
   });
 
-  // enable controls only once the adapter has a live backend (bounded wait, like nav.js)
-  toggle.disabled = true;
+  // A slow native load can recover after the initial bounded poll. Transport
+  // notifications keep controls aligned with the backend that is actually ready.
   // A SEEK-ONLY transport (Bilibili embed) can be told where to go but never says where it is, and
-  // the drill is a loop over observed position — it would arm, seek once and hang. Both exits below
-  // must honour it: this ran unconditionally and re-enabled a button the transport had already
+  // the drill is a loop over observed position — it would arm, seek once and hang. Readiness must
+  // honour it: this once ran unconditionally and re-enabled a button the transport had already
   // disabled, so 跟读 came back to life on a page with no clock. tools/bili.sh covers both orders
   // (shadow enabling before the transport is chosen, and after).
   function seekOnly(){ return !!(LP.seekOnly && LP.seekOnly()); }
+  function refreshTransport(event){
+    var limited = seekOnly(), ready = !limited && (!LP.ready || LP.ready());
+    var changed = !!(event && event.detail && event.detail.changed === true);
+    // Only an observed prior backend can transfer its actual speed. Initial
+    // loading and Bili recovery keep the preference retained by this controller.
+    var transferredRate = changed && event.detail.previousSource !== null && event.detail.previousSource !== 'bilibili' ? event.detail.playbackRate : null;
+    if (typeof transferredRate === 'number' && isFinite(transferredRate) && transferredRate > 0)
+      desiredRate = transferredRate;
+    [toggle, hlToggle, dToggle, loopBtn, runBtn, prevBtn, nextBtn, rateBtn,
+      dReplayBtn, dRevealBtn, dMissBtn, dGotBtn].forEach(function(button){ if (button) button.disabled = !ready; });
+    if (limited || changed){
+      if (on) setOn(false);
+      if (hlOn) setHl(false);
+      if (dOn) setDict(false);
+      active = -1; gapUntil = null; dSeekTo = null;
+      ++loopGen;                                     // invalidate every old playback pump
+      if (LP.unpin) LP.unpin();
+    }
+    // The auto adapter exists before the actual backend. Retain the requested
+    // speed until readiness supplies that backend's supported-rate list.
+    appliedRate = null;
+    applyDesiredRate();
+    if (ready) reflect();
+  }
+  document.addEventListener('lang:transport', refreshTransport);
+  refreshTransport();
   (function wait(tries){
-    if (LP.ready && LP.ready()){ applyDesiredRate(); if (!seekOnly()){ toggle.disabled = false; reflect(); } return; }
+    if (LP.ready && LP.ready()){ refreshTransport(); return; }
     if (tries < 40) setTimeout(function(){ wait(tries + 1); }, 100);
-    else if (!seekOnly()){ toggle.disabled = false; reflect(); }   // best-effort: enable anyway
   })(0);
   document.dispatchEvent(new Event('lang:study-controls'));
 })();
@@ -6993,10 +7022,27 @@
     var pg = pageName();
     var lastId = null, lastSec = null, lastWrite = 0;
     var watched = false, wasPlaying = false, dirty = false, syncing = false, lastSync = Date.now();
+    var pendingResume = null;
+    function cancelResume(){ pendingResume = null; }
+    function replayResume(){
+      var request = pendingResume, lp = window.LangPlayer;
+      if (!request) return false;
+      if (ownerId() !== request.owner){ cancelResume(); return false; }
+      if (!lp || !lp.ready || !lp.ready()) return false;
+      // Clear before seeking: readiness can synchronously announce another transport event.
+      pendingResume = null;
+      lp.seek(request.sec);
+      request.reveal();
+      return true;
+    }
+    document.addEventListener('lang:transport', replayResume);
+    document.addEventListener('lang:seek-intent', cancelResume);
     function activeCard(){ return document.querySelector('.u.active'); }
     function record(force){
       // Opening a page must not replace a hydrated account checkpoint with zero.
       if (!watched) return;
+      var lp = window.LangPlayer;
+      if (!lp || !lp.ready || !lp.ready() || (lp.seekOnly && lp.seekOnly())) return;
       var c = activeCard(); if (!c) return;
       var id = c.dataset.sid || c.dataset.favId; if (!id) return;
       var t = (window.LangPlayer && LangPlayer.getTime) ? Math.floor(LangPlayer.getTime()) : 0;
@@ -7033,7 +7079,7 @@
 
     var banner = document.getElementById('resumeBanner'),dismissed=false,seenOwner=ownerId();
     function refreshResume(){
-      var current=ownerId();if(current!==seenOwner){seenOwner=current;dismissed=false;lastId=null;lastSec=null;lastWrite=0;watched=false;wasPlaying=false;dirty=false;lastSync=Date.now();}
+      var current=ownerId();if(current!==seenOwner){cancelResume();seenOwner=current;dismissed=false;lastId=null;lastSec=null;lastWrite=0;watched=false;wasPlaying=false;dirty=false;lastSync=Date.now();}
       if(!banner)return;
       var prog=LF.getNS('progress')[pg],top=cards[0],topId=top?(top.dataset.sid||top.dataset.favId):'';
       banner.hidden=true;banner.innerHTML='';
@@ -7045,19 +7091,17 @@
         // Resume must reveal the sentence even when the fragment already matches.
         var hash='#s='+encodeURIComponent(prog.id);
         if(location.hash!==hash)history.pushState(null,'',hash);
-        var sec=prog.sec||0,tries=0,seekOwner=ownerId();
+        var sec=prog.sec||0,tries=0;
         function reveal(){
           document.dispatchEvent(new Event('lang:follow-scroll'));
           document.dispatchEvent(new CustomEvent('lang:sentence-jump',{detail:{id:prog.id}}));
         }
+        var request={sec:sec,owner:ownerId(),reveal:reveal};
+        pendingResume=request;
         if(!window.LangPlayer||!LangPlayer.ready||!LangPlayer.ready())reveal();
         (function seek(){
-          if(ownerId()!==seekOwner)return;
-          if(window.LangPlayer&&LangPlayer.ready&&LangPlayer.ready()){
-            LangPlayer.seek(sec);
-            reveal();
-            return;
-          }
+          if(pendingResume!==request)return;
+          if(replayResume())return;
           if(++tries<40)setTimeout(seek,150);
         })();
       });

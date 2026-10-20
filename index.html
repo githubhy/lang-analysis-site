@@ -137,6 +137,10 @@
   .study-state-bar{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
   .study-state-bar button{min-height:44px;padding:.5rem .8rem;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;cursor:pointer}
   .study-state-bar button[aria-pressed="true"]{border-color:currentColor}
+  .media-status{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;font-size:.85rem;color:var(--ink-soft)}
+  .media-status[hidden],.media-status button[hidden]{display:none}
+  .media-status button{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;min-height:44px;padding:.4rem .7rem;cursor:pointer}
+  .media-status button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
   .idx-completion{display:inline-block;margin:.3rem .5rem;color:var(--ink-soft);font-size:.8rem}
   .furi-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem 1rem;
     flex-wrap:wrap;margin:1.5rem 0 0;padding:.7rem .5rem .7rem 1rem;background:var(--card);
@@ -2307,10 +2311,27 @@ function INDEX_PURE(){
     var pg = pageName();
     var lastId = null, lastSec = null, lastWrite = 0;
     var watched = false, wasPlaying = false, dirty = false, syncing = false, lastSync = Date.now();
+    var pendingResume = null;
+    function cancelResume(){ pendingResume = null; }
+    function replayResume(){
+      var request = pendingResume, lp = window.LangPlayer;
+      if (!request) return false;
+      if (ownerId() !== request.owner){ cancelResume(); return false; }
+      if (!lp || !lp.ready || !lp.ready()) return false;
+      // Clear before seeking: readiness can synchronously announce another transport event.
+      pendingResume = null;
+      lp.seek(request.sec);
+      request.reveal();
+      return true;
+    }
+    document.addEventListener('lang:transport', replayResume);
+    document.addEventListener('lang:seek-intent', cancelResume);
     function activeCard(){ return document.querySelector('.u.active'); }
     function record(force){
       // Opening a page must not replace a hydrated account checkpoint with zero.
       if (!watched) return;
+      var lp = window.LangPlayer;
+      if (!lp || !lp.ready || !lp.ready() || (lp.seekOnly && lp.seekOnly())) return;
       var c = activeCard(); if (!c) return;
       var id = c.dataset.sid || c.dataset.favId; if (!id) return;
       var t = (window.LangPlayer && LangPlayer.getTime) ? Math.floor(LangPlayer.getTime()) : 0;
@@ -2347,7 +2368,7 @@ function INDEX_PURE(){
 
     var banner = document.getElementById('resumeBanner'),dismissed=false,seenOwner=ownerId();
     function refreshResume(){
-      var current=ownerId();if(current!==seenOwner){seenOwner=current;dismissed=false;lastId=null;lastSec=null;lastWrite=0;watched=false;wasPlaying=false;dirty=false;lastSync=Date.now();}
+      var current=ownerId();if(current!==seenOwner){cancelResume();seenOwner=current;dismissed=false;lastId=null;lastSec=null;lastWrite=0;watched=false;wasPlaying=false;dirty=false;lastSync=Date.now();}
       if(!banner)return;
       var prog=LF.getNS('progress')[pg],top=cards[0],topId=top?(top.dataset.sid||top.dataset.favId):'';
       banner.hidden=true;banner.innerHTML='';
@@ -2359,19 +2380,17 @@ function INDEX_PURE(){
         // Resume must reveal the sentence even when the fragment already matches.
         var hash='#s='+encodeURIComponent(prog.id);
         if(location.hash!==hash)history.pushState(null,'',hash);
-        var sec=prog.sec||0,tries=0,seekOwner=ownerId();
+        var sec=prog.sec||0,tries=0;
         function reveal(){
           document.dispatchEvent(new Event('lang:follow-scroll'));
           document.dispatchEvent(new CustomEvent('lang:sentence-jump',{detail:{id:prog.id}}));
         }
+        var request={sec:sec,owner:ownerId(),reveal:reveal};
+        pendingResume=request;
         if(!window.LangPlayer||!LangPlayer.ready||!LangPlayer.ready())reveal();
         (function seek(){
-          if(ownerId()!==seekOwner)return;
-          if(window.LangPlayer&&LangPlayer.ready&&LangPlayer.ready()){
-            LangPlayer.seek(sec);
-            reveal();
-            return;
-          }
+          if(pendingResume!==request)return;
+          if(replayResume())return;
           if(++tries<40)setTimeout(seek,150);
         })();
       });
