@@ -129,6 +129,46 @@
   .cn-mask.cn-peek{opacity:0;}
   .cn-mask[hidden]{display:none;}
   .video-dock.min .dock-video{display:none;}
+  /* Clip a fixed-size frame while the surrounding dock smoothly folds. No media DOM moves. */
+  .video-dock[data-fold-ready] .dock-video{height:var(--dock-open-height,auto);overflow:hidden;
+    visibility:visible;opacity:1;transition:height .28s cubic-bezier(.22,.61,.36,1),opacity .2s,visibility 0s;}
+  .video-dock.min[data-fold-ready] .dock-video{display:block;height:0;opacity:0;visibility:hidden;
+    pointer-events:none;transition:height .28s cubic-bezier(.22,.61,.36,1),opacity .16s,visibility 0s .28s;}
+  .dock-settings{flex:0 0 auto;font:600 .75rem var(--font-gothic);color:var(--ink-soft);
+    background:transparent;border:1px solid var(--line-strong);border-radius:2rem;min-width:44px;min-height:44px;padding:.4rem .6rem;cursor:pointer;}
+  .settings-dialog{color:var(--ink);background:var(--paper);border:1px solid var(--line-strong);
+    border-radius:1.2rem;width:min(26rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);padding:1.2rem;overflow-y:auto;}
+  .settings-dialog::backdrop{background:rgba(0,0,0,.35);}
+  .settings-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;}
+  .settings-heading h2{font:600 1.2rem var(--font-gothic);margin:0;}
+  .settings-heading button{min-width:48px;min-height:48px;border:1px solid var(--line-strong);border-radius:2rem;
+    color:var(--ink);background:var(--card);font:600 .85rem var(--font-gothic);cursor:pointer;}
+  .settings-dialog fieldset{border:0;margin:0;padding:0;min-width:0;}
+  .settings-dialog legend{font:600 .9rem var(--font-gothic);margin-bottom:.6rem;}
+  .settings-dialog label{display:flex;align-items:center;gap:.8rem;min-height:64px;padding:.7rem;
+    margin:.4rem 0;border:1px solid var(--line);border-radius:.8rem;background:var(--card);cursor:pointer;}
+  .settings-dialog label:has(:checked){border-color:var(--shu);background:var(--joshi-t);}
+  .settings-dialog input{accent-color:var(--shu);flex:0 0 auto;width:1.2rem;height:1.2rem;}
+  .settings-dialog label span{font:600 .9rem/1.5 var(--font-gothic);}
+  .settings-dialog small{display:block;font-weight:400;font-size:.78rem;color:var(--ink-soft);}
+  .settings-note{font:.78rem/1.7 var(--font-gothic);color:var(--ink-soft);margin:.8rem 0 0;}
+  .sentence-transport{display:grid;grid-template-columns:1fr minmax(56px,.65fr) 1fr;gap:.6rem;
+    padding:.5rem;background:var(--card);border-top:1px solid var(--line);}
+  .sentence-transport[hidden]{display:none;}
+  .sentence-transport button{min-width:48px;min-height:48px;border:1px solid var(--line-strong);border-radius:.9rem;
+    font:600 .9rem var(--font-gothic);color:var(--ink);background:var(--paper);cursor:pointer;touch-action:manipulation;}
+  .sentence-transport button:disabled{opacity:.4;cursor:default;}
+  .sentence-transport #sentencePlay{color:var(--paper);background:var(--shu);border-color:var(--shu);}
+  .sentence-transport[data-placement="bottom"]{position:fixed;z-index:45;bottom:0;left:0;right:0;
+    padding: .5rem max(.7rem,env(safe-area-inset-right)) max(.5rem,env(safe-area-inset-bottom)) max(.7rem,env(safe-area-inset-left));
+    box-shadow:0 -10px 28px -18px rgba(0,0,0,.45);}
+  body{padding-bottom:var(--sentence-controls-space,0px);}
+  html.sentence-controls-active #shPrev,html.sentence-controls-active #shNext{display:none;}
+  #refollow{margin-bottom:var(--sentence-controls-space,0px);}
+  .dock-settings:focus-visible,.sentence-transport button:focus-visible,.settings-dialog :focus-visible{outline:2px solid var(--shu);outline-offset:3px;}
+  @media (prefers-reduced-motion:reduce){
+    .video-dock[data-fold-ready] .dock-video,.video-dock.min[data-fold-ready] .dock-video{transition:none;}
+  }
   .play-hint{font-size:.83rem;color:var(--ink-soft);margin:.75rem 0 0;}
   .play-hint b{color:var(--ink);font-weight:600;}
 
@@ -1974,7 +2014,7 @@
     for (var i = 1; i < rs.length; i++){ var d = Math.abs(rs[i] - r); if (d < bd){ bd = d; best = rs[i]; } }
     return best;
   }
-  var shadowPrevMin = null;    // fold state to restore when the 跟读 drill turns off (mobile auto-fold)
+  var shadowPrevMin = null, pendingFoldSeek = false;    // restore the drill fold; re-seat after a seek unfolds
   window.LangPlayer = {
     kind: 'video',
     ready:    function(){ return !!(transport && !handoff && (!transport.ready || transport.ready())); },
@@ -2047,6 +2087,10 @@
   }
   function setMin(m){
     if (!dock) return;
+    if (dock.classList.contains('min') !== m){
+      guard.begin(nowms());
+      document.dispatchEvent(new Event('lang:follow-scroll'));
+    }
     dock.classList.toggle('min', m);
     if (minBtn){ minBtn.setAttribute('aria-expanded', m ? 'false' : 'true'); minBtn.textContent = m ? '展开 ▸' : '收起 ▾'; }
   }
@@ -2103,8 +2147,16 @@
     var el = u.el, theater = isTheater();
     if (theater){ var p = document.querySelector('.u.lay-prev'); if (p) el = p; }
     var r = el.getBoundingClientRect();
-    if (force || theater || r.top < dockH() + 16 || r.bottom > window.innerHeight - 16){
-      var y = Math.max(0, window.pageYOffset + r.top - dockH() - 24);
+    var controls=document.getElementById('sentenceTransport');
+    var lowerEdge=controls&&!controls.hidden&&controls.dataset.placement==='bottom'?controls.getBoundingClientRect().top:window.innerHeight;
+    if (force || theater || r.top < dockH() + 16 || r.bottom > lowerEdge - 16){
+      var seat=24;
+      if(controls&&!controls.hidden){
+        var readingBottom=r.top, pieces=el.querySelectorAll('.ts,.u-jp,.u-cn');
+        for(var pi=0;pi<pieces.length;pi++)if(pieces[pi].getClientRects().length)readingBottom=Math.max(readingBottom,pieces[pi].getBoundingClientRect().bottom);
+        seat=Math.min(seat,Math.max(0,lowerEdge-dockH()-(readingBottom-r.top)-16));
+      }
+      var y = Math.max(0, window.pageYOffset + r.top - dockH() - seat);
       // Arm the guard FIRST, even when nothing will scroll: a caller's own scroll (a click that
       // re-arms 跟随 scrolls its target into view) can land in the next 900ms and must read as ours.
       // An early return before this line un-armed it and follow switched itself off (live suite).
@@ -2171,10 +2223,19 @@
   // the guard makes our own auto-scroll invisible here, so follow never self-cancels
   // and (unlike the old wheel/touchmove pair) touch scrolling behaves the same.
   function suspend(){ if (following && !stickyFollow) setFollow(false, true); }
-  var lastY = window.pageYOffset;
+  var lastY = window.pageYOffset, foldTravel=0, foldDirection=0,
+      inputDirection=0, inputUntil=0, touchPoint=null;
+  function foldInput(delta){if(Math.abs(delta)>.1){inputDirection=delta>0?1:-1;inputUntil=nowms()+200;}}
+  function foldTarget(e){return !(e.target&&e.target.closest&&e.target.closest('.dock-bar,.dock-shadow,.sentence-transport,dialog,.video-frame,.dock-toc'));}
+  window.addEventListener('touchstart',function(e){var t=e.touches[0];touchPoint=t&&foldTarget(e)?{x:t.clientX,y:t.clientY}:null;},{passive:true});
+  window.addEventListener('touchmove',function(e){var t=e.touches[0];if(!t||!touchPoint)return;var dx=t.clientX-touchPoint.x,dy=touchPoint.y-t.clientY;touchPoint={x:t.clientX,y:t.clientY};if(Math.abs(dy)>Math.abs(dx))foldInput(dy);},{passive:true});
+  window.addEventListener('touchend',function(){touchPoint=null;},{passive:true});
+  window.addEventListener('touchcancel',function(){touchPoint=null;inputUntil=0;},{passive:true});
+  window.addEventListener('wheel',function(e){if(foldTarget(e)&&Math.abs(e.deltaY)>Math.abs(e.deltaX))foldInput(e.deltaY);},{passive:true});
   window.addEventListener('scroll', function(){
-    var y = window.pageYOffset;
-    if (guard.action(nowms()) === 'suspend'){          // a genuine user scroll
+    var y = window.pageYOffset, delta=y-lastY, unguarded=guard.action(nowms())==='suspend',
+        physical=nowms()<inputUntil&&delta*inputDirection>0;
+    if (unguarded||physical){          // physical input can reverse a fold before its guard expires
       suspend();
       // on phones, scrolling down into the transcript collapses the video to reclaim space;
       // tapping any timestamp seeks and re-expands it (transport.seek → autoSetMin(false)), UNLESS
@@ -2184,12 +2245,24 @@
       // geometry where the docked video leaves too little room to read a sentence. Scrolling into the
       // transcript is exactly the moment the reader is done looking at the video.
       // auto-fold buys room under a TOP dock; side/theater have none to buy
-      if ((window.innerWidth <= 560 || window.innerHeight <= 480) && y > lastY + 6 && y > 200 &&
-          dock && !dock.classList.contains('min') &&
-          !/^(side|theater)$/.test(document.documentElement.getAttribute('data-layout') || '')) autoSetMin(true);
-    }
+      var direction=delta>0?1:delta<0?-1:0;
+      if(direction!==foldDirection){foldTravel=0;foldDirection=direction;}
+      foldTravel+=Math.abs(delta);
+      if (foldTravel>=24 && (window.innerWidth <= 560 || window.innerHeight <= 480) && dock){
+        if(direction>0 && y>200 && !dock.classList.contains('min') &&
+            !/^(side|theater)$/.test(document.documentElement.getAttribute('data-layout') || '')) autoSetMin(true);
+        else if(direction<0 && dock.classList.contains('min') && shadowPrevMin===null) autoSetMin(false);
+        foldTravel=0;
+      }
+    } else if(nowms()>=inputUntil){foldTravel=0;foldDirection=0;}
     lastY = y;
   }, { passive: true });
+  document.addEventListener('lang:controls-will-layout',function(){guard.begin(nowms());});
+  document.addEventListener('lang:controls-layout',function(){guard.begin(nowms());if(following)scrollToActive(true);});
+  document.addEventListener('lang:fold-settled',function(){
+    if(pendingFoldSeek&&following&&dock&&!dock.classList.contains('min'))scrollToActive(true);
+    pendingFoldSeek=false;
+  });
 
   // A layout switch moves the text under a different dock footprint: re-seat the active line,
   // under the scroll guard so our own scroll does not read as the user's and suspend follow.
@@ -2340,7 +2413,10 @@
   function seekTo(sec){
     if (typeof sec !== 'number' || !isFinite(sec) || sec < 0) return;
     document.dispatchEvent(new CustomEvent('lang:seek-intent', { detail: { sec: sec } }));
-    guard.begin(nowms()); lastCommand = sec; autoSetMin(false);
+    guard.begin(nowms()); lastCommand = sec;
+    var wasFolded=dock&&dock.classList.contains('min');
+    if (shadowPrevMin === null) autoSetMin(false);
+    if(wasFolded&&dock&&!dock.classList.contains('min'))pendingFoldSeek=true;
     if (handoff) cancelHandoff(false);
     if (transport && (!transport.ready || transport.ready())) transport.seek(sec);
     else pendingSeek = sec;
@@ -2938,10 +3014,11 @@
         v.due>=0&&v.ivl>=0&&v.ivl<=365000&&v.ease>=1.3&&v.ease<=3&&
         Number.isInteger(v.reps)&&v.reps>=0&&Number.isInteger(v.lapses)&&v.lapses>=0);
     }
-    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask'].indexOf(k) >= 0; }
+    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls'].indexOf(k) >= 0; }
     function preferenceValue(k,v){
       if(k==='playbackRate')return Number.isFinite(v)&&v>=.25&&v<=3;
       if(k==='followMode')return ['off','on','sticky'].indexOf(v)>=0;
+      if(k==='sentenceControls')return ['original','bottom','below'].indexOf(v)>=0;
       if(k==='furigana'||k==='translations')return typeof v==='boolean';
       return k==='cnMask'&&Number.isInteger(v)&&v>=0&&v<=2;
     }
@@ -4051,7 +4128,12 @@
     desiredRate = r;
     applyDesiredRate();
   });
-  function step(d){ var i = (active < 0 ? currentIdx() : active) + d; if (i >= 0 && i < rows.length){ setActive(i); reflect(); } }
+  function step(d){
+    var all=document.documentElement.getAttribute('data-layout')==='theater';
+    for(var i=(active<0?currentIdx():active)+d;i>=0&&i<rows.length;i+=d){
+      if(all||rows[i].el.offsetParent!==null){setActive(i);reflect();return;}
+    }
+  }
 
   // ── 重点 (highlights) — mutually exclusive with the drill; one tick loop dispatches by hlOn. ──
   var hlOn = false, hlParked = false;   // hlParked: sequence ran to the last key line — lens stays, loop stops
@@ -5426,6 +5508,17 @@
     var i = K.stepIndex(visible(), cur, dir);
     if (i >= 0) goRow(i);
   }
+  // Touch sentence controls share the keyboard's filtering and precise onset rules.
+  window.LangSentences = { step: step, canStep: function(dir){
+    var lp=LP(); if (!lp || (lp.seekOnly && lp.seekOnly()) || !rows.length) return false;
+    var cur=K.currentIndex(starts(),lp.getTime()), shadow=document.getElementById('shadowToggle');
+    // A loop pins the highlighted sentence even during the clock's 0.15s look-ahead.
+    if(shadow&&shadow.getAttribute('aria-pressed')==='true'){
+      for(var i=0;i<rows.length;i++)if(rows[i].el.classList.contains('active')){cur=i;break;}
+    }
+    var next=K.stepIndex(visible(),cur,dir);
+    return next>=0 && next!==cur;
+  } };
   function replay(){
     if (!LP() || !rows.length) return;
     goRow(K.currentIndex(starts(), LP().getTime()));
@@ -6295,7 +6388,7 @@
       study=!!document.querySelector('.u[data-sid]'), owner=null, fingerprint=null,
       settings=null, pending=null, timer=null, automatic=false, settleTimer=null, suppressUntil=Date.now()+1000;
   function identity(){return LF.account&&LF.account()?LF.account().id:null;}
-  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0};}
+  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original'};}
   function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
   function button(id,text,parent){
     var b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;
@@ -6407,6 +6500,118 @@
     apply(false);
   });
   apply(false);
+})();
+</script>
+<script>
+/* Phone sentence controls and settings. Media and its ancestors stay in place. */
+(function(){
+  'use strict';
+  var dock=document.getElementById('dock'), lp=window.LangPlayer;
+  if(!dock||!lp)return;
+  var root=document.documentElement, header=dock.querySelector('.dock-bar'),
+      picture=dock.querySelector('.dock-video'), frame=dock.querySelector('.video-frame'),
+      layouts=['original','bottom','below'], mode='original', savedPaint='',
+      phone=matchMedia('(max-width:560px), (max-height:480px)'),
+      storageKey='lang:sentence-controls', guest=true;
+  function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
+  function account(){return window.LangFav&&LangFav.account&&LangFav.account();}
+  function paintText(e,text){if(e.textContent!==text)e.textContent=text;}
+  function button(id,text,parent){var b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;parent.appendChild(b);return b;}
+
+  var settings=button('dockSettings','设置',header);settings.className='dock-settings';
+  header.insertBefore(settings,document.getElementById('dockFollow'));
+  settings.setAttribute('aria-label','设置');settings.setAttribute('aria-haspopup','dialog');settings.setAttribute('aria-controls','settingsDialog');
+  var dialog=document.createElement('dialog');dialog.id='settingsDialog';dialog.className='settings-dialog';dialog.setAttribute('aria-labelledby','settingsTitle');
+  dialog.innerHTML='<div class="settings-heading"><h2 id="settingsTitle">设置</h2><button type="button" id="settingsClose" aria-label="关闭设置">完成</button></div>'+
+    '<fieldset><legend>手机句子按钮</legend>'+
+    '<label for="sentenceControls-original"><input id="sentenceControls-original" type="radio" name="sentenceControls" value="original"><span>原版<small>沿用播放器内的紧凑控制</small></span></label>'+
+    '<label for="sentenceControls-bottom"><input id="sentenceControls-bottom" type="radio" name="sentenceControls" value="bottom"><span>底部按钮栏<small>上一句 · 播放 / 暂停 · 下一句，方便单手操作</small></span></label>'+
+    '<label for="sentenceControls-below"><input id="sentenceControls-below" type="radio" name="sentenceControls" value="below"><span>视频下方大按钮<small>把句子按钮放在播放器下方</small></span></label></fieldset>'+
+    '<p id="settingsSync" class="settings-note"></p>';
+  document.body.appendChild(dialog);
+  var radios=Array.from(dialog.querySelectorAll('input[name="sentenceControls"]')), note=dialog.querySelector('#settingsSync');
+  settings.addEventListener('click',function(){if(!dialog.open)dialog.showModal();});
+  dialog.querySelector('#settingsClose').addEventListener('click',function(){dialog.close();});
+  dialog.addEventListener('close',function(){settings.focus({preventScroll:true});});
+  radios.forEach(function(r){r.addEventListener('change',function(){
+    if(!r.checked)return;
+    apply(r.value);
+    if(window.LangFav)emit('lang:study-preference',{key:'sentenceControls',value:r.value});
+    else try{localStorage.setItem(storageKey,r.value);}catch(e){}
+  });});
+
+  var transport=document.createElement('div');transport.id='sentenceTransport';transport.className='sentence-transport';
+  transport.setAttribute('role','group');transport.setAttribute('aria-label','句子播放控制');transport.hidden=true;
+  var prev=button('sentencePrev','◀ 上一句',transport), play=button('sentencePlay','▶',transport), next=button('sentenceNext','下一句 ▶',transport);
+  prev.setAttribute('aria-label','上一句');next.setAttribute('aria-label','下一句');
+  // Only this new control moves between placements. Never move a player ancestor.
+  function step(dir){
+    if(!lp.ready()||(lp.seekOnly&&lp.seekOnly()))return;
+    var shadow=document.getElementById('shadowToggle');
+    if(shadow&&shadow.getAttribute('aria-pressed')==='true'){
+      var original=document.getElementById(dir<0?'shPrev':'shNext');if(original)original.click();
+    }else if(window.LangSentences)LangSentences.step(dir);
+    render();
+  }
+  prev.addEventListener('click',function(){step(-1);});next.addEventListener('click',function(){step(1);});
+  play.addEventListener('click',function(){if(lp.ready())lp.toggle();render();});
+  function reserve(){
+    var space=!transport.hidden&&mode==='bottom'?transport.getBoundingClientRect().height:0;
+    var value=space+'px';
+    if(root.style.getPropertyValue('--sentence-controls-space')!==value)root.style.setProperty('--sentence-controls-space',value);
+  }
+  function render(){
+    var limited=lp.seekOnly&&lp.seekOnly(), visible=phone.matches&&mode!=='original'&&!limited,
+        ready=lp.ready(), paused=!ready||lp.paused(), nav=window.LangSentences,
+        state=[visible,ready,paused,!!(nav&&nav.canStep(-1)),!!(nav&&nav.canStep(1))].join(':');
+    if(state!==savedPaint){
+      savedPaint=state;transport.hidden=!visible;
+      root.classList.toggle('sentence-controls-active',visible);
+      play.disabled=!ready;prev.disabled=!ready||!nav||!nav.canStep(-1);next.disabled=!ready||!nav||!nav.canStep(1);
+      paintText(play,paused?'▶':'❚❚');play.setAttribute('aria-label',paused?'播放':'暂停');play.setAttribute('aria-pressed',String(!paused));
+    }
+    reserve();
+  }
+  function apply(value){
+    if(layouts.indexOf(value)<0)value='original';
+    // Arm the reading/follow guards before changing the player's footprint.
+    var changed=value!==mode;
+    if(changed){emit('lang:controls-will-layout');emit('lang:follow-scroll');}
+    mode=value;root.dataset.sentenceControls=mode;transport.dataset.placement=mode;
+    var parent=mode==='bottom'?document.body:dock;
+    if(transport.parentNode!==parent){if(parent===dock&&picture)picture.insertAdjacentElement('afterend',transport);else parent.appendChild(transport);}
+    radios.forEach(function(r){r.checked=r.value===mode;});
+    paintText(note,guest?'保存在此设备；登录后可随账号同步。':'此设置会随账号同步。');
+    savedPaint='';render();if(changed)emit('lang:controls-layout');
+  }
+  document.addEventListener('lang:study-preferences',function(e){
+    var p=e.detail||{};if(typeof p.guest==='boolean')guest=p.guest;
+    if(Object.prototype.hasOwnProperty.call(p,'sentenceControls'))apply(p.sentenceControls);
+    else paintText(note,guest?'保存在此设备；登录后可随账号同步。':'此设置会随账号同步。');
+  });
+  document.addEventListener('lang:active',render);document.addEventListener('lang:transport',render);
+  phone.addEventListener('change',function(){emit('lang:controls-will-layout');savedPaint='';render();emit('lang:controls-layout');});
+  if(window.ResizeObserver)new ResizeObserver(reserve).observe(transport);
+  window.addEventListener('resize',reserve,{passive:true});
+  setInterval(render,250); // repaint only changed state, including native control pauses
+
+  // Animate a measured outer height, clipping the unchanged video frame inside it.
+  // A hidden parent still gives the frame a measurable width once fold-ready is set.
+  if(picture&&frame){
+    dock.dataset.foldReady='true';
+    function measure(){var h=frame.getBoundingClientRect().height+'px';if(picture.style.getPropertyValue('--dock-open-height')!==h)picture.style.setProperty('--dock-open-height',h);}
+    function settled(){emit('lang:controls-will-layout');emit('lang:follow-scroll');emit('lang:fold-settled');}
+    function folded(){var min=dock.classList.contains('min');picture.inert=min;picture.setAttribute('aria-hidden',String(min));if(matchMedia('(prefers-reduced-motion:reduce)').matches)settled();}
+    picture.addEventListener('transitionend',function(e){if(e.target===picture&&e.propertyName==='height')settled();});
+    measure();folded();
+    if(window.ResizeObserver)new ResizeObserver(measure).observe(frame);
+    new MutationObserver(folded).observe(dock,{attributes:true,attributeFilter:['class']});
+    window.addEventListener('resize',measure,{passive:true});
+  }
+  var initial='original';
+  if(window.LangFav){guest=!account();initial=LangFav.getNS('preferences').sentenceControls||initial;}
+  else try{initial=localStorage.getItem(storageKey)||initial;}catch(e){}
+  apply(initial);emit('lang:study-controls');
 })();
 </script>
 </body>
