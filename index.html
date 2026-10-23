@@ -166,6 +166,59 @@
   html.sentence-controls-active #shPrev,html.sentence-controls-active #shNext{display:none;}
   #refollow{margin-bottom:var(--sentence-controls-space,0px);}
   .dock-settings:focus-visible,.sentence-transport button:focus-visible,.settings-dialog :focus-visible{outline:2px solid var(--shu);outline-offset:3px;}
+  /* The phone arrangements move controller nodes, never the media or its ancestors. */
+  .phone-utility[hidden],.phone-menu [hidden],.settings-dialog [hidden]{display:none!important;}
+  .phone-utility{display:none;}
+  html.phone-toolbar-active .lang-nav,html.phone-toolbar-active .dock-bar,
+  html.phone-toolbar-active .furi-bar,html.phone-toolbar-active .study-state-bar{display:none;}
+  html.phone-toolbar-active .sentence-transport{box-sizing:border-box;display:grid;gap:3px;
+    grid-template-columns:repeat(6,minmax(48px,1fr));padding:5px 4px;background:var(--card);}
+  html.phone-toolbar-active .sentence-transport[hidden]{display:none;}
+  html.phone-toolbar-active .sentence-transport[data-placement="bottom"]{
+    padding:5px max(4px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));}
+  html.phone-toolbar-active[data-toolbar-arrangement="b"] .sentence-transport{grid-template-columns:repeat(4,minmax(48px,1fr));}
+  html.phone-toolbar-active[data-toolbar-arrangement="c"] .sentence-transport{grid-template-columns:repeat(5,minmax(48px,1fr));}
+  html.phone-toolbar-active .sentence-transport button{box-sizing:border-box;min-width:48px;min-height:48px;
+    width:100%;margin:0;padding:4px 1px;border-radius:.7rem;font:600 .78rem var(--font-gothic);}
+  html.phone-toolbar-active .sentence-transport #sentencePlay{font-size:1.1rem;}
+  html.phone-toolbar-active .sentence-transport #dockFollow{display:block!important;}
+  html.phone-toolbar-active .phone-utility{box-sizing:border-box;display:grid;align-items:center;
+    grid-template-columns:48px minmax(0,1fr) 48px 48px 48px;gap:3px;padding:3px 4px;
+    border-bottom:1px solid var(--line);background:var(--card);}
+  .phone-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font:600 .76rem var(--font-gothic);color:var(--ink-soft);}
+  .phone-utility button,.phone-utility a{display:flex;align-items:center;justify-content:center;
+    box-sizing:border-box;min-width:48px;min-height:48px;padding:3px 0;border:1px solid var(--line-strong);
+    border-radius:.65rem;background:var(--paper);color:var(--ink);font:600 .72rem var(--font-gothic);
+    text-decoration:none;cursor:pointer;touch-action:manipulation;}
+  .phone-menu{box-sizing:border-box;position:fixed;z-index:60;inset:auto 8px calc(var(--sentence-controls-space,0px) + 8px);
+    margin:0 auto;width:min(34rem,calc(100vw - 16px));max-height:calc(100dvh - var(--sentence-controls-space,0px) - 24px);
+    overflow:auto;overscroll-behavior:contain;padding:12px;border:1px solid var(--line-strong);
+    border-radius:1rem;background:var(--paper);color:var(--ink);box-shadow:0 10px 50px #0004;
+    font-family:var(--font-gothic);}
+  .phone-menu:not([open]){display:none;}
+  .phone-menu-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .phone-menu h2{font-size:1rem;margin:0;}
+  .phone-menu h3{font-size:.8rem;color:var(--ink-soft);margin:12px 0 6px;}
+  #phoneMenu button,#phoneMenu a{box-sizing:border-box;min-height:48px;min-width:48px;padding:8px 10px;
+    border:1px solid var(--line-strong);border-radius:.65rem;background:var(--card);color:var(--ink);
+    font:600 .8rem/1.4 var(--font-gothic);text-decoration:none;cursor:pointer;touch-action:manipulation;}
+  .phone-menu button:disabled,.phone-utility button:disabled{opacity:.45;cursor:default;}
+  .phone-menu-tabs{display:flex;gap:6px;margin:10px 0;}
+  .phone-menu-tabs button{flex:1;}
+  .phone-menu-tabs [aria-selected="true"]{border-color:var(--shu);color:var(--shu);background:var(--joshi-t);}
+  .phone-control-buttons,.phone-menu-footer{display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+  .phone-control-buttons>*{flex:1 1 auto;margin:0;}
+  .phone-menu .dock-shadow,.phone-menu .dock-dict{flex-wrap:wrap;overflow:visible;padding:8px 0;gap:6px;
+    margin:8px 0;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .phone-menu .sh-mode,.phone-menu .dict-grade{display:flex;gap:6px;}
+  .phone-menu .sh-mode[hidden],.phone-menu .dict-grade[hidden]{display:none;}
+  .phone-menu .sh-rate-cycle{margin-left:0;}
+  .phone-page-links{display:grid;gap:6px;}
+  .phone-page-links a,.phone-page-links button{text-align:left;display:flex;align-items:center;}
+  .phone-menu-footer{padding-top:10px;margin-top:10px;border-top:1px solid var(--line);}
+  .phone-menu-footer>*{display:flex;align-items:center;justify-content:center;flex:1;}
+  .phone-menu :focus-visible,.phone-utility :focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
   @media (prefers-reduced-motion:reduce){
     .video-dock[data-fold-ready] .dock-video,.video-dock.min[data-fold-ready] .dock-video{transition:none;}
   }
@@ -1331,11 +1384,12 @@
         v.due>=0&&v.ivl>=0&&v.ivl<=365000&&v.ease>=1.3&&v.ease<=3&&
         Number.isInteger(v.reps)&&v.reps>=0&&Number.isInteger(v.lapses)&&v.lapses>=0);
     }
-    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls'].indexOf(k) >= 0; }
+    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls','toolbarArrangement'].indexOf(k) >= 0; }
     function preferenceValue(k,v){
       if(k==='playbackRate')return Number.isFinite(v)&&v>=.25&&v<=3;
       if(k==='followMode')return ['off','on','sticky'].indexOf(v)>=0;
       if(k==='sentenceControls')return ['original','bottom','below'].indexOf(v)>=0;
+      if(k==='toolbarArrangement')return ['a','b','c'].indexOf(v)>=0;
       if(k==='furigana'||k==='translations')return typeof v==='boolean';
       return k==='cnMask'&&Number.isInteger(v)&&v>=0&&v<=2;
     }
@@ -1381,15 +1435,15 @@
       return x;
     }
     function needsUpgrade(doc){
-      return doc.cacheVersion!==2 || doc.appliedCursor!==doc.cursor || !doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
+      return doc.cacheVersion!==3 || doc.appliedCursor!==doc.cursor || !doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
     }
     function upgrade(doc){
       var missing=!doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
-      // Old readers advanced the shared cursor past namespaces they could not apply.
-      if(missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
+      // Old readers consumed revisions for namespaces or preference keys they rejected.
+      if(doc.cacheVersion!==3 || missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
       doc.base = doc.base || empty();
       names.forEach(function(ns){ if(!doc.base[ns])doc.base[ns]={}; });
-      doc.cacheVersion=2;doc.appliedCursor=doc.cursor;return doc;
+      doc.cacheVersion=3;doc.appliedCursor=doc.cursor;return doc;
     }
     function applyReply(doc, reply, sent, known){
       upgrade(doc);
@@ -1517,9 +1571,9 @@
     for (var i=0;i<localStorage.length;i++){
       var k = localStorage.key(i);
       if (k && k.indexOf(p+'base:')===0){
-        var d = readJSON(k,null), modern = k.indexOf(p+'base:v2:')===0;
-        // An old tab can still write a higher legacy cursor after ignoring new maps.
-        if(d && ((modern&&!current)||(modern===current&&d.cursor>=doc.cursor))){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;doc.cacheVersion=d.cacheVersion;doc.appliedCursor=d.appliedCursor;current=modern;}
+        var d = readJSON(k,null), modern = k.indexOf(p+'base:v3:')===0 || !!(d&&d.cacheVersion===3);
+        // Old tabs can still write higher cursors after ignoring new maps or keys.
+        if(d && ((modern&&!current)||(modern===current&&d.cursor>=doc.cursor))){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;doc.cacheVersion=d.cacheVersion;doc.appliedCursor=d.appliedCursor;doc.localKey=k;current=modern;}
       }
       if (k && k.indexOf(p+'op:')===0){ var o=readJSON(k,null); if(o && !localStorage.getItem(p+'ack:'+o.id)) doc.ops.push(o); }
     }
@@ -1534,16 +1588,23 @@
       if (mutate || upgraded){
         var p = prefix(id), keep = new Set(doc.ops.map(function(o){return o.id;}));
         try {
-          // Retain only the newest canonical snapshot; immutable operation keys
-          // and acknowledgement markers remain independent of snapshot cleanup.
+          var snapshotKey=p+'base:v3:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
+          try {localStorage.setItem(snapshotKey,snapshot);}
+          catch(e){
+            // setItem replaces atomically: reuse the selected snapshot's space
+            // when a second full copy exceeds quota, without deleting its backup.
+            if(e.name!=='QuotaExceededError'||!old.localKey)throw e;
+            snapshotKey=old.localKey;localStorage.setItem(snapshotKey,snapshot);
+          }
+          // Compact only after the new canonical data is durable. Immutable
+          // operation keys and acknowledgement markers remain independent.
           var stale=[];
-          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf(p+'base:v2:')===0&&Number(k.slice((p+'base:v2:').length))<old.cursor)stale.push(k);}
+          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v3:')===0&&Number(k.slice((p+'base:v3:').length))<=old.cursor)))stale.push(k);}
           stale.forEach(function(k){localStorage.removeItem(k);});
-          localStorage.setItem(p+'base:v2:'+doc.cursor,JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor}));
-          if(doc.cursor>old.cursor)localStorage.removeItem(p+'base:v2:'+old.cursor);
+          doc.localKey=snapshotKey;
           old.ops.forEach(function(o){if(!keep.has(o.id)){localStorage.setItem(p+'ack:'+o.id,'1');localStorage.removeItem(p+'op:'+o.id);}});
           doc.ops.forEach(function(o){ localStorage.setItem(p+'op:'+o.id,JSON.stringify(o)); });
-        } catch(e){ storageFailed = true; throw e; }
+        } catch(e){ storageFailed = true;useDoc(id,AP.upgrade(AP.clone(old)));throw e; }
       }
       return doc;
     }
@@ -1833,7 +1894,7 @@
     return importState(JSON.parse(text)); // read only: never creates or patches a Gist
   }
   async function initialize(){
-    if(owner){try{useDoc(owner,await transaction(owner));fireChange();}catch(e){storageFailed=true;}}
+    if(owner){try{useDoc(owner,await transaction(owner));fireChange();}catch(e){storageFailed=true;fireChange();}}
     await detectBackend();
     if(available){await refreshSession();if(owner)await doFlush();}
     else if(!owner&&!accountOrigin)await legacyPull();
@@ -2478,7 +2539,7 @@ function INDEX_PURE(){
       study=!!document.querySelector('.u[data-sid]'), owner=null, fingerprint=null,
       settings=null, pending=null, timer=null, automatic=false, settleTimer=null, suppressUntil=Date.now()+1000;
   function identity(){return LF.account&&LF.account()?LF.account().id:null;}
-  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original'};}
+  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original',toolbarArrangement:null};}
   function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
   function button(id,text,parent){
     var b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;
@@ -2590,6 +2651,7 @@ function INDEX_PURE(){
     apply(false);
   });
   apply(false);
+  if(study)emit('lang:study-controls');
 })();
 </script>
 </body>

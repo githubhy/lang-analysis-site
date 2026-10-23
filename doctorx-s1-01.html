@@ -166,6 +166,59 @@
   html.sentence-controls-active #shPrev,html.sentence-controls-active #shNext{display:none;}
   #refollow{margin-bottom:var(--sentence-controls-space,0px);}
   .dock-settings:focus-visible,.sentence-transport button:focus-visible,.settings-dialog :focus-visible{outline:2px solid var(--shu);outline-offset:3px;}
+  /* The phone arrangements move controller nodes, never the media or its ancestors. */
+  .phone-utility[hidden],.phone-menu [hidden],.settings-dialog [hidden]{display:none!important;}
+  .phone-utility{display:none;}
+  html.phone-toolbar-active .lang-nav,html.phone-toolbar-active .dock-bar,
+  html.phone-toolbar-active .furi-bar,html.phone-toolbar-active .study-state-bar{display:none;}
+  html.phone-toolbar-active .sentence-transport{box-sizing:border-box;display:grid;gap:3px;
+    grid-template-columns:repeat(6,minmax(48px,1fr));padding:5px 4px;background:var(--card);}
+  html.phone-toolbar-active .sentence-transport[hidden]{display:none;}
+  html.phone-toolbar-active .sentence-transport[data-placement="bottom"]{
+    padding:5px max(4px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));}
+  html.phone-toolbar-active[data-toolbar-arrangement="b"] .sentence-transport{grid-template-columns:repeat(4,minmax(48px,1fr));}
+  html.phone-toolbar-active[data-toolbar-arrangement="c"] .sentence-transport{grid-template-columns:repeat(5,minmax(48px,1fr));}
+  html.phone-toolbar-active .sentence-transport button{box-sizing:border-box;min-width:48px;min-height:48px;
+    width:100%;margin:0;padding:4px 1px;border-radius:.7rem;font:600 .78rem var(--font-gothic);}
+  html.phone-toolbar-active .sentence-transport #sentencePlay{font-size:1.1rem;}
+  html.phone-toolbar-active .sentence-transport #dockFollow{display:block!important;}
+  html.phone-toolbar-active .phone-utility{box-sizing:border-box;display:grid;align-items:center;
+    grid-template-columns:48px minmax(0,1fr) 48px 48px 48px;gap:3px;padding:3px 4px;
+    border-bottom:1px solid var(--line);background:var(--card);}
+  .phone-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font:600 .76rem var(--font-gothic);color:var(--ink-soft);}
+  .phone-utility button,.phone-utility a{display:flex;align-items:center;justify-content:center;
+    box-sizing:border-box;min-width:48px;min-height:48px;padding:3px 0;border:1px solid var(--line-strong);
+    border-radius:.65rem;background:var(--paper);color:var(--ink);font:600 .72rem var(--font-gothic);
+    text-decoration:none;cursor:pointer;touch-action:manipulation;}
+  .phone-menu{box-sizing:border-box;position:fixed;z-index:60;inset:auto 8px calc(var(--sentence-controls-space,0px) + 8px);
+    margin:0 auto;width:min(34rem,calc(100vw - 16px));max-height:calc(100dvh - var(--sentence-controls-space,0px) - 24px);
+    overflow:auto;overscroll-behavior:contain;padding:12px;border:1px solid var(--line-strong);
+    border-radius:1rem;background:var(--paper);color:var(--ink);box-shadow:0 10px 50px #0004;
+    font-family:var(--font-gothic);}
+  .phone-menu:not([open]){display:none;}
+  .phone-menu-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .phone-menu h2{font-size:1rem;margin:0;}
+  .phone-menu h3{font-size:.8rem;color:var(--ink-soft);margin:12px 0 6px;}
+  #phoneMenu button,#phoneMenu a{box-sizing:border-box;min-height:48px;min-width:48px;padding:8px 10px;
+    border:1px solid var(--line-strong);border-radius:.65rem;background:var(--card);color:var(--ink);
+    font:600 .8rem/1.4 var(--font-gothic);text-decoration:none;cursor:pointer;touch-action:manipulation;}
+  .phone-menu button:disabled,.phone-utility button:disabled{opacity:.45;cursor:default;}
+  .phone-menu-tabs{display:flex;gap:6px;margin:10px 0;}
+  .phone-menu-tabs button{flex:1;}
+  .phone-menu-tabs [aria-selected="true"]{border-color:var(--shu);color:var(--shu);background:var(--joshi-t);}
+  .phone-control-buttons,.phone-menu-footer{display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+  .phone-control-buttons>*{flex:1 1 auto;margin:0;}
+  .phone-menu .dock-shadow,.phone-menu .dock-dict{flex-wrap:wrap;overflow:visible;padding:8px 0;gap:6px;
+    margin:8px 0;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .phone-menu .sh-mode,.phone-menu .dict-grade{display:flex;gap:6px;}
+  .phone-menu .sh-mode[hidden],.phone-menu .dict-grade[hidden]{display:none;}
+  .phone-menu .sh-rate-cycle{margin-left:0;}
+  .phone-page-links{display:grid;gap:6px;}
+  .phone-page-links a,.phone-page-links button{text-align:left;display:flex;align-items:center;}
+  .phone-menu-footer{padding-top:10px;margin-top:10px;border-top:1px solid var(--line);}
+  .phone-menu-footer>*{display:flex;align-items:center;justify-content:center;flex:1;}
+  .phone-menu :focus-visible,.phone-utility :focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
   @media (prefers-reduced-motion:reduce){
     .video-dock[data-fold-ready] .dock-video,.video-dock.min[data-fold-ready] .dock-video{transition:none;}
   }
@@ -10064,11 +10117,12 @@
         v.due>=0&&v.ivl>=0&&v.ivl<=365000&&v.ease>=1.3&&v.ease<=3&&
         Number.isInteger(v.reps)&&v.reps>=0&&Number.isInteger(v.lapses)&&v.lapses>=0);
     }
-    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls'].indexOf(k) >= 0; }
+    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls','toolbarArrangement'].indexOf(k) >= 0; }
     function preferenceValue(k,v){
       if(k==='playbackRate')return Number.isFinite(v)&&v>=.25&&v<=3;
       if(k==='followMode')return ['off','on','sticky'].indexOf(v)>=0;
       if(k==='sentenceControls')return ['original','bottom','below'].indexOf(v)>=0;
+      if(k==='toolbarArrangement')return ['a','b','c'].indexOf(v)>=0;
       if(k==='furigana'||k==='translations')return typeof v==='boolean';
       return k==='cnMask'&&Number.isInteger(v)&&v>=0&&v<=2;
     }
@@ -10114,15 +10168,15 @@
       return x;
     }
     function needsUpgrade(doc){
-      return doc.cacheVersion!==2 || doc.appliedCursor!==doc.cursor || !doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
+      return doc.cacheVersion!==3 || doc.appliedCursor!==doc.cursor || !doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
     }
     function upgrade(doc){
       var missing=!doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
-      // Old readers advanced the shared cursor past namespaces they could not apply.
-      if(missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
+      // Old readers consumed revisions for namespaces or preference keys they rejected.
+      if(doc.cacheVersion!==3 || missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
       doc.base = doc.base || empty();
       names.forEach(function(ns){ if(!doc.base[ns])doc.base[ns]={}; });
-      doc.cacheVersion=2;doc.appliedCursor=doc.cursor;return doc;
+      doc.cacheVersion=3;doc.appliedCursor=doc.cursor;return doc;
     }
     function applyReply(doc, reply, sent, known){
       upgrade(doc);
@@ -10250,9 +10304,9 @@
     for (var i=0;i<localStorage.length;i++){
       var k = localStorage.key(i);
       if (k && k.indexOf(p+'base:')===0){
-        var d = readJSON(k,null), modern = k.indexOf(p+'base:v2:')===0;
-        // An old tab can still write a higher legacy cursor after ignoring new maps.
-        if(d && ((modern&&!current)||(modern===current&&d.cursor>=doc.cursor))){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;doc.cacheVersion=d.cacheVersion;doc.appliedCursor=d.appliedCursor;current=modern;}
+        var d = readJSON(k,null), modern = k.indexOf(p+'base:v3:')===0 || !!(d&&d.cacheVersion===3);
+        // Old tabs can still write higher cursors after ignoring new maps or keys.
+        if(d && ((modern&&!current)||(modern===current&&d.cursor>=doc.cursor))){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;doc.cacheVersion=d.cacheVersion;doc.appliedCursor=d.appliedCursor;doc.localKey=k;current=modern;}
       }
       if (k && k.indexOf(p+'op:')===0){ var o=readJSON(k,null); if(o && !localStorage.getItem(p+'ack:'+o.id)) doc.ops.push(o); }
     }
@@ -10267,16 +10321,23 @@
       if (mutate || upgraded){
         var p = prefix(id), keep = new Set(doc.ops.map(function(o){return o.id;}));
         try {
-          // Retain only the newest canonical snapshot; immutable operation keys
-          // and acknowledgement markers remain independent of snapshot cleanup.
+          var snapshotKey=p+'base:v3:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
+          try {localStorage.setItem(snapshotKey,snapshot);}
+          catch(e){
+            // setItem replaces atomically: reuse the selected snapshot's space
+            // when a second full copy exceeds quota, without deleting its backup.
+            if(e.name!=='QuotaExceededError'||!old.localKey)throw e;
+            snapshotKey=old.localKey;localStorage.setItem(snapshotKey,snapshot);
+          }
+          // Compact only after the new canonical data is durable. Immutable
+          // operation keys and acknowledgement markers remain independent.
           var stale=[];
-          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf(p+'base:v2:')===0&&Number(k.slice((p+'base:v2:').length))<old.cursor)stale.push(k);}
+          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v3:')===0&&Number(k.slice((p+'base:v3:').length))<=old.cursor)))stale.push(k);}
           stale.forEach(function(k){localStorage.removeItem(k);});
-          localStorage.setItem(p+'base:v2:'+doc.cursor,JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor}));
-          if(doc.cursor>old.cursor)localStorage.removeItem(p+'base:v2:'+old.cursor);
+          doc.localKey=snapshotKey;
           old.ops.forEach(function(o){if(!keep.has(o.id)){localStorage.setItem(p+'ack:'+o.id,'1');localStorage.removeItem(p+'op:'+o.id);}});
           doc.ops.forEach(function(o){ localStorage.setItem(p+'op:'+o.id,JSON.stringify(o)); });
-        } catch(e){ storageFailed = true; throw e; }
+        } catch(e){ storageFailed = true;useDoc(id,AP.upgrade(AP.clone(old)));throw e; }
       }
       return doc;
     }
@@ -10566,7 +10627,7 @@
     return importState(JSON.parse(text)); // read only: never creates or patches a Gist
   }
   async function initialize(){
-    if(owner){try{useDoc(owner,await transaction(owner));fireChange();}catch(e){storageFailed=true;}}
+    if(owner){try{useDoc(owner,await transaction(owner));fireChange();}catch(e){storageFailed=true;fireChange();}}
     await detectBackend();
     if(available){await refreshSession();if(owner)await doFlush();}
     else if(!owner&&!accountOrigin)await legacyPull();
@@ -13437,7 +13498,7 @@
       study=!!document.querySelector('.u[data-sid]'), owner=null, fingerprint=null,
       settings=null, pending=null, timer=null, automatic=false, settleTimer=null, suppressUntil=Date.now()+1000;
   function identity(){return LF.account&&LF.account()?LF.account().id:null;}
-  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original'};}
+  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original',toolbarArrangement:null};}
   function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
   function button(id,text,parent){
     var b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;
@@ -13549,51 +13610,187 @@
     apply(false);
   });
   apply(false);
+  if(study)emit('lang:study-controls');
 })();
 </script>
 <script>
 /* Phone sentence controls and settings. Media and its ancestors stay in place. */
 (function(){
   'use strict';
+  /*<<phone-toolbar-pure>>*/
+  function PHONE_TOOLBAR_PURE(){
+    function resolve(raw){
+      raw=raw||{};
+      if(['a','b','c'].indexOf(raw.toolbarArrangement)>=0)return raw.toolbarArrangement;
+      var legacy=raw.sentenceControls;
+      return legacy==='bottom'?'a':legacy==='below'?'c':legacy==='original'?'b':'a';
+    }
+    function placement(choice){return choice==='c'?'below':'bottom';}
+    return {resolve:resolve,placement:placement};
+  }
+  /*<</phone-toolbar-pure>>*/
   var dock=document.getElementById('dock'), lp=window.LangPlayer;
   if(!dock||!lp)return;
-  var root=document.documentElement, header=dock.querySelector('.dock-bar'),
+  var P=PHONE_TOOLBAR_PURE(), root=document.documentElement, header=dock.querySelector('.dock-bar'),
       picture=dock.querySelector('.dock-video'), frame=dock.querySelector('.video-frame'),
-      layouts=['original','bottom','below'], mode='original', savedPaint='',
+      navSource=document.querySelector('.lang-nav'), mode='a', savedPaint='', homes=new Map(),
       phone=matchMedia('(max-width:560px), (max-height:480px)'),
-      storageKey='lang:sentence-controls', guest=true;
+      storageKey='lang:toolbar-arrangement', legacyKey='lang:sentence-controls', guest=true,
+      menuOpener=null, settingsOpener=null, accountOpener=null, pageSignature='', accountSource=null;
   function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
-  function account(){return window.LangFav&&LangFav.account&&LangFav.account();}
+  function account(){var f=window.LangFav;return f&&f.account&&f.account();}
   function paintText(e,text){if(e.textContent!==text)e.textContent=text;}
-  function button(id,text,parent){var b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;parent.appendChild(b);return b;}
+  function element(tag,id,parent){var e=document.createElement(tag);if(id)e.id=id;if(parent)parent.appendChild(e);return e;}
+  function button(id,text,parent){var b=element('button',id,parent);b.type='button';b.textContent=text;return b;}
+  function heading(text,parent){var h=element('h3','',parent);h.textContent=text;return h;}
+  function home(node){
+    if(node&&!homes.has(node)){var marker=document.createComment('phone control home');node.before(marker);homes.set(node,marker);}
+    return node;
+  }
+  function move(node,parent,before){
+    if(!node||!parent)return;home(node);
+    if(node.parentNode!==parent||(before&&node.nextSibling!==before))parent.insertBefore(node,before||null);
+  }
+  function restore(){homes.forEach(function(marker,node){if(marker.parentNode&&(node.parentNode!==marker.parentNode||node.previousSibling!==marker))marker.after(node);});}
+  function visible(node){return !!(node&&node.isConnected&&node.getClientRects().length&&!node.disabled);}
+  function launcher(preferred){
+    if(visible(preferred))return preferred;
+    return [more,phoneNav,settings,document.getElementById('accountOpen')].find(visible);
+  }
+  function focus(node){var target=launcher(node);if(target)target.focus({preventScroll:true});}
 
   var settings=button('dockSettings','设置',header);settings.className='dock-settings';
   header.insertBefore(settings,document.getElementById('dockFollow'));
   settings.setAttribute('aria-label','设置');settings.setAttribute('aria-haspopup','dialog');settings.setAttribute('aria-controls','settingsDialog');
-  var dialog=document.createElement('dialog');dialog.id='settingsDialog';dialog.className='settings-dialog';dialog.setAttribute('aria-labelledby','settingsTitle');
+  var dialog=element('dialog','settingsDialog',document.body);dialog.className='settings-dialog';dialog.setAttribute('aria-labelledby','settingsTitle');
+  // Static trusted interface text only. Page titles, account state and links use textContent below.
   dialog.innerHTML='<div class="settings-heading"><h2 id="settingsTitle">设置</h2><button type="button" id="settingsClose" aria-label="关闭设置">完成</button></div>'+
-    '<fieldset><legend>手机句子按钮</legend>'+
-    '<label for="sentenceControls-original"><input id="sentenceControls-original" type="radio" name="sentenceControls" value="original"><span>原版<small>沿用播放器内的紧凑控制</small></span></label>'+
-    '<label for="sentenceControls-bottom"><input id="sentenceControls-bottom" type="radio" name="sentenceControls" value="bottom"><span>底部按钮栏<small>上一句 · 播放 / 暂停 · 下一句，方便单手操作</small></span></label>'+
-    '<label for="sentenceControls-below"><input id="sentenceControls-below" type="radio" name="sentenceControls" value="below"><span>视频下方大按钮<small>把句子按钮放在播放器下方</small></span></label></fieldset>'+
+    '<fieldset><legend>手机工具栏</legend>'+
+    '<label for="toolbarArrangement-a"><input id="toolbarArrangement-a" type="radio" name="toolbarArrangement" value="a"><span>A · 底部单行<small>导航、句子播放、跟随与更多</small></span></label>'+
+    '<label for="toolbarArrangement-b"><input id="toolbarArrangement-b" type="radio" name="toolbarArrangement" value="b"><span>B · 顶部工具与底部播放<small>页面、收藏与账号放在视频上方</small></span></label>'+
+    '<label for="toolbarArrangement-c"><input id="toolbarArrangement-c" type="radio" name="toolbarArrangement" value="c"><span>C · 视频下方单行<small>播放与导航靠近视频，不占用屏幕底部</small></span></label></fieldset>'+
+    '<fieldset hidden aria-hidden="true"><input id="sentenceControls-original" type="radio" name="sentenceControls" value="original"><input id="sentenceControls-bottom" type="radio" name="sentenceControls" value="bottom"><input id="sentenceControls-below" type="radio" name="sentenceControls" value="below"></fieldset>'+
     '<p id="settingsSync" class="settings-note"></p>';
-  document.body.appendChild(dialog);
-  var radios=Array.from(dialog.querySelectorAll('input[name="sentenceControls"]')), note=dialog.querySelector('#settingsSync');
-  settings.addEventListener('click',function(){if(!dialog.open)dialog.showModal();});
+  var radios=Array.from(dialog.querySelectorAll('input[name="toolbarArrangement"]')), note=dialog.querySelector('#settingsSync');
+  settings.addEventListener('click',function(){
+    settingsOpener=launcher(menu.open?menuOpener:settings);closeMenu(false);
+    if(!dialog.open)dialog.showModal();
+  });
   dialog.querySelector('#settingsClose').addEventListener('click',function(){dialog.close();});
-  dialog.addEventListener('close',function(){settings.focus({preventScroll:true});});
-  radios.forEach(function(r){r.addEventListener('change',function(){
-    if(!r.checked)return;
-    apply(r.value);
-    if(window.LangFav)emit('lang:study-preference',{key:'sentenceControls',value:r.value});
-    else try{localStorage.setItem(storageKey,r.value);}catch(e){}
-  });});
+  dialog.addEventListener('close',function(){focus(settingsOpener);});
+  dialog.addEventListener('click',function(e){if(e.target===dialog){var r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
+  function select(value){
+    apply(value);
+    if(window.LangFav&&/^(https?:)$/.test(location.protocol))emit('lang:study-preference',{key:'toolbarArrangement',value:value});
+    else try{localStorage.setItem(storageKey,value);}catch(e){}
+  }
+  radios.forEach(function(r){r.addEventListener('change',function(){if(r.checked)select(r.value);});});
+  dialog.querySelectorAll('input[name="sentenceControls"]').forEach(function(r){r.addEventListener('change',function(){if(r.checked)select(P.resolve({sentenceControls:r.value}));});});
 
-  var transport=document.createElement('div');transport.id='sentenceTransport';transport.className='sentence-transport';
+  var transport=element('div','sentenceTransport');transport.className='sentence-transport';
   transport.setAttribute('role','group');transport.setAttribute('aria-label','句子播放控制');transport.hidden=true;
-  var prev=button('sentencePrev','◀ 上一句',transport), play=button('sentencePlay','▶',transport), next=button('sentenceNext','下一句 ▶',transport);
+  var phoneNav=button('phoneNav','导航',transport),
+      prev=button('sentencePrev','‹ 上句',transport), play=button('sentencePlay','▶',transport), next=button('sentenceNext','下句 ›',transport),
+      more=button('phoneMore','更多',transport);
   prev.setAttribute('aria-label','上一句');next.setAttribute('aria-label','下一句');
-  // Only this new control moves between placements. Never move a player ancestor.
+  [phoneNav,more].forEach(function(b){b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','phoneMenu');b.setAttribute('aria-expanded','false');});
+  var utility=element('div','phoneUtility',dock);utility.className='phone-utility';utility.hidden=true;
+  var title=element('span','phoneTitle',utility);title.className='phone-title';title.textContent=(header.querySelector('.dock-title')||document.querySelector('h1')||{}).textContent||document.title;
+  var favorites=element('a','phoneFavorites',utility);favorites.textContent='收藏';favorites.setAttribute('aria-label','收藏库');
+  var accountButton=button('phoneAccount','账号',utility);accountButton.setAttribute('aria-haspopup','dialog');
+  if(picture)dock.insertBefore(utility,picture);
+
+  var menu=element('dialog','phoneMenu',document.body);menu.className='phone-menu';menu.setAttribute('aria-labelledby','phoneMenuTitle');
+  var menuHeading=element('div','',menu);menuHeading.className='phone-menu-heading';
+  var menuTitle=element('h2','phoneMenuTitle',menuHeading);menuTitle.textContent='学习工具';
+  var menuClose=button('phoneMenuClose','完成',menuHeading);menuClose.setAttribute('aria-label','关闭学习工具');
+  var tabs=element('div','',menu);tabs.className='phone-menu-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','学习工具分类');
+  var tabControls=button('phoneTabControls','学习控制',tabs),tabPages=button('phoneTabPages','页面与章节',tabs);
+  var controls=element('section','phoneControls',menu),pages=element('section','phonePages',menu);
+  [[tabControls,controls],[tabPages,pages]].forEach(function(pair){pair[0].setAttribute('role','tab');pair[0].setAttribute('aria-controls',pair[1].id);pair[1].setAttribute('role','tabpanel');pair[1].setAttribute('aria-labelledby',pair[0].id);});
+  var mainControls=element('div','phoneControlButtons',controls);mainControls.className='phone-control-buttons';
+  var practiceControls=element('div','phonePracticeControls',controls);
+  var readingControls=element('div','phoneReadingControls',controls);readingControls.className='phone-control-buttons';
+  heading('视频与页面',pages);var pageLinks=element('div','phonePageLinks',pages);pageLinks.className='phone-page-links';
+  heading('本页章节',pages);var chapterLinks=element('div','phoneChapterLinks',pages);chapterLinks.className='phone-page-links';
+  var readingReturn=element('div','phoneReadingReturn',pages);readingReturn.className='phone-control-buttons';
+  var menuFooter=element('div','',menu);menuFooter.className='phone-menu-footer';
+  var library=element('a','phoneLibrary',menuFooter);library.textContent='收藏库';
+  var menuAccount=button('phoneMenuAccount','账号',menuFooter);menuAccount.setAttribute('aria-haspopup','dialog');
+  function chooseTab(name){
+    var isPages=name==='pages';controls.hidden=isPages;pages.hidden=!isPages;
+    [[tabControls,!isPages],[tabPages,isPages]].forEach(function(pair){pair[0].setAttribute('aria-selected',String(pair[1]));pair[0].tabIndex=pair[1]?0:-1;});
+  }
+  function closeMenu(restoreFocus){
+    if(!menu.open)return;menu.close();
+    [phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded','false');});
+    if(restoreFocus!==false)focus(menuOpener);
+  }
+  function openMenu(tab,opener){
+    if(menu.open&&menuOpener===opener){closeMenu();return;}
+    menuOpener=opener;refreshNavigation();chooseTab(tab);
+    if(!menu.open)menu.show();
+    [phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded',String(b===opener));});
+    (tab==='pages'?tabPages:tabControls).focus({preventScroll:true});
+  }
+  phoneNav.addEventListener('click',function(){openMenu('pages',phoneNav);});
+  more.addEventListener('click',function(){openMenu('controls',more);});
+  tabControls.addEventListener('click',function(){chooseTab('controls');});tabPages.addEventListener('click',function(){chooseTab('pages');});
+  tabs.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();var showPages=document.activeElement===tabControls;chooseTab(showPages?'pages':'controls');(showPages?tabPages:tabControls).focus();}});
+  menuClose.addEventListener('click',function(){closeMenu();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.open){e.preventDefault();closeMenu();}});
+  document.addEventListener('pointerdown',function(e){if(menu.open&&!menu.contains(e.target)&&e.target!==phoneNav&&e.target!==more)closeMenu();});
+  menu.addEventListener('close',function(){[phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded','false');});});
+  function openAccount(from){
+    var source=document.getElementById('accountOpen');if(!source)return;
+    // nav.js captures activeElement, so preserve a launcher that stays visible after the menu closes.
+    accountOpener=launcher(menu.open?menuOpener:from);closeMenu(false);focus(accountOpener);source.click();
+  }
+  accountButton.addEventListener('click',function(){openAccount(accountButton);});menuAccount.addEventListener('click',function(){openAccount(menuAccount);});
+  document.addEventListener('close',function(e){
+    if(e.target.classList&&e.target.classList.contains('account-dialog')&&accountOpener){focus(accountOpener);accountOpener=null;}
+  },true);
+  function refreshAccount(){
+    accountSource=document.getElementById('accountOpen');
+    [accountButton,menuAccount].forEach(function(b){b.disabled=!accountSource;paintText(b,accountSource?(account()?'我的账号':'登录同步'):'账号（仅在线）');});
+    // The top row has a compact visible label; its accessible name retains the account state.
+    accountButton.setAttribute('aria-label',accountButton.textContent);paintText(accountButton,'账号');
+  }
+  function refreshNavigation(){
+    var anchors=navSource?Array.from(navSource.querySelectorAll('a')):[],sourceFav=navSource&&navSource.querySelector('a.ln-fav'),
+        chapters=Array.from(document.querySelectorAll('#tocPanel .dock-toc-item')),
+        signature=JSON.stringify([anchors.map(function(a){return [a.className,a.getAttribute('href'),a.textContent];}),chapters.map(function(c){return c.textContent;})]);
+    if(sourceFav)[favorites,library].forEach(function(a){var href=sourceFav.getAttribute('href');if(a.getAttribute('href')!==href)a.setAttribute('href',href);});
+    else [favorites,library].forEach(function(a){a.hidden=true;});
+    if(signature!==pageSignature){
+      pageSignature=signature;pageLinks.replaceChildren();chapterLinks.replaceChildren();
+      anchors.filter(function(a){return !a.classList.contains('ln-fav');}).forEach(function(source){
+        var a=element('a','',pageLinks);a.setAttribute('href',source.getAttribute('href'));
+        a.textContent=source.classList.contains('ln-prev')?'‹ 上一个视频':source.classList.contains('ln-next')?'下一个视频 ›':'全部页面';
+        a.addEventListener('click',function(){closeMenu(false);});
+      });
+      chapters.forEach(function(source){var b=button('',source.textContent,chapterLinks);b.className='dock-toc-item';b.addEventListener('click',function(){closeMenu(false);source.click();});});
+    }
+    refreshAccount();
+  }
+  function reconcile(){
+    var mobile=phone.matches,follow=document.getElementById('dockFollow');
+    root.classList.toggle('phone-toolbar-active',mobile);utility.hidden=!mobile||mode!=='b';
+    if(!mobile){restore();closeMenu();return;}
+    ['shadowToggle','highlightsToggle','dictToggle','cnMaskToggle','layoutToggle','pinToggle','dockMin','dockSettings'].forEach(function(id){move(document.getElementById(id),mainControls);});
+    ['shadowBar','dictBar'].forEach(function(id){move(document.getElementById(id),practiceControls);});
+    move(document.getElementById('shRate'),mainControls);
+    ['furiToggle','favFilter','telopToggle','translationsToggle','markStudied'].forEach(function(id){move(document.getElementById(id),readingControls);});
+    move(document.getElementById('readingResume'),readingReturn);
+    var parent=P.placement(mode)==='bottom'?document.body:dock;
+    if(transport.parentNode!==parent){if(parent===dock&&picture)picture.insertAdjacentElement('afterend',transport);else parent.appendChild(transport);}
+    if(mode==='b'){
+      move(phoneNav,utility,title);move(more,utility);move(follow,transport);
+    }else{
+      move(phoneNav,transport,prev);move(more,transport);move(follow,mode==='a'?transport:mainControls,mode==='a'?more:null);
+    }
+    refreshNavigation();
+  }
   function step(dir){
     if(!lp.ready()||(lp.seekOnly&&lp.seekOnly()))return;
     var shadow=document.getElementById('shadowToggle');
@@ -13603,47 +13800,46 @@
     render();
   }
   prev.addEventListener('click',function(){step(-1);});next.addEventListener('click',function(){step(1);});
-  play.addEventListener('click',function(){if(lp.ready())lp.toggle();render();});
+  play.addEventListener('click',function(){if(lp.ready()&&!(lp.seekOnly&&lp.seekOnly()))lp.toggle();render();});
   function reserve(){
-    var space=!transport.hidden&&mode==='bottom'?transport.getBoundingClientRect().height:0;
-    var value=space+'px';
+    var space=!transport.hidden&&P.placement(mode)==='bottom'?transport.getBoundingClientRect().height:0,value=space+'px';
     if(root.style.getPropertyValue('--sentence-controls-space')!==value)root.style.setProperty('--sentence-controls-space',value);
   }
   function render(){
-    var limited=lp.seekOnly&&lp.seekOnly(), visible=phone.matches&&mode!=='original'&&!limited,
-        ready=lp.ready(), paused=!ready||lp.paused(), nav=window.LangSentences,
-        state=[visible,ready,paused,!!(nav&&nav.canStep(-1)),!!(nav&&nav.canStep(1))].join(':');
+    var limited=!!(lp.seekOnly&&lp.seekOnly()),mobile=phone.matches,ready=lp.ready(),paused=!ready||lp.paused(),nav=window.LangSentences,
+        canPrev=!!(nav&&nav.canStep(-1)),canNext=!!(nav&&nav.canStep(1)),state=[mobile,mode,limited,ready,paused,canPrev,canNext].join(':');
     if(state!==savedPaint){
-      savedPaint=state;transport.hidden=!visible;
-      root.classList.toggle('sentence-controls-active',visible);
-      play.disabled=!ready;prev.disabled=!ready||!nav||!nav.canStep(-1);next.disabled=!ready||!nav||!nav.canStep(1);
+      savedPaint=state;transport.hidden=!mobile;root.classList.toggle('sentence-controls-active',mobile);
+      play.disabled=!ready||limited;prev.disabled=!ready||limited||!canPrev;next.disabled=!ready||limited||!canNext;
       paintText(play,paused?'▶':'❚❚');play.setAttribute('aria-label',paused?'播放':'暂停');play.setAttribute('aria-pressed',String(!paused));
     }
     reserve();
   }
   function apply(value){
-    if(layouts.indexOf(value)<0)value='original';
-    // Arm the reading/follow guards before changing the player's footprint.
+    if(['a','b','c'].indexOf(value)<0)value='a';
     var changed=value!==mode;
     if(changed){emit('lang:controls-will-layout');emit('lang:follow-scroll');}
-    mode=value;root.dataset.sentenceControls=mode;transport.dataset.placement=mode;
-    var parent=mode==='bottom'?document.body:dock;
-    if(transport.parentNode!==parent){if(parent===dock&&picture)picture.insertAdjacentElement('afterend',transport);else parent.appendChild(transport);}
-    radios.forEach(function(r){r.checked=r.value===mode;});
+    mode=value;root.dataset.toolbarArrangement=mode;root.dataset.sentenceControls=P.placement(mode);transport.dataset.placement=P.placement(mode);
+    reconcile();radios.forEach(function(r){r.checked=r.value===mode;});
+    dialog.querySelectorAll('input[name="sentenceControls"]').forEach(function(r){r.checked=P.resolve({sentenceControls:r.value})===mode;});
     paintText(note,guest?'保存在此设备；登录后可随账号同步。':'此设置会随账号同步。');
     savedPaint='';render();if(changed)emit('lang:controls-layout');
   }
-  document.addEventListener('lang:study-preferences',function(e){
-    var p=e.detail||{};if(typeof p.guest==='boolean')guest=p.guest;
-    if(Object.prototype.hasOwnProperty.call(p,'sentenceControls'))apply(p.sentenceControls);
-    else paintText(note,guest?'保存在此设备；登录后可随账号同步。':'此设置会随账号同步。');
-  });
+  function hydrate(){
+    var raw={},lf=window.LangFav;
+    if(lf&&/^(https?:)$/.test(location.protocol)){guest=!account();raw=lf.getNS('preferences')||{};}
+    else try{raw={toolbarArrangement:localStorage.getItem(storageKey),sentenceControls:localStorage.getItem(legacyKey)};}catch(e){}
+    apply(P.resolve(raw));
+  }
+  document.addEventListener('lang:study-preferences',hydrate);
+  document.addEventListener('lang:study-controls',function(){reconcile();render();});
   document.addEventListener('lang:active',render);document.addEventListener('lang:transport',render);
-  phone.addEventListener('change',function(){emit('lang:controls-will-layout');savedPaint='';render();emit('lang:controls-layout');});
+  phone.addEventListener('change',function(){emit('lang:controls-will-layout');emit('lang:follow-scroll');reconcile();savedPaint='';render();emit('lang:controls-layout');});
   if(window.ResizeObserver)new ResizeObserver(reserve).observe(transport);
   window.addEventListener('resize',reserve,{passive:true});
-  setInterval(render,250); // repaint only changed state, including native control pauses
-
+  setInterval(render,250); // one timer; unchanged transport states never repaint
+  if(navSource)new MutationObserver(refreshAccount).observe(navSource,{childList:true,subtree:true});
+  if(window.LangFav){if(LangFav.onChange)LangFav.onChange(hydrate);if(LangFav.ready)LangFav.ready.then(hydrate);}
   // Animate a measured outer height, clipping the unchanged video frame inside it.
   // A hidden parent still gives the frame a measurable width once fold-ready is set.
   if(picture&&frame){
@@ -13657,10 +13853,7 @@
     new MutationObserver(folded).observe(dock,{attributes:true,attributeFilter:['class']});
     window.addEventListener('resize',measure,{passive:true});
   }
-  var initial='original';
-  if(window.LangFav){guest=!account();initial=LangFav.getNS('preferences').sentenceControls||initial;}
-  else try{initial=localStorage.getItem(storageKey)||initial;}catch(e){}
-  apply(initial);emit('lang:study-controls');
+  hydrate();emit('lang:study-controls');
 })();
 </script>
 </body>
