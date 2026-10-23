@@ -166,59 +166,104 @@
   html.sentence-controls-active #shPrev,html.sentence-controls-active #shNext{display:none;}
   #refollow{margin-bottom:var(--sentence-controls-space,0px);}
   .dock-settings:focus-visible,.sentence-transport button:focus-visible,.settings-dialog :focus-visible{outline:2px solid var(--shu);outline-offset:3px;}
-  /* The phone arrangements move controller nodes, never the media or its ancestors. */
+  /* Shared phone controls: fixed touch sizes, grouped by purpose. */
   .phone-utility[hidden],.phone-menu [hidden],.settings-dialog [hidden]{display:none!important;}
-  .phone-utility{display:none;}
+  .phone-utility,.phone-only-label{display:none;}
   html.phone-toolbar-active .lang-nav,html.phone-toolbar-active .dock-bar,
   html.phone-toolbar-active .furi-bar,html.phone-toolbar-active .study-state-bar{display:none;}
-  html.phone-toolbar-active .sentence-transport{box-sizing:border-box;display:grid;gap:3px;
-    grid-template-columns:repeat(6,minmax(48px,1fr));padding:5px 4px;background:var(--card);}
+  html.phone-toolbar-active .sentence-transport{box-sizing:border-box;display:flex;align-items:center;
+    justify-content:space-between;gap:4px;padding:6px 8px;background:var(--paper);}
   html.phone-toolbar-active .sentence-transport[hidden]{display:none;}
   html.phone-toolbar-active .sentence-transport[data-placement="bottom"]{
-    padding:5px max(4px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));}
-  html.phone-toolbar-active[data-toolbar-arrangement="b"] .sentence-transport{grid-template-columns:repeat(4,minmax(48px,1fr));}
-  html.phone-toolbar-active[data-toolbar-arrangement="c"] .sentence-transport{grid-template-columns:repeat(5,minmax(48px,1fr));}
-  html.phone-toolbar-active .sentence-transport button{box-sizing:border-box;min-width:48px;min-height:48px;
-    width:100%;margin:0;padding:4px 1px;border-radius:.7rem;font:600 .78rem var(--font-gothic);}
-  html.phone-toolbar-active .sentence-transport #sentencePlay{font-size:1.1rem;}
-  html.phone-toolbar-active .sentence-transport #dockFollow{display:block!important;}
+    padding:6px max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+    border-color:var(--line);box-shadow:0 -8px 28px -20px #0005;}
+  html.phone-toolbar-active[data-toolbar-arrangement="b"] .sentence-transport{justify-content:center;gap:20px;}
+  html.phone-toolbar-active .sentence-transport button{box-sizing:border-box;display:flex;flex:0 0 48px;
+    align-items:center;justify-content:center;flex-direction:column;gap:2px;width:48px;height:48px;
+    min-width:48px;min-height:48px;margin:0;padding:3px 0;border:0;border-radius:12px;
+    color:var(--ink-soft);background:transparent;font:600 12px/1.1 var(--font-gothic);-webkit-tap-highlight-color:transparent;}
+  .phone-button-label{font:600 11px/1.1 var(--font-gothic);}
+  .sentence-transport svg{display:block;flex:none;pointer-events:none;}
+  .sentence-playback{display:grid;grid-template-columns:repeat(3,48px);gap:0;flex:none;padding:2px;
+    border-radius:999px;background:var(--card-2);box-shadow:inset 0 0 0 1px var(--line);}
+  html.phone-toolbar-active .sentence-playback button{border-radius:50%;}
+  html.phone-toolbar-active .sentence-transport #sentencePlay{color:var(--paper);background:var(--shu);
+    box-shadow:0 2px 5px #0002;}
+  html.phone-toolbar-active .sentence-transport #sentencePlay svg{width:22px;height:22px;}
+  html.phone-toolbar-active .sentence-transport #dockFollow{display:flex!important;flex-basis:52px;
+    width:52px;font-size:11px;border:1px solid transparent;border-radius:12px;}
+  html.phone-toolbar-active .sentence-transport #dockFollow.on{color:var(--shu);background:var(--joshi-t);border-color:var(--joshi-t);}
+  html.phone-toolbar-active .sentence-transport #dockFollow.sticky{border-color:var(--shu);box-shadow:none;}
+  html.phone-toolbar-active .sentence-transport button:disabled{opacity:.35;}
   html.phone-toolbar-active .phone-utility{box-sizing:border-box;display:grid;align-items:center;
-    grid-template-columns:48px minmax(0,1fr) 48px 48px 48px;gap:3px;padding:3px 4px;
-    border-bottom:1px solid var(--line);background:var(--card);}
+    grid-template-columns:48px minmax(0,1fr) 48px 48px 48px;gap:4px;padding:4px 6px;
+    border-bottom:1px solid var(--line);background:var(--paper);}
   .phone-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     font:600 .76rem var(--font-gothic);color:var(--ink-soft);}
-  .phone-utility button,.phone-utility a{display:flex;align-items:center;justify-content:center;
-    box-sizing:border-box;min-width:48px;min-height:48px;padding:3px 0;border:1px solid var(--line-strong);
-    border-radius:.65rem;background:var(--paper);color:var(--ink);font:600 .72rem var(--font-gothic);
-    text-decoration:none;cursor:pointer;touch-action:manipulation;}
+  .phone-utility button,.phone-utility a{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;
+    box-sizing:border-box;width:48px;height:48px;min-width:48px;min-height:48px;padding:3px 0;border:0;
+    border-radius:12px;background:transparent;color:var(--ink-soft);font:600 12px/1.1 var(--font-gothic);
+    text-decoration:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
   .phone-menu{box-sizing:border-box;position:fixed;z-index:60;inset:auto 8px calc(var(--sentence-controls-space,0px) + 8px);
-    margin:0 auto;width:min(34rem,calc(100vw - 16px));max-height:calc(100dvh - var(--sentence-controls-space,0px) - 24px);
-    overflow:auto;overscroll-behavior:contain;padding:12px;border:1px solid var(--line-strong);
-    border-radius:1rem;background:var(--paper);color:var(--ink);box-shadow:0 10px 50px #0004;
+    margin:0 auto;width:min(26rem,calc(100vw - 16px));max-height:calc(100dvh - var(--sentence-controls-space,0px) - 24px);
+    overflow:auto;overscroll-behavior:contain;padding:16px;border:1px solid var(--line-strong);
+    border-radius:22px;background:var(--paper);color:var(--ink);box-shadow:0 12px 60px #0005;
     font-family:var(--font-gothic);}
   .phone-menu:not([open]){display:none;}
+  html.phone-toolbar-active[data-toolbar-arrangement="c"] .phone-menu{inset:var(--phone-menu-top,8px) 8px auto;
+    max-height:calc(100dvh - var(--phone-menu-top,8px) - 8px);}
   .phone-menu-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;}
-  .phone-menu h2{font-size:1rem;margin:0;}
-  .phone-menu h3{font-size:.8rem;color:var(--ink-soft);margin:12px 0 6px;}
-  #phoneMenu button,#phoneMenu a{box-sizing:border-box;min-height:48px;min-width:48px;padding:8px 10px;
-    border:1px solid var(--line-strong);border-radius:.65rem;background:var(--card);color:var(--ink);
-    font:600 .8rem/1.4 var(--font-gothic);text-decoration:none;cursor:pointer;touch-action:manipulation;}
-  .phone-menu button:disabled,.phone-utility button:disabled{opacity:.45;cursor:default;}
-  .phone-menu-tabs{display:flex;gap:6px;margin:10px 0;}
-  .phone-menu-tabs button{flex:1;}
-  .phone-menu-tabs [aria-selected="true"]{border-color:var(--shu);color:var(--shu);background:var(--joshi-t);}
-  .phone-control-buttons,.phone-menu-footer{display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
-  .phone-control-buttons>*{flex:1 1 auto;margin:0;}
-  .phone-menu .dock-shadow,.phone-menu .dock-dict{flex-wrap:wrap;overflow:visible;padding:8px 0;gap:6px;
-    margin:8px 0;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
-  .phone-menu .sh-mode,.phone-menu .dict-grade{display:flex;gap:6px;}
+  .phone-menu h2{font-size:1rem;letter-spacing:.02em;margin:0;}
+  .phone-menu h3{font:600 12px/1.5 var(--font-gothic);letter-spacing:.08em;color:var(--ink-soft);margin:0 0 8px;}
+  #phoneMenu button,#phoneMenu a{box-sizing:border-box;min-height:48px;min-width:48px;margin:0;padding:8px 10px;
+    border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);
+    font:600 13px/1.35 var(--font-gothic);text-decoration:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+  #phoneMenu button:disabled,.phone-utility button:disabled{opacity:.4;cursor:default;}
+  #phoneMenu #phoneMenuClose{border:0;background:transparent;color:var(--ink-soft);padding:8px 0;}
+  .phone-menu-tabs{display:flex;gap:3px;margin:10px 0 18px;padding:3px;border-radius:12px;background:var(--card-2);}
+  #phoneMenu .phone-menu-tabs button{flex:1;min-height:44px;padding:6px;border-color:transparent;background:transparent;
+    border-radius:9px;color:var(--ink-soft);font-size:12px;}
+  #phoneMenu .phone-menu-tabs [aria-selected="true"]{color:var(--ink);background:var(--paper);box-shadow:0 1px 4px #0002;}
+  .phone-control-section+.phone-control-section{margin-top:18px;}
+  .phone-control-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .phone-control-grid-three{grid-template-columns:repeat(auto-fit,minmax(80px,1fr));}
+  #phoneMenu .phone-control-grid>button,#phoneMenu .phone-control-row>button{display:flex;align-items:center;justify-content:center;
+    gap:6px;min-width:0;width:100%;height:48px;margin:0;padding:8px;border-radius:12px;white-space:nowrap;}
+  #phoneMenu .phone-control-grid>button[aria-pressed="true"]{background:var(--joshi-t);border-color:var(--shu);color:var(--shu);}
+  #phoneMenu #pinToggle .phone-only-label{display:inline;font:600 13px/1.35 var(--font-gothic);}
+  .phone-control-rows{grid-template-columns:minmax(0,1fr);}
+  .phone-control-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;
+    padding-left:12px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);}
+  .phone-control-row>span{font-size:13px;color:var(--ink-soft);}
+  #phoneMenu .phone-control-row>button{width:96px;flex:none;border:0;border-radius:0 12px 12px 0;
+    background:var(--card-2);font-variant-numeric:tabular-nums;}
+  #phoneMenu .phone-control-row>button[aria-pressed="true"]{color:var(--shu);background:var(--joshi-t);}
+  #phoneMenu .phone-layout-row{margin-bottom:8px;}
+  #phoneMenu .phone-control-row:has(>button[hidden]){display:none;}
+  #phoneMenu #dockFollow{display:flex!important;}
+  .phone-menu .dock-shadow,.phone-menu .dock-dict{display:flex;flex-wrap:wrap;overflow:visible;gap:8px;
+    margin:8px 0 0;padding:8px;border:0;border-radius:12px;background:var(--card-2);}
+  #phoneMenu .dock-shadow button,#phoneMenu .dock-dict button{height:48px;flex:1;min-width:48px;padding:8px;border-radius:10px;}
+  .phone-menu .sh-mode,.phone-menu .dict-grade{display:flex;flex:1;gap:6px;}
   .phone-menu .sh-mode[hidden],.phone-menu .dict-grade[hidden]{display:none;}
   .phone-menu .sh-rate-cycle{margin-left:0;}
-  .phone-page-links{display:grid;gap:6px;}
+  .phone-page-links{display:grid;gap:8px;}
+  .phone-pages h3{margin-top:16px;}
   .phone-page-links a,.phone-page-links button{text-align:left;display:flex;align-items:center;}
-  .phone-menu-footer{padding-top:10px;margin-top:10px;border-top:1px solid var(--line);}
-  .phone-menu-footer>*{display:flex;align-items:center;justify-content:center;flex:1;}
+  .phone-control-buttons{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+  .phone-menu-footer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+    padding-top:14px;margin-top:18px;border-top:1px solid var(--line);}
+  #phoneMenu .phone-menu-footer>*{display:flex;align-items:center;justify-content:center;min-width:0;
+    height:48px;margin:0;padding:8px 4px;font-size:12px;background:transparent;white-space:nowrap;}
   .phone-menu :focus-visible,.phone-utility :focus-visible{outline:2px solid var(--shu);outline-offset:2px;}
+  @media (hover:hover){
+    html.phone-toolbar-active .sentence-transport button:not(:disabled):hover,.phone-utility :is(button,a):not(:disabled):hover{background:var(--card-2);color:var(--ink);}
+    #phoneMenu button:not(:disabled):hover,#phoneMenu a:hover{border-color:var(--line-strong);}
+  }
+  @media (max-width:340px){
+    html.phone-toolbar-active .sentence-transport,html.phone-toolbar-active .sentence-transport[data-placement="bottom"]{padding-left:4px;padding-right:4px;}
+    .phone-menu{padding:12px;}
+  }
   @media (prefers-reduced-motion:reduce){
     .video-dock[data-fold-ready] .dock-video,.video-dock.min[data-fold-ready] .dock-video{transition:none;}
   }
@@ -9950,6 +9995,19 @@
   function element(tag,id,parent){var e=document.createElement(tag);if(id)e.id=id;if(parent)parent.appendChild(e);return e;}
   function button(id,text,parent){var b=element('button',id,parent);b.type='button';b.textContent=text;return b;}
   function heading(text,parent){var h=element('h3','',parent);h.textContent=text;return h;}
+  function icon(name){
+    var paths={pages:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',more:'M5 12h.01M12 12h.01M19 12h.01',previous:'M6 5v14M18 5l-9 7 9 7V5z',next:'M18 5v14M6 5l9 7-9 7V5z',play:'M8 5l11 7-11 7V5z',pause:'M8 5v14M16 5v14'};
+    var svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(svg.namespaceURI,'path');
+    svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','20');svg.setAttribute('height','20');
+    svg.setAttribute('fill',name==='play'?'currentColor':'none');svg.setAttribute('stroke','currentColor');
+    svg.setAttribute('stroke-width',name==='more'||name==='pause'?'3':'1.8');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
+    svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');path.setAttribute('d',paths[name]);svg.appendChild(path);return svg;
+  }
+  function iconLabel(node,name,text){node.replaceChildren(icon(name));var label=element('span','',node);label.className='phone-button-label';label.textContent=text;}
+  function controlGroup(id,name,parent){
+    var section=element('section','',parent);section.className='phone-control-section';section.setAttribute('role','group');section.setAttribute('aria-label',name);heading(name,section);
+    var grid=element('div',id,section);grid.className='phone-control-grid';return grid;
+  }
   function home(node){
     if(node&&!homes.has(node)){var marker=document.createComment('phone control home');node.before(marker);homes.set(node,marker);}
     return node;
@@ -9999,6 +10057,9 @@
   var phoneNav=button('phoneNav','导航',transport),
       prev=button('sentencePrev','‹ 上句',transport), play=button('sentencePlay','▶',transport), next=button('sentenceNext','下句 ›',transport),
       more=button('phoneMore','更多',transport);
+  var playback=element('div','sentencePlayback');playback.className='sentence-playback';playback.setAttribute('role','group');playback.setAttribute('aria-label','上一句、播放与下一句');
+  transport.insertBefore(playback,prev);[prev,play,next].forEach(function(b){playback.appendChild(b);});
+  iconLabel(phoneNav,'pages','导航');iconLabel(more,'more','更多');iconLabel(prev,'previous','上句');iconLabel(next,'next','下句');
   prev.setAttribute('aria-label','上一句');next.setAttribute('aria-label','下一句');
   [phoneNav,more].forEach(function(b){b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','phoneMenu');b.setAttribute('aria-expanded','false');});
   var utility=element('div','phoneUtility',dock);utility.className='phone-utility';utility.hidden=true;
@@ -10013,19 +10074,27 @@
   var menuClose=button('phoneMenuClose','完成',menuHeading);menuClose.setAttribute('aria-label','关闭学习工具');
   var tabs=element('div','',menu);tabs.className='phone-menu-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','学习工具分类');
   var tabControls=button('phoneTabControls','学习控制',tabs),tabPages=button('phoneTabPages','页面与章节',tabs);
-  var controls=element('section','phoneControls',menu),pages=element('section','phonePages',menu);
+  var controls=element('section','phoneControls',menu),pages=element('section','phonePages',menu);pages.className='phone-pages';
   [[tabControls,controls],[tabPages,pages]].forEach(function(pair){pair[0].setAttribute('role','tab');pair[0].setAttribute('aria-controls',pair[1].id);pair[1].setAttribute('role','tabpanel');pair[1].setAttribute('aria-labelledby',pair[0].id);});
-  var mainControls=element('div','phoneControlButtons',controls);mainControls.className='phone-control-buttons';
-  var practiceControls=element('div','phonePracticeControls',controls);
-  var readingControls=element('div','phoneReadingControls',controls);readingControls.className='phone-control-buttons';
+  var playbackControls=controlGroup('phonePlaybackControls','播放',controls);playbackControls.classList.add('phone-control-rows');
+  var speedRow=element('div','',playbackControls);speedRow.className='phone-control-row';element('span','',speedRow).textContent='播放速度';
+  var followRow=element('div','',playbackControls);followRow.className='phone-control-row';element('span','',followRow).textContent='字幕跟随';
+  var modes=controlGroup('phoneModeControls','练习',controls);modes.classList.add('phone-control-grid-three');
+  var practiceControls=element('div','phonePracticeControls',modes.parentNode);
+  var readingControls=controlGroup('phoneReadingControls','阅读',controls);
+  var mainControls=controlGroup('phoneControlButtons','画面',controls);
+  var layoutRow=element('div','',mainControls.parentNode);layoutRow.className='phone-control-row phone-layout-row';
+  mainControls.before(layoutRow);element('span','',layoutRow).textContent='页面布局';
   heading('视频与页面',pages);var pageLinks=element('div','phonePageLinks',pages);pageLinks.className='phone-page-links';
   heading('本页章节',pages);var chapterLinks=element('div','phoneChapterLinks',pages);chapterLinks.className='phone-page-links';
   var readingReturn=element('div','phoneReadingReturn',pages);readingReturn.className='phone-control-buttons';
   var menuFooter=element('div','',menu);menuFooter.className='phone-menu-footer';
   var library=element('a','phoneLibrary',menuFooter);library.textContent='收藏库';
   var menuAccount=button('phoneMenuAccount','账号',menuFooter);menuAccount.setAttribute('aria-haspopup','dialog');
+  var pin=document.getElementById('pinToggle');
+  if(pin){var pinLabel=element('span','',pin);pinLabel.className='phone-only-label';pinLabel.textContent='锁定折叠';}
   function chooseTab(name){
-    var isPages=name==='pages';controls.hidden=isPages;pages.hidden=!isPages;
+    var isPages=name==='pages';controls.hidden=isPages;pages.hidden=!isPages;menu.scrollTop=0;
     [[tabControls,!isPages],[tabPages,isPages]].forEach(function(pair){pair[0].setAttribute('aria-selected',String(pair[1]));pair[0].tabIndex=pair[1]?0:-1;});
   }
   function closeMenu(restoreFocus){
@@ -10035,7 +10104,7 @@
   }
   function openMenu(tab,opener){
     if(menu.open&&menuOpener===opener){closeMenu();return;}
-    menuOpener=opener;refreshNavigation();chooseTab(tab);
+    menuOpener=opener;refreshNavigation();chooseTab(tab);reserve();
     if(!menu.open)menu.show();
     [phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded',String(b===opener));});
     (tab==='pages'?tabPages:tabControls).focus({preventScroll:true});
@@ -10046,7 +10115,7 @@
   tabs.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();var showPages=document.activeElement===tabControls;chooseTab(showPages?'pages':'controls');(showPages?tabPages:tabControls).focus();}});
   menuClose.addEventListener('click',function(){closeMenu();});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.open){e.preventDefault();closeMenu();}});
-  document.addEventListener('pointerdown',function(e){if(menu.open&&!menu.contains(e.target)&&e.target!==phoneNav&&e.target!==more)closeMenu();});
+  document.addEventListener('pointerdown',function(e){if(menu.open&&!menu.contains(e.target)&&!phoneNav.contains(e.target)&&!more.contains(e.target))closeMenu();});
   menu.addEventListener('close',function(){[phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded','false');});});
   function openAccount(from){
     var source=document.getElementById('accountOpen');if(!source)return;
@@ -10059,9 +10128,9 @@
   },true);
   function refreshAccount(){
     accountSource=document.getElementById('accountOpen');
-    [accountButton,menuAccount].forEach(function(b){b.disabled=!accountSource;paintText(b,accountSource?(account()?'我的账号':'登录同步'):'账号（仅在线）');});
+    [accountButton,menuAccount].forEach(function(b){b.disabled=!accountSource;b.setAttribute('aria-label',accountSource?(account()?'我的账号':'登录同步'):'账号（仅在线）');paintText(b,accountSource?(account()?'我的账号':'登录同步'):'账号');});
     // The top row has a compact visible label; its accessible name retains the account state.
-    accountButton.setAttribute('aria-label',accountButton.textContent);paintText(accountButton,'账号');
+    paintText(accountButton,'账号');
   }
   function refreshNavigation(){
     var anchors=navSource?Array.from(navSource.querySelectorAll('a')):[],sourceFav=navSource&&navSource.querySelector('a.ln-fav'),
@@ -10084,18 +10153,22 @@
     var mobile=phone.matches,follow=document.getElementById('dockFollow');
     root.classList.toggle('phone-toolbar-active',mobile);utility.hidden=!mobile||mode!=='b';
     if(!mobile){restore();closeMenu();return;}
-    ['shadowToggle','highlightsToggle','dictToggle','cnMaskToggle','layoutToggle','pinToggle','dockMin','dockSettings'].forEach(function(id){move(document.getElementById(id),mainControls);});
+    ['shadowToggle','highlightsToggle','dictToggle'].forEach(function(id){move(document.getElementById(id),modes);});
+    ['cnMaskToggle','telopToggle','pinToggle','dockMin'].forEach(function(id){move(document.getElementById(id),mainControls);});
+    move(document.getElementById('layoutToggle'),layoutRow);
+    move(settings,menuFooter);
     ['shadowBar','dictBar'].forEach(function(id){move(document.getElementById(id),practiceControls);});
-    move(document.getElementById('shRate'),mainControls);
-    ['furiToggle','favFilter','telopToggle','translationsToggle','markStudied'].forEach(function(id){move(document.getElementById(id),readingControls);});
+    move(document.getElementById('shRate'),speedRow);
+    ['furiToggle','favFilter','translationsToggle','markStudied'].forEach(function(id){move(document.getElementById(id),readingControls);});
     move(document.getElementById('readingResume'),readingReturn);
     var parent=P.placement(mode)==='bottom'?document.body:dock;
     if(transport.parentNode!==parent){if(parent===dock&&picture)picture.insertAdjacentElement('afterend',transport);else parent.appendChild(transport);}
     if(mode==='b'){
       move(phoneNav,utility,title);move(more,utility);move(follow,transport);
     }else{
-      move(phoneNav,transport,prev);move(more,transport);move(follow,mode==='a'?transport:mainControls,mode==='a'?more:null);
+      move(phoneNav,transport,playback);move(more,transport);move(follow,mode==='a'?transport:followRow,mode==='a'?more:null);
     }
+    followRow.hidden=mode!=='c';
     refreshNavigation();
   }
   function step(dir){
@@ -10111,6 +10184,7 @@
   function reserve(){
     var space=!transport.hidden&&P.placement(mode)==='bottom'?transport.getBoundingClientRect().height:0,value=space+'px';
     if(root.style.getPropertyValue('--sentence-controls-space')!==value)root.style.setProperty('--sentence-controls-space',value);
+    if(mode==='c'&&phone.matches){var top=Math.max(8,transport.getBoundingClientRect().bottom+8)+'px';if(root.style.getPropertyValue('--phone-menu-top')!==top)root.style.setProperty('--phone-menu-top',top);}
   }
   function render(){
     var limited=!!(lp.seekOnly&&lp.seekOnly()),mobile=phone.matches,ready=lp.ready(),paused=!ready||lp.paused(),nav=window.LangSentences,
@@ -10118,7 +10192,7 @@
     if(state!==savedPaint){
       savedPaint=state;transport.hidden=!mobile;root.classList.toggle('sentence-controls-active',mobile);
       play.disabled=!ready||limited;prev.disabled=!ready||limited||!canPrev;next.disabled=!ready||limited||!canNext;
-      paintText(play,paused?'▶':'❚❚');play.setAttribute('aria-label',paused?'播放':'暂停');play.setAttribute('aria-pressed',String(!paused));
+      play.replaceChildren(icon(paused?'play':'pause'));play.setAttribute('aria-label',paused?'播放':'暂停');play.setAttribute('aria-pressed',String(!paused));
     }
     reserve();
   }
@@ -10142,7 +10216,7 @@
   document.addEventListener('lang:study-controls',function(){reconcile();render();});
   document.addEventListener('lang:active',render);document.addEventListener('lang:transport',render);
   phone.addEventListener('change',function(){emit('lang:controls-will-layout');emit('lang:follow-scroll');reconcile();savedPaint='';render();emit('lang:controls-layout');});
-  if(window.ResizeObserver)new ResizeObserver(reserve).observe(transport);
+  if(window.ResizeObserver){var controlSizeObserver=new ResizeObserver(reserve);controlSizeObserver.observe(transport);if(picture)controlSizeObserver.observe(picture);}
   window.addEventListener('resize',reserve,{passive:true});
   setInterval(render,250); // one timer; unchanged transport states never repaint
   if(navSource)new MutationObserver(refreshAccount).observe(navSource,{childList:true,subtree:true});
