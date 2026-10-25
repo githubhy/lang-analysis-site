@@ -5195,15 +5195,19 @@ global.LangStudyDOM={patch};
       return x;
     }
     function needsUpgrade(doc){
-      return doc.cacheVersion!==4 || doc.appliedCursor!==doc.cursor || !doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
+      return doc.cacheVersion!==5 || doc.appliedCursor!==doc.cursor || !doc.base || (doc.ops||[]).some(function(o){return typeof o.attempted!=='boolean';}) || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
     }
     function upgrade(doc){
       var missing=!doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
       // Old readers consumed revisions for namespaces or preference keys they rejected.
-      if(doc.cacheVersion!==4 || missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
+      var old=doc.cacheVersion!==5 || (doc.appliedCursor!==undefined&&doc.appliedCursor!==doc.cursor);
+      if(old || missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
+      // Old readers did not persist dispatch intent; even a failed reply can
+      // represent an accepted write. Never cancel their unknown outcomes.
+      (doc.ops||[]).forEach(function(o){if(old||typeof o.attempted!=='boolean')o.attempted=true;});
       doc.base = doc.base || empty();
       names.forEach(function(ns){ if(!doc.base[ns])doc.base[ns]={}; });
-      doc.cacheVersion=4;doc.appliedCursor=doc.cursor;return doc;
+      doc.cacheVersion=5;doc.appliedCursor=doc.cursor;return doc;
     }
     function applyReply(doc, reply, sent, known){
       upgrade(doc);
@@ -5228,16 +5232,30 @@ global.LangStudyDOM={patch};
       if(doc.ops.some(function(o){return o.acked;}))doc.complete=false;
       return doc;
     }
-    // Positions describe the latest value, unlike reviews/imports. Keep immutable
-    // IDs for the surviving writes and treat acknowledged overlays as barriers.
+    // Compact assignments, never events or attempted operations. Birth evidence
+    // is local metadata and never changes the surviving wire ID/payload.
     function compactPositions(ops){
       var seen=Object.create(null),out=[];
-      for(var i=ops.length-1;i>=0;i--){
+      for(var i=0;i<ops.length;i++){
         var op=ops[i],position=['progress','reading','checkpoints'].indexOf(op.ns)>=0,key=op.ns+'\u0000'+op.key;
-        if(!position||op.op!=='set'||op.acked){delete seen[key];out.push(op);}
-        else if(!seen[key]){seen[key]=true;out.push(op);}
+        var assignment=position||['notes','preferences','completed'].indexOf(op.ns)>=0;
+        if(!assignment||op.op!=='set'||op.acked||op.attempted===true||(!position&&op.attempted!==false)){delete seen[key];out.push(op);continue;}
+        if(seen[key]!==undefined){var previous=out[seen[key]];if(previous.newCheckpoint){op=clone(op);op.newCheckpoint=true;}out[seen[key]]=null;}
+        seen[key]=out.length;out.push(op);
       }
-      return out.reverse();
+      return out.filter(function(o){return o!==null;});
+    }
+    function compactQueue(doc,transactional){
+      doc.ops=compactPositions(doc.ops);
+      if(!transactional||!doc.complete)return doc;
+      var groups=Object.create(null),remove=new Set();
+      doc.ops.forEach(function(o,i){if(o.ns==='checkpoints')(groups[o.key]||(groups[o.key]=[])).push(i);});
+      Object.keys(groups).forEach(function(key){
+        var indexes=groups[key],first=doc.ops[indexes[0]],last=doc.ops[indexes[indexes.length-1]];
+        if(Object.prototype.hasOwnProperty.call(doc.base.checkpoints,key)||!first.newCheckpoint||first.op!=='set'||last.op!=='del')return;
+        if(indexes.every(function(i){var o=doc.ops[i];return o.attempted===false&&!o.acked&&(o.op==='set'||o.op==='del');}))indexes.forEach(function(i){remove.add(i);});
+      });
+      doc.ops=doc.ops.filter(function(o,i){return !remove.has(i);});return doc;
     }
     function outbound(ops){
       var out = [], bytes = 100;
@@ -5245,11 +5263,12 @@ global.LangStudyDOM={patch};
         if(ops[i].acked)continue;
         var size = new TextEncoder().encode(JSON.stringify(ops[i])).length + 1;
         if (bytes + size > 450000) break;
-        bytes += size; out.push(ops[i]);
+        var wire=clone(ops[i]);delete wire.attempted;delete wire.newCheckpoint;
+        bytes += size; out.push(wire);
       }
       return out;
     }
-    return { empty: empty, clone: clone, valid: valid, replay: replay, schedule: schedule, needsUpgrade: needsUpgrade, upgrade: upgrade, applyReply: applyReply, compactPositions: compactPositions, outbound: outbound };
+    return { empty: empty, clone: clone, valid: valid, replay: replay, schedule: schedule, needsUpgrade: needsUpgrade, upgrade: upgrade, applyReply: applyReply, compactPositions: compactPositions, compactQueue:compactQueue, outbound: outbound };
   }
   /*<</account-pure>>*/
 
@@ -5342,11 +5361,11 @@ global.LangStudyDOM={patch};
     for (var i=0;i<localStorage.length;i++){
       var k = localStorage.key(i);
       if (k && k.indexOf(p+'base:')===0){
-        var d = readJSON(k,null), modern = k.indexOf(p+'base:v4:')===0 || !!(d&&d.cacheVersion===4);
+        var d = readJSON(k,null), modern = k.indexOf(p+'base:v5:')===0 || !!(d&&d.cacheVersion===5);
         // Old tabs can still write higher cursors after ignoring new maps or keys.
         if(d && ((modern&&!current)||(modern===current&&d.cursor>=doc.cursor))){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;doc.cacheVersion=d.cacheVersion;doc.appliedCursor=d.appliedCursor;doc.localKey=k;current=modern;}
       }
-      if (k && k.indexOf(p+'op:')===0){ var o=readJSON(k,null); if(o && !localStorage.getItem(p+'ack:'+o.id)) doc.ops.push(o); }
+      if (k && k.indexOf(p+'op:')===0){ var o=readJSON(k,null); if(o && !localStorage.getItem(p+'ack:'+o.id)){o.attempted=true;doc.ops.push(o);} }
     }
     doc.ops.sort(function(a,b){ return a.order-b.order || a.id.localeCompare(b.id); });
     return doc;
@@ -5359,7 +5378,7 @@ global.LangStudyDOM={patch};
       if (mutate || upgraded){
         var p = prefix(id), keep = new Set(doc.ops.map(function(o){return o.id;}));
         try {
-          var snapshotKey=p+'base:v4:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
+          var snapshotKey=p+'base:v5:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
           try {localStorage.setItem(snapshotKey,snapshot);}
           catch(e){
             // setItem replaces atomically: reuse the selected snapshot's space
@@ -5370,7 +5389,7 @@ global.LangStudyDOM={patch};
           // Compact only after the new canonical data is durable. Immutable
           // operation keys and acknowledgement markers remain independent.
           var stale=[];
-          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v4:')===0&&Number(k.slice((p+'base:v4:').length))<=old.cursor)))stale.push(k);}
+          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v5:')===0&&Number(k.slice((p+'base:v5:').length))<=old.cursor)))stale.push(k);}
           stale.forEach(function(k){localStorage.removeItem(k);});
           doc.localKey=snapshotKey;
           // A superseded position remains recoverable until its replacement is
@@ -5383,7 +5402,7 @@ global.LangStudyDOM={patch};
     }
     return new Promise(function(resolve,reject){
       var tx = db.transaction('accounts','readwrite'), store = tx.objectStore('accounts'), r = store.get(id), doc;
-      r.onsuccess = function(){ doc=r.result||freshDoc();var upgraded=AP.needsUpgrade(doc);doc=AP.upgrade(doc);if(mutate)doc=mutate(doc);if(mutate||upgraded)store.put(doc,id); };
+      r.onsuccess = function(){ doc=r.result||freshDoc();var upgraded=AP.needsUpgrade(doc);doc=AP.upgrade(doc);if(mutate)doc=AP.compactQueue(mutate(doc),true);if(mutate||upgraded)store.put(doc,id); };
       tx.oncomplete = function(){ resolve(doc); };
       tx.onerror = tx.onabort = function(){ storageFailed=true;reject(tx.error||new Error('study storage unavailable')); };
     });
@@ -5400,8 +5419,8 @@ global.LangStudyDOM={patch};
     durable = durable.then(function(){
       // A newer synchronous position can supersede a write before its disk job
       // starts. Avoid hundreds of redundant transactions during queue recovery.
-      if(!optimistic.some(function(o){return o.id===op.id;}))return null;
-      return transaction(id,function(doc){if(!doc.ops.some(function(o){return o.id===op.id;}))doc.ops.push(op);doc.ops=AP.compactPositions(doc.ops);return doc;});
+      var pending=optimistic.find(function(o){return o.id===op.id;});if(!pending)return null;
+      return transaction(id,function(doc){if(!doc.ops.some(function(o){return o.id===op.id;}))doc.ops.push(pending);doc.ops=AP.compactPositions(doc.ops);return doc;});
     }).then(function(doc){
       optimistic = optimistic.filter(function(o){return o.id!==op.id;});if(!doc)return;useDoc(id,doc);
       try { localStorage.setItem('langstudy:changed',identityId()); } catch(e){}
@@ -5421,7 +5440,7 @@ global.LangStudyDOM={patch};
   function queueOp(op){
     if (owner){
       op = AP.clone(op); op.id=identityId(); op.order=sequence=Math.max(sequence+1,Date.now()*1000);
-      persistAccount(op); return;
+      op.attempted=false;persistAccount(op); return;
     }
     if(op.op==='import')op.op='set'; // guest imports use the legacy operation vocabulary
     if (op && op.ns && op.key != null){                  // coalesce same ns+key: a key's synced state = its last op (bounds a long session's queue)
@@ -5447,6 +5466,8 @@ global.LangStudyDOM={patch};
   function setKey(ns, key, value, opts){
     var op = { ns: ns, op: opts && opts.import ? 'import' : 'set', key: key, value: value };
     if (!AP.valid(op) || !active()) return false;
+    if(op.op==='set'&&['notes','preferences','progress','reading','completed'].indexOf(ns)>=0&&JSON.stringify(state[ns][key])===JSON.stringify(cleanValue(ns,value)))return true;
+    if(ns==='checkpoints'&&opts&&opts.newCheckpoint&&op.op==='set')op.newCheckpoint=true;
     // Guest preferences have a synchronous persistence contract. Commit the one
     // namespace atomically before changing memory or the legacy sync queue; a
     // rejected choice must leave the prior durable data available for retry.
@@ -5527,7 +5548,7 @@ global.LangStudyDOM={patch};
   function resolveGid(force){ if (force) dropGid(); return findGist(); }
   function engine(){ return P.makeSyncEngine({ resolve: resolveGid, makeReq: makeRequest }); }
 
-  var flushing = false, dirtyAgain = false, timer = null;
+  var flushing = false, dirtyAgain = false, timer = null, timerAt=0, retryAt=0, retryFailures=0;
   async function legacyFlush(){
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
@@ -5547,7 +5568,19 @@ global.LangStudyDOM={patch};
       return { ok: false, status: e && e.status, error: String((e && e.message) || e) };
     } finally { flushing = false; if (dirtyAgain){ dirtyAgain = false; scheduleFlush(); } }
   }
-  function scheduleFlush(){ if (timer) clearTimeout(timer); timer = setTimeout(doFlush, 1200); }
+  function scheduleFlush(){
+    var now=Date.now(),at=Math.max(now+1200,retryAt);
+    if(timer&&timerAt<=at)return;
+    if(timer)clearTimeout(timer);timerAt=at;
+    timer=setTimeout(function(){timer=null;timerAt=0;doFlush({automatic:true});},Math.max(0,at-now));
+  }
+  function retryLater(response){
+    retryFailures++;var delay=Math.min(60000,1000*Math.pow(2,Math.min(retryFailures,6)));
+    var header=response&&response.headers&&response.headers.get('Retry-After'),serverDelay=0;
+    if(header){var seconds=Number(header);serverDelay=Number.isFinite(seconds)?seconds*1000:Date.parse(header)-Date.now();}
+    retryAt=Date.now()+Math.max(delay+Math.floor(Math.random()*Math.min(1000,delay*.2)),serverDelay||0);
+    if(timer){clearTimeout(timer);timer=null;}scheduleFlush();
+  }
   async function legacyPull(){
     if (!token()) return { ok: false, reason: 'no-token' };
     if (!navigator.onLine) return { ok: false, reason: 'offline' };
@@ -5611,23 +5644,40 @@ global.LangStudyDOM={patch};
     if(available)return 'off';
     return P.syncStatus({hasToken:!!token(),lastErr:lastErr,pending:pendingCount()});
   }
-  async function doFlush(){
+  async function doFlush(options){
     if(!available && (owner||accountOrigin)){if(await detectBackend())await refreshSession();}
     if(!available){ if(owner||accountOrigin)return result(false,'backend-unavailable');return legacyFlush(); }
     if(!owner)return result(false,'signed-out');
     if(!active())return result(false,'account-changed');
     if(navigator.onLine===false)return result(false,'offline');
+    if(options&&options.automatic&&Date.now()<retryAt){scheduleFlush();return result(false,'backoff');}
     if(flushing){dirtyAgain=true;return result(false,'busy');}
     flushing=true;var id=owner;
+    if(timer){clearTimeout(timer);timer=null;timerAt=0;}
+    try{
+      if(navigator.locks&&navigator.locks.request)return await navigator.locks.request('langstudy:sync:'+id,{ifAvailable:true},function(lock){if(lock)return flushAccount(id);scheduleFlush();return result(false,'busy');});
+      return await flushAccount(id);
+    }catch(e){lastErr=true;retryLater();fireChange();return result(false,'network-error');
+    }finally{flushing=false;if(dirtyAgain){dirtyAgain=false;scheduleFlush();}}
+  }
+  async function flushAccount(id){
     try {
       await durable;if(storageFailed)return result(false,'storage-unavailable');
       var doc=await transaction(id,function(current){current.ops=AP.compactPositions(current.ops);return current;}), snapshot=new Set(doc.ops.map(function(o){return o.id;})), sent=AP.outbound(doc.ops), pages=0, more, remaining;
       // Only this snapshot's immutable IDs can be acknowledged; later writes survive.
       do {
         if(owner!==id||!active())return result(false,'account-changed');
+        // A durable intent precedes fetch, including a lost/failed response.
+        // Re-read atomically: a newer assignment can supersede a selected write
+        // before its dispatch; only IDs still present may leave this outbox.
+        var selected=new Set(sent.map(function(o){return o.id;}));
+        if(selected.size){
+          doc=await transaction(id,function(latest){latest.ops.forEach(function(o){if(selected.has(o.id)&&!o.acked)o.attempted=true;});return latest;});
+          sent=AP.outbound(doc.ops.filter(function(o){return selected.has(o.id)&&!o.acked;}));
+        }
         var covered=doc.ops.filter(function(o){return o.acked;}).map(function(o){return o.id;});
         var r=await fetch('/api/study/sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Study-Owner':id},body:JSON.stringify({cursor:doc.cursor,ops:sent})});
-        if(!r.ok){lastErr=true;fireChange();return result(false,r.status===409?'account-changed':'server-error',r.status);}
+        if(!r.ok){lastErr=true;if(r.status===429||r.status>=500)retryLater(r);fireChange();return result(false,r.status===409?'account-changed':'server-error',r.status);}
         var reply=await r.json();
         if(!Number.isSafeInteger(reply.cursor)||reply.cursor<0||!Array.isArray(reply.changes)||!Array.isArray(reply.acked))throw new Error('invalid sync reply');
         reply.changes=reply.changes.map(function(c){var x=AP.clone(c);if(!x.deleted&&x.value!==undefined)x.value=cleanValue(x.ns,x.value);return x;});
@@ -5638,9 +5688,8 @@ global.LangStudyDOM={patch};
         sent=more?[]:AP.outbound(remaining);pages++;
         if(pages>1000)throw new Error('too many sync pages');
       } while(more||sent.length);
-      lastErr=false;fireChange();if(doc.ops.length)scheduleFlush();return result(true);
-    } catch(e){lastErr=true;fireChange();return result(false,'network-error');}
-    finally{flushing=false;if(dirtyAgain){dirtyAgain=false;scheduleFlush();}}
+      retryAt=0;retryFailures=0;lastErr=false;fireChange();if(doc.ops.length)scheduleFlush();return result(true);
+    } catch(e){lastErr=true;retryLater();fireChange();return result(false,'network-error');}
   }
   async function pullOnLoad(){return available||owner||accountOrigin?doFlush():legacyPull();}
   async function importState(data){
@@ -5771,16 +5820,16 @@ global.LangStudyDOM={patch};
   }
 
   // ---------- triggers: pull on load, push eagerly before backgrounding ----------
-  window.addEventListener('online', scheduleFlush);
-  document.addEventListener('visibilitychange', function(){ if (document.hidden) doFlush(); });
-  window.addEventListener('pagehide', function(){ doFlush(); });
+  window.addEventListener('online', function(){retryAt=0;retryFailures=0;scheduleFlush();});
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) doFlush({automatic:true}); });
+  window.addEventListener('pagehide', function(){ doFlush({automatic:true}); });
   window.addEventListener('storage',function(e){
     if(e.key===activeKey){fireChange();return;}
     if(owner && active() && (e.key==='langstudy:changed'||(e.key&&e.key.indexOf(prefix(owner))===0))){
       var id=owner;durable=durable.then(function(){return transaction(id);}).then(function(doc){useDoc(id,doc);fireChange();}).catch(function(){lastErr=true;});
     }
   });
-  document.addEventListener('visibilitychange',function(){if(!document.hidden && active()){refreshSession().then(pullOnLoad);}});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden && active()){refreshSession().then(function(){return doFlush({automatic:true});});}});
 
   // ---------- public surface ----------
   window.LangFav = {
@@ -7550,7 +7599,7 @@ global.LangStudyDOM={patch};
       if (!force && id === lastId && (now - lastWrite) < 3000) return;   // throttle steady playback
       if (LF.setKey('progress', pg, { id: id, sec: t, at: now }, { defer: true }) === false) return;
       if(segment&&deviceId){
-        LF.setKey('checkpoints',segment,{page:pg,id:id,sec:exact,at:now,deviceId:deviceId,device:deviceLabel()},{defer:true});
+        LF.setKey('checkpoints',segment,{page:pg,id:id,sec:exact,at:now,deviceId:deviceId,device:deviceLabel()},{defer:true,newCheckpoint:!Object.prototype.hasOwnProperty.call(LF.getNS('checkpoints'),segment)});
         // Prune only observed records owned by this installation and page. Another
         // device's active point can be absent from a stale account snapshot.
         var own=[],map=LF.getNS('checkpoints')||{};
@@ -7564,7 +7613,7 @@ global.LangStudyDOM={patch};
       var syncOwner = ownerId();
       dirty = false; syncing = true; lastSync = Date.now();
       function retry(){ if (ownerId() === syncOwner) dirty = true; }
-      Promise.resolve(LF.sync()).then(function(result){ if (!result || !result.ok) retry(); }, retry)
+      Promise.resolve(LF.sync({automatic:true})).then(function(result){ if (!result || !result.ok) retry(); }, retry)
         .then(function(){ syncing = false; });
     }
     function checkpoint(){ record(true); flushProgress(); }
@@ -7581,7 +7630,7 @@ global.LangStudyDOM={patch};
       wasPlaying = playing;
       // Account progress must reach the server during a long visit, rather than
       // relying on a request started while the browser is unloading the page.
-      if (ownerId() && dirty && Date.now() - lastSync >= 30000) checkpoint();
+      if (ownerId() && dirty && Date.now() - lastSync >= 60000) checkpoint();
     }
     if (window.LangPlayer && LangPlayer.onTick) LangPlayer.onTick(pulse);
     setInterval(pulse, 1000);                             // also observes native/YT pause and ended
@@ -9279,7 +9328,7 @@ global.LangStudyDOM={patch};
       pending={id:row.dataset.sid,at:Date.now(),owner:identity()};
       clearTimeout(timer);timer=setTimeout(flushReading,350);
     },{passive:true});
-    function leaving(){flushReading();if(identity()&&LF.sync)LF.sync();}
+    function leaving(){flushReading();if(identity()&&LF.sync)LF.sync({automatic:true});}
     document.addEventListener('visibilitychange',function(){if(document.hidden)leaving();});
     window.addEventListener('pagehide',leaving);
   }
