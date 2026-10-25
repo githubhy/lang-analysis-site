@@ -3535,7 +3535,7 @@
 </script>
 
 <!--study-ui:start-->
-<style data-study-ui="17dca606bf63b8609535a569dae7b228ac6808f95d34d7efcf0a9d0d7305436a">
+<style data-study-ui="9fefd32caee8bebc5366d2c898f2f347c77260af4dd4017b4f5154b2c48473e8">
 /* Shared component foundation, scoped away from the surrounding lesson. */
 .study-ui{--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font:14px/1.5 var(--font);color:var(--ink);container-type:inline-size}
 .study-ui *{box-sizing:border-box}
@@ -3627,27 +3627,13 @@
 .study-ui .cycle-control,.study-ui .transport-row .follow{width:44px;height:44px}
 .study-ui .cycle-control span{font-size:9px}
 .study-ui .cycle-control:after{right:4px;top:1px;font-size:8px}}
-/* From compact-shadow.css */
-.study-ui .transport-row[data-shadow=true]{gap:3px;padding-left:6px;padding-right:6px}
-.study-ui .transport-row[data-shadow=true]>.cycle-control{width:var(--target-size);height:var(--transport-size)}
-.study-ui .shadow-pattern,.study-ui .shadow-rate{height:var(--transport-size);min-width:var(--target-size);width:var(--target-size);flex:none;border-radius:9px;background:var(--soft);color:var(--accent);padding:3px;display:flex;align-items:center;justify-content:center}
-.study-ui .shadow-pattern{flex-direction:column;gap:3px}
+/* Shadow options use the header's existing contextual row. */
+.study-ui .resume-controls[data-shadow=true]{gap:6px}
+.study-ui .shadow-pattern,.study-ui .shadow-rate{height:var(--target-size);min-width:var(--target-size);flex:none;border-radius:8px;background:var(--soft);color:var(--accent);padding:0 7px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;white-space:nowrap}
 .study-ui .shadow-pattern svg{width:16px;height:16px}
-.study-ui .shadow-pattern span{font-size:10px;line-height:1.2;white-space:nowrap}
-.study-ui .shadow-rate{font-size:11px;font-weight:550;font-variant-numeric:tabular-nums}
-.study-ui .transport-row[data-shadow=true]>.transport{gap:3px}
-.study-ui .transport-row[data-shadow=true] .transport>.step{min-width:var(--target-size);padding:0 2px;font-size:11px;gap:3px}
-.study-ui .transport-row[data-shadow=true] .transport>.step svg{width:13px;height:13px}
-.study-ui .transport-row[data-shadow=true] .transport>.play{width:var(--transport-size);height:var(--transport-size)}
-.study-ui .transport-row[data-shadow=true][data-shadow-layout=stacked]{display:grid;grid-template-columns:var(--target-size) minmax(0,1fr) var(--target-size);grid-template-rows:var(--target-size) var(--transport-size);column-gap:5px;row-gap:4px;height:120px;padding-top:5px;padding-bottom:15px}
-.study-ui .transport-row[data-shadow-layout=stacked]>.mode-trigger{grid-row:2;grid-column:1}
-.study-ui .transport-row[data-shadow-layout=stacked]>.transport{grid-row:2;grid-column:2;width:100%}
-.study-ui .transport-row[data-shadow-layout=stacked]>.follow{grid-row:2;grid-column:3}
-.study-ui .transport-row[data-shadow-layout=stacked]>.shadow-pattern{grid-row:1;grid-column:1;height:var(--target-size);flex-direction:row;gap:4px;width:65px;justify-content:flex-start;padding:0 7px;font-size:10px}
-.study-ui .transport-row[data-shadow-layout=stacked]>.shadow-rate{grid-row:1;grid-column:2;justify-self:start;margin-left:23px;height:var(--target-size);width:var(--transport-size)}
-.study-ui .transport-row[data-shadow-layout=stacked] .transport>.step{font-size:11px}
-@media(max-height:550px) and (orientation:landscape){.study-ui .transport-row[data-shadow=true]{height:65px;padding-bottom:9px}}
-/* From repairs.css */
+.study-ui .shadow-rate{font-variant-numeric:tabular-nums}
+.study-ui .resume-controls[data-shadow=true] .resume-latest span{display:none}
+.study-ui .resume-empty{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .study-ui .topbar.expanded{height:88px}
 .study-ui .topbar .repaired-nav{height:88px;display:grid;grid-template-columns:var(--target-size) minmax(0,1fr) 49px var(--target-size);grid-template-rows:var(--target-size) var(--target-size);gap:0 1px;align-items:center}
 .study-ui .repaired-nav .app-exit{grid-column:1;grid-row:1}
@@ -3825,6 +3811,26 @@ html[data-layout=theater] .video-dock{--dock-w:max(100%,min(calc(100vw - 2rem),m
 .library-note a svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;margin-right:6px}
 #libraryNotes[hidden],#libraryEmpty[hidden],#favList[hidden],.fav-toolbar[hidden],.fav-actions[hidden]{display:none!important}
 @media(max-width:560px){.lang-nav .ln-account span{display:none}.lang-nav .ln-account{width:44px;padding:0;flex:none}}
+
+/* Keep phone text broad; reserve device safe areas without desktop gutters. */
+@media(max-width:560px){
+  .wrap{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+  .u.active,.u.key{padding-left:6px}
+}
+#phoneMenu [hidden]{display:none!important}
+.production-player-status{position:absolute;top:6px;left:6px;right:6px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:6px;pointer-events:none;color:white;font:500 11px/1.4 var(--font-gothic)}
+.production-player-status[hidden]{display:none!important}
+.production-player-status>span{background:#10191ed9;border-radius:6px;padding:5px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.production-player-status button{pointer-events:auto;flex:none;min-width:44px;min-height:44px;background:#10191ed9;color:inherit;border:0;border-radius:7px;font:inherit;padding:4px}
+#dock>.production-player-status{position:relative;inset:auto;min-height:44px;padding:0 8px;background:var(--card);color:var(--ink)}
+#dock>.production-player-status>span,#dock>.production-player-status button{background:transparent}
+/* A short landscape phone has room beside folded chrome, not for another row. */
+@media(min-width:561px) and (max-height:480px){
+  html.phone-toolbar-active #dock.min{display:grid;grid-template-columns:minmax(0,1fr) 160px;align-items:start}
+  html.phone-toolbar-active #dock.min>#productionStudyHeader{grid-column:1;grid-row:1;min-width:0}
+  html.phone-toolbar-active #dock.min>.production-player-status{grid-column:2;grid-row:1;min-width:0}
+  html.phone-toolbar-active #dock.min>.dock-video{grid-column:1 / -1;grid-row:2}
+}
 
 </style>
 <script>
@@ -5333,7 +5339,8 @@ function button(action,body,label,classes='icon',attributes='',context={}){
 }
 function renderResumeControls(model,context={}){
  const {button:btn,icon,escape:esc,t}=helpers(context);
- return `<div class="resume-controls">${model.hasLatestPoint?btn('resume-latest',icon('history')+'<span>'+esc(t('Resume latest'))+'<\/span><b>'+esc(model.latestPointTime||'')+'<\/b>',t('Resume latest')+' · '+model.latestPointLabel,'resume-latest',`title="${esc(model.latestPointLabel)}"`):'<span class="resume-empty">'+esc(t('History empty'))+'<\/span>'}${btn('open:points',icon('down'),'Recent points','resume-more','aria-haspopup="dialog"')}<\/div>`;
+ const shadow=model.mode==='shadow'?btn('cycle-shadow-style',icon(model.shadowStyle==='loop'?'shadowLoop':'shadowRun')+'<span>'+esc(t(model.shadowStyle==='loop'?'Loop short':'Sequence short'))+'<\/span>',model.shadowDescription||'Loop sentence','shadow-pattern',`data-shadow-style="${model.shadowStyle}"`)+btn('rate',model.rate+'×',t('Playback speed')+' '+model.rate+'×','shadow-rate'):'';
+ return `<div class="resume-controls" data-shadow="${model.mode==='shadow'}">${model.hasLatestPoint?btn('resume-latest',icon('history')+'<span>'+esc(t('Resume latest'))+'<\/span><b>'+esc(model.latestPointTime||'')+'<\/b>',t('Resume latest')+' · '+model.latestPointLabel,'resume-latest',`title="${esc(model.latestPointLabel)}"`):'<span class="resume-empty">'+esc(t('History empty'))+'<\/span>'}${shadow}${btn('open:points',icon('down'),'Recent points','resume-more','aria-haspopup="dialog"')}<\/div>`;
 }
 function menuGlyph(name,context={}){
  const {icon}=helpers(context);
@@ -5392,14 +5399,16 @@ function renderHeader(model,context={}){
 }
 function renderTransport(model,context={}){
  const {button:btn,icon,escape:esc,t}=helpers(context);
- const shadow=model.mode==='shadow',playing=model.playing,blocked=model.blocked;
+ const playing=model.playing,blocked=model.blocked;
  return `${btn('cycle-mode',icon(model.mode)+'<span>'+esc(t(model.modeLabel))+'<\/span>',model.practiceDescription,'mode-trigger cycle-control',`data-practice-mode="${model.mode}" title="${esc(model.practiceDescription)}" ${model.modeDisabled?'disabled':''}`)}
- ${shadow?btn('cycle-shadow-style',icon(model.shadowStyle==='loop'?'shadowLoop':'shadowRun')+'<span>'+esc(t(model.shadowStyle==='loop'?'Loop short':'Sequence short'))+'<\/span>',model.shadowDescription,'shadow-pattern',`data-shadow-style="${model.shadowStyle}" title="${esc(model.shadowDescription)}"`):''}
  <div class="transport" data-key="transport">${btn('prev',icon('prev')+'<span>'+esc(t('Prev'))+'<\/span>','Previous sentence','step',model.previousDisabled?'disabled':'')}${btn('play',icon(playing?'pause':'play',!playing),playing?'Pause':'Play','play',blocked&&!playing||model.completed?'disabled':'')}${btn('next',icon('next')+'<span>'+esc(t('Next'))+'<\/span>','Next sentence','step',model.nextDisabled?'disabled':'')}<\/div>
- ${shadow?btn('rate',model.rate+'×',t('Playback speed')+' '+model.rate+'×','shadow-rate',`title="${esc(t('Playback speed'))}"`):''}
  ${btn('follow',icon(model.follow==='sticky'?'locked':model.follow==='off'?'followOff':'follow')+'<span>'+esc(t({off:'Follow off short',on:'Follow normal short',sticky:'Follow locked short'}[model.follow]))+'<\/span>',model.followDescription,'follow cycle-control',`data-follow-mode="${model.follow}" aria-pressed="${model.follow!=='off'}" title="${esc(model.followDescription)}" ${model.followDisabled?'disabled':''}`)}`;
 }
-global.LangStudyUI={renderHeader,renderTransport,renderResumeControls,button,icon,escape,paths,menuGlyph,menuActionIcon,menuPanelIcon,menuFieldIcon,menuHeading,menuButtonBody,strings:global.LangStudyLocales};
+function renderPlayerStatus(model,context={}){
+ const {button:btn,escape:esc,t}=helpers(context);
+ return '<span>'+esc(t(model.modeLabel))+' · '+esc(model.index)+'/'+esc(model.total)+'<\/span>'+btn('rate',esc(model.rate)+'×',t('Playback speed')+' '+model.rate+'×','status-rate',model.rateDisabled?'disabled':'');
+}
+global.LangStudyUI={renderHeader,renderTransport,renderResumeControls,renderPlayerStatus,button,icon,escape,paths,menuGlyph,menuActionIcon,menuPanelIcon,menuFieldIcon,menuHeading,menuButtonBody,strings:global.LangStudyLocales};
 })(window);
 
 // Pure optional surfaces. Import after study-ui.js; callers own models and effects.
@@ -5442,6 +5451,42 @@ function renderAccountStatus(model,context={}){
  return `<div class="study-account-status" role="status" aria-live="polite" data-sync-status="${status}"><div class="study-account-identity">${icon(model.signedIn?'person':'device')}<span><strong>${esc(t(model.signedIn?'Signed in':'Guest'))}<\/strong>${model.signedIn&&model.email?`<span class="study-account-email">${esc(model.email)}<\/span>`:''}<\/span><\/div><p class="study-sync-state">${icon({ok:'check',wait:'cycle',off:'device',offline:'network',err:'close'}[status])}<span>${esc(t(syncLabels[status]))}<\/span><\/p>${pending?`<p class="study-pending-count">${esc(t('Pending changes'))}: ${pending}<\/p>`:''}<\/div>`;
 }
 Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountStatus});
+})(window);
+
+// Patch trusted control fragments without detaching unchanged semantic actions.
+(function(global){
+'use strict';
+function key(node){
+ if(node.nodeType!==1)return null;
+ return node.hasAttribute('data-key')?'key:'+node.getAttribute('data-key'):
+  node.hasAttribute('data-act')?'act:'+node.getAttribute('data-act'):
+  node.id?'id:'+node.id:node.tagName+':'+(node.getAttribute('class')||'').split(' ')[0];
+}
+function reconcile(parent,next,options){
+ const old=Array.from(parent.childNodes),used=new Set(),keyed=new Map();
+ for(const node of old){const id=key(node);if(id&&!keyed.has(id))keyed.set(id,node);}
+ const matches=next.map((fresh,i)=>{const id=key(fresh),node=id?keyed.get(id):old[i];if(!node||used.has(node)||node.nodeType!==fresh.nodeType||(node.nodeType===1&&node.tagName!==fresh.tagName))return null;used.add(node);return node;});
+ // Remove obsolete siblings first; moving a pressed surviving button around a
+ // sibling that is about to disappear would unnecessarily cancel its gesture.
+ for(const node of old)if(!used.has(node))node.remove();
+ let anchor=parent.firstChild;
+ for(let i=0;i<next.length;i++){
+  const fresh=next[i];let node=matches[i];
+  if(!node)node=fresh.cloneNode(true);
+  else if(node.nodeType===3){if(node.nodeValue!==fresh.nodeValue)node.nodeValue=fresh.nodeValue;}
+  else if(node.nodeType===1){
+   for(const attr of Array.from(node.attributes))if(!fresh.hasAttribute(attr.name)&&!(options.preserveIds&&attr.name==='id'))node.removeAttribute(attr.name);
+   for(const attr of Array.from(fresh.attributes))if(node.getAttribute(attr.name)!==attr.value)node.setAttribute(attr.name,attr.value);
+   reconcile(node,Array.from(fresh.childNodes),options);
+  }
+  if(node!==anchor)parent.insertBefore(node,anchor);anchor=node.nextSibling;
+ }
+}
+function patch(parent,html,options={}){
+ const template=parent.ownerDocument.createElement('template');template.innerHTML=html;
+ reconcile(parent,Array.from(template.content.childNodes),options);
+}
+global.LangStudyDOM={patch};
 })(window);
 
 </script>
@@ -5815,6 +5860,17 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
       if(doc.ops.some(function(o){return o.acked;}))doc.complete=false;
       return doc;
     }
+    // Positions describe the latest value, unlike reviews/imports. Keep immutable
+    // IDs for the surviving writes and treat acknowledged overlays as barriers.
+    function compactPositions(ops){
+      var seen=Object.create(null),out=[];
+      for(var i=ops.length-1;i>=0;i--){
+        var op=ops[i],position=['progress','reading','checkpoints'].indexOf(op.ns)>=0,key=op.ns+'\u0000'+op.key;
+        if(!position||op.op!=='set'||op.acked){delete seen[key];out.push(op);}
+        else if(!seen[key]){seen[key]=true;out.push(op);}
+      }
+      return out.reverse();
+    }
     function outbound(ops){
       var out = [], bytes = 100;
       for (var i=0;i<ops.length && out.length<4;i++){
@@ -5825,7 +5881,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
       }
       return out;
     }
-    return { empty: empty, clone: clone, valid: valid, replay: replay, schedule: schedule, needsUpgrade: needsUpgrade, upgrade: upgrade, applyReply: applyReply, outbound: outbound };
+    return { empty: empty, clone: clone, valid: valid, replay: replay, schedule: schedule, needsUpgrade: needsUpgrade, upgrade: upgrade, applyReply: applyReply, compactPositions: compactPositions, outbound: outbound };
   }
   /*<</account-pure>>*/
 
@@ -5949,8 +6005,10 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
           for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v4:')===0&&Number(k.slice((p+'base:v4:').length))<=old.cursor)))stale.push(k);}
           stale.forEach(function(k){localStorage.removeItem(k);});
           doc.localKey=snapshotKey;
-          old.ops.forEach(function(o){if(!keep.has(o.id)){localStorage.setItem(p+'ack:'+o.id,'1');localStorage.removeItem(p+'op:'+o.id);}});
+          // A superseded position remains recoverable until its replacement is
+          // durable. A quota failure must never erase the last offline point.
           doc.ops.forEach(function(o){ localStorage.setItem(p+'op:'+o.id,JSON.stringify(o)); });
+          old.ops.forEach(function(o){if(!keep.has(o.id)){localStorage.setItem(p+'ack:'+o.id,'1');localStorage.removeItem(p+'op:'+o.id);}});
         } catch(e){ storageFailed = true;useDoc(id,AP.upgrade(AP.clone(old)));throw e; }
       }
       return doc;
@@ -5970,9 +6028,14 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     })));
   }
   function persistAccount(op){
-    var id = owner; optimistic.push(op);
-    durable = durable.then(function(){ return transaction(id,function(doc){if(!doc.ops.some(function(o){return o.id===op.id;}))doc.ops.push(op);return doc;}); }).then(function(doc){
-      optimistic = optimistic.filter(function(o){return o.id!==op.id;}); useDoc(id,doc);
+    var id = owner; optimistic=AP.compactPositions(optimistic.concat(op));
+    durable = durable.then(function(){
+      // A newer synchronous position can supersede a write before its disk job
+      // starts. Avoid hundreds of redundant transactions during queue recovery.
+      if(!optimistic.some(function(o){return o.id===op.id;}))return null;
+      return transaction(id,function(doc){if(!doc.ops.some(function(o){return o.id===op.id;}))doc.ops.push(op);doc.ops=AP.compactPositions(doc.ops);return doc;});
+    }).then(function(doc){
+      optimistic = optimistic.filter(function(o){return o.id!==op.id;});if(!doc)return;useDoc(id,doc);
       try { localStorage.setItem('langstudy:changed',identityId()); } catch(e){}
     }).catch(function(){storageFailed=true;lastErr=true;fireChange();});
   }
@@ -6190,7 +6253,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     flushing=true;var id=owner;
     try {
       await durable;if(storageFailed)return result(false,'storage-unavailable');
-      var doc=await transaction(id), snapshot=new Set(doc.ops.map(function(o){return o.id;})), sent=AP.outbound(doc.ops), pages=0, more, remaining;
+      var doc=await transaction(id,function(current){current.ops=AP.compactPositions(current.ops);return current;}), snapshot=new Set(doc.ops.map(function(o){return o.id;})), sent=AP.outbound(doc.ops), pages=0, more, remaining;
       // Only this snapshot's immutable IDs can be acknowledged; later writes survive.
       do {
         if(owner!==id||!active())return result(false,'account-changed');
@@ -6294,10 +6357,11 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     if (!cards.length) return;
     cards.forEach(function(card, i){
       var on = !!favs[IDS[i]], b = card.querySelector('.fav-btn');
-      card.classList.toggle('faved', on); if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if(card.classList.contains('faved')!==on)card.classList.toggle('faved', on);
+      if(b&&b.getAttribute('aria-pressed')!==String(on))b.setAttribute('aria-pressed',String(on));
     });
-    if (filterBtn) filterBtn.textContent = '只看收藏 (' + favCount() + ')';
-    if (favEmpty) favEmpty.hidden = !(document.body.classList.contains('fav-only') && favCount() === 0);
+    var label='只看收藏 ('+favCount()+')';if(filterBtn&&filterBtn.textContent!==label)filterBtn.textContent=label;
+    var empty=!(document.body.classList.contains('fav-only')&&favCount()===0);if(favEmpty&&favEmpty.hidden!==empty)favEmpty.hidden=empty;
   }
   if (cards.length){
     var YT = pageYt();
@@ -6416,14 +6480,17 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   function t(value){ return window.LangStudyI18n ? LangStudyI18n.t(value) : value; }
   function refresh(){
     LF = window.LangFav; if (!LF) return;
-    if (nEl) nEl.textContent = LF.count();
+    if(nEl&&nEl.textContent!==String(LF.count()))nEl.textContent=LF.count();
     var s = (LF.status && LF.status()) || 'off', d = DOT[s] || DOT.off;
-    if (dot){ dot.className = 'ln-dot ' + d[0]; dot.title = t(d[1]); }
+    if(dot){if(dot.className!=='ln-dot '+d[0])dot.className='ln-dot '+d[0];if(dot.title!==t(d[1]))dot.title=t(d[1]);}
     if (LF.backendAvailable && LF.backendAvailable() && !button) setup();
     if (button){
       var label=t(LF.account() ? 'My account' : 'Sign in');
-      button.innerHTML=(window.LangStudyUI?LangStudyUI.icon('person'):'')+'<span></span>';
-      button.querySelector('span').textContent=label;button.setAttribute('aria-label',label);button.title=t(d[1]);
+      if(button.getAttribute('aria-label')!==label){
+        button.innerHTML=(window.LangStudyUI?LangStudyUI.icon('person'):'')+'<span></span>';
+        button.querySelector('span').textContent=label;button.setAttribute('aria-label',label);
+      }
+      if(button.title!==t(d[1]))button.title=t(d[1]);
     }
     if (dialog && dialog.open) render();
   }
@@ -7905,7 +7972,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     btn.type = 'button'; btn.className = 'u-act note-btn'; btn.title = '笔记'; btn.setAttribute('aria-label', '笔记');
     btn.textContent = '📝';
     function has(){ var n = LF.getNS('notes')[id]; return !!(n && n.text); }
-    function setDot(){ btn.classList.toggle('has-note', has()); }
+    function setDot(){var on=has();if(btn.classList.contains('has-note')!==on)btn.classList.toggle('has-note',on);}
     setDot();
 
     var editor = document.createElement('div'); editor.className = 'u-note'; editor.style.display = 'none';
@@ -8190,6 +8257,8 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
       if(!banner)return;
       var prog=latestCurrent(),top=cards[0],topId=top?(top.dataset.sid||top.dataset.favId):'';
       banner.hidden=true;banner.innerHTML='';
+      // The shared header owns Resume; a second banner would move held controls.
+      if(document.getElementById('productionStudyHeader'))return;
       if(dismissed||!prog||!prog.id||prog.id===topId)return;
       banner.innerHTML = '<button class="resume-go" type="button">↩ 回到上次 ' + FP.secToMmss(prog.sec || 0) + '</button>' +
         '<button class="resume-x" type="button" aria-label="关闭">✕</button>';
@@ -8823,7 +8892,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     reconciling=true;
     try {
       if(!LF.hydrated||LF.hydrated())applyReconcile();
-      chips.forEach(function(chip){chip.classList.toggle('saved',!!LF.getNS('vocab')[VP.termId(VP.stripStarOf(chip.textContent))]);});
+      chips.forEach(function(chip){var saved=!!LF.getNS('vocab')[VP.termId(VP.stripStarOf(chip.textContent))];if(chip.classList.contains('saved')!==saved)chip.classList.toggle('saved',saved);});
       if(section)renderList();
     }finally{reconciling=false;}
   }
@@ -9395,6 +9464,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   var tabs=element('div','',menu);tabs.className='phone-menu-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','学习工具分类');
   var tabControls=button('phoneTabControls','学习控制',tabs),tabPages=button('phoneTabPages','页面与章节',tabs);
   var controls=element('section','phoneControls',menu),pages=element('section','phonePages',menu);pages.className='phone-pages';
+  var pointPanel=element('section','phonePointPanel',menu);pointPanel.hidden=true;pointPanel.appendChild(pointList);
   [[tabControls,controls],[tabPages,pages]].forEach(function(pair){pair[0].setAttribute('role','tab');pair[0].setAttribute('aria-controls',pair[1].id);pair[1].setAttribute('role','tabpanel');pair[1].setAttribute('aria-labelledby',pair[0].id);});
   var playbackControls=controlGroup('phonePlaybackControls','播放',controls);playbackControls.classList.add('phone-control-rows');
   var speedRow=element('div','',playbackControls);speedRow.className='phone-control-row';element('span','',speedRow).textContent='播放速度';
@@ -9407,7 +9477,6 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   mainControls.before(layoutRow);element('span','',layoutRow).textContent='页面布局';
   heading('视频与页面',pages);var pageLinks=element('div','phonePageLinks',pages);pageLinks.className='phone-page-links';
   heading('本页章节',pages);var chapterLinks=element('div','phoneChapterLinks',pages);chapterLinks.className='phone-page-links';
-  pages.appendChild(pointList);
   var readingReturn=element('div','phoneReadingReturn',pages);readingReturn.className='phone-control-buttons';
   var menuFooter=element('div','',menu);menuFooter.className='phone-menu-footer';
   var library=element('a','phoneLibrary',menuFooter);library.textContent='收藏库';
@@ -9415,7 +9484,8 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   var pin=document.getElementById('pinToggle');
   if(pin){var pinLabel=element('span','',pin);pinLabel.className='phone-only-label';pinLabel.textContent='锁定折叠';}
   function chooseTab(name){
-    var isPages=name==='pages';controls.hidden=isPages;pages.hidden=!isPages;menu.scrollTop=0;
+    var isPages=name==='pages',isPoints=name==='points';controls.hidden=isPages||isPoints;pages.hidden=!isPages;pointPanel.hidden=!isPoints;tabs.hidden=isPoints;menu.scrollTop=0;
+    paintText(menuTitle,translate(isPoints?'Recent study points':'Study tools'));
     [[tabControls,!isPages],[tabPages,isPages]].forEach(function(pair){pair[0].setAttribute('aria-selected',String(pair[1]));pair[0].tabIndex=pair[1]?0:-1;});
   }
   function closeMenu(restoreFocus){
@@ -9429,7 +9499,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     if(!menu.open)menu.show();
     if(!phone.matches){reconcile();render();}
     [phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded',String(b===opener));});
-    (tab==='pages'?tabPages:tabControls).focus({preventScroll:true});
+    (tab==='points'?(pointList.querySelector('[data-point]')||menuClose):tab==='pages'?tabPages:tabControls).focus({preventScroll:true});
   }
   phoneNav.addEventListener('click',function(){openMenu('pages',phoneNav);});
   more.addEventListener('click',function(){openMenu('controls',more);});
@@ -9514,6 +9584,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   var context={t:translate},pointRecords=new Map(),selectedPoint=null;
   function transplant(container,selector,node){
     var place=container.querySelector(selector);if(!place)return;
+    if(place===node)return;
     Array.from(node.attributes).forEach(function(a){if(a.name!=='id')node.removeAttribute(a.name);});
     Array.from(place.attributes).forEach(function(a){if(a.name!=='id')node.setAttribute(a.name,a.value);});
     node.innerHTML=place.innerHTML;place.replaceWith(node);
@@ -9527,12 +9598,13 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     var p=pageProgress(),count=document.querySelectorAll('.u.faved').length,
         lesson=(document.querySelector('h1')||header.querySelector('.dock-title')||{}).textContent||document.title,
         wide=sharedHeader.clientWidth>=700,stamp=p&&Number.isFinite(p.sec)?Math.floor(p.sec/60)+':'+String(Math.floor(p.sec%60)).padStart(2,'0'):'';
-    var model={title:lesson,favoriteCount:count,hasLatestPoint:!!p,latestPointLabel:stamp,latestPointTime:stamp,wide:wide,folded:headerFolded,backLabel:'All lessons'};
+    var practice=window.LangPractice?LangPractice.snapshot():{};
+    var model={title:lesson,favoriteCount:count,hasLatestPoint:!!p,latestPointLabel:stamp,latestPointTime:stamp,wide:wide,folded:headerFolded,backLabel:'All lessons',mode:practice.mode,shadowStyle:practice.shadowStyle,shadowDescription:translate(practice.shadowStyle==='loop'?'Loop sentence':'In order'),rate:practice.rate};
     var favoriteFilter=document.body.classList.contains('fav-only');
     var html=UI.renderHeader(model,context),signature=JSON.stringify([html,headerFolded,favoriteFilter]);
     if(signature===headerPaint)return;headerPaint=signature;
     var focused=sharedHeader.contains(document.activeElement)?document.activeElement.dataset.act:null;
-    sharedHeader.innerHTML='<div class="topbar '+(headerFolded?'folded':'expanded')+'">'+html+'</div>';
+    LangStudyDOM.patch(sharedHeader,'<div class="topbar '+(headerFolded?'folded':'expanded')+'">'+html+'</div>',{preserveIds:true});
     transplant(sharedHeader,'.nav-full [data-act="open:nav"]',phoneNav);
     transplant(sharedHeader,'.nav-full [data-act="open:learning"]',more);
     phoneNav.setAttribute('aria-controls','phoneMenu');more.setAttribute('aria-controls','phoneMenu');
@@ -9574,7 +9646,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   }
   pointList.addEventListener('click',function(e){var button=e.target.closest('[data-act="resume-point"]');if(!button)return;var record=pointRecords.get(button.dataset.point);if(record){selectedPoint=button.dataset.point;resumeProgress(record);}});
   function showPoints(opener){
-    pointsOwner=account()?account().id:null;if(!pointList.isConnected)pages.prepend(pointList);paintPoints();openMenu('pages',opener);
+    pointsOwner=account()?account().id:null;paintPoints();openMenu('points',opener);
   }
   function resumeProgress(p){
     if(!p)return;closeMenu(false);
@@ -9590,6 +9662,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     else if(act==='open:points')showPoints(b);
     else if(act==='resume-latest')resumeProgress(pageProgress());
     else if(act==='open:favorites'){var f=document.getElementById('favFilter');if(f)f.click();}
+    else if(act==='cycle-shadow-style'||act==='rate')transportAction(e);
   });
   function transportAction(e){
     var b=e.target.closest('[data-act]');if(!b||b.disabled)return;
@@ -9618,11 +9691,12 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
       savedPaint=state;transport.hidden=!mobile;root.classList.toggle('sentence-controls-active',mobile);
       transport.dataset.shadow=String(practice.mode==='shadow');transport.dataset.shadowLayout=window.innerWidth<350?'stacked':'inline';
       var focusedAction=transport.contains(document.activeElement)||modeStrip.contains(document.activeElement)?document.activeElement.dataset.act:null;
-      transport.innerHTML='<div class="transport-row">'+html+'</div>';
+      var fragment=document.createElement('template');fragment.innerHTML=html;var strip='';
+      if(mobile&&mode==='b')Array.from(fragment.content.children).forEach(function(control){if(control.hasAttribute('data-act')){strip+=control.outerHTML;control.remove();}});
+      LangStudyDOM.patch(transport,'<div class="transport-row">'+fragment.innerHTML+'</div>',{preserveIds:true});
       transplant(transport,'[data-act="prev"]',prev);transplant(transport,'[data-act="play"]',play);transplant(transport,'[data-act="next"]',next);
-      play.setAttribute('aria-pressed',String(!paused));
-      modeStrip.replaceChildren();modeStrip.hidden=!mobile||mode!=='b';
-      if(mobile&&mode==='b'){transport.querySelectorAll('.transport-row > [data-act]').forEach(function(control){modeStrip.appendChild(control);});}
+      if(play.getAttribute('aria-pressed')!==String(!paused))play.setAttribute('aria-pressed',String(!paused));
+      LangStudyDOM.patch(modeStrip,strip);modeStrip.hidden=!mobile||mode!=='b';
       if(focusedAction){var focusedButton=transport.querySelector('[data-act="'+focusedAction+'"]')||modeStrip.querySelector('[data-act="'+focusedAction+'"]');if(focusedButton&&!focusedButton.disabled)focusedButton.focus({preventScroll:true});}
     }
     var transportRow=transport.querySelector('.transport-row');
@@ -9631,7 +9705,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     if(showPractice){var dbar=document.getElementById('dictBar');move(dbar,practiceSurface);var parent=P.placement(mode)==='bottom'?document.body:dock;if(practiceSurface.parentNode!==parent)parent.insertBefore(practiceSurface,parent===dock?transport:null);practiceSurface.dataset.placement=P.placement(mode);}
     else if(mobile)move(document.getElementById('dictBar'),practiceControls);
     var dark=root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
-    [sharedHeader,transport,modeStrip].forEach(function(node){node.classList.toggle('dark',dark);});
+    [sharedHeader,transport,modeStrip].forEach(function(node){if(node.classList.contains('dark')!==dark)node.classList.toggle('dark',dark);});
     paintHeader();reserve();
   }
   function apply(value){
@@ -9642,7 +9716,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     reconcile();radios.forEach(function(r){r.checked=r.value===mode;});
     dialog.querySelectorAll('input[name="sentenceControls"]').forEach(function(r){r.checked=P.resolve({sentenceControls:r.value})===mode;});
     paintText(note,guest?'保存在此设备；登录后可随账号同步。':'此设置会随账号同步。');
-    savedPaint='';render();if(changed)emit('lang:controls-layout');
+    if(changed)savedPaint='';render();if(changed)emit('lang:controls-layout');
   }
   function hydrate(){
     var nextOwner=account()?account().id:null;if(pointList&&pointsOwner!==nextOwner){pointList.replaceChildren();pointRecords.clear();selectedPoint=null;pointsOwner=nextOwner;}
@@ -9650,6 +9724,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     if(lf&&/^(https?:)$/.test(location.protocol)){guest=!account();raw=lf.getNS('preferences')||{};}
     else try{raw={toolbarArrangement:localStorage.getItem(storageKey),sentenceControls:localStorage.getItem(legacyKey)};}catch(e){}
     apply(P.resolve(raw));
+    if(menu.open&&!pointPanel.hidden)paintPoints();
   }
   document.addEventListener('lang:study-preferences',hydrate);
   document.addEventListener('lang:ui-preferences',function(){headerPaint='';savedPaint='';refreshNavigation();paintHeader();if(pointList.isConnected)paintPoints();render();});
@@ -9782,9 +9857,11 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
     }
     if(study){
       var r=LF.getNS('reading')[page],done=LF.getNS('completed')[page];
-      readButton.hidden=!(r&&Array.from(document.querySelectorAll('.u[data-sid]')).some(function(e){return e.dataset.sid===r.id;}));
-      doneButton.setAttribute('aria-pressed',String(!!(done&&done.done)));
-      doneButton.textContent=done&&done.done?'✓ 已学完':'标记已学完';
+      var hide=!(r&&Array.from(document.querySelectorAll('.u[data-sid]')).some(function(e){return e.dataset.sid===r.id;}));
+      if(readButton.hidden!==hide)readButton.hidden=hide;
+      var pressed=String(!!(done&&done.done)),label=done&&done.done?'✓ 已学完':'标记已学完';
+      if(doneButton.getAttribute('aria-pressed')!==pressed)doneButton.setAttribute('aria-pressed',pressed);
+      if(doneButton.textContent!==label)doneButton.textContent=label;
     }
     document.querySelectorAll('a.idx-card, a.idx-row').forEach(function(card){
       var r=LF.getNS('completed')[card.getAttribute('href')],badge=card.querySelector('.idx-completion');
@@ -9875,7 +9952,7 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   }
   function localize(container){
     if(!container)return;
-    container.lang={zh:'zh-Hans',en:'en',ja:'ja'}[current().uiLocale];
+    var language={zh:'zh-Hans',en:'en',ja:'ja'}[current().uiLocale];if(container.lang!==language)container.lang=language;
     var walk=document.createTreeWalker(container,NodeFilter.SHOW_TEXT),node;
     while((node=walk.nextNode())){
       if(!node.parentElement||node.parentElement.closest(forbidden+',textarea,input')||/^(SCRIPT|STYLE)$/.test(node.parentElement.tagName))continue;
@@ -9943,10 +10020,10 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   });
   function paint(){
     queued=false;var value=current(),dark=value.theme==='dark'||(value.theme==='auto'&&media.matches);
-    root.dataset.uiLocale=value.uiLocale;
+    if(root.dataset.uiLocale!==value.uiLocale)root.dataset.uiLocale=value.uiLocale;
     if(value.theme==='auto')root.removeAttribute('data-theme');else root.dataset.theme=value.theme;
-    root.classList.toggle('dark',dark);
-    document.querySelectorAll('.study-ui').forEach(function(el){el.classList.toggle('dark',dark);el.lang={zh:'zh-Hans',en:'en',ja:'ja'}[value.uiLocale];});
+    if(root.classList.contains('dark')!==dark)root.classList.toggle('dark',dark);
+    document.querySelectorAll('.study-ui').forEach(function(el){if(el.classList.contains('dark')!==dark)el.classList.toggle('dark',dark);var lang={zh:'zh-Hans',en:'en',ja:'ja'}[value.uiLocale];if(el.lang!==lang)el.lang=lang;});
     document.querySelectorAll(chrome).forEach(localize);
     document.querySelectorAll('dialog.settings-dialog').forEach(function(dialog){if(dialog.querySelector('[data-shared-settings]'))refreshSettings(dialog);});
     if(appDialog){var title=appDialog.querySelector('#appSettingsTitle');if(title&&title.textContent!==t('Settings'))title.textContent=t('Settings');}
@@ -9964,6 +10041,39 @@ Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountSt
   });
   observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder']});
   document.dispatchEvent(new Event('lang:ui-ready'));
+})();
+</script>
+<script>
+/* Production playback status follows the active adapter, including folded video. */
+(function(){
+  'use strict';
+  var UI=window.LangStudyUI,player=window.LangPlayer,dock=document.getElementById('dock');
+  var frame=dock&&dock.querySelector('.video-frame'),picture=dock&&dock.querySelector('.dock-video');
+  if(!UI||!player||!frame||!picture)return;
+  var rows=Array.from(document.querySelectorAll('.u')),status=document.createElement('div'),paint='';
+  status.id='productionPlayerStatus';status.className='production-player-status';status.dataset.uiChrome='';
+  function t(key){return window.LangStudyI18n?LangStudyI18n.t(key):key;}
+  function render(){
+    var practice=window.LangPractice?LangPractice.snapshot():{mode:'listen',rate:1};
+    var compact=dock.classList.contains('min')||document.body.classList.contains('dictation');
+    var parent=compact?dock:frame;
+    if(status.parentNode!==parent){if(compact)dock.insertBefore(status,picture);else frame.appendChild(status);}
+    var hidden=!compact&&player.ready()&&!player.paused();
+    if(status.hidden!==hidden)status.hidden=hidden;
+    var value=String(compact);if(status.dataset.compact!==value)status.dataset.compact=value;
+    var index=Math.max(0,rows.indexOf(document.querySelector('.u.active')))+1;
+    var html=UI.renderPlayerStatus({modeLabel:{listen:'Listen',shadow:'Shadow',dictate:'Write'}[practice.mode]||'Listen',index:index,total:rows.length,rate:practice.rate||1,rateDisabled:!player.ready()||!!(player.seekOnly&&player.seekOnly())},{t:t});
+    if(html!==paint){paint=html;LangStudyDOM.patch(status,html);}
+  }
+  status.addEventListener('click',function(e){if(e.target.closest('[data-act="rate"]')){var rate=document.getElementById('shRate');if(rate)rate.click();render();}});
+  if(player.onTick)player.onTick(render);
+  var clip=document.getElementById('clip');
+  if(clip)['play','pause','ended','ratechange'].forEach(function(event){clip.addEventListener(event,render);});
+  ['lang:active','lang:transport','lang:study-preferences','lang:ui-preferences','lang:study-controls'].forEach(function(event){document.addEventListener(event,render);});
+  document.addEventListener('click',function(e){if(e.target.closest('#sentenceTransport,#productionStudyHeader,#phoneMenu,#shadowBar,#dictBar'))render();});
+  new MutationObserver(render).observe(dock,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(render).observe(document.body,{attributes:true,attributeFilter:['class']});
+  render();
 })();
 </script>
 <!--study-ui:runtime:end-->
