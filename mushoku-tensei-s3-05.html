@@ -143,13 +143,13 @@
   .settings-heading h2{font:600 1.2rem var(--font-gothic);margin:0;}
   .settings-heading button{min-width:48px;min-height:48px;border:1px solid var(--line-strong);border-radius:2rem;
     color:var(--ink);background:var(--card);font:600 .85rem var(--font-gothic);cursor:pointer;}
-  .settings-dialog fieldset{border:0;margin:0;padding:0;min-width:0;}
-  .settings-dialog legend{font:600 .9rem var(--font-gothic);margin-bottom:.6rem;}
-  .settings-dialog label{display:flex;align-items:center;gap:.8rem;min-height:64px;padding:.7rem;
+  .settings-dialog fieldset:not(.study-settings-group){border:0;margin:0;padding:0;min-width:0;}
+  .settings-dialog legend:not(.study-settings-group legend){font:600 .9rem var(--font-gothic);margin-bottom:.6rem;}
+  .settings-dialog label:not(.study-setting):not(.study-toolbar-choice){display:flex;align-items:center;gap:.8rem;min-height:64px;padding:.7rem;
     margin:.4rem 0;border:1px solid var(--line);border-radius:.8rem;background:var(--card);cursor:pointer;}
-  .settings-dialog label:has(:checked){border-color:var(--shu);background:var(--joshi-t);}
-  .settings-dialog input{accent-color:var(--shu);flex:0 0 auto;width:1.2rem;height:1.2rem;}
-  .settings-dialog label span{font:600 .9rem/1.5 var(--font-gothic);}
+  .settings-dialog label:not(.study-setting):not(.study-toolbar-choice):has(:checked){border-color:var(--shu);background:var(--joshi-t);}
+  .settings-dialog input:not([data-setting]){accent-color:var(--shu);flex:0 0 auto;width:1.2rem;height:1.2rem;}
+  .settings-dialog label:not(.study-setting):not(.study-toolbar-choice) span{font:600 .9rem/1.5 var(--font-gothic);}
   .settings-dialog small{display:block;font-weight:400;font-size:.78rem;color:var(--ink-soft);}
   .settings-note{font:.78rem/1.7 var(--font-gothic);color:var(--ink-soft);margin:.8rem 0 0;}
   .sentence-transport:not(.study-ui){display:grid;grid-template-columns:1fr minmax(56px,.65fr) 1fr;gap:.6rem;
@@ -5304,7 +5304,7 @@
 </script>
 
 <!--study-ui:start-->
-<style data-study-ui="af200a4376d72d3b964b6dfb988e77b8588e3b14d37fae900b2f565a28b3ee88">
+<style data-study-ui="d7eb81810e5bdf18fcb802b9bb5ec567614294fb06670cb13b65693cca670e9e">
 /* Shared component foundation, scoped away from the surrounding lesson. */
 .study-ui{--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font:14px/1.5 var(--font);color:var(--ink);container-type:inline-size}
 .study-ui *{box-sizing:border-box}
@@ -5472,23 +5472,21 @@
 @media(prefers-reduced-motion:reduce){.study-ui *{transition:none!important;scroll-behavior:auto!important}}
 /* Pure settings, watch history, library navigation and real account status. */
 .study-ui .study-settings,.study-ui .study-history,.study-ui .study-account-status{min-width:0}
-.study-ui .study-setting{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;padding:8px 0}
-.study-ui .study-setting>span{display:flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
-.study-ui .study-setting svg{width:18px;height:18px;color:var(--muted)}
-.study-ui .study-setting>.study-select{position:relative;display:block;flex:none;max-width:100%}
-.study-ui .study-select>svg{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;pointer-events:none;color:var(--muted)}
-.study-ui .study-setting select{appearance:none;-webkit-appearance:none;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;min-height:var(--target-size);min-width:var(--target-size);max-width:100%;padding:8px 34px 8px 12px}
-.study-ui .study-setting select:focus-visible,.study-ui .study-toolbar-choice input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.study-ui .study-toolbar{border:0;padding:12px 0 0;margin:8px 0;min-width:0;border-top:1px solid var(--line)}
-.study-ui .study-toolbar legend{font-weight:650;padding:0 6px 0 0}
-.study-ui .study-toolbar-choice{display:flex;align-items:center;gap:4px;min-height:var(--target-size);margin:8px 0;border:1px solid var(--line);border-radius:8px;padding:4px 8px 4px 0;cursor:pointer}
-.study-ui .study-toolbar-choice:has(:checked){border-color:var(--accent);background:var(--tint)}
-.study-ui .study-toolbar-choice input{appearance:none;flex:none;width:var(--target-size);height:var(--target-size);margin:0;background:radial-gradient(circle,var(--paper) 6px,var(--muted) 6px,var(--muted) 7px,transparent 7px);cursor:pointer}
-.study-ui .study-toolbar-choice input:checked{background:radial-gradient(circle,var(--accent) 4px,var(--paper) 4px,var(--paper) 6px,var(--accent) 6px,var(--accent) 7px,transparent 7px)}
-.study-ui .study-toolbar-choice>span{min-width:0;overflow-wrap:anywhere}
-.study-ui .study-toolbar-choice strong{font-size:13px;font-weight:600}
-.study-ui .study-toolbar-choice small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
-.study-ui .study-panel-note{margin:12px 0 0;color:var(--muted);font-size:12px}
+.study-ui .study-settings-group{border:0;border-top:1px solid var(--line);padding:4px 0 6px;margin:6px 0;min-width:0}
+.study-ui .study-settings-group legend{margin:0;font-size:12px;font-weight:650;color:var(--muted);padding-right:8px}
+.study-ui .study-setting{display:flex;align-items:center;gap:8px;justify-content:space-between;min-height:48px;padding:0}
+.study-ui .study-setting>span{display:flex;align-items:center;gap:6px;min-width:0;overflow-wrap:anywhere;font-size:13px}
+.study-ui .study-setting svg{width:18px;height:18px;color:var(--muted);flex:none}
+.study-ui .study-setting>.study-select{position:relative;display:block;flex:none;max-width:57%}
+.study-ui .study-select>svg{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:16px;height:16px;pointer-events:none}
+.study-ui .study-setting select{appearance:none;-webkit-appearance:none;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;min-height:var(--target-size);min-width:var(--target-size);width:100%;padding:6px 28px 6px 10px}
+.study-ui .study-setting select:focus-visible,.study-ui .study-toolbar-choice input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.study-ui .study-toolbar-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.study-ui .study-toolbar-choice{position:relative;display:flex;align-items:center;justify-content:center;min-height:var(--target-size);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:8px;padding:4px;text-align:center;cursor:pointer}
+.study-ui .study-toolbar-choice:has(:checked){box-shadow:inset 0 0 0 1px var(--accent);background:var(--tint);color:var(--accent)}
+.study-ui .study-toolbar-choice input{appearance:none;position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:8px;cursor:pointer}
+.study-ui .study-toolbar-choice strong{font-size:12px;font-weight:600;overflow-wrap:anywhere}
+.study-ui .study-setting-hint,.study-ui .study-panel-note{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.4}
 .study-ui .study-history{display:grid;gap:8px}
 .study-ui .study-history-point{display:flex;align-items:center;gap:10px;min-height:var(--target-size);width:100%;border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:12px;text-align:left}
 .study-ui .study-history-point[aria-pressed=true]{border-color:var(--accent);background:var(--tint)}
@@ -5516,16 +5514,16 @@
 .player-osd button:disabled,.player-osd input:disabled{opacity:.45;cursor:default}
 .player-osd svg,.production-player-status .status-expand svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 .player-osd button:focus-visible,.player-osd input:focus-visible{outline:2px solid white;outline-offset:-2px}
-.player-osd-header{display:flex;align-items:center;gap:4px;min-width:0}
+.player-osd-header{grid-row:1;display:flex;align-items:center;gap:4px;min-width:0}
 .player-osd-header>.player-status-label{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .player-osd .status-rate{background:#ffffff1a;font-weight:650;border-radius:12px}
 .player-osd .player-osd-play{place-self:center;width:52px;height:52px;border-radius:50%;background:#f4f7f5;color:#14201a;box-shadow:0 2px 12px #0004}
 .player-osd-play svg{width:25px;height:25px}
-.player-osd-timeline{display:flex;align-items:center;gap:6px;min-width:0}
+.player-osd-timeline{grid-row:3;display:flex;align-items:center;gap:6px;min-width:0}
 .player-osd-time{flex:none;font-variant-numeric:tabular-nums;font-size:10px}
 .player-osd input[type=range]{flex:1;min-width:64px;width:0;height:44px;margin:0;accent-color:#fff;cursor:pointer;background:transparent}
 .player-osd[data-small=true]{display:flex;gap:3px;padding:2px 8px;background:#071015b3}
-.player-osd[data-small=true] .player-osd-header,.player-osd[data-small=true] .player-osd-timeline{display:contents}
+.player-osd[data-small=true] .player-osd-header,.player-osd[data-small=true] .player-osd-timeline{grid-row:3;display:contents}
 .player-osd[data-small=true] .player-osd-play{order:0;width:44px;height:44px}
 .player-osd[data-small=true] .player-status-label{position:absolute;left:56px;top:calc(50% - 20px);width:auto;font-size:11px;line-height:13px;text-align:left}
 .player-osd[data-small=true] .player-status-mode,.player-osd[data-small=true] .player-osd-time,.player-osd[data-small=true] .player-osd-fold{display:none}
@@ -5541,6 +5539,34 @@
 .player-osd[data-small=true][data-narrow=true] input{grid-row:2;grid-column:2;width:100%}
 .player-osd[data-small=true][data-narrow=true] .player-osd-fullscreen{grid-row:2;grid-column:3}
 .player-osd[data-small=true][data-narrow=true] .player-status-label{top:calc(50% + 4px)}
+
+/* A second contextual row reuses header space in player-tap mode. */
+.study-ui .header-study-controls{padding-left:44px;grid-column:1 / -1;grid-row:2;display:flex;align-items:center;gap:4px;min-width:0;height:44px}
+.study-ui .header-study-history{display:flex;align-items:center;gap:0;margin-right:auto}
+.study-ui .header-study-history button{display:grid;place-items:center;min-width:44px;width:44px;height:44px;padding:0}
+.study-ui .header-study-controls .cycle-control{width:44px;height:44px;border-radius:8px}
+.study-ui .header-study-controls .shadow-pattern{min-width:44px;max-width:70px;padding:0 4px}
+@container(max-width:359px){.study-ui .repaired-nav[data-tap-controls=true]{padding-left:6px;padding-right:6px}.study-ui .header-study-controls{gap:0}.study-ui .header-study-controls .shadow-pattern{width:44px}.study-ui .header-study-controls .shadow-pattern span{display:none}}
+/* Regions stay interactive during playback; only their paused affordances hide. */
+.player-tap{position:absolute;inset:0;z-index:3;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));pointer-events:none}
+.player-tap[hidden]{display:none!important}
+.player-tap .player-tap-zone{pointer-events:auto;touch-action:pan-y pinch-zoom;appearance:none;border:0;border-radius:0;margin:0;padding:0;min-width:44px;min-height:44px;background:transparent;color:white;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.player-tap .tap-affordance{display:flex;align-items:center;justify-content:center;gap:4px;flex-direction:column;text-shadow:0 1px 4px black;font-size:11px;pointer-events:none}
+.player-tap svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.8;filter:drop-shadow(0 1px 3px #000)}
+.player-tap[data-playing=true] .tap-affordance{opacity:0}
+.player-tap .player-tap-zone:disabled .tap-affordance{opacity:.35}
+.player-tap[data-playing=true] .player-tap-zone:disabled .tap-affordance{opacity:0}
+.player-tap .player-tap-zone:focus-visible{outline:3px solid white;outline-offset:-4px;background:#0003}
+.player-tap .player-tap-zone:focus-visible .tap-affordance{opacity:1}
+
+@container(min-width:700px){.study-ui .topbar:has([data-tap-controls=true]).expanded,.study-ui .topbar .repaired-nav[data-tap-controls=true]{height:88px}.study-ui .topbar .repaired-nav[data-tap-controls=true]{grid-template-rows:44px 44px;grid-template-columns:44px minmax(0,1fr) 49px 44px}}
+
+.study-ui .header-shadow-controls{display:flex;align-items:center;gap:4px;flex:none}
+@container(max-width:339px){
+ .study-ui .topbar.expanded:has(.header-shadow-controls),.study-ui .repaired-nav:has(.header-shadow-controls){height:132px;grid-template-rows:44px 44px 44px}
+ .study-ui .header-study-controls:has(.header-shadow-controls){grid-row:2 / span 2;align-self:start;height:88px;flex-wrap:wrap;align-content:start;row-gap:0}
+ .study-ui .header-shadow-controls{flex-basis:100%;height:44px;justify-content:flex-end}
+}
 
 .study-ui{--bg:rgba(238,240,242,1);--paper:rgba(255,255,255,1);--soft:rgba(243,245,246,1);--ink:rgba(32,44,53,1);--muted:rgba(82,97,109,1);--line:rgba(223,230,232,1);--accent:rgba(49,95,78,1);--tint:rgba(237,245,240,1)}
 .dark .study-ui,.study-ui.dark{--bg:rgba(17,23,27,1);--paper:rgba(28,35,40,1);--soft:rgba(37,46,53,1);--ink:rgba(237,244,240,1);--muted:rgba(180,194,200,1);--line:rgba(58,71,77,1);--accent:rgba(177,214,191,1);--tint:rgba(38,61,51,1)}
@@ -5655,6 +5681,8 @@ html[data-layout=theater] .video-dock{--dock-w:max(100%,min(calc(100vw - 2rem),m
   html.phone-toolbar-active:has(.u-note-ta:focus) #sentenceTransport[data-placement=bottom]{visibility:hidden}
   html.phone-toolbar-active:has(.u-note-ta:focus) #productionPractice[data-placement=bottom]{visibility:hidden}
 }
+
+@container(min-width:700px){html[data-layout=theater] #productionStudyHeader .topbar:has([data-tap-controls=true]).expanded,html[data-layout=theater] #productionStudyHeader .topbar .repaired-nav[data-tap-controls=true]{height:88px;grid-template-rows:44px 44px}}
 
 </style>
 <script>
@@ -7124,6 +7152,43 @@ Object.assign(window.LangStudyLocales.ja, {
   "No matching terms.": "一致する語句がありません。"
 });
 
+// Compact preference groups and optional player interaction.
+Object.assign(window.LangStudyLocales.en, {
+ "Appearance":"Appearance", "Study controls":"Study controls", "Playback controls":"Playback controls", "Buttons":"Buttons", "Tap player":"Tap player",
+ "Tap left / center / right for previous / play or pause / next.":"Tap left / center / right for previous / play or pause / next.",
+ "Toolbar fallback hint":"Tap player uses buttons when the picture is hidden or too small. A/B/C sets their position.",
+ "Toolbar A short":"Bottom", "Toolbar B short":"Split", "Toolbar C short":"Below video"
+});
+Object.assign(window.LangStudyLocales.zh, {
+ "Appearance":"外观", "Study controls":"学习操作", "Playback controls":"播放操作", "Buttons":"按钮", "Tap player":"点按画面",
+ "Tap left / center / right for previous / play or pause / next.":"点按左 / 中 / 右：上句 / 播放或暂停 / 下句。",
+ "Toolbar fallback hint":"画面隐藏或过小时，自动使用按钮；A/B/C 决定按钮的位置。",
+ "Toolbar A short":"底部", "Toolbar B short":"分置", "Toolbar C short":"视频下方"
+});
+Object.assign(window.LangStudyLocales.ja, {
+ "Appearance":"表示", "Study controls":"学習操作", "Playback controls":"再生操作", "Buttons":"ボタン", "Tap player":"画面をタップ",
+ "Tap left / center / right for previous / play or pause / next.":"左 / 中央 / 右をタップ：前の文 / 再生・一時停止 / 次の文。",
+ "Toolbar fallback hint":"映像が非表示・小さい場合はボタンを使用。A/B/C で配置を選べます。",
+ "Toolbar A short":"下部", "Toolbar B short":"上下", "Toolbar C short":"動画の下"
+});
+
+Object.assign(window.LangStudyLocales.en, {
+ "练习模式：听 → 跟读 → 听写":"Practice mode: Listen → Shadow → Dictation",
+ "字幕跟随：关 → 跟随 → 锁定":"Follow: Off → Follow → Locked",
+ "跟读：循环 / 连续":"Shadow: Loop / Sequence"
+});
+Object.assign(window.LangStudyLocales.ja, {
+ "练习模式：听 → 跟读 → 听写":"練習モード：リスニング → シャドーイング → ディクテーション",
+ "字幕跟随：关 → 跟随 → 锁定":"追従：オフ → 追従 → 固定",
+ "跟读：循环 / 连续":"シャドーイング：繰り返し / 順番に"
+});
+
+Object.assign(window.LangStudyLocales.zh, {
+ "练习模式：听 → 跟读 → 听写":"练习模式：听 → 跟读 → 听写",
+ "字幕跟随：关 → 跟随 → 锁定":"字幕跟随：关 → 跟随 → 锁定",
+ "跟读：循环 / 连续":"跟读：循环 / 连续"
+});
+
 // Pure shared presentation. Import locales.js first; no DOM or host state reads.
 (function(global){
 'use strict';
@@ -7167,6 +7232,7 @@ function button(action,body,label,classes='icon',attributes='',context={}){
 function renderResumeControls(model,context={}){
  const {button:btn,icon,escape:esc,t}=helpers(context);
  const shadow=model.mode==='shadow'?btn('cycle-shadow-style',icon(model.shadowStyle==='loop'?'shadowLoop':'shadowRun')+'<span>'+esc(t(model.shadowStyle==='loop'?'Loop short':'Sequence short'))+'<\/span>',model.shadowDescription||'Loop sentence','shadow-pattern',`data-shadow-style="${model.shadowStyle}"`)+btn('rate',model.rate+'×',t('Playback speed')+' '+model.rate+'×','shadow-rate'):'';
+ if(model.studyOnly)return shadow;
  return `<div class="resume-controls" data-shadow="${model.mode==='shadow'}">${model.hasLatestPoint?btn('resume-latest',icon('history')+'<span>'+esc(t('Resume latest'))+'<\/span><b>'+esc(model.latestPointTime||'')+'<\/b>',t('Resume latest')+' · '+model.latestPointLabel,'resume-latest',`title="${esc(model.latestPointLabel)}"`):'<span class="resume-empty">'+esc(t('History empty'))+'<\/span>'}${shadow}${btn('open:points',icon('down'),'Recent points','resume-more','aria-haspopup="dialog"')}<\/div>`;
 }
 function menuGlyph(name,context={}){
@@ -7211,10 +7277,10 @@ function renderHeader(model,context={}){
  const restore=()=>btn('expand-header',icon('down'),'Expand header','restore');
  const resume=()=>btn('resume-latest',icon('history'),point?t('Resume latest')+' · '+pointLabel(point):'History empty','folded-resume',point?`title="${esc(pointLabel(point))}"`:'disabled');
  const history=()=>btn('open:points',icon('down'),'Recent points','resume-more','aria-haspopup="dialog"');
- return `<div class="nav-full repaired-nav" data-key="nav-full" ${model.folded?'inert aria-hidden="true"':''}>
+ return `<div class="nav-full repaired-nav" data-key="nav-full" data-tap-controls="${!!model.tapControls}" ${model.folded?'inert aria-hidden="true"':''}>
   ${btn('app-exit',icon('back'),backLabel,'icon app-exit')}
   <button type="button" class="lesson-title" data-act="open:nav" aria-haspopup="dialog"><span class="lesson-label">${esc(model.title)}<\/span> ${icon('down')}<\/button>
-  ${resumeControls()}
+  ${model.tapControls?`<div class="header-study-controls" data-key="header-study-controls"><div class="header-study-history">${resume()}${history()}<\/div>${studyButtons(model,context).mode}${studyButtons(model,context).follow}${model.mode==='shadow'?'<div class="header-shadow-controls">'+renderResumeControls({...model,studyOnly:true},context)+'<\/div>':''}<\/div>`:resumeControls()}
   ${favorites()}
   ${btn('open:learning',icon('settings'),'Transcript tools','icon transcript-tools','aria-haspopup="dialog"')}
  <\/div><div class="folded-nav" data-key="folded-nav" ${model.folded?'':'inert aria-hidden="true"'}>
@@ -7224,12 +7290,21 @@ function renderHeader(model,context={}){
   ${wide?btn('open:learning',icon('settings'),'Transcript tools','icon transcript-tools','aria-haspopup="dialog"'):history()}
  <\/div>`;
 }
-function renderTransport(model,context={}){
+function studyButtons(model,context={}){
  const {button:btn,icon,escape:esc,t}=helpers(context);
+ return {
+ mode:btn('cycle-mode',icon(model.mode)+'<span>'+esc(t(model.modeLabel))+'<\/span>',model.practiceDescription,'mode-trigger cycle-control',`data-practice-mode="${model.mode}" title="${esc(model.practiceDescription)}" ${model.modeDisabled?'disabled':''}`),
+ follow:btn('follow',icon(model.follow==='sticky'?'locked':model.follow==='off'?'followOff':'follow')+'<span>'+esc(t({off:'Follow off short',on:'Follow normal short',sticky:'Follow locked short'}[model.follow]||'Follow normal short'))+'<\/span>',model.followDescription,'follow cycle-control',`data-follow-mode="${model.follow}" aria-pressed="${model.follow!=='off'}" title="${esc(model.followDescription)}" ${model.followDisabled?'disabled':''}`)
+ };
+}
+function renderTransport(model,context={}){
+ const {button:btn,icon,escape:esc,t}=helpers(context),controls=studyButtons(model,context);
  const playing=model.playing,blocked=model.blocked;
- return `${btn('cycle-mode',icon(model.mode)+'<span>'+esc(t(model.modeLabel))+'<\/span>',model.practiceDescription,'mode-trigger cycle-control',`data-practice-mode="${model.mode}" title="${esc(model.practiceDescription)}" ${model.modeDisabled?'disabled':''}`)}
- <div class="transport" data-key="transport">${btn('prev',icon('prev')+'<span>'+esc(t('Prev'))+'<\/span>','Previous sentence','step',model.previousDisabled?'disabled':'')}${btn('play',icon(playing?'pause':'play',!playing),playing?'Pause':'Play','play',blocked&&!playing||model.completed?'disabled':'')}${btn('next',icon('next')+'<span>'+esc(t('Next'))+'<\/span>','Next sentence','step',model.nextDisabled?'disabled':'')}<\/div>
- ${btn('follow',icon(model.follow==='sticky'?'locked':model.follow==='off'?'followOff':'follow')+'<span>'+esc(t({off:'Follow off short',on:'Follow normal short',sticky:'Follow locked short'}[model.follow]))+'<\/span>',model.followDescription,'follow cycle-control',`data-follow-mode="${model.follow}" aria-pressed="${model.follow!=='off'}" title="${esc(model.followDescription)}" ${model.followDisabled?'disabled':''}`)}`;
+ return `${controls.mode}<div class="transport" data-key="transport">${btn('prev',icon('prev')+'<span>'+esc(t('Prev'))+'<\/span>','Previous sentence','step',model.previousDisabled?'disabled':'')}${btn('play',icon(playing?'pause':'play',!playing),playing?'Pause':'Play','play',blocked&&!playing||model.completed?'disabled':'')}${btn('next',icon('next')+'<span>'+esc(t('Next'))+'<\/span>','Next sentence','step',model.nextDisabled?'disabled':'')}<\/div>${controls.follow}`;
+}
+function renderPlayerTap(model,context={}){
+ const {button:btn,icon,escape:esc,t}=helpers(context);
+ return [['prev','prev','Previous sentence',model.previousDisabled],['play',model.playing?'pause':'play',model.playing?'Pause':'Play',model.playDisabled],['next','next','Next sentence',model.nextDisabled]].map(([action,glyph,label,disabled])=>btn(action,'<span class="tap-affordance">'+icon(glyph)+'<span>'+esc(t(label))+'<\/span><\/span>',label,'player-tap-zone',disabled?'disabled':'')).join('');
 }
 function renderPlayerStatus(model,context={}){
  const {button:btn,icon,escape:esc,t}=helpers(context);
@@ -7240,13 +7315,13 @@ function renderVideoControls(model,context={}){
  const clock=value=>Number.isFinite(value)?Math.floor(Math.max(0,value)/60)+':'+String(Math.floor(Math.max(0,value)%60)).padStart(2,'0'):'--:--';
  const duration=Number.isFinite(model.duration)&&model.duration>0?model.duration:0,current=Number.isFinite(model.current)?Math.max(0,Math.min(duration||Infinity,model.current)):0;
  return `<div class="player-osd-header">${renderPlayerStatus(model,context)}${btn('video-mute',icon(model.muted?'muted':'listen'),model.muted?'Unmute':'Mute','player-osd-mute')}${btn('video-fold',icon('up'),'Hide picture','player-osd-fold')}<\/div>
- ${btn('video-play',icon('play',true),'Play','player-osd-play',model.playDisabled?'disabled':'')}
+ ${model.tapControls?'':btn('video-play',icon('play',true),'Play','player-osd-play',model.playDisabled?'disabled':'')}
  <div class="player-osd-timeline"><time class="player-osd-time" data-key="elapsed">${clock(current)}<\/time>
  <input type="range" data-act="video-seek" aria-label="${esc(t('Playback position'))}" aria-valuetext="${clock(current)} / ${clock(duration||NaN)}" min="0" max="${duration||1}" step="0.01" value="${duration?current.toFixed(2):'0'}" ${!duration||model.playDisabled?'disabled':''}>
  <time class="player-osd-time" data-key="duration">${clock(duration||NaN)}<\/time>${btn('video-fullscreen',icon('fullscreen'),'Fullscreen','player-osd-fullscreen',model.fullscreenDisabled?'disabled':'')}<\/div>`;
 }
 paths.muted='M3 9v6h4l5 4V5L7 9Zm13 0 6 6m0-6-6 6';
-global.LangStudyUI={renderHeader,renderTransport,renderResumeControls,renderPlayerStatus,renderVideoControls,button,icon,escape,paths,menuGlyph,menuActionIcon,menuPanelIcon,menuFieldIcon,menuHeading,menuButtonBody,strings:global.LangStudyLocales};
+global.LangStudyUI={renderHeader,renderTransport,renderPlayerTap,renderResumeControls,renderPlayerStatus,renderVideoControls,button,icon,escape,paths,menuGlyph,menuActionIcon,menuPanelIcon,menuFieldIcon,menuHeading,menuButtonBody,strings:global.LangStudyLocales};
 })(window);
 
 // Pure optional surfaces. Import after study-ui.js; callers own models and effects.
@@ -7263,9 +7338,10 @@ function syncStatus(status){return Object.hasOwn(syncLabels,status)?status:'off'
 function renderSettings(model,context={}){
  const {t,escape:esc,icon}=helpers(context);
  const select=(key,label,choices,value,glyph)=>`<label class="study-setting" for="study-${key}"><span>${icon(glyph)}<span>${esc(t(label))}<\/span><\/span><span class="study-select"><select id="study-${key}" data-setting="${key}" name="${key}">${choices.map(([val,text])=>`<option value="${val}"${value===val?' selected':''}>${esc(t(text))}<\/option>`).join('')}<\/select>${icon('down')}<\/span><\/label>`;
- const toolbar=['a','b','c'].map(value=>`<label class="study-toolbar-choice" for="toolbarArrangement-${value}"><input id="toolbarArrangement-${value}" type="radio" name="toolbarArrangement" data-setting="toolbarArrangement" value="${value}"${model.toolbarArrangement===value?' checked':''}><span><strong>${value.toUpperCase()} · ${esc(t('Toolbar '+value.toUpperCase()))}<\/strong><small>${esc(t('Toolbar '+value.toUpperCase()+' description'))}<\/small><\/span><\/label>`).join('');
+ const toolbar=['a','b','c'].map(value=>`<label class="study-toolbar-choice" for="toolbarArrangement-${value}"><input id="toolbarArrangement-${value}" type="radio" name="toolbarArrangement" data-setting="toolbarArrangement" value="${value}"${model.toolbarArrangement===value?' checked':''}><span><strong>${value.toUpperCase()} · ${esc(t('Toolbar '+value.toUpperCase()+' short'))}<\/strong><\/span><\/label>`).join('');
  const status=syncStatus(model.syncStatus);
- return `<div class="study-settings">${select('uiLocale','UI language',[['zh','简体中文'],['en','English'],['ja','日本語']],model.uiLocale,'language')}${select('theme','Theme',[['auto','Automatic'],['light','Light theme'],['dark','Dark theme']],model.theme,'theme')}<fieldset class="study-toolbar"><legend>${esc(t('Phone toolbar'))}<\/legend>${toolbar}<\/fieldset><p id="settingsSync" class="study-panel-note" role="status" data-sync-status="${status}">${esc(t(syncLabels[status]))}<\/p><\/div>`;
+ const group=(label,body,cls='')=>`<fieldset class="study-settings-group ${cls}"><legend>${esc(t(label))}<\/legend>${body}<\/fieldset>`;
+ return `<div class="study-settings">${group('Appearance',select('uiLocale','UI language',[['zh','简体中文'],['en','English'],['ja','日本語']],model.uiLocale,'language')+select('theme','Theme',[['auto','Automatic'],['light','Light theme'],['dark','Dark theme']],model.theme,'theme'))}${group('Study controls',select('playerInteraction','Playback controls',[['buttons','Buttons'],['tap','Tap player']],model.playerInteraction||'buttons','play')+`<p class="study-setting-hint">${esc(t('Tap left / center / right for previous / play or pause / next.'))}<\/p>`)}${group('Phone toolbar',`<div class="study-toolbar-options">${toolbar}<\/div><p class="study-setting-hint">${esc(t('Toolbar fallback hint'))}<\/p>`,'study-toolbar')}<p id="settingsSync" class="study-panel-note" role="status" data-sync-status="${status}">${esc(t(syncLabels[status]))}<\/p><\/div>`;
 }
 function renderHistory(model,context={}){
  const {t,escape:esc,icon,button}=helpers(context);
@@ -7604,13 +7680,14 @@ global.LangStudyDOM={patch};
         v.due>=0&&v.ivl>=0&&v.ivl<=365000&&v.ease>=1.3&&v.ease<=3&&
         Number.isInteger(v.reps)&&v.reps>=0&&Number.isInteger(v.lapses)&&v.lapses>=0);
     }
-    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls','toolbarArrangement','uiLocale','theme'].indexOf(k) >= 0; }
+    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls','toolbarArrangement','playerInteraction','uiLocale','theme'].indexOf(k) >= 0; }
     function preferenceValue(k,v){
       if(k==='uiLocale')return ['zh','en','ja'].indexOf(v)>=0;
       if(k==='theme')return ['auto','light','dark'].indexOf(v)>=0;
       if(k==='playbackRate')return Number.isFinite(v)&&v>=.25&&v<=3;
       if(k==='followMode')return ['off','on','sticky'].indexOf(v)>=0;
       if(k==='sentenceControls')return ['original','bottom','below'].indexOf(v)>=0;
+      if(k==='playerInteraction')return ['buttons','tap'].indexOf(v)>=0;
       if(k==='toolbarArrangement')return ['a','b','c'].indexOf(v)>=0;
       if(k==='furigana'||k==='translations')return typeof v==='boolean';
       return k==='cnMask'&&Number.isInteger(v)&&v>=0&&v<=2;
@@ -7665,19 +7742,19 @@ global.LangStudyDOM={patch};
       return x;
     }
     function needsUpgrade(doc){
-      return doc.cacheVersion!==5 || doc.appliedCursor!==doc.cursor || !doc.base || (doc.ops||[]).some(function(o){return typeof o.attempted!=='boolean';}) || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
+      return doc.cacheVersion!==6 || doc.appliedCursor!==doc.cursor || !doc.base || (doc.ops||[]).some(function(o){return typeof o.attempted!=='boolean';}) || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
     }
     function upgrade(doc){
       var missing=!doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
       // Old readers consumed revisions for namespaces or preference keys they rejected.
-      var old=doc.cacheVersion!==5 || (doc.appliedCursor!==undefined&&doc.appliedCursor!==doc.cursor);
+      var old=doc.cacheVersion!==6 || (doc.appliedCursor!==undefined&&doc.appliedCursor!==doc.cursor);
       if(old || missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
       // Old readers did not persist dispatch intent; even a failed reply can
       // represent an accepted write. Never cancel their unknown outcomes.
       (doc.ops||[]).forEach(function(o){if(old||typeof o.attempted!=='boolean')o.attempted=true;});
       doc.base = doc.base || empty();
       names.forEach(function(ns){ if(!doc.base[ns])doc.base[ns]={}; });
-      doc.cacheVersion=5;doc.appliedCursor=doc.cursor;return doc;
+      doc.cacheVersion=6;doc.appliedCursor=doc.cursor;return doc;
     }
     function applyReply(doc, reply, sent, known){
       upgrade(doc);
@@ -7831,7 +7908,7 @@ global.LangStudyDOM={patch};
     for (var i=0;i<localStorage.length;i++){
       var k = localStorage.key(i);
       if (k && k.indexOf(p+'base:')===0){
-        var d = readJSON(k,null), modern = k.indexOf(p+'base:v5:')===0 || !!(d&&d.cacheVersion===5);
+        var d = readJSON(k,null), modern = k.indexOf(p+'base:v6:')===0 || !!(d&&d.cacheVersion===6);
         // Old tabs can still write higher cursors after ignoring new maps or keys.
         if(d && ((modern&&!current)||(modern===current&&d.cursor>=doc.cursor))){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;doc.cacheVersion=d.cacheVersion;doc.appliedCursor=d.appliedCursor;doc.localKey=k;current=modern;}
       }
@@ -7848,7 +7925,7 @@ global.LangStudyDOM={patch};
       if (mutate || upgraded){
         var p = prefix(id), keep = new Set(doc.ops.map(function(o){return o.id;}));
         try {
-          var snapshotKey=p+'base:v5:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
+          var snapshotKey=p+'base:v6:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
           try {localStorage.setItem(snapshotKey,snapshot);}
           catch(e){
             // setItem replaces atomically: reuse the selected snapshot's space
@@ -7859,7 +7936,7 @@ global.LangStudyDOM={patch};
           // Compact only after the new canonical data is durable. Immutable
           // operation keys and acknowledgement markers remain independent.
           var stale=[];
-          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v5:')===0&&Number(k.slice((p+'base:v5:').length))<=old.cursor)))stale.push(k);}
+          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v6:')===0&&Number(k.slice((p+'base:v6:').length))<=old.cursor)))stale.push(k);}
           stale.forEach(function(k){localStorage.removeItem(k);});
           doc.localKey=snapshotKey;
           // A superseded position remains recoverable until its replacement is
@@ -11267,7 +11344,7 @@ global.LangStudyDOM={patch};
       navSource=document.querySelector('.lang-nav'), mode='a', savedPaint='', homes=new Map(),
       phone=matchMedia('(max-width:560px), (max-height:480px)'),
       storageKey='lang:toolbar-arrangement', legacyKey='lang:sentence-controls', guest=true,
-      menuOpener=null, settingsOpener=null, accountOpener=null, pageSignature='', accountSource=null,pointsOwner=null;
+      transportModel=null, menuOpener=null, settingsOpener=null, accountOpener=null, pageSignature='', accountSource=null,pointsOwner=null;
   function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
   function account(){var f=window.LangFav;return f&&f.account&&f.account();}
   function paintText(e,text){if(e.textContent!==text)e.textContent=text;}
@@ -11477,7 +11554,7 @@ global.LangStudyDOM={patch};
   }
   function uiPreferences(){return window.LangStudyPreferences?LangStudyPreferences.get():Object.assign({uiLocale:'zh',theme:'auto'},window.LangFav?LangFav.getNS('preferences'):{});}
   function translate(key){var value=uiPreferences();return window.LangStudyI18n?LangStudyI18n.t(key):(UI.strings[value.uiLocale]||UI.strings.zh)[key]||UI.strings.en[key]||key;}
-  function settingsModel(){var prefs=uiPreferences(),lf=window.LangFav,raw=lf?lf.getNS('preferences'):{};return {uiLocale:prefs.uiLocale,theme:prefs.theme,toolbarArrangement:P.resolve(raw),syncStatus:lf&&lf.status?lf.status():'off'};}
+  function settingsModel(){var prefs=uiPreferences(),lf=window.LangFav,raw=lf?lf.getNS('preferences'):{};return {uiLocale:prefs.uiLocale,theme:prefs.theme,playerInteraction:prefs.playerInteraction,toolbarArrangement:P.resolve(raw),syncStatus:lf&&lf.status?lf.status():'off'};}
   var context={t:translate},pointRecords=new Map(),selectedPoint=null;
   function transplant(container,selector,node){
     var place=container.querySelector(selector);if(!place)return;
@@ -11497,6 +11574,7 @@ global.LangStudyDOM={patch};
         wide=sharedHeader.clientWidth>=700,stamp=p&&Number.isFinite(p.sec)?Math.floor(p.sec/60)+':'+String(Math.floor(p.sec%60)).padStart(2,'0'):'';
     var practice=window.LangPractice?LangPractice.snapshot():{};
     var model={title:lesson,favoriteCount:count,hasLatestPoint:!!p,latestPointLabel:stamp,latestPointTime:stamp,wide:wide,folded:headerFolded,backLabel:'All lessons',mode:practice.mode,shadowStyle:practice.shadowStyle,shadowDescription:translate(practice.shadowStyle==='loop'?'Loop sentence':'In order'),rate:practice.rate};
+    Object.assign(model,transportModel||{},{tapControls:phone.matches&&uiPreferences().playerInteraction==='tap'});
     var favoriteFilter=document.body.classList.contains('fav-only');
     var html=UI.renderHeader(model,context),signature=JSON.stringify([html,headerFolded,favoriteFilter]);
     if(signature===headerPaint)return;headerPaint=signature;
@@ -11559,7 +11637,7 @@ global.LangStudyDOM={patch};
     else if(act==='open:points')showPoints(b);
     else if(act==='resume-latest')resumeProgress(pageProgress());
     else if(act==='open:favorites'){var f=document.getElementById('favFilter');if(f)f.click();}
-    else if(act==='cycle-shadow-style'||act==='rate')transportAction(e);
+    else if(['cycle-mode','follow','cycle-shadow-style','rate'].indexOf(act)>=0)transportAction(e);
   });
   function transportAction(e){
     var b=e.target.closest('[data-act]');if(!b||b.disabled)return;
@@ -11583,17 +11661,20 @@ global.LangStudyDOM={patch};
     if(practice.mode==='dictate'&&window.LangPractice){canPrev=LangPractice.canStep(-1);canNext=LangPractice.canStep(1);}
     var hasRows=Array.from(document.querySelectorAll('.u')).some(function(row){return row.offsetParent!==null;});
     var model={mode:practice.mode,modeLabel:{listen:'Listen',shadow:'Shadow',dictate:'Write'}[practice.mode],practiceDescription:'练习模式：听 → 跟读 → 听写',shadowStyle:practice.shadowStyle,shadowDescription:'跟读：循环 / 连续',rate:practice.rate,follow:followMode,followDescription:'字幕跟随：关 → 跟随 → 锁定',blocked:!ready||limited||!hasRows,playing:!paused,completed:practice.completed,previousDisabled:!ready||limited||!canPrev||practice.completed,nextDisabled:!ready||limited||!canNext||practice.completed,modeDisabled:!ready||limited||(!hasRows&&practice.mode==='listen'),followDisabled:limited};
-    var html=UI.renderTransport(model,context),state=JSON.stringify([mobile,mode,html]);
+    transportModel=model;
+    var tapPreferred=mobile&&uiPreferences().playerInteraction==='tap',tapAvailable=frame&&frame.dataset.tapAvailable==='true';
+    var html=UI.renderTransport(model,context),state=JSON.stringify([mobile,mode,html,tapPreferred,tapAvailable]);
     if(state!==savedPaint){
-      savedPaint=state;transport.hidden=!mobile;root.classList.toggle('sentence-controls-active',mobile);
+      savedPaint=state;transport.hidden=!mobile||(tapPreferred&&tapAvailable);root.classList.toggle('sentence-controls-active',mobile&&!transport.hidden);
       transport.dataset.shadow=String(practice.mode==='shadow');transport.dataset.shadowLayout=window.innerWidth<350?'stacked':'inline';
       var focusedAction=transport.contains(document.activeElement)||modeStrip.contains(document.activeElement)?document.activeElement.dataset.act:null;
       var fragment=document.createElement('template');fragment.innerHTML=html;var strip='';
-      if(mobile&&mode==='b')Array.from(fragment.content.children).forEach(function(control){if(control.hasAttribute('data-act')){strip+=control.outerHTML;control.remove();}});
+      if(tapPreferred)Array.from(fragment.content.children).forEach(function(control){if(control.hasAttribute('data-act'))control.remove();});
+      else if(mobile&&mode==='b')Array.from(fragment.content.children).forEach(function(control){if(control.hasAttribute('data-act')){strip+=control.outerHTML;control.remove();}});
       LangStudyDOM.patch(transport,'<div class="transport-row">'+fragment.innerHTML+'</div>',{preserveIds:true});
       transplant(transport,'[data-act="prev"]',prev);transplant(transport,'[data-act="play"]',play);transplant(transport,'[data-act="next"]',next);
       if(play.getAttribute('aria-pressed')!==String(!paused))play.setAttribute('aria-pressed',String(!paused));
-      LangStudyDOM.patch(modeStrip,strip);modeStrip.hidden=!mobile||mode!=='b';
+      LangStudyDOM.patch(modeStrip,strip);modeStrip.hidden=!mobile||mode!=='b'||tapPreferred;
       if(focusedAction){var focusedButton=transport.querySelector('[data-act="'+focusedAction+'"]')||modeStrip.querySelector('[data-act="'+focusedAction+'"]');if(focusedButton&&!focusedButton.disabled)focusedButton.focus({preventScroll:true});}
     }
     var transportRow=transport.querySelector('.transport-row');
@@ -11626,6 +11707,7 @@ global.LangStudyDOM={patch};
   document.addEventListener('lang:study-preferences',hydrate);
   document.addEventListener('lang:ui-preferences',function(){headerPaint='';savedPaint='';refreshNavigation();paintHeader();if(pointList.isConnected)paintPoints();render();});
   document.addEventListener('lang:study-controls',function(){reconcile();render();});
+  document.addEventListener('lang:player-tap-availability',render);
   document.addEventListener('lang:active',render);document.addEventListener('lang:transport',render);
   phone.addEventListener('change',function(){emit('lang:controls-will-layout');emit('lang:follow-scroll');reconcile();savedPaint='';render();emit('lang:controls-layout');});
   if(window.ResizeObserver){var controlSizeObserver=new ResizeObserver(reserve);controlSizeObserver.observe(transport);controlSizeObserver.observe(practiceSurface);if(picture)controlSizeObserver.observe(picture);}
@@ -11663,18 +11745,19 @@ global.LangStudyDOM={patch};
   var uiKey='langstudy:ui-preferences';
   function validUI(key,value){
     return key==='uiLocale'?['zh','en','ja'].indexOf(value)>=0:
+      key==='playerInteraction'?['buttons','tap'].indexOf(value)>=0:
       key==='theme'&&['auto','light','dark'].indexOf(value)>=0;
   }
   if(!uiLF){try{localUI=JSON.parse(localStorage.getItem(uiKey)||'{}')||{};}catch(e){}}
   function readUI(){
     var raw=uiLF?uiLF.getNS('preferences'):localUI;
-    return {uiLocale:validUI('uiLocale',raw.uiLocale)?raw.uiLocale:'zh',theme:validUI('theme',raw.theme)?raw.theme:'auto'};
+    return {uiLocale:validUI('uiLocale',raw.uiLocale)?raw.uiLocale:'zh',theme:validUI('theme',raw.theme)?raw.theme:'auto',playerInteraction:validUI('playerInteraction',raw.playerInteraction)?raw.playerInteraction:'buttons'};
   }
   function hydrateUI(){
     var next=readUI(),who=uiLF&&uiLF.account&&uiLF.account(),fingerprint=JSON.stringify([who?who.id:null,next]);
     if(fingerprint===uiFingerprint)return;
     uiFingerprint=fingerprint;
-    document.dispatchEvent(new CustomEvent('lang:ui-preferences',{detail:{uiLocale:next.uiLocale,theme:next.theme}}));
+    document.dispatchEvent(new CustomEvent('lang:ui-preferences',{detail:next}));
   }
   window.LangStudyPreferences={
     get:function(){return readUI();},
@@ -11698,7 +11781,7 @@ global.LangStudyDOM={patch};
       study=!!document.querySelector('.u[data-sid]'), owner=null, fingerprint=null,
       settings=null, pending=null, timer=null, automatic=false, settleTimer=null, suppressUntil=Date.now()+1000;
   function identity(){return LF.account&&LF.account()?LF.account().id:null;}
-  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original',toolbarArrangement:null,uiLocale:'zh',theme:'auto'};}
+  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original',toolbarArrangement:null,playerInteraction:'buttons',uiLocale:'zh',theme:'auto'};}
   function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
   function button(id,text,parent){
     var b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;
@@ -11870,7 +11953,7 @@ global.LangStudyDOM={patch};
   function model(){
     var value=current(),lf=window.LangFav;
     var raw=lf?lf.getNS('preferences'):{};
-    return {uiLocale:value.uiLocale,theme:value.theme,
+    return {uiLocale:value.uiLocale,theme:value.theme,playerInteraction:value.playerInteraction,
       toolbarArrangement:(document.getElementById('dockSettings')&&root.dataset.toolbarArrangement)||raw.toolbarArrangement||({bottom:'a',original:'b',below:'c'}[raw.sentenceControls])||(function(){try{return localStorage.getItem('lang:toolbar-arrangement')||'a';}catch(e){return 'a';}})(),
       syncStatus:lf&&lf.status?lf.status():'off'};
   }
@@ -11907,7 +11990,7 @@ global.LangStudyDOM={patch};
     // The lesson adapter owns its existing toolbar radio handlers.
     if(key==='toolbarArrangement'&&field.closest('#settingsDialog'))return;
     var accepted=false;
-    if(key==='uiLocale'||key==='theme')accepted=preferences.set(key,field.value);
+    if(key==='uiLocale'||key==='theme'||key==='playerInteraction')accepted=preferences.set(key,field.value);
     else if(key==='toolbarArrangement'&&['a','b','c'].includes(field.value)){
       if(window.LangFav)accepted=LangFav.setKey('preferences',key,field.value)!==false;
       else try{localStorage.setItem('lang:toolbar-arrangement',field.value);accepted=true;}catch(error){}
@@ -11950,6 +12033,45 @@ global.LangStudyDOM={patch};
   var rows=Array.from(document.querySelectorAll('.u')),status=document.createElement('div'),paint='';
   status.id='productionPlayerStatus';status.className='production-player-status';status.dataset.uiChrome='';
   var clip=frame.querySelector('video'),pauseSurface=null,nativeFullscreen=false,scrubbing=false;
+  var tap=document.createElement('div'),tapPaint='',gesture=null,cancelClick=false,tapOwner,epoch=0,keyEpoch=null;
+  tap.id='productionPlayerTap';tap.className='player-tap';tap.hidden=true;tap.dataset.uiChrome='';frame.appendChild(tap);
+  var phone=matchMedia('(max-width:560px), (max-height:480px)');
+  function updateTap(compact,systemPresentation){
+    var preferred=window.LangStudyPreferences&&LangStudyPreferences.get().playerInteraction==='tap';
+    var owner=window.LangFav&&LangFav.account&&LangFav.account(),ownerKey=owner?owner.id:null;
+    if(ownerKey!==tapOwner){tapOwner=ownerKey;epoch++;gesture=null;cancelClick=true;}
+    var bounds=frame.getBoundingClientRect();
+    var available=!!(preferred&&phone.matches&&clip&&clip.id==='clip'&&!compact&&!systemPresentation&&player.ready()&&!(player.seekOnly&&player.seekOnly())&&bounds.height>=160&&bounds.width>=264);
+    tap.hidden=!available;
+    var value=String(available);
+    if(frame.dataset.tapAvailable!==value){
+      frame.dataset.tapAvailable=value;epoch++;gesture=null;cancelClick=true;
+      document.dispatchEvent(new Event('lang:player-tap-availability'));
+    }
+    if(!available)return false;
+    var prev=document.getElementById('sentencePrev'),play=document.getElementById('sentencePlay'),next=document.getElementById('sentenceNext');
+    var playing=!player.paused(),model={playing:playing,previousDisabled:!prev||prev.disabled,playDisabled:!play||play.disabled,nextDisabled:!next||next.disabled};
+    tap.dataset.playing=String(playing);
+    var html=UI.renderPlayerTap(model,{t:t});if(html!==tapPaint){tapPaint=html;LangStudyDOM.patch(tap,html);}
+    return true;
+  }
+  tap.addEventListener('pointerdown',function(e){
+    if(gesture&&gesture.id!==e.pointerId){gesture.cancelled=true;cancelClick=true;return;}
+    var button=e.target.closest('button');
+    cancelClick=false;gesture={id:e.pointerId,x:e.clientX,y:e.clientY,button:button,cancelled:false};
+  });
+  window.addEventListener('pointermove',function(e){if(gesture&&gesture.id===e.pointerId&&Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>8)gesture.cancelled=true;},{passive:true});
+  window.addEventListener('pointercancel',function(){if(gesture){gesture=null;cancelClick=true;}});
+  window.addEventListener('pointerup',function(e){if(!gesture)return;cancelClick=gesture.cancelled||gesture.id!==e.pointerId||!gesture.button||!gesture.button.contains(document.elementFromPoint(e.clientX,e.clientY));gesture=null;});
+  tap.addEventListener('keydown',function(e){if(!e.repeat&&(e.key===' '||e.key==='Enter'))keyEpoch=epoch;});
+  tap.addEventListener('keyup',function(e){if(e.key===' '||e.key==='Enter'){var released=keyEpoch;setTimeout(function(){if(keyEpoch===released)keyEpoch=null;},0);}});
+  tap.addEventListener('click',function(e){
+    var button=e.target.closest('button[data-act]');
+    if(!button||button.disabled||tap.hidden||(e.detail!==0&&cancelClick)||(e.detail===0&&keyEpoch!==null&&keyEpoch!==epoch))return;
+    var target=document.getElementById({prev:'sentencePrev',play:'sentencePlay',next:'sentenceNext'}[button.dataset.act]);
+    if(target&&!target.disabled)target.click();
+    render();
+  });
   if(clip){
     // The unified inline layer owns paused controls; a transparent playing
     // picture remains a tap-to-pause target. System presentations keep native UI.
@@ -11965,13 +12087,14 @@ global.LangStudyDOM={patch};
   function t(key){return window.LangStudyI18n?LangStudyI18n.t(key):key;}
   function render(){
     var practice=window.LangPractice?LangPractice.snapshot():{mode:'listen',rate:1};
-    var compact=dock.classList.contains('min')||document.body.classList.contains('dictation');
+    var compact=dock.classList.contains('min')||document.body.classList.contains('dictation'),systemPresentation=false;
+    if(clip)systemPresentation=!!(nativeFullscreen||clip.webkitDisplayingFullscreen||document.fullscreenElement||document.pictureInPictureElement===clip||clip.webkitPresentationMode==='picture-in-picture');
+    var tapActive=updateTap(compact,systemPresentation);
     if(pauseSurface){
-      var systemPresentation=nativeFullscreen||clip.webkitDisplayingFullscreen||document.fullscreenElement||document.pictureInPictureElement===clip||clip.webkitPresentationMode==='picture-in-picture';
       var inlinePlaying=clip.id==='clip'&&!clip.paused&&!systemPresentation;
       var nativeControls=!!systemPresentation;
       if(clip.controls!==nativeControls)clip.controls=nativeControls;
-      pauseSurface.hidden=!inlinePlaying||compact;
+      pauseSurface.hidden=!inlinePlaying||compact||tapActive;
       pauseSurface.setAttribute('aria-label',t('Pause'));
     }
     var parent=compact?dock:frame;
@@ -11990,7 +12113,7 @@ global.LangStudyDOM={patch};
     var ready=player.ready(),play=document.getElementById('sentencePlay');
     var model={modeLabel:{listen:'Listen',shadow:'Shadow',dictate:'Write'}[practice.mode]||'Listen',index:index,total:rows.length,rate:practice.rate||1,rateDisabled:!ready||!!(player.seekOnly&&player.seekOnly()),expandEnabled:compact&&dock.classList.contains('min')&&!document.body.classList.contains('dictation')};
     if(unified){
-      model.current=clip.currentTime;model.duration=clip.duration;model.muted=clip.muted;
+      model.tapControls=tapActive;model.current=clip.currentTime;model.duration=clip.duration;model.muted=clip.muted;
       model.playDisabled=!ready||(play?play.disabled:!!practice.completed||!rows.some(function(row){return row.offsetParent!==null;}));
       model.fullscreenDisabled=!ready||!((document.fullscreenEnabled&&clip.requestFullscreen)||(clip.webkitEnterFullscreen&&clip.webkitSupportsFullscreen!==false));
     }
@@ -12038,6 +12161,7 @@ global.LangStudyDOM={patch};
   new MutationObserver(render).observe(dock,{attributes:true,attributeFilter:['class']});
   new MutationObserver(render).observe(document.body,{attributes:true,attributeFilter:['class']});
   if(window.ResizeObserver)new ResizeObserver(render).observe(frame);
+  phone.addEventListener('change',render);
   render();
 })();
 </script>
