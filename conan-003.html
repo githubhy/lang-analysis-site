@@ -5396,7 +5396,7 @@
 </script>
 
 <!--study-ui:start-->
-<style data-study-ui="7c788f0a316c805d411cff92af4f97f5924ef116fa5cfb9569fabfef532c78df">
+<style data-study-ui="af200a4376d72d3b964b6dfb988e77b8588e3b14d37fae900b2f565a28b3ee88">
 /* Shared component foundation, scoped away from the surrounding lesson. */
 .study-ui{--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font:14px/1.5 var(--font);color:var(--ink);container-type:inline-size}
 .study-ui *{box-sizing:border-box}
@@ -5601,6 +5601,38 @@
 .study-ui .study-sync-state{margin:12px 0 0;font-size:13px}
 .study-ui .study-sync-state svg{width:18px;height:18px;color:var(--muted)}
 .study-ui .study-pending-count{margin:6px 0 0 28px;color:var(--muted);font-size:12px}
+.player-osd{position:absolute;inset:0;z-index:4;display:grid;grid-template-rows:44px minmax(0,1fr) 44px;align-items:center;gap:2px;padding:6px 8px;color:#fff;background:linear-gradient(#071015b3,transparent 35%,transparent 60%,#071015cc);font:500 11px/1.3 system-ui,sans-serif;pointer-events:none;box-sizing:border-box}
+.player-osd[hidden]{display:none!important}
+.player-osd button,.player-osd input{pointer-events:auto;box-sizing:border-box}
+.player-osd button{display:grid;place-items:center;flex:none;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.player-osd button:disabled,.player-osd input:disabled{opacity:.45;cursor:default}
+.player-osd svg,.production-player-status .status-expand svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.player-osd button:focus-visible,.player-osd input:focus-visible{outline:2px solid white;outline-offset:-2px}
+.player-osd-header{display:flex;align-items:center;gap:4px;min-width:0}
+.player-osd-header>.player-status-label{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.player-osd .status-rate{background:#ffffff1a;font-weight:650;border-radius:12px}
+.player-osd .player-osd-play{place-self:center;width:52px;height:52px;border-radius:50%;background:#f4f7f5;color:#14201a;box-shadow:0 2px 12px #0004}
+.player-osd-play svg{width:25px;height:25px}
+.player-osd-timeline{display:flex;align-items:center;gap:6px;min-width:0}
+.player-osd-time{flex:none;font-variant-numeric:tabular-nums;font-size:10px}
+.player-osd input[type=range]{flex:1;min-width:64px;width:0;height:44px;margin:0;accent-color:#fff;cursor:pointer;background:transparent}
+.player-osd[data-small=true]{display:flex;gap:3px;padding:2px 8px;background:#071015b3}
+.player-osd[data-small=true] .player-osd-header,.player-osd[data-small=true] .player-osd-timeline{display:contents}
+.player-osd[data-small=true] .player-osd-play{order:0;width:44px;height:44px}
+.player-osd[data-small=true] .player-status-label{position:absolute;left:56px;top:calc(50% - 20px);width:auto;font-size:11px;line-height:13px;text-align:left}
+.player-osd[data-small=true] .player-status-mode,.player-osd[data-small=true] .player-osd-time,.player-osd[data-small=true] .player-osd-fold{display:none}
+.player-osd[data-small=true] input{order:2;padding-top:12px}
+.player-osd[data-small=true] .status-rate{order:3}
+.player-osd[data-small=true] .player-osd-mute{order:4}
+.player-osd[data-small=true] .player-osd-fullscreen{order:5}
+.player-osd[data-small=true][data-narrow=true]{display:grid;grid-template-columns:44px minmax(64px,1fr) 44px;grid-template-rows:44px 44px;align-content:center}
+.player-osd[data-small=true][data-narrow=true] .status-rate{grid-row:1;grid-column:1}
+.player-osd[data-small=true][data-narrow=true] .player-osd-mute{grid-row:1;grid-column:2;justify-self:center}
+.player-osd[data-small=true][data-narrow=true] .player-osd-fold{display:grid;grid-row:1;grid-column:3}
+.player-osd[data-small=true][data-narrow=true] .player-osd-play{grid-row:2;grid-column:1}
+.player-osd[data-small=true][data-narrow=true] input{grid-row:2;grid-column:2;width:100%}
+.player-osd[data-small=true][data-narrow=true] .player-osd-fullscreen{grid-row:2;grid-column:3}
+.player-osd[data-small=true][data-narrow=true] .player-status-label{top:calc(50% + 4px)}
 
 .study-ui{--bg:rgba(238,240,242,1);--paper:rgba(255,255,255,1);--soft:rgba(243,245,246,1);--ink:rgba(32,44,53,1);--muted:rgba(82,97,109,1);--line:rgba(223,230,232,1);--accent:rgba(49,95,78,1);--tint:rgba(237,245,240,1)}
 .dark .study-ui,.study-ui.dark{--bg:rgba(17,23,27,1);--paper:rgba(28,35,40,1);--soft:rgba(37,46,53,1);--ink:rgba(237,244,240,1);--muted:rgba(180,194,200,1);--line:rgba(58,71,77,1);--accent:rgba(177,214,191,1);--tint:rgba(38,61,51,1)}
@@ -5690,11 +5722,17 @@ html[data-layout=theater] .video-dock{--dock-w:max(100%,min(calc(100vw - 2rem),m
 .production-player-status button{pointer-events:auto;flex:none;min-width:44px;min-height:44px;background:#10191ed9;color:inherit;border:0;border-radius:7px;font:inherit;padding:4px}
 #dock>.production-player-status{position:relative;inset:auto;min-height:44px;padding:0 8px;background:var(--card);color:var(--ink)}
 #dock>.production-player-status>span,#dock>.production-player-status button{background:transparent}
+/* Keep the capped picture height, using the available width for a compact row. */
+@media(max-height:560px){
+  html.phone-toolbar-active #dock .dock-video:has(.player-osd){width:100%;max-width:100%}
+  html.phone-toolbar-active #dock .video-frame:has(.player-osd){width:100%}
+}
 /* A short landscape phone has room beside folded chrome, not for another row. */
 @media(min-width:561px) and (max-height:480px){
   html.phone-toolbar-active #dock.min{display:grid;grid-template-columns:minmax(0,1fr) 160px;align-items:start}
   html.phone-toolbar-active #dock.min>#productionStudyHeader{grid-column:1;grid-row:1;min-width:0}
   html.phone-toolbar-active #dock.min>.production-player-status{grid-column:2;grid-row:1;min-width:0}
+  html.phone-toolbar-active #dock.min>.production-player-status .player-status-mode{display:none}
   html.phone-toolbar-active #dock.min>.dock-video{grid-column:1 / -1;grid-row:2}
 }
 
@@ -6612,6 +6650,9 @@ Object.assign(window.LangStudyLocales.zh, {
  "Toolbar A description":"练习模式、句子播放与跟随", "Toolbar B description":"模式与跟随放在视频上方，底部保留句子播放", "Toolbar C description":"练习模式、句子播放与跟随放在视频下方",
  "Pending changes":"待同步更改", "General":"通用设置", "History":"观看记录", "No history":"还没有观看记录。", "Account status":"账号状态", "Language":"语言", "Light":"浅色", "Dark":"深色"
 });
+Object.assign(window.LangStudyLocales.zh,{'Playback position':'播放位置','Mute':'静音','Unmute':'取消静音'});
+Object.assign(window.LangStudyLocales.en,{'Playback position':'Playback position','Mute':'Mute','Unmute':'Unmute'});
+Object.assign(window.LangStudyLocales.ja,{'Playback position':'再生位置','Mute':'ミュート','Unmute':'ミュート解除'});
 Object.assign(window.LangStudyLocales.ja, {
  "Phone toolbar":"スマートフォンのツールバー", "Toolbar A":"下部にすべての操作", "Toolbar B":"上部に練習、下部に再生", "Toolbar C":"動画の下にすべての操作",
  "Toolbar A description":"練習モード・文の再生・追従", "Toolbar B description":"動画の上にモードと追従、画面下部に文の再生", "Toolbar C description":"動画の下に練習モード・文の再生・追従",
@@ -7283,10 +7324,21 @@ function renderTransport(model,context={}){
  ${btn('follow',icon(model.follow==='sticky'?'locked':model.follow==='off'?'followOff':'follow')+'<span>'+esc(t({off:'Follow off short',on:'Follow normal short',sticky:'Follow locked short'}[model.follow]))+'<\/span>',model.followDescription,'follow cycle-control',`data-follow-mode="${model.follow}" aria-pressed="${model.follow!=='off'}" title="${esc(model.followDescription)}" ${model.followDisabled?'disabled':''}`)}`;
 }
 function renderPlayerStatus(model,context={}){
- const {button:btn,escape:esc,t}=helpers(context);
- return '<span>'+esc(t(model.modeLabel))+' · '+esc(model.index)+'/'+esc(model.total)+'<\/span>'+btn('rate',esc(model.rate)+'×',t('Playback speed')+' '+model.rate+'×','status-rate',model.rateDisabled?'disabled':'');
+ const {button:btn,icon,escape:esc,t}=helpers(context);
+ return '<span class="player-status-label"><span class="player-status-mode">'+esc(t(model.modeLabel))+' · <\/span>'+esc(model.index)+'/'+esc(model.total)+'<\/span>'+btn('rate',esc(model.rate)+'×',t('Playback speed')+' '+model.rate+'×','status-rate',model.rateDisabled?'disabled':'')+(model.expandEnabled?btn('video-fold',icon('video'),'Expand video','status-expand'):'');
 }
-global.LangStudyUI={renderHeader,renderTransport,renderResumeControls,renderPlayerStatus,button,icon,escape,paths,menuGlyph,menuActionIcon,menuPanelIcon,menuFieldIcon,menuHeading,menuButtonBody,strings:global.LangStudyLocales};
+function renderVideoControls(model,context={}){
+ const {button:btn,icon,escape:esc,t}=helpers(context);
+ const clock=value=>Number.isFinite(value)?Math.floor(Math.max(0,value)/60)+':'+String(Math.floor(Math.max(0,value)%60)).padStart(2,'0'):'--:--';
+ const duration=Number.isFinite(model.duration)&&model.duration>0?model.duration:0,current=Number.isFinite(model.current)?Math.max(0,Math.min(duration||Infinity,model.current)):0;
+ return `<div class="player-osd-header">${renderPlayerStatus(model,context)}${btn('video-mute',icon(model.muted?'muted':'listen'),model.muted?'Unmute':'Mute','player-osd-mute')}${btn('video-fold',icon('up'),'Hide picture','player-osd-fold')}<\/div>
+ ${btn('video-play',icon('play',true),'Play','player-osd-play',model.playDisabled?'disabled':'')}
+ <div class="player-osd-timeline"><time class="player-osd-time" data-key="elapsed">${clock(current)}<\/time>
+ <input type="range" data-act="video-seek" aria-label="${esc(t('Playback position'))}" aria-valuetext="${clock(current)} / ${clock(duration||NaN)}" min="0" max="${duration||1}" step="0.01" value="${duration?current.toFixed(2):'0'}" ${!duration||model.playDisabled?'disabled':''}>
+ <time class="player-osd-time" data-key="duration">${clock(duration||NaN)}<\/time>${btn('video-fullscreen',icon('fullscreen'),'Fullscreen','player-osd-fullscreen',model.fullscreenDisabled?'disabled':'')}<\/div>`;
+}
+paths.muted='M3 9v6h4l5 4V5L7 9Zm13 0 6 6m0-6-6 6';
+global.LangStudyUI={renderHeader,renderTransport,renderResumeControls,renderPlayerStatus,renderVideoControls,button,icon,escape,paths,menuGlyph,menuActionIcon,menuPanelIcon,menuFieldIcon,menuHeading,menuButtonBody,strings:global.LangStudyLocales};
 })(window);
 
 // Pure optional surfaces. Import after study-ui.js; callers own models and effects.
@@ -11940,10 +11992,10 @@ global.LangStudyDOM={patch};
   if(!UI||!player||!frame||!picture)return;
   var rows=Array.from(document.querySelectorAll('.u')),status=document.createElement('div'),paint='';
   status.id='productionPlayerStatus';status.className='production-player-status';status.dataset.uiChrome='';
-  var clip=frame.querySelector('video'),pauseSurface=null,nativeFullscreen=false;
+  var clip=frame.querySelector('video'),pauseSurface=null,nativeFullscreen=false,scrubbing=false;
   if(clip){
-    // Retain the browser's paused scrubber/fullscreen controls. While playing
-    // inline, a transparent tap target pauses without waiting for browser chrome.
+    // The unified inline layer owns paused controls; a transparent playing
+    // picture remains a tap-to-pause target. System presentations keep native UI.
     pauseSurface=document.createElement('button');pauseSurface.id='productionVideoPause';
     pauseSurface.className='production-video-pause';pauseSurface.type='button';pauseSurface.hidden=true;
     pauseSurface.addEventListener('click',function(){if(clip.id==='clip'&&!clip.paused)player.pause();});
@@ -11960,27 +12012,75 @@ global.LangStudyDOM={patch};
     if(pauseSurface){
       var systemPresentation=nativeFullscreen||clip.webkitDisplayingFullscreen||document.fullscreenElement||document.pictureInPictureElement===clip||clip.webkitPresentationMode==='picture-in-picture';
       var inlinePlaying=clip.id==='clip'&&!clip.paused&&!systemPresentation;
-      if(clip.controls===inlinePlaying)clip.controls=!inlinePlaying;
+      var nativeControls=!!systemPresentation;
+      if(clip.controls!==nativeControls)clip.controls=nativeControls;
       pauseSurface.hidden=!inlinePlaying||compact;
       pauseSurface.setAttribute('aria-label',t('Pause'));
     }
     var parent=compact?dock:frame;
     if(status.parentNode!==parent){if(compact)dock.insertBefore(status,picture);else frame.appendChild(status);}
-    var hidden=!compact&&player.ready()&&!player.paused();
+    var unified=clip&&clip.id==='clip'&&!compact;
+    var classes=unified?'player-osd':'production-player-status';
+    if(status.className!==classes)status.className=classes;
+    if(unified){var bounds=frame.getBoundingClientRect();status.dataset.small=String(bounds.height<160);status.dataset.narrow=String(bounds.width<268);}
+    var hidden=!compact&&(!!systemPresentation||player.ready()&&!player.paused());
+    if(hidden||!unified)scrubbing=false;
     if(status.hidden!==hidden)status.hidden=hidden;
     var value=String(compact);if(status.dataset.compact!==value)status.dataset.compact=value;
+    // No hidden timeline needs repainting at playback tick frequency.
+    if(hidden)return;
     var index=Math.max(0,rows.indexOf(document.querySelector('.u.active')))+1;
-    var html=UI.renderPlayerStatus({modeLabel:{listen:'Listen',shadow:'Shadow',dictate:'Write'}[practice.mode]||'Listen',index:index,total:rows.length,rate:practice.rate||1,rateDisabled:!player.ready()||!!(player.seekOnly&&player.seekOnly())},{t:t});
+    var ready=player.ready(),play=document.getElementById('sentencePlay');
+    var model={modeLabel:{listen:'Listen',shadow:'Shadow',dictate:'Write'}[practice.mode]||'Listen',index:index,total:rows.length,rate:practice.rate||1,rateDisabled:!ready||!!(player.seekOnly&&player.seekOnly()),expandEnabled:compact&&dock.classList.contains('min')&&!document.body.classList.contains('dictation')};
+    if(unified){
+      model.current=clip.currentTime;model.duration=clip.duration;model.muted=clip.muted;
+      model.playDisabled=!ready||(play?play.disabled:!!practice.completed||!rows.some(function(row){return row.offsetParent!==null;}));
+      model.fullscreenDisabled=!ready||!((document.fullscreenEnabled&&clip.requestFullscreen)||(clip.webkitEnterFullscreen&&clip.webkitSupportsFullscreen!==false));
+    }
+    var html=unified?UI.renderVideoControls(model,{t:t}):UI.renderPlayerStatus(model,{t:t});
     if(html!==paint){paint=html;LangStudyDOM.patch(status,html);}
+    var range=unified&&status.querySelector('[data-act="video-seek"]');
+    // Attribute patching preserves a dirty range's DOM identity, so update its
+    // live property after playback without fighting an active pointer gesture.
+    if(range&&(!Number.isFinite(model.duration)||model.duration<=0))range.value='0';
+    else if(range&&!scrubbing)range.value=Number(model.current||0).toFixed(2);
   }
-  status.addEventListener('click',function(e){if(e.target.closest('[data-act="rate"]')){var rate=document.getElementById('shRate');if(rate)rate.click();render();}});
+  status.addEventListener('click',function(e){
+    var button=e.target.closest('button[data-act]');if(!button||button.disabled)return;
+    var action=button.dataset.act;
+    if(action==='rate'){var rate=document.getElementById('shRate');if(rate)rate.click();}
+    else if(action==='video-fold'){var fold=document.getElementById('dockMin');if(fold)fold.click();}
+    else if(clip&&clip.id==='clip'){
+      if(action==='video-play'){
+        var play=document.getElementById('sentencePlay');
+        if(play&&!play.disabled)play.click();
+        else if(!play&&player.ready()){if(window.LangPractice)LangPractice.play();else player.toggle();}
+      }
+      else if(action==='video-mute')clip.muted=!clip.muted;
+      else if(action==='video-fullscreen'){
+        try{if(document.fullscreenEnabled&&clip.requestFullscreen){var request=clip.requestFullscreen();if(request&&request.catch)request.catch(render);}else if(clip.webkitEnterFullscreen)clip.webkitEnterFullscreen();}catch(error){render();}
+        return;
+      }
+    }
+    render();
+  });
+  status.addEventListener('input',function(e){
+    if(e.target.dataset.act!=='video-seek'||!clip||clip.id!=='clip'||!player.ready())return;
+    var target=Number(e.target.value);
+    if(Number.isFinite(target)&&Number.isFinite(clip.duration))player.seek(Math.max(0,Math.min(target,clip.duration)),{autoplay:false});
+    render();
+  });
+  status.addEventListener('pointerdown',function(e){if(e.target.dataset.act==='video-seek')scrubbing=true;});
+  function endScrub(){if(scrubbing){scrubbing=false;render();}}
+  window.addEventListener('pointerup',endScrub);window.addEventListener('pointercancel',endScrub);
   if(player.onTick)player.onTick(render);
   var media=clip||document.getElementById('clip');
-  if(media)['play','pause','ended','ratechange'].forEach(function(event){media.addEventListener(event,render);});
+  if(media)['play','pause','ended','ratechange','volumechange','loadedmetadata','durationchange','timeupdate','seeked'].forEach(function(event){media.addEventListener(event,render);});
   ['lang:active','lang:transport','lang:study-preferences','lang:ui-preferences','lang:study-controls'].forEach(function(event){document.addEventListener(event,render);});
   document.addEventListener('click',function(e){if(e.target.closest('#sentenceTransport,#productionStudyHeader,#phoneMenu,#shadowBar,#dictBar'))render();});
   new MutationObserver(render).observe(dock,{attributes:true,attributeFilter:['class']});
   new MutationObserver(render).observe(document.body,{attributes:true,attributeFilter:['class']});
+  if(window.ResizeObserver)new ResizeObserver(render).observe(frame);
   render();
 })();
 </script>
