@@ -12102,6 +12102,9 @@ html[data-layout=theater] .video-dock{--dock-w:max(100%,min(calc(100vw - 2rem),m
   .cc-hits a{white-space:normal;overflow-wrap:anywhere}
 }
 #phoneMenu [hidden]{display:none!important}
+.production-video-pause{position:absolute;inset:0;z-index:3;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.production-video-pause[hidden]{display:none!important}
+.production-video-pause:focus-visible{outline:3px solid white;outline-offset:-5px}
 .production-player-status{position:absolute;top:6px;left:6px;right:6px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:6px;pointer-events:none;color:white;font:500 11px/1.4 var(--font-gothic)}
 .production-player-status[hidden]{display:none!important}
 .production-player-status>span{background:#10191ed9;border-radius:6px;padding:5px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -18358,10 +18361,30 @@ global.LangStudyDOM={patch};
   if(!UI||!player||!frame||!picture)return;
   var rows=Array.from(document.querySelectorAll('.u')),status=document.createElement('div'),paint='';
   status.id='productionPlayerStatus';status.className='production-player-status';status.dataset.uiChrome='';
+  var clip=frame.querySelector('video'),pauseSurface=null,nativeFullscreen=false;
+  if(clip){
+    // Retain the browser's paused scrubber/fullscreen controls. While playing
+    // inline, a transparent tap target pauses without waiting for browser chrome.
+    pauseSurface=document.createElement('button');pauseSurface.id='productionVideoPause';
+    pauseSurface.className='production-video-pause';pauseSurface.type='button';pauseSurface.hidden=true;
+    pauseSurface.addEventListener('click',function(){if(clip.id==='clip'&&!clip.paused)player.pause();});
+    frame.appendChild(pauseSurface);
+    clip.addEventListener('webkitbeginfullscreen',function(){nativeFullscreen=true;render();});
+    clip.addEventListener('webkitendfullscreen',function(){nativeFullscreen=false;render();});
+    ['webkitpresentationmodechanged','enterpictureinpicture','leavepictureinpicture'].forEach(function(event){clip.addEventListener(event,render);});
+    document.addEventListener('fullscreenchange',render);
+  }
   function t(key){return window.LangStudyI18n?LangStudyI18n.t(key):key;}
   function render(){
     var practice=window.LangPractice?LangPractice.snapshot():{mode:'listen',rate:1};
     var compact=dock.classList.contains('min')||document.body.classList.contains('dictation');
+    if(pauseSurface){
+      var systemPresentation=nativeFullscreen||clip.webkitDisplayingFullscreen||document.fullscreenElement||document.pictureInPictureElement===clip||clip.webkitPresentationMode==='picture-in-picture';
+      var inlinePlaying=clip.id==='clip'&&!clip.paused&&!systemPresentation;
+      if(clip.controls===inlinePlaying)clip.controls=!inlinePlaying;
+      pauseSurface.hidden=!inlinePlaying||compact;
+      pauseSurface.setAttribute('aria-label',t('Pause'));
+    }
     var parent=compact?dock:frame;
     if(status.parentNode!==parent){if(compact)dock.insertBefore(status,picture);else frame.appendChild(status);}
     var hidden=!compact&&player.ready()&&!player.paused();
@@ -18373,8 +18396,8 @@ global.LangStudyDOM={patch};
   }
   status.addEventListener('click',function(e){if(e.target.closest('[data-act="rate"]')){var rate=document.getElementById('shRate');if(rate)rate.click();render();}});
   if(player.onTick)player.onTick(render);
-  var clip=document.getElementById('clip');
-  if(clip)['play','pause','ended','ratechange'].forEach(function(event){clip.addEventListener(event,render);});
+  var media=clip||document.getElementById('clip');
+  if(media)['play','pause','ended','ratechange'].forEach(function(event){media.addEventListener(event,render);});
   ['lang:active','lang:transport','lang:study-preferences','lang:ui-preferences','lang:study-controls'].forEach(function(event){document.addEventListener(event,render);});
   document.addEventListener('click',function(e){if(e.target.closest('#sentenceTransport,#productionStudyHeader,#phoneMenu,#shadowBar,#dictBar'))render();});
   new MutationObserver(render).observe(dock,{attributes:true,attributeFilter:['class']});
