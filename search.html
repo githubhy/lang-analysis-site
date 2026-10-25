@@ -972,7 +972,7 @@
 </main>
 
 <!--study-ui:start-->
-<style data-study-ui="d7eb81810e5bdf18fcb802b9bb5ec567614294fb06670cb13b65693cca670e9e">
+<style data-study-ui="8170f2d226e781be6f00e49b521c35cd9b32c5fe81e05d385c55f4a26d62e2cd">
 /* Shared component foundation, scoped away from the surrounding lesson. */
 .study-ui{--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font:14px/1.5 var(--font);color:var(--ink);container-type:inline-size}
 .study-ui *{box-sizing:border-box}
@@ -1175,7 +1175,7 @@
 .study-ui .study-sync-state{margin:12px 0 0;font-size:13px}
 .study-ui .study-sync-state svg{width:18px;height:18px;color:var(--muted)}
 .study-ui .study-pending-count{margin:6px 0 0 28px;color:var(--muted);font-size:12px}
-.player-osd{position:absolute;inset:0;z-index:4;display:grid;grid-template-rows:44px minmax(0,1fr) 44px;align-items:center;gap:2px;padding:6px 8px;color:#fff;background:linear-gradient(#071015b3,transparent 35%,transparent 60%,#071015cc);font:500 11px/1.3 system-ui,sans-serif;pointer-events:none;box-sizing:border-box}
+.player-osd{position:absolute;inset:0;z-index:4;display:grid;grid-template-rows:44px minmax(0,1fr) 44px;align-items:center;gap:2px;padding:6px 8px;color:#fff;background:transparent;font:500 11px/1.3 system-ui,sans-serif;pointer-events:none;box-sizing:border-box}
 .player-osd[hidden]{display:none!important}
 .player-osd button,.player-osd input{pointer-events:auto;box-sizing:border-box}
 .player-osd button{display:grid;place-items:center;flex:none;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;cursor:pointer}
@@ -1190,7 +1190,7 @@
 .player-osd-timeline{grid-row:3;display:flex;align-items:center;gap:6px;min-width:0}
 .player-osd-time{flex:none;font-variant-numeric:tabular-nums;font-size:10px}
 .player-osd input[type=range]{flex:1;min-width:64px;width:0;height:44px;margin:0;accent-color:#fff;cursor:pointer;background:transparent}
-.player-osd[data-small=true]{display:flex;gap:3px;padding:2px 8px;background:#071015b3}
+.player-osd[data-small=true]{display:flex;gap:3px;padding:2px 8px;background:transparent}
 .player-osd[data-small=true] .player-osd-header,.player-osd[data-small=true] .player-osd-timeline{grid-row:3;display:contents}
 .player-osd[data-small=true] .player-osd-play{order:0;width:44px;height:44px}
 .player-osd[data-small=true] .player-status-label{position:absolute;left:56px;top:calc(50% - 20px);width:auto;font-size:11px;line-height:13px;text-align:left}
@@ -1224,7 +1224,7 @@
 .player-tap[data-playing=true] .tap-affordance{opacity:0}
 .player-tap .player-tap-zone:disabled .tap-affordance{opacity:.35}
 .player-tap[data-playing=true] .player-tap-zone:disabled .tap-affordance{opacity:0}
-.player-tap .player-tap-zone:focus-visible{outline:3px solid white;outline-offset:-4px;background:#0003}
+.player-tap .player-tap-zone:focus-visible{outline:3px solid white;outline-offset:-4px}
 .player-tap .player-tap-zone:focus-visible .tap-affordance{opacity:1}
 
 @container(min-width:700px){.study-ui .topbar:has([data-tap-controls=true]).expanded,.study-ui .topbar .repaired-nav[data-tap-controls=true]{height:88px}.study-ui .topbar .repaired-nav[data-tap-controls=true]{grid-template-rows:44px 44px;grid-template-columns:44px minmax(0,1fr) 49px 44px}}
@@ -1235,6 +1235,49 @@
  .study-ui .header-study-controls:has(.header-shadow-controls){grid-row:2 / span 2;align-self:start;height:88px;flex-wrap:wrap;align-content:start;row-gap:0}
  .study-ui .header-shadow-controls{flex-basis:100%;height:44px;justify-content:flex-end}
 }
+
+/* Folded chrome retains study state and one disclosure. */
+.study-ui .folded-nav{grid-template-columns:44px 44px minmax(44px,1fr) minmax(44px,1fr) 49px 44px;gap:1px}
+.study-ui .folded-nav .folded-resume{grid-column:2;grid-row:1;justify-self:start}
+.study-ui .folded-nav .mode-trigger{grid-column:3;grid-row:1}
+.study-ui .folded-nav .follow{grid-column:4;grid-row:1}
+.study-ui .folded-nav .favorite-nav{grid-column:5;grid-row:1}
+.study-ui .folded-nav .restore{grid-column:6;grid-row:1;justify-content:center}
+.study-ui .folded-nav .cycle-control{width:44px;height:44px;justify-self:center;border-radius:8px}
+.player-osd{text-shadow:0 1px 3px #000,0 0 2px #000}
+.player-osd svg{filter:drop-shadow(0 1px 2px #000)}
+.study-ui .study-history-scope{display:flex;gap:4px;margin-bottom:8px}
+.study-ui .study-history-scope button{flex:1;min-height:44px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--soft);font-size:12px}
+.study-ui .study-history-scope [aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--tint)}
+.study-ui .study-history-compact{gap:4px}
+.study-ui .study-history-compact .study-history-point{display:grid;grid-template-columns:minmax(0,1fr) 18px;gap:2px 6px;padding:7px 9px;min-height:52px;align-items:center}
+.study-ui .study-point-main{grid-column:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.study-ui .study-point-main strong{font-size:15px;font-variant-numeric:tabular-nums}
+.study-ui .study-point-device{max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--soft);border-radius:5px;padding:1px 5px;font-size:11px;color:var(--muted)}
+.study-ui .study-point-date{grid-column:1;font-size:11px;color:var(--muted);line-height:1.4}
+.study-ui .study-history-compact .study-history-point>svg{grid-column:2;grid-row:1 / span 2;width:16px;height:16px}
+.study-ui .study-history-section{margin:0 0 12px}
+.study-ui .study-history-section h4{font-size:12px;color:var(--muted);margin:8px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#phoneMenu.study-ui{padding:12px}
+#phoneMenu.study-ui h3{margin-bottom:4px}
+#phoneMenu.study-ui .phone-menu-tabs{margin:6px 0 10px}
+#phoneMenu.study-ui .phone-control-section+.phone-control-section{margin-top:10px}
+#phoneMenu.study-ui .phone-control-grid{gap:4px}
+#phoneMenu.study-ui button,#phoneMenu.study-ui a{min-height:44px}
+#phoneMenu.study-ui .phone-control-grid>button,#phoneMenu.study-ui .phone-control-row>button{height:44px;padding:4px 7px;font-size:12px;border-radius:8px}
+#phoneMenu.study-ui .phone-control-row{min-height:44px;padding-left:8px}
+#phoneMenu.study-ui .phone-menu-footer{gap:4px;padding-top:8px;margin-top:10px}
+#phoneMenu.study-ui .phone-menu-footer>*{height:44px;padding:4px}
+#phoneMenu.study-ui .dock-shadow,#phoneMenu.study-ui .dock-dict{padding:6px;gap:4px;margin-top:4px}
+#phoneMenu.study-ui .dock-shadow button,#phoneMenu.study-ui .dock-dict button{height:44px;padding:4px}
+#phoneMenu.study-ui #markStudied{grid-column:1 / -1}
+html.study-modal-open{overflow:hidden;overscroll-behavior:none;scroll-behavior:auto!important}
+html.study-modal-open body{overscroll-behavior:none}
+html.study-modal-open :is(dialog.settings-dialog,dialog.account-dialog)[open]{overflow:auto;overscroll-behavior:contain;max-height:calc(var(--study-modal-height,100dvh) - 32px);inset-block-start:var(--study-modal-top,0px);inset-block-end:calc(100% - var(--study-modal-top,0px) - var(--study-modal-height,100dvh));margin-block:auto}
+
+.study-ui .folded-nav[data-wide="true"]{grid-template-columns:44px 44px minmax(44px,1fr) minmax(44px,1fr) 49px 44px 44px}
+.study-ui .folded-nav[data-wide="true"] .transcript-tools{grid-column:6;grid-row:1}
+.study-ui .folded-nav[data-wide="true"] .restore{grid-column:7;grid-row:1}
 
 .study-ui{--bg:rgba(238,240,242,1);--paper:rgba(255,255,255,1);--soft:rgba(243,245,246,1);--ink:rgba(32,44,53,1);--muted:rgba(82,97,109,1);--line:rgba(223,230,232,1);--accent:rgba(49,95,78,1);--tint:rgba(237,245,240,1)}
 .dark .study-ui,.study-ui.dark{--bg:rgba(17,23,27,1);--paper:rgba(28,35,40,1);--soft:rgba(37,46,53,1);--ink:rgba(237,244,240,1);--muted:rgba(180,194,200,1);--line:rgba(58,71,77,1);--accent:rgba(177,214,191,1);--tint:rgba(38,61,51,1)}
@@ -2857,6 +2900,10 @@ Object.assign(window.LangStudyLocales.zh, {
  "跟读：循环 / 连续":"跟读：循环 / 连续"
 });
 
+Object.assign(window.LangStudyLocales.zh,{'History scope':'观看记录范围','This lesson':'本课','All lessons':'全部课程'});
+Object.assign(window.LangStudyLocales.en,{'History scope':'History scope','This lesson':'This lesson','All lessons':'All lessons'});
+Object.assign(window.LangStudyLocales.ja,{'History scope':'履歴の範囲','This lesson':'このレッスン','All lessons':'すべてのレッスン'});
+
 // Pure shared presentation. Import locales.js first; no DOM or host state reads.
 (function(global){
 'use strict';
@@ -2937,6 +2984,7 @@ function menuButtonBody(action,body,classes,context={}){
 }
 
 function renderHeader(model,context={}){
+ model={mode:'listen',modeLabel:'Listen',follow:'on',practiceDescription:'Next practice',followDescription:'Next follow',...model};
  const {button:btn,icon,escape:esc,t}=helpers(context);
  const {favoriteCount:count,hasLatestPoint:point,wide,backLabel}=model;
  const pointLabel=()=>model.latestPointLabel;
@@ -2951,18 +2999,18 @@ function renderHeader(model,context={}){
   ${model.tapControls?`<div class="header-study-controls" data-key="header-study-controls"><div class="header-study-history">${resume()}${history()}<\/div>${studyButtons(model,context).mode}${studyButtons(model,context).follow}${model.mode==='shadow'?'<div class="header-shadow-controls">'+renderResumeControls({...model,studyOnly:true},context)+'<\/div>':''}<\/div>`:resumeControls()}
   ${favorites()}
   ${btn('open:learning',icon('settings'),'Transcript tools','icon transcript-tools','aria-haspopup="dialog"')}
- <\/div><div class="folded-nav" data-key="folded-nav" ${model.folded?'':'inert aria-hidden="true"'}>
+ <\/div><div class="folded-nav" data-key="folded-nav" data-wide="${!!wide}" ${model.folded?'':'inert aria-hidden="true"'}>
   ${btn('app-exit',icon('back'),backLabel,'icon app-exit')}
-  ${wide?restore()+'<div class="resume-controls">'+resume()+history()+'<\/div>':resume()+restore()}
-  ${favorites()}
-  ${wide?btn('open:learning',icon('settings'),'Transcript tools','icon transcript-tools','aria-haspopup="dialog"'):history()}
+  ${resume()}
+  ${studyButtons(model,context,true).mode}${studyButtons(model,context,true).follow}
+  ${favorites()}${wide?btn('open:learning',icon('settings'),'Transcript tools','icon transcript-tools','aria-haspopup="dialog"'):''}${restore()}
  <\/div>`;
 }
-function studyButtons(model,context={}){
+function studyButtons(model,context={},compact=false){
  const {button:btn,icon,escape:esc,t}=helpers(context);
  return {
- mode:btn('cycle-mode',icon(model.mode)+'<span>'+esc(t(model.modeLabel))+'<\/span>',model.practiceDescription,'mode-trigger cycle-control',`data-practice-mode="${model.mode}" title="${esc(model.practiceDescription)}" ${model.modeDisabled?'disabled':''}`),
- follow:btn('follow',icon(model.follow==='sticky'?'locked':model.follow==='off'?'followOff':'follow')+'<span>'+esc(t({off:'Follow off short',on:'Follow normal short',sticky:'Follow locked short'}[model.follow]||'Follow normal short'))+'<\/span>',model.followDescription,'follow cycle-control',`data-follow-mode="${model.follow}" aria-pressed="${model.follow!=='off'}" title="${esc(model.followDescription)}" ${model.followDisabled?'disabled':''}`)
+ mode:btn('cycle-mode',icon(model.mode)+(compact?'':'<span>'+esc(t(model.modeLabel))+'<\/span>'),compact?t(model.modeLabel)+'. '+t(model.practiceDescription):model.practiceDescription,'mode-trigger cycle-control',`data-practice-mode="${model.mode}" title="${esc(model.practiceDescription)}" ${model.modeDisabled?'disabled':''}`),
+ follow:btn('follow',icon(model.follow==='sticky'?'locked':model.follow==='off'?'followOff':'follow')+(compact?'':'<span>'+esc(t({off:'Follow off short',on:'Follow normal short',sticky:'Follow locked short'}[model.follow]||'Follow normal short'))+'<\/span>'),compact?t({off:'Follow off short',on:'Follow normal short',sticky:'Follow locked short'}[model.follow]||'Follow normal short')+'. '+t(model.followDescription):model.followDescription,'follow cycle-control',`data-follow-mode="${model.follow}" aria-pressed="${model.follow!=='off'}" title="${esc(model.followDescription)}" ${model.followDisabled?'disabled':''}`)
  };
 }
 function renderTransport(model,context={}){
@@ -2972,7 +3020,7 @@ function renderTransport(model,context={}){
 }
 function renderPlayerTap(model,context={}){
  const {button:btn,icon,escape:esc,t}=helpers(context);
- return [['prev','prev','Previous sentence',model.previousDisabled],['play',model.playing?'pause':'play',model.playing?'Pause':'Play',model.playDisabled],['next','next','Next sentence',model.nextDisabled]].map(([action,glyph,label,disabled])=>btn(action,'<span class="tap-affordance">'+icon(glyph)+'<span>'+esc(t(label))+'<\/span><\/span>',label,'player-tap-zone',disabled?'disabled':'')).join('');
+ return [['prev','prev','Previous sentence',model.previousDisabled],['play',model.playing?'pause':'play',model.playing?'Pause':'Play',model.playDisabled],['next','next','Next sentence',model.nextDisabled]].map(([action,glyph,label,disabled])=>btn(action,'<span class="tap-affordance">'+icon(glyph)+'<\/span>',label,'player-tap-zone',disabled?'disabled':'')).join('');
 }
 function renderPlayerStatus(model,context={}){
  const {button:btn,icon,escape:esc,t}=helpers(context);
@@ -3013,11 +3061,14 @@ function renderSettings(model,context={}){
 }
 function renderHistory(model,context={}){
  const {t,escape:esc,icon,button}=helpers(context);
- if(!model.points?.length)return `<p class="study-panel-empty">${icon('history')}<span>${esc(t('No saved study points yet.'))}<\/span><\/p>`;
- return `<div class="study-history" role="group" aria-label="${esc(t('Recent study points'))}">${model.points.map(point=>{
+ const rows=points=>`<div class="study-history${model.compact?' study-history-compact':''}" role="group" aria-label="${esc(t('Recent study points'))}">${points.map(point=>{
   const label=[t('Resume'),point.title,point.timeLabel,point.dateLabel,point.device].filter(Boolean).join(' · ');
-  return button('resume-point',icon('history')+`<span class="study-point-copy"><strong>${esc(point.title)}<\/strong><span class="study-point-meta"><span>${esc(point.timeLabel)}<\/span><span>${esc(point.dateLabel)}<\/span><span>${esc(point.device)}<\/span><\/span><\/span>`+(point.selected?icon('check'):''),label,'study-history-point',`data-point="${esc(point.key)}" aria-pressed="${!!point.selected}"${point.disabled?' disabled':''}`);
+  const copy=model.compact?`<span class="study-point-main"><strong>${esc(point.timeLabel)}<\/strong><span class="study-point-device">${esc(point.device)}<\/span><\/span><span class="study-point-date">${esc(point.dateLabel)}<\/span>`:`${icon('history')}<span class="study-point-copy"><strong>${esc(point.title)}<\/strong><span class="study-point-meta"><span>${esc(point.timeLabel)}<\/span><span>${esc(point.dateLabel)}<\/span><span>${esc(point.device)}<\/span><\/span><\/span>`;
+  return button('resume-point',copy+(point.selected?icon('check'):''),label,'study-history-point',`data-key="point:${esc(point.key)}" data-point="${esc(point.key)}" aria-pressed="${!!point.selected}"${point.disabled?' disabled':''}`);
  }).join('')}<\/div>`;
+ const nonempty=model.groups?.some(group=>group.points?.length)||model.points?.length;
+ if(!nonempty)return `<p class="study-panel-empty">${icon('history')}<span>${esc(t('No saved study points yet.'))}<\/span><\/p>`;
+ return model.groups?model.groups.map(group=>`<section class="study-history-section" data-key="source:${esc(group.key)}"><h4 data-user-content title="${esc(group.title)}">${esc(group.title)}<\/h4>${rows(group.points)}<\/section>`).join(''):rows(model.points);
 }
 function renderLibraryTabs(model,context={}){
  const {t,escape:esc,icon,button}=helpers(context);
@@ -3348,8 +3399,10 @@ global.LangStudyDOM={patch};
         v.due>=0&&v.ivl>=0&&v.ivl<=365000&&v.ease>=1.3&&v.ease<=3&&
         Number.isInteger(v.reps)&&v.reps>=0&&Number.isInteger(v.lapses)&&v.lapses>=0);
     }
-    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls','toolbarArrangement','playerInteraction','uiLocale','theme'].indexOf(k) >= 0; }
+    function preferenceKey(k){ return ['playbackRate','followMode','furigana','translations','cnMask','sentenceControls','toolbarArrangement','playerInteraction','uiLocale','theme','studyMode','shadowStyle'].indexOf(k) >= 0; }
     function preferenceValue(k,v){
+      if(k==='studyMode')return ['listen','shadow','dictate'].indexOf(v)>=0;
+      if(k==='shadowStyle')return ['loop','run'].indexOf(v)>=0;
       if(k==='uiLocale')return ['zh','en','ja'].indexOf(v)>=0;
       if(k==='theme')return ['auto','light','dark'].indexOf(v)>=0;
       if(k==='playbackRate')return Number.isFinite(v)&&v>=.25&&v<=3;
@@ -3410,19 +3463,19 @@ global.LangStudyDOM={patch};
       return x;
     }
     function needsUpgrade(doc){
-      return doc.cacheVersion!==6 || doc.appliedCursor!==doc.cursor || !doc.base || (doc.ops||[]).some(function(o){return typeof o.attempted!=='boolean';}) || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
+      return doc.cacheVersion!==7 || doc.appliedCursor!==doc.cursor || !doc.base || (doc.ops||[]).some(function(o){return typeof o.attempted!=='boolean';}) || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
     }
     function upgrade(doc){
       var missing=!doc.base || names.some(function(ns){return !Object.prototype.hasOwnProperty.call(doc.base,ns);});
       // Old readers consumed revisions for namespaces or preference keys they rejected.
-      var old=doc.cacheVersion!==6 || (doc.appliedCursor!==undefined&&doc.appliedCursor!==doc.cursor);
+      var old=doc.cacheVersion!==7 || (doc.appliedCursor!==undefined&&doc.appliedCursor!==doc.cursor);
       if(old || missing || (doc.appliedCursor!==undefined && doc.appliedCursor!==doc.cursor)){doc.cursor=0;doc.complete=false;}
       // Old readers did not persist dispatch intent; even a failed reply can
       // represent an accepted write. Never cancel their unknown outcomes.
       (doc.ops||[]).forEach(function(o){if(old||typeof o.attempted!=='boolean')o.attempted=true;});
       doc.base = doc.base || empty();
       names.forEach(function(ns){ if(!doc.base[ns])doc.base[ns]={}; });
-      doc.cacheVersion=6;doc.appliedCursor=doc.cursor;return doc;
+      doc.cacheVersion=7;doc.appliedCursor=doc.cursor;return doc;
     }
     function applyReply(doc, reply, sent, known){
       upgrade(doc);
@@ -3576,7 +3629,7 @@ global.LangStudyDOM={patch};
     for (var i=0;i<localStorage.length;i++){
       var k = localStorage.key(i);
       if (k && k.indexOf(p+'base:')===0){
-        var d = readJSON(k,null), modern = k.indexOf(p+'base:v6:')===0 || !!(d&&d.cacheVersion===6);
+        var d = readJSON(k,null), modern = k.indexOf(p+'base:v7:')===0 || !!(d&&d.cacheVersion===7);
         // Old tabs can still write higher cursors after ignoring new maps or keys.
         if(d && ((modern&&!current)||(modern===current&&d.cursor>=doc.cursor))){doc.base=d.base;doc.cursor=d.cursor;doc.complete=!!d.complete;doc.cacheVersion=d.cacheVersion;doc.appliedCursor=d.appliedCursor;doc.localKey=k;current=modern;}
       }
@@ -3593,7 +3646,7 @@ global.LangStudyDOM={patch};
       if (mutate || upgraded){
         var p = prefix(id), keep = new Set(doc.ops.map(function(o){return o.id;}));
         try {
-          var snapshotKey=p+'base:v6:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
+          var snapshotKey=p+'base:v7:'+doc.cursor,snapshot=JSON.stringify({base:doc.base,cursor:doc.cursor,complete:doc.complete,cacheVersion:doc.cacheVersion,appliedCursor:doc.appliedCursor});
           try {localStorage.setItem(snapshotKey,snapshot);}
           catch(e){
             // setItem replaces atomically: reuse the selected snapshot's space
@@ -3604,7 +3657,7 @@ global.LangStudyDOM={patch};
           // Compact only after the new canonical data is durable. Immutable
           // operation keys and acknowledgement markers remain independent.
           var stale=[];
-          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v6:')===0&&Number(k.slice((p+'base:v6:').length))<=old.cursor)))stale.push(k);}
+          for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k!==snapshotKey&&(k===old.localKey||(k.indexOf(p+'base:v7:')===0&&Number(k.slice((p+'base:v7:').length))<=old.cursor)))stale.push(k);}
           stale.forEach(function(k){localStorage.removeItem(k);});
           doc.localKey=snapshotKey;
           // A superseded position remains recoverable until its replacement is
@@ -4051,7 +4104,7 @@ global.LangStudyDOM={patch};
     all: function(){ return favs; },
     count: favCount,
     status: storeStatus, pendingCount: pendingCount,
-    account: function(){return user;}, hydrated: function(){return !owner||hydrated;}, backendAvailable: function(){return available;},
+    account: function(){return user;}, isCurrentOwner: active, hydrated: function(){return !owner||hydrated;}, backendAvailable: function(){return available;},
     refreshSession: refreshSession, clearSession: clearSession, importGuest: importGuest, importState: importState, importGist: importGist,
     exportState: function(){return AP.clone(P.serialize(state));}, review: review,
     remove: removeFav,
@@ -4360,7 +4413,7 @@ global.LangStudyDOM={patch};
       study=!!document.querySelector('.u[data-sid]'), owner=null, fingerprint=null,
       settings=null, pending=null, timer=null, automatic=false, settleTimer=null, suppressUntil=Date.now()+1000;
   function identity(){return LF.account&&LF.account()?LF.account().id:null;}
-  function defaults(){return {playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original',toolbarArrangement:null,playerInteraction:'buttons',uiLocale:'zh',theme:'auto'};}
+  function defaults(){return {studyMode:'listen',shadowStyle:'loop',playbackRate:1,followMode:'on',furigana:false,translations:true,cnMask:0,sentenceControls:'original',toolbarArrangement:null,playerInteraction:'buttons',uiLocale:'zh',theme:'auto'};}
   function emit(name,detail){document.dispatchEvent(new CustomEvent(name,{detail:detail}));}
   function button(id,text,parent){
     var b=document.createElement('button');b.id=id;b.type='button';b.textContent=text;
@@ -4564,6 +4617,104 @@ global.LangStudyDOM={patch};
     appDialog.addEventListener('close',function(){if(button.isConnected)button.focus({preventScroll:true});});
     appDialog.addEventListener('click',function(e){if(e.target!==appDialog)return;var r=appDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)appDialog.close();});
   }
+  function containModalScroll(){
+    var selector='dialog.settings-dialog,dialog.account-dialog',dialogs=[],position=null,restore=null,touch=null;
+    function viewport(){
+      if(!position)return;
+      var view=window.visualViewport;
+      // Pinch zoom remains browser-owned; do not resize the dialog under a pinch.
+      if(view&&Math.abs(view.scale-1)>.01)return;
+      root.style.setProperty('--study-modal-height',(view?view.height:window.innerHeight)+'px');
+      root.style.setProperty('--study-modal-top',(view?view.offsetTop:0)+'px');
+    }
+    function seat(saved){
+      if(window.scrollX!==saved.x||window.scrollY!==saved.y)window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});
+    }
+    function lock(){
+      if(position){viewport();return;}
+      position=restore?restore.position:{x:window.scrollX,y:window.scrollY};
+      if(restore){cancelAnimationFrame(restore.frame);restore=null;}
+      document.dispatchEvent(new CustomEvent('lang:follow-scroll',{detail:{reason:'modal'}}));
+      root.classList.add('study-modal-open');guards(true);viewport();
+      // Cancel an already-running follow animation without moving its sticky dock.
+      window.scrollTo({left:position.x,top:position.y,behavior:'instant'});
+    }
+    function unlock(){
+      if(!position)return;
+      var saved=position;position=null;touch=null;
+      document.dispatchEvent(new CustomEvent('lang:follow-scroll',{detail:{reason:'modal'}}));
+      root.classList.remove('study-modal-open');guards(false);
+      root.style.removeProperty('--study-modal-height');root.style.removeProperty('--study-modal-top');
+      seat(saved);
+      // Native dialog and host close handlers restore focus before this final seat.
+      restore={position:saved,frame:requestAnimationFrame(function(){if(!position)seat(saved);restore=null;})};
+    }
+    function sync(){
+      var open=Array.from(document.querySelectorAll(selector)).filter(function(dialog){return dialog.open;});
+      dialogs=dialogs.filter(function(dialog){return open.includes(dialog);}).concat(open.filter(function(dialog){return !dialogs.includes(dialog);}));
+      if(dialogs.length)lock();else unlock();
+    }
+    document.addEventListener('beforetoggle',function(e){
+      var dialog=e.target;
+      if(e.newState!=='open'||!dialog.matches||!dialog.matches(selector))return;
+      dialogs=dialogs.filter(function(item){return item!==dialog;});dialogs.push(dialog);
+      // beforetoggle precedes native autofocus; the observer also covers older engines.
+      lock();queueMicrotask(sync);
+    },true);
+    document.addEventListener('close',sync,true);
+    new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open']});
+    window.addEventListener('resize',viewport);
+    if(window.visualViewport){window.visualViewport.addEventListener('resize',viewport);window.visualViewport.addEventListener('scroll',viewport);}
+    function topDialog(){
+      for(var i=dialogs.length-1;i>=0;i--)if(dialogs[i].isConnected&&dialogs[i].open)return dialogs[i];
+      return null;
+    }
+    function inside(dialog,target,x,y){
+      if(!dialog.contains(target))return false;
+      var rect=dialog.getBoundingClientRect();
+      // Backdrop events target the dialog too, but must not scroll its contents.
+      return x>=rect.left&&x<=rect.right&&y>=rect.top&&y<=rect.bottom;
+    }
+    function canScroll(target,dialog,dx,dy){
+      var vertical=Math.abs(dy)>=Math.abs(dx),delta=vertical?dy:dx;
+      if(!delta)return true;
+      for(var el=target.nodeType===1?target:target.parentElement;el;el=el.parentElement){
+        var style=getComputedStyle(el),overflow=vertical?style.overflowY:style.overflowX,
+            limit=vertical?el.scrollHeight-el.clientHeight:el.scrollWidth-el.clientWidth,
+            at=vertical?el.scrollTop:el.scrollLeft;
+        if(/^(auto|scroll|overlay)$/.test(overflow)&&limit>1&&(delta<0?at>1:at<limit-1))return true;
+        if(el===dialog)break;
+      }
+      return false;
+    }
+    function wheel(e){
+      var dialog=topDialog();if(!dialog||e.ctrlKey)return;
+      if(!inside(dialog,e.target,e.clientX,e.clientY)||!canScroll(e.target,dialog,e.deltaX,e.deltaY))e.preventDefault();
+    }
+    function touchstart(e){
+      touch=e.touches.length===1?{id:e.touches[0].identifier,x:e.touches[0].clientX,y:e.touches[0].clientY,target:e.target}:null;
+    }
+    function touchmove(e){
+      var dialog=topDialog();if(!dialog||!touch||e.touches.length!==1){touch=null;return;}
+      var point=e.touches[0];if(point.identifier!==touch.id){touch=null;return;}
+      var dx=touch.x-point.clientX,dy=touch.y-point.clientY;touch.x=point.clientX;touch.y=point.clientY;
+      // Keep native range dragging and text-field cursor gestures intact.
+      var field=touch.target.closest&&touch.target.closest('input,textarea,select,[contenteditable=true]');
+      if(field&&dialog.contains(field)&&Math.abs(dx)>Math.abs(dy))return;
+      if(!inside(dialog,touch.target,point.clientX,point.clientY)||!canScroll(touch.target,dialog,dx,dy))e.preventDefault();
+    }
+    function touchend(){touch=null;}
+    function guards(enabled){
+      var method=enabled?'addEventListener':'removeEventListener';
+      // Nonpassive guards exist only while a modal is open; ordinary reading keeps
+      // the browser's normal asynchronous scrolling path.
+      document[method]('wheel',wheel,{passive:false,capture:true});
+      document[method]('touchmove',touchmove,{passive:false,capture:true});
+      document[method]('touchstart',touchstart,{passive:true,capture:true});
+      ['touchend','touchcancel'].forEach(function(name){document[method](name,touchend,{passive:true,capture:true});});
+    }
+    sync();
+  }
   document.addEventListener('change',function(e){
     var field=e.target,key=field.dataset&&field.dataset.setting;if(!key)return;
     // The lesson adapter owns its existing toolbar radio handlers.
@@ -4593,7 +4744,7 @@ global.LangStudyDOM={patch};
   document.addEventListener('lang:ui-preferences',schedule);
   document.addEventListener('lang:study-preferences',schedule);
   if(media.addEventListener)media.addEventListener('change',function(){if(current().theme==='auto')schedule();});
-  createAppSettings();paint();
+  createAppSettings();containModalScroll();paint();
   // Observe explicit chrome only. Never walk or translate lesson/user content.
   var observer=new MutationObserver(function(records){
     if(records.some(function(record){var el=record.target.nodeType===1?record.target:record.target.parentElement;return el&&el.closest(chrome);}))schedule();
