@@ -2536,6 +2536,8 @@
   }
   function isTheater(){ return document.documentElement.getAttribute('data-layout') === 'theater'; }
   function scrollToActive(force){
+    // Editing owns the viewport until focus leaves the note.
+    if(document.activeElement&&document.activeElement.classList.contains('u-note-ta'))return;
     var u = units[activeIdx]; if (!u) return;
     // THEATER seats the PREVIOUS row just under the dock (the current one when there is none): the
     // layout IS previous · current · next, and seating the active row there hid previous by
@@ -2620,11 +2622,19 @@
   // one scroll listener drives BOTH follow-suspend and mobile auto-minimize.
   // the guard makes our own auto-scroll invisible here, so follow never self-cancels
   // and (unlike the old wheel/touchmove pair) touch scrolling behaves the same.
-  function suspend(){ if (following && !stickyFollow) setFollow(false, true); }
+  function suspend(){ if (document.activeElement&&document.activeElement.classList.contains('u-note-ta'))return; if (following && !stickyFollow) setFollow(false, true); }
   var lastY = window.pageYOffset, foldTravel=0, foldDirection=0,
       inputDirection=0, inputUntil=0, touchPoint=null;
   function foldInput(delta){if(Math.abs(delta)>.1){inputDirection=delta>0?1:-1;inputUntil=nowms()+200;}}
   function foldTarget(e){return !(e.target&&e.target.closest&&e.target.closest('.dock-bar,.dock-shadow,.sentence-transport,dialog,.video-frame,.dock-toc'));}
+  function noteFocusChange(e){
+    if(!e.target.classList||!e.target.classList.contains('u-note-ta'))return;
+    // Native focus/keyboard scrolling and the dock's focus layout are ours.
+    // Keep the current Follow state; an explicit mode change still wins.
+    guard.begin(nowms());inputUntil=0;touchPoint=null;foldTravel=0;foldDirection=0;
+  }
+  document.addEventListener('focus',noteFocusChange,true);
+  document.addEventListener('blur',noteFocusChange,true);
   window.addEventListener('touchstart',function(e){var t=e.touches[0];touchPoint=t&&foldTarget(e)?{x:t.clientX,y:t.clientY}:null;},{passive:true});
   window.addEventListener('touchmove',function(e){var t=e.touches[0];if(!t||!touchPoint)return;var dx=t.clientX-touchPoint.x,dy=touchPoint.y-t.clientY;touchPoint={x:t.clientX,y:t.clientY};if(Math.abs(dy)>Math.abs(dx))foldInput(dy);},{passive:true});
   window.addEventListener('touchend',function(){touchPoint=null;},{passive:true});
@@ -2633,6 +2643,9 @@
   window.addEventListener('scroll', function(){
     var y = window.pageYOffset, delta=y-lastY, unguarded=guard.action(nowms())==='suspend',
         physical=nowms()<inputUntil&&delta*inputDirection>0;
+    if(document.activeElement&&document.activeElement.classList.contains('u-note-ta')){
+      lastY=y;foldTravel=0;foldDirection=0;return;
+    }
     if (unguarded||physical){          // physical input can reverse a fold before its guard expires
       suspend();
       // on phones, scrolling down into the transcript collapses the video to reclaim space;
@@ -2904,7 +2917,7 @@
         volume: function(){ return video.volume; }, muted: function(){ return video.muted; },
         paused: function(){ return !!video.paused; }, play: nativePlay,
         pause: function(){ nativeWanted = false; safePause(video); },
-        rates: function(){ return [0.5, 0.75, 1]; }, duration: function(){ return video.duration || 0; }
+        rates: function(){ return [0.5, 0.75, 1, 1.25]; }, duration: function(){ return video.duration || 0; }
       };
     }
     transport = nativeAdapter;
@@ -3154,7 +3167,7 @@
 </script>
 
 <!--study-ui:start-->
-<style data-study-ui="9fefd32caee8bebc5366d2c898f2f347c77260af4dd4017b4f5154b2c48473e8">
+<style data-study-ui="7c788f0a316c805d411cff92af4f97f5924ef116fa5cfb9569fabfef532c78df">
 /* Shared component foundation, scoped away from the surrounding lesson. */
 .study-ui{--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font:14px/1.5 var(--font);color:var(--ink);container-type:inline-size}
 .study-ui *{box-sizing:border-box}
@@ -3449,6 +3462,16 @@ html[data-layout=theater] .video-dock{--dock-w:max(100%,min(calc(100vw - 2rem),m
   html.phone-toolbar-active #dock.min>#productionStudyHeader{grid-column:1;grid-row:1;min-width:0}
   html.phone-toolbar-active #dock.min>.production-player-status{grid-column:2;grid-row:1;min-width:0}
   html.phone-toolbar-active #dock.min>.dock-video{grid-column:1 / -1;grid-row:2}
+}
+
+@media(min-width:561px) and (max-height:480px){
+  html.phone-toolbar-active #dock.min>#sentenceTransport[data-placement=below],
+  html.phone-toolbar-active #dock.min>#productionModeStrip{grid-column:1 / -1}
+}
+/* Native keyboards need the editor's space rather than a sticky media overlay. */
+@media(max-width:560px),(max-height:480px){
+  .u-note-ta{font-size:max(1rem,16px)}
+  html.phone-toolbar-active:has(.u-note-ta:focus) #dock{position:relative!important;top:auto!important}
 }
 
 </style>
@@ -5067,7 +5090,7 @@ function renderLibraryTabs(model,context={}){
 function renderAccountStatus(model,context={}){
  const {t,escape:esc,icon}=helpers(context),status=syncStatus(model.status);
  const pending=Number.isSafeInteger(model.pendingCount)&&model.pendingCount>0?model.pendingCount:0;
- return `<div class="study-account-status" role="status" aria-live="polite" data-sync-status="${status}"><div class="study-account-identity">${icon(model.signedIn?'person':'device')}<span><strong>${esc(t(model.signedIn?'Signed in':'Guest'))}<\/strong>${model.signedIn&&model.email?`<span class="study-account-email">${esc(model.email)}<\/span>`:''}<\/span><\/div><p class="study-sync-state">${icon({ok:'check',wait:'cycle',off:'device',offline:'network',err:'close'}[status])}<span>${esc(t(syncLabels[status]))}<\/span><\/p>${pending?`<p class="study-pending-count">${esc(t('Pending changes'))}: ${pending}<\/p>`:''}<\/div>`;
+ return `<div class="study-account-status" role="status" aria-live="polite" data-sync-status="${status}"><div class="study-account-identity">${icon(model.signedIn?'person':'device')}<span><strong>${esc(t(model.signedIn?'Signed in':'Guest'))}<\/strong>${model.signedIn&&model.email?`<span class="study-account-email">${esc(model.email)}<\/span>`:''}<\/span><\/div><p class="study-sync-state">${icon({ok:'check',wait:'cycle',off:'device',offline:'network',err:'close'}[status])}<span>${esc(t(syncLabels[status]))}<\/span><\/p>${pending&&status!=='off'?`<p class="study-pending-count">${esc(t('Pending changes'))}: ${pending}<\/p>`:''}<\/div>`;
 }
 Object.assign(UI,{renderSettings,renderHistory,renderLibraryTabs,renderAccountStatus});
 })(window);
@@ -6770,14 +6793,16 @@ global.LangStudyDOM={patch};
   var prevBtn = document.getElementById('shPrev'), nextBtn = document.getElementById('shNext');
   if (prevBtn) prevBtn.addEventListener('click', function(){ step(-1); });
   if (nextBtn) nextBtn.addEventListener('click', function(){ step(1); });
-  // Speed is one tap-to-cycle button: 1× → 0.75× → 0.5× → 1× (slow down for shadowing, then back).
+  // Match the saved workspace choices: 0.5× → 0.75× → 1× → 1.25×.
   // clampRate snaps each to a rate the player actually supports, so an odd rate set can't wedge it.
   var rateBtn = document.getElementById('shRate');
   if (rateBtn){
-    var RATE_CYCLE = [1, 0.75, 0.5];
+    var RATE_CYCLE = [0.5, 0.75, 1, 1.25];
     rateBtn.addEventListener('click', function(){
-      var i = RATE_CYCLE.indexOf(rate);
-      desiredRate = RATE_CYCLE[i < 0 ? 0 : (i + 1) % RATE_CYCLE.length];
+      var supported = LP.rates(), cycle = RATE_CYCLE.filter(function(r){ return supported.indexOf(r) >= 0; });
+      if (!cycle.length) cycle = [1];
+      var i = cycle.indexOf(rate);
+      desiredRate = cycle[i < 0 ? 0 : (i + 1) % cycle.length];
       setRate(desiredRate);
       document.dispatchEvent(new CustomEvent('lang:study-preference', { detail: { key: 'playbackRate', value: rate } }));
     });
@@ -7598,6 +7623,14 @@ global.LangStudyDOM={patch};
     var ta = document.createElement('textarea'); ta.className = 'u-note-ta'; ta.rows = 2;
     ta.placeholder = '写点笔记…（跨设备同步）';
     editor.appendChild(ta); body.appendChild(editor);
+    // Focusing an editor takes viewport ownership immediately, including a
+    // smooth follow animation that started before this focus event.
+    ta.addEventListener('focus',function(){
+      window.scrollTo({top:window.pageYOffset,left:window.pageXOffset,behavior:'instant'});
+      var r=ta.getBoundingClientRect();
+      if(r.top<8||r.bottom>window.innerHeight-8)
+        ta.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+    });
 
     var timer = null,owner=ownerId(),editOwner=owner,dirty=false;
     function cancel(){if(timer)clearTimeout(timer);timer=null;dirty=false;}
