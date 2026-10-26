@@ -12088,7 +12088,7 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   document.addEventListener('lang:preferences-closed',function(){if(!phone.matches&&!menu.open&&!dialog.open)restore();});
   function reconcile(){
     var mobile=phone.matches,follow=document.getElementById('dockFollow');
-    root.classList.toggle('phone-toolbar-active',mobile);utility.hidden=true;
+    if(root.classList.contains('phone-toolbar-active')!==mobile)root.classList.toggle('phone-toolbar-active',mobile);if(!utility.hidden)utility.hidden=true;
     if(!mobile&&!menu.open&&!dialog.open){restore();return;}
     ['shadowToggle','dictToggle'].forEach(function(id){move(document.getElementById(id),modes);});
     ['cnMaskToggle','telopToggle','pinToggle','dockMin'].forEach(function(id){move(document.getElementById(id),mainControls);});
@@ -12102,7 +12102,7 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     var parent=P.placement(mode)==='bottom'?document.body:dock;
     if(transport.parentNode!==parent){if(parent===dock&&picture)picture.insertAdjacentElement('afterend',transport);else parent.appendChild(transport);}
     move(follow,followRow);followRow.hidden=false;
-    paintHeader();
+    render();
     refreshNavigation();
   }
   function step(dir){
@@ -12232,7 +12232,8 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   window.addEventListener('scroll',function(){var now=window.scrollY,delta=now-headerLastScroll;headerLastScroll=now;if(!headerUserScroll||Math.abs(delta)<2)return;headerUserScroll=false;var folded=!headerExpanded&&now>120&&delta>0;if(folded!==headerFolded){var before=sharedHeader.getBoundingClientRect().height;headerFolded=folded;paintHeader();var bar=sharedHeader.querySelector('.topbar'),height=sharedHeader.getBoundingClientRect().height;headerReadingResize=height!==before||headerHeightAnimating(bar)?{bar:bar,folded:folded}:null;}},{passive:true});
   document.addEventListener('lang:follow-scroll',function(e){if(!e.detail||['reading-scroll','fold-settled'].indexOf(e.detail.reason)<0)headerUserScroll=false;});
   ['wheel','touchmove'].forEach(function(name){window.addEventListener(name,function(e){if(root.classList.contains('study-modal-open')||(e.target&&e.target.closest&&e.target.closest('dialog')))return;headerExpanded=false;headerUserScroll=true;},{passive:true});});
-  function render(){
+  function render(){requestRender();}
+  function renderNow(){
     var limited=!!(lp.seekOnly&&lp.seekOnly()),mobile=phone.matches,ready=lp.ready(),paused=!ready||lp.paused(),nav=window.LangSentences,
         practice=window.LangPractice?LangPractice.snapshot():{mode:'listen',shadowStyle:'loop',rate:1},
         canPrev=!!(nav&&nav.canStep(-1)),canNext=!!(nav&&nav.canStep(1)),follow=document.getElementById('dockFollow'),followMode=follow&&follow.dataset.followMode||'on';
@@ -12263,13 +12264,16 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     else if(mobile)move(document.getElementById('dictBar'),practiceControls);
     var dark=root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
     [sharedHeader,transport,modeStrip].forEach(function(node){if(node.classList.contains('dark')!==dark)node.classList.toggle('dark',dark);});
-    paintHeader();reserve();
+    paintHeader();reserve();emit('lang:sentence-controls-rendered');
   }
   function apply(value){
     if(['a','b','c'].indexOf(value)<0)value='a';
     var changed=value!==mode;
     if(changed){emit('lang:controls-will-layout');emit('lang:follow-scroll');}
-    mode=value;root.dataset.toolbarArrangement=mode;root.dataset.sentenceControls=P.placement(mode);transport.dataset.placement=P.placement(mode);
+    mode=value;var placement=P.placement(mode);
+    if(root.dataset.toolbarArrangement!==mode)root.dataset.toolbarArrangement=mode;
+    if(root.dataset.sentenceControls!==placement)root.dataset.sentenceControls=placement;
+    if(transport.dataset.placement!==placement)transport.dataset.placement=placement;
     reconcile();radios.forEach(function(r){r.checked=r.value===mode;});
     dialog.querySelectorAll('input[name="sentenceControls"]').forEach(function(r){r.checked=P.resolve({sentenceControls:r.value})===mode;});
     paintText(note,guest?'保存在此设备；登录后可随账号同步。':'此设置会随账号同步。');
@@ -12284,14 +12288,16 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     if(menu.open&&!pointPanel.hidden)paintPoints();
   }
   document.addEventListener('lang:study-preferences',hydrate);
-  document.addEventListener('lang:ui-preferences',function(){headerPaint='';savedPaint='';refreshNavigation();paintHeader();if(pointList.isConnected)paintPoints();render();});
+  document.addEventListener('lang:ui-preferences',function(){headerPaint='';savedPaint='';refreshNavigation();if(menu.open&&!pointPanel.hidden)paintPoints();render();});
   document.addEventListener('lang:study-controls',function(){reconcile();render();});
   document.addEventListener('lang:player-tap-availability',render);
   document.addEventListener('lang:active',render);document.addEventListener('lang:transport',render);
   phone.addEventListener('change',function(){emit('lang:controls-will-layout');emit('lang:follow-scroll');reconcile();savedPaint='';render();emit('lang:controls-layout');});
   if(window.ResizeObserver){var lastHeaderHeight=null;var controlSizeObserver=new ResizeObserver(function(entries){reserve();entries.forEach(function(entry){if(entry.target===sharedHeader){var height=sharedHeader.getBoundingClientRect().height,reading=!!(headerReadingResize&&headerReadingResize.bar===sharedHeader.querySelector('.topbar')&&headerReadingResize.folded===headerFolded);if(!reading||!headerHeightAnimating(headerReadingResize.bar))headerReadingResize=null;if(height!==lastHeaderHeight){lastHeaderHeight=height;emit('lang:controls-layout',{reason:reading?'reading-scroll':'layout'});}}});});controlSizeObserver.observe(sharedHeader);controlSizeObserver.observe(transport);controlSizeObserver.observe(practiceSurface);if(picture)controlSizeObserver.observe(picture);}
-  var renderFrame=null;
-  function requestRender(){if(renderFrame===null)renderFrame=requestAnimationFrame(function(){renderFrame=null;render();});}
+  var renderQueued=false;
+  // Commit once after the controller's synchronous notifications settle, before
+  // the next input can act on stale button geometry or availability.
+  function requestRender(){if(!renderQueued){renderQueued=true;queueMicrotask(function(){renderQueued=false;renderNow();});}}
   window.addEventListener('resize',requestRender,{passive:true});
   // Playback ticks are frequent; only availability or play/pause changes affect
   // these controls. Sentence boundaries already arrive through lang:active.
@@ -12789,8 +12795,9 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     var preferred=window.LangStudyPreferences&&LangStudyPreferences.get().playerInteraction==='tap';
     var owner=window.LangFav&&LangFav.account&&LangFav.account(),ownerKey=owner?owner.id:null;
     if(ownerKey!==tapOwner){tapOwner=ownerKey;epoch++;gesture=null;cancelClick=true;}
-    var bounds=frame.getBoundingClientRect();
-    var available=!!(preferred&&phone.matches&&clip&&clip.id==='clip'&&!compact&&!systemPresentation&&player.ready()&&!(player.seekOnly&&player.seekOnly())&&bounds.height>=160&&bounds.width>=264);
+    var eligible=preferred&&phone.matches&&clip&&clip.id==='clip'&&!compact&&!systemPresentation&&player.ready()&&!(player.seekOnly&&player.seekOnly());
+    var bounds=eligible?frame.getBoundingClientRect():null;
+    var available=!!(bounds&&bounds.height>=160&&bounds.width>=264);
     tap.hidden=!available;
     var value=String(available);
     if(frame.dataset.tapAvailable!==value){
@@ -12838,6 +12845,9 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     var practice=window.LangPractice?LangPractice.snapshot():{mode:'listen',rate:1};
     var compact=dock.classList.contains('min')||document.body.classList.contains('dictation'),systemPresentation=false;
     if(clip)systemPresentation=!!(nativeFullscreen||clip.webkitDisplayingFullscreen||document.fullscreenElement||document.pictureInPictureElement===clip||clip.webkitPresentationMode==='picture-in-picture');
+    var hidden=!compact&&(!!systemPresentation||player.ready()&&!player.paused());
+    // Native play feedback wins over any geometry work needed for tap regions.
+    if(hidden&&!status.hidden)status.hidden=true;
     var tapActive=updateTap(compact,systemPresentation);
     if(pauseSurface){
       var inlinePlaying=clip.id==='clip'&&!clip.paused&&!systemPresentation;
@@ -12851,13 +12861,12 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     var unified=clip&&clip.id==='clip'&&!compact;
     var classes=unified?'player-osd':'production-player-status';
     if(status.className!==classes)status.className=classes;
-    if(unified){var bounds=frame.getBoundingClientRect();status.dataset.small=String(bounds.height<160);status.dataset.narrow=String(bounds.width<268);}
-    var hidden=!compact&&(!!systemPresentation||player.ready()&&!player.paused());
     if(hidden||!unified)scrubbing=false;
     if(status.hidden!==hidden)status.hidden=hidden;
     var value=String(compact);if(status.dataset.compact!==value)status.dataset.compact=value;
     // No hidden timeline needs repainting at playback tick frequency.
     if(hidden)return;
+    if(unified){var bounds=frame.getBoundingClientRect();status.dataset.small=String(bounds.height<160);status.dataset.narrow=String(bounds.width<268);}
     var index=Math.max(0,rows.indexOf(document.querySelector('.u.active')))+1;
     var ready=player.ready(),play=document.getElementById('sentencePlay');
     var model={modeLabel:{listen:'Listen',shadow:'Shadow',dictate:'Write'}[practice.mode]||'Listen',index:index,total:rows.length,rate:practice.rate||1,rateDisabled:!ready||!!(player.seekOnly&&player.seekOnly()),expandEnabled:compact&&dock.classList.contains('min')&&!document.body.classList.contains('dictation')};
@@ -12905,7 +12914,7 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   if(player.onTick)player.onTick(render);
   var media=clip||document.getElementById('clip');
   if(media)['play','pause','ended','ratechange','volumechange','loadedmetadata','durationchange','timeupdate','seeked'].forEach(function(event){media.addEventListener(event,render);});
-  ['lang:active','lang:transport','lang:study-preferences','lang:ui-preferences','lang:study-controls'].forEach(function(event){document.addEventListener(event,render);});
+  ['lang:active','lang:transport','lang:study-preferences','lang:ui-preferences','lang:study-controls','lang:sentence-controls-rendered'].forEach(function(event){document.addEventListener(event,render);});
   document.addEventListener('click',function(e){if(e.target.closest('#sentenceTransport,#productionStudyHeader,#phoneMenu,#shadowBar,#dictBar'))render();});
   new MutationObserver(render).observe(dock,{attributes:true,attributeFilter:['class']});
   new MutationObserver(render).observe(document.body,{attributes:true,attributeFilter:['class']});

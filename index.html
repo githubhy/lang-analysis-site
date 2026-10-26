@@ -5676,8 +5676,9 @@ function INDEX_PURE(){
     var preferred=window.LangStudyPreferences&&LangStudyPreferences.get().playerInteraction==='tap';
     var owner=window.LangFav&&LangFav.account&&LangFav.account(),ownerKey=owner?owner.id:null;
     if(ownerKey!==tapOwner){tapOwner=ownerKey;epoch++;gesture=null;cancelClick=true;}
-    var bounds=frame.getBoundingClientRect();
-    var available=!!(preferred&&phone.matches&&clip&&clip.id==='clip'&&!compact&&!systemPresentation&&player.ready()&&!(player.seekOnly&&player.seekOnly())&&bounds.height>=160&&bounds.width>=264);
+    var eligible=preferred&&phone.matches&&clip&&clip.id==='clip'&&!compact&&!systemPresentation&&player.ready()&&!(player.seekOnly&&player.seekOnly());
+    var bounds=eligible?frame.getBoundingClientRect():null;
+    var available=!!(bounds&&bounds.height>=160&&bounds.width>=264);
     tap.hidden=!available;
     var value=String(available);
     if(frame.dataset.tapAvailable!==value){
@@ -5725,6 +5726,9 @@ function INDEX_PURE(){
     var practice=window.LangPractice?LangPractice.snapshot():{mode:'listen',rate:1};
     var compact=dock.classList.contains('min')||document.body.classList.contains('dictation'),systemPresentation=false;
     if(clip)systemPresentation=!!(nativeFullscreen||clip.webkitDisplayingFullscreen||document.fullscreenElement||document.pictureInPictureElement===clip||clip.webkitPresentationMode==='picture-in-picture');
+    var hidden=!compact&&(!!systemPresentation||player.ready()&&!player.paused());
+    // Native play feedback wins over any geometry work needed for tap regions.
+    if(hidden&&!status.hidden)status.hidden=true;
     var tapActive=updateTap(compact,systemPresentation);
     if(pauseSurface){
       var inlinePlaying=clip.id==='clip'&&!clip.paused&&!systemPresentation;
@@ -5738,13 +5742,12 @@ function INDEX_PURE(){
     var unified=clip&&clip.id==='clip'&&!compact;
     var classes=unified?'player-osd':'production-player-status';
     if(status.className!==classes)status.className=classes;
-    if(unified){var bounds=frame.getBoundingClientRect();status.dataset.small=String(bounds.height<160);status.dataset.narrow=String(bounds.width<268);}
-    var hidden=!compact&&(!!systemPresentation||player.ready()&&!player.paused());
     if(hidden||!unified)scrubbing=false;
     if(status.hidden!==hidden)status.hidden=hidden;
     var value=String(compact);if(status.dataset.compact!==value)status.dataset.compact=value;
     // No hidden timeline needs repainting at playback tick frequency.
     if(hidden)return;
+    if(unified){var bounds=frame.getBoundingClientRect();status.dataset.small=String(bounds.height<160);status.dataset.narrow=String(bounds.width<268);}
     var index=Math.max(0,rows.indexOf(document.querySelector('.u.active')))+1;
     var ready=player.ready(),play=document.getElementById('sentencePlay');
     var model={modeLabel:{listen:'Listen',shadow:'Shadow',dictate:'Write'}[practice.mode]||'Listen',index:index,total:rows.length,rate:practice.rate||1,rateDisabled:!ready||!!(player.seekOnly&&player.seekOnly()),expandEnabled:compact&&dock.classList.contains('min')&&!document.body.classList.contains('dictation')};
@@ -5792,7 +5795,7 @@ function INDEX_PURE(){
   if(player.onTick)player.onTick(render);
   var media=clip||document.getElementById('clip');
   if(media)['play','pause','ended','ratechange','volumechange','loadedmetadata','durationchange','timeupdate','seeked'].forEach(function(event){media.addEventListener(event,render);});
-  ['lang:active','lang:transport','lang:study-preferences','lang:ui-preferences','lang:study-controls'].forEach(function(event){document.addEventListener(event,render);});
+  ['lang:active','lang:transport','lang:study-preferences','lang:ui-preferences','lang:study-controls','lang:sentence-controls-rendered'].forEach(function(event){document.addEventListener(event,render);});
   document.addEventListener('click',function(e){if(e.target.closest('#sentenceTransport,#productionStudyHeader,#phoneMenu,#shadowBar,#dictBar'))render();});
   new MutationObserver(render).observe(dock,{attributes:true,attributeFilter:['class']});
   new MutationObserver(render).observe(document.body,{attributes:true,attributeFilter:['class']});
