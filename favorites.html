@@ -1056,18 +1056,165 @@
   .srs-summary{text-align:center;padding:1.5rem 0 .5rem;}
   .srs-done{font-family:var(--font-mincho);font-size:1.15rem;color:var(--ink);margin:0 0 1.2rem;}
 </style>
+<style data-app-pages>
+/* App-only catalog/library layout. Existing production tokens and owners remain shared. */
+.library-app{max-width:1100px;padding-top:20px;padding-bottom:32px;--app-radius:16px;}
+.library-app [hidden]{display:none!important;}
+.library-app .lang-nav{margin-bottom:26px;gap:8px;min-width:0;}
+.library-app .ln-brand{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.library-app .ln-fav{margin-left:auto;min-height:44px;box-sizing:border-box;}
+.library-app .ln-account{max-width:92px;overflow:hidden;text-overflow:ellipsis;}
+.library-app .app-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;}
+.library-app .app-heading h1{font:700 clamp(1.7rem,3vw,2.25rem)/1.2 var(--font-gothic);letter-spacing:-.04em;margin:0 0 8px;}
+.library-app .app-heading p{font-size:.9rem;line-height:1.65;color:var(--ink-soft);margin:0;}
+.library-app [data-app-icon]{display:inline-flex;align-items:center;flex:none;}
+.library-app [data-app-icon] svg{width:20px;height:20px;}
+.library-app button,.library-app select,.library-app input[type=search],.library-app summary{min-height:44px;box-sizing:border-box;}
+.library-app button,.library-app summary,.library-app select{font-family:var(--font-gothic);}
+.library-app :is(a,button,input,select,summary):focus-visible{outline:2px solid var(--goi);outline-offset:3px;}
+.library-app .app-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--app-radius);padding:16px;margin-bottom:24px;}
+.library-app .app-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;}
+.library-app .app-section-heading h2{font:650 1rem/1.4 var(--font-gothic);margin:0;color:var(--ink);}
+.library-app .app-meta{font-size:.78rem;font-variant-numeric:tabular-nums;color:var(--ink-soft);}
+.library-app .app-search{position:relative;min-width:0;}
+.library-app .app-search>[data-app-icon]{position:absolute;top:12px;left:14px;color:var(--ink-faint);pointer-events:none;}
+.library-app .app-search input{width:100%;border:1px solid var(--line-strong);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit;font-size:.9rem;padding:10px 12px 10px 44px;}
+.library-app .app-filter-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.library-app .app-text-button{border:0;background:transparent;color:var(--goi);padding:8px;font:600 .8rem var(--font-gothic);cursor:pointer;}
+.library-app .app-tools{border:1px solid var(--line);border-radius:12px;margin:0 0 24px;background:var(--card);}
+.library-app .app-tools>summary{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;list-style:none;color:var(--ink-soft);font-size:.85rem;}
+.library-app .app-tools>summary::-webkit-details-marker{display:none;}
+.library-app .app-tools>summary::after{content:'⌄';margin-left:auto;font-size:1.1rem;}
+.library-app .app-tools[open]>summary::after{content:'⌃';}
+.library-app .app-tool-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:0 8px 8px;gap:4px;}
+.library-app .app-tool-links a{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px;color:var(--ink);text-decoration:none;border-radius:8px;line-height:1.4;}
+.library-app .app-tool-links a:hover{background:var(--paper);}
+.library-app .app-tool-links small{display:block;font-size:.75rem;color:var(--ink-soft);margin-top:4px;}
+.library-app .idx-head{gap:12px;margin:0;}
+.library-app .idx-chips{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:0 0 4px;gap:6px;scrollbar-width:thin;}
+.library-app .idx-chip{flex:none;padding:8px 14px;font-size:.8rem;border-radius:9px;background:var(--paper);}
+.library-app .idx-chip.on{background:var(--goi);border-color:var(--goi);color:var(--paper);}
+.library-app .idx-sort{gap:4px;}
+.library-app .idx-sort-l{margin-right:4px;}
+.library-app .idx-sort-b{padding:6px 10px;border-radius:8px;background:transparent;border-color:transparent;}
+.library-app .idx-sort-b.on{background:var(--paper);color:var(--ink);border-color:var(--line-strong);}
+.library-app .idx-recent{gap:10px;margin-bottom:24px;grid-template-columns:repeat(3,minmax(0,1fr));}
+.library-app a.idx-card{border-radius:12px;padding:14px;gap:6px;transition:border-color .15s;min-width:0;}
+.library-app a.idx-card:hover{transform:none;border-color:var(--goi);}
+.library-app .idx-card-jp{font:650 1rem/1.6 var(--font-gothic);}
+.library-app .idx-card-src{font-size:.78rem;}
+.library-app .idx-card-eb{font-size:.7rem;letter-spacing:0;}
+.library-app .idx-pill{padding:2px 6px;font-size:.7rem;}
+.library-app .idx-month{margin:20px 0 4px;font-size:.8rem;}
+.library-app a.idx-row{grid-template-columns:45px 72px minmax(0,1fr) auto auto;padding:14px 2px;gap:12px;min-height:64px;}
+.library-app .idx-title{white-space:normal;overflow:visible;line-height:1.65;font:600 .94rem/1.6 var(--font-gothic);min-width:0;overflow-wrap:anywhere;}
+.library-app .idx-dur{white-space:nowrap;}
+.library-app .idx-continue{margin-bottom:20px;}
+.library-app .idx-continue:has(#idxResume[hidden]){display:none;}
+.library-app .idx-resume-link{display:block;border-radius:12px;border-left:3px solid var(--goi);padding:14px 16px;color:var(--ink);font-size:.9rem;line-height:1.6;}
+.library-app .app-about{margin-top:28px;border-top:1px solid var(--line);padding-top:12px;color:var(--ink-soft);font-size:.8rem;}
+.library-app .app-about summary{display:flex;align-items:center;cursor:pointer;}
+.library-app .app-about p{line-height:1.7;margin:0 0 12px;}
+.library-app footer{margin-top:24px;padding-top:16px;font-size:.75rem;line-height:1.7;}
+.library-app .library-navigation{margin:0 0 16px;}
+.library-app .library-navigation .study-library-tabs{gap:6px;}
+.library-app .study-library-tabs button{min-height:54px;flex-direction:row;align-items:center;gap:7px;padding:10px 8px;border-radius:10px;}
+.library-app .study-library-tabs button svg{width:19px;height:19px;}
+.library-app .study-library-tabs button b{margin-left:auto;font-size:.78rem;}
+.library-app .fav-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin:0;}
+.library-app .fav-toolbar .app-search{grid-column:1/-1;}
+.library-app .fav-toolbar select{min-width:0;max-width:100%;border-radius:9px;padding:8px 12px;font-size:.8rem;}
+.library-app .fav-count{display:flex;align-items:center;justify-content:flex-end;font-size:.76rem;letter-spacing:0;}
+.library-app .library-review-actions{display:flex;gap:8px;margin-top:12px;}
+.library-app .library-review-actions:empty{display:none;}
+.library-app .library-review-actions .btn{border-radius:10px;background:var(--goi);border-color:var(--goi);color:var(--paper);font-size:.85rem;padding:10px 16px;}
+.library-app #libraryData{margin:0;flex:none;background:transparent;position:relative;}
+.library-app #libraryData>summary{white-space:nowrap;font-size:.8rem;gap:6px;padding:8px 10px;}
+.library-app #libraryData>summary::after{display:none;}
+.library-app .library-data-body{position:absolute;right:0;top:calc(100% + 8px);width:min(330px,calc(100vw - 2.2rem));padding:16px;background:var(--card);border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 12px 32px #0002;z-index:10;box-sizing:border-box;}
+.library-app .library-data-body h2{font-size:.8rem;font-family:var(--font-gothic);margin:0 0 8px;color:var(--ink-soft);}
+.library-app .library-data-body p{font-size:.78rem;line-height:1.6;color:var(--ink-soft);margin:6px 0 12px;}
+.library-app .library-data-body .btn{border-radius:9px;white-space:normal;text-align:left;font-size:.8rem;padding:8px 12px;}
+.library-app .library-backup-actions,.library-app .fav-actions{display:grid;gap:8px;margin:0 0 16px;}
+.library-app .library-data-body .sync{margin:16px 0 0;}
+.library-app .fgroup{margin:24px 0 0;}
+.library-app .fgroup-h{align-items:center;font-size:.88rem;margin:0 0 10px;line-height:1.5;}
+.library-app .fgroup-h .n{border:1px solid var(--line);border-radius:6px;padding:1px 6px;}
+.library-app .frow{grid-template-columns:1fr;padding:16px 0;gap:8px;}
+.library-app .fts{font-size:.72rem;color:var(--goi);}
+.library-app .fjp{font-size:1.05rem;line-height:1.9;}
+.library-app .fcn{font-size:.84rem;line-height:1.7;margin-top:4px;}
+.library-app .frow-side{flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px;}
+.library-app .frow-side a,.library-app .frow-side button{min-height:44px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.76rem;}
+.library-app .frow-side .srs-due{font-size:.7rem;margin-right:auto;}
+.library-app .library-note{padding:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow-wrap:anywhere;}
+.library-app .library-note small{font-size:.75rem;color:var(--ink-soft);}
+.library-app .library-note p{line-height:1.8;white-space:pre-wrap;font-size:.93rem;margin:10px 0;}
+.library-app .library-note a{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:.8rem;color:var(--goi);}
+.library-app .library-note a svg{width:17px;height:17px;}
+.library-app .vocab-deck{margin:0;}
+.library-app .vocab-head{display:none;}
+.library-app .vrow{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px;border-radius:12px;}
+.library-app .vrow .chip{justify-self:start;margin:0;}
+.library-app .vgloss{grid-column:1;grid-row:2;overflow-wrap:anywhere;}
+.library-app .vsrc{grid-column:1;grid-row:3;min-height:44px;display:flex;align-items:center;}
+.library-app .vdel{grid-column:2;grid-row:1/4;min-width:44px;}
+.library-app .library-empty{border:1px dashed var(--line-strong);border-radius:12px;padding:20px;margin:16px 0;font-size:.9rem;line-height:1.7;color:var(--ink-soft);}
+@media(max-width:600px){
+ .library-app .app-heading{gap:10px;margin-bottom:18px;}
+ .library-app .app-heading p{font-size:.82rem;}
+ .library-app .app-tool-links{grid-template-columns:1fr;}
+ .library-app .idx-recent{grid-template-columns:1fr;gap:8px;}
+ .library-app a.idx-card{padding:12px 14px;gap:4px;}
+ .library-app .idx-card-jp{font-size:.94rem;}
+ .library-app .idx-card-src{display:none;}
+ .library-app .idx-card-pills{margin-top:0;}
+ .library-app .idx-row{grid-template-columns:38px minmax(0,1fr) auto!important;gap:8px!important;}
+ .library-app .idx-n,.library-app .idx-gtag{display:none;}
+ .library-app .app-panel{padding:12px;}
+ .library-app .app-filter-bottom{gap:0;}
+ .library-app .idx-sort-b{font-size:.73rem;padding:6px 8px;}
+ .library-app .app-text-button{font-size:.75rem;}
+ .library-app .ln-account{max-width:64px;padding-left:8px;padding-right:8px;}
+ .library-app .ln-brand{font-size:.75rem;}
+ .library-app .ln-fav{font-size:.75rem;padding:5px 8px;}
+}
+@media(prefers-reduced-motion:reduce){.library-app *{scroll-behavior:auto!important;transition:none!important;}}
+
+.library-app [data-app-icon] svg,.library-app .ln-mark svg,.library-app .library-note svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.library-app .app-search #idxSearch,.library-app .app-search #favSearch{padding-left:42px;border-radius:10px;background:var(--paper);}
+.library-app :is(.idx-chip,.idx-card-eb,.idx-gtag,.idx-date,.idx-month,.idx-n,.idx-dur,.idx-pill,.idx-sort,.idx-sort-l,.idx-recency,footer){color:var(--ink-soft);}
+.library-app .idx-chip.on{color:var(--paper);}
+.library-app .idx-card-eb::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--genre-accent);margin-right:6px;vertical-align:2px;}
+.library-app .study-library-count{margin-left:auto;}
+.library-app .library-data-body{max-height:70dvh;overflow-y:auto;overscroll-behavior:contain;}
+@media(max-width:600px){.library-app .ln-brand{font-size:0;display:inline-flex;align-items:center;min-width:36px;flex:none;}.library-app .ln-mark{font-size:1rem;display:inline-flex;}.library-app .ln-mark svg{width:22px;height:22px;}}
+.library-app .fav-count,.library-app .frow-side button{color:var(--ink-soft);}
+
+@media(max-width:600px){.library-app .app-search #idxSearch,.library-app .app-search #favSearch,.library-app .sync-body input{font-size:1rem;}}
+
+.library-app #favVideo{height:44px;}
+
+.library-app .ln-brand{min-width:44px;min-height:44px;display:inline-flex;align-items:center;}
+.library-app footer a{min-height:44px;display:inline-flex;align-items:center;}
+.library-app textarea{font-size:1rem;}
+
+</style>
 </head>
 <body>
-<div class="wrap">
+<main class="wrap library-app" data-app-page="favorites">
   <nav class="lang-nav" data-kind="review"><a class="ln-brand" href="index.html"><span class="ln-mark">◂</span> lang分析</a><span class="ln-fav ln-current"><span class="ln-star">★</span> 收藏 <b class="ln-fav-n">0</b><span class="ln-dot ln-off" title="未开启"></span></span></nav>
-  <p class="eyebrow" data-ui-chrome>Favorites library</p>
-  <h1 data-ui-chrome>Favorites</h1>
-  <p class="sub" data-ui-chrome>Saved sentences, words and notes from your study pages.</p>
-  <nav id="libraryNavigation" class="library-navigation study-ui" aria-label="Favorites library"></nav>
-  <p id="libraryEmpty" class="note" data-ui-chrome hidden></p>
-  <section id="libraryNotes" hidden></section>
-
-  <div id="accountSyncIntro" hidden><p>登录后，收藏、复习记录、笔记和学习进度会自动同步。</p><button class="btn" id="accountConnect" type="button">登录或管理账号</button></div>
+  <header class="app-heading"><div data-ui-chrome><h1>Your library</h1><p>A home for your saved sentences, words and notes.</p></div>
+    <details class="app-tools" id="libraryData"><summary data-ui-chrome><span data-app-icon="archive"></span><span>Data tools</span></summary>
+      <div class="library-data-body">
+        <h2 data-ui-chrome>Complete backup</h2><p data-ui-chrome>Includes sentences, words, notes and study records.</p>
+        <div class="library-backup-actions" data-ui-chrome>
+          <button class="btn ghost" id="expJson" type="button"><span data-app-icon="download"></span> 导出备份（JSON）</button>
+          <button class="btn ghost" id="impBtn" type="button"><span data-app-icon="upload"></span> 导入备份（JSON）</button>
+          <input id="impFile" type="file" accept="application/json,.json" hidden>
+        </div>
+        <div class="fav-actions" data-ui-chrome><h2>Sentence export</h2><button class="btn ghost" id="expAnki" type="button">导出 Anki（TSV）</button></div>
+        <div id="accountSyncIntro" hidden><p data-ui-chrome>登录后，收藏、复习记录、笔记和学习进度会自动同步。</p><button class="btn" id="accountConnect" type="button" data-ui-chrome>登录或管理账号</button></div>
   <details class="sync" id="legacySyncPanel" hidden>
     <summary>⚙ 云同步（可选 · 跨设备）</summary>
     <div class="sync-body">
@@ -1084,27 +1231,28 @@
         任何拿到链接的人都能看。</p>
     </div>
   </details>
-
-  <div class="fav-toolbar" data-ui-chrome>
-    <input id="favSearch" type="search" placeholder="搜索 日文 / 译文 / 文法…" aria-label="搜索收藏">
-    <select id="favVideo" aria-label="按视频筛选"><option value="">全部视频</option></select>
-    <span class="fav-count" id="favCount"></span>
-  </div>
-
-  <div class="fav-actions" data-ui-chrome>
-    <button class="btn" id="expAnki">导出 Anki（TSV）</button>
-    <button class="btn ghost" id="expJson">导出备份（JSON）</button>
-    <button class="btn ghost" id="impBtn">导入备份（JSON）</button>
-    <input id="impFile" type="file" accept="application/json,.json" hidden>
-  </div>
-
-  <div id="favList"></div>
-  <p id="favEmptyReview" class="note" hidden>还没有收藏。打开任意讲解页，点句子的<b>书签图标</b>即可收藏。</p>
-
-  <footer>
-    学习记录保存在本机；登录后可跨设备同步。请定期导出完整备份，避免浏览器清理数据造成丢失。 · <a href="index.html">← 返回目录</a>
-  </footer>
-</div>
+      </div>
+    </details>
+  </header>
+  <nav id="libraryNavigation" class="library-navigation study-ui" aria-label="Favorites library"></nav>
+  <section class="app-panel" aria-label="Favorites library" data-ui-chrome>
+    <div class="fav-toolbar"><div class="app-search"><span data-app-icon="search"></span>
+      <input id="favSearch" type="search" placeholder="Search your saved items…" aria-label="搜索收藏"></div>
+      <select id="favVideo" aria-label="按视频筛选"><option value="">全部视频</option></select>
+      <span class="fav-count" id="favCount" role="status" aria-live="polite"></span>
+    </div>
+    <div id="libraryReviewActions" class="library-review-actions"></div>
+  </section>
+  <section id="libraryContent" aria-label="Favorites library">
+    <div id="favList"></div>
+    <p id="favEmptyReview" class="library-empty" data-ui-chrome hidden>No saved sentences hint</p>
+    <p id="libraryEmpty" class="library-empty" data-ui-chrome hidden></p>
+    <div id="libraryNoResults" class="library-empty" hidden><p data-ui-chrome>No matching saved items.</p><button id="libraryClear" class="app-text-button" type="button" data-ui-chrome>Clear search</button></div>
+    <section id="libraryWords" hidden></section>
+    <section id="libraryNotes" hidden></section>
+  </section>
+  <footer data-ui-chrome><span>Library storage note</span> · <a href="index.html">← 返回目录</a></footer>
+</main>
 <!--study-ui:start-->
 <style data-study-ui="7748565c9bad5987b03e0e6c318d677908a40f9dbb8673c2e7930b3f33b82abf">
 /* Shared component foundation, scoped away from the surrounding lesson. */
@@ -5625,40 +5773,102 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   var LF=window.LangFav,UI=window.LangStudyUI,nav=document.getElementById('libraryNavigation');
   if(!LF||!UI||!nav)return;
   var pages={"1000776697656": {"page": "hatameimu-fun-059.html", "title": "「ついに福本莉子さんが登場！」"}, "LYZx8n0VOWg": {"page": "kachikan.html", "title": "「恋人との価値観のズレ」"}, "TOu_aXJptMc": {"page": "konkatsu.html", "title": "「会話が続かないんですよ」"}, "EP8pYHrmyig": {"page": "sashinomi.html", "title": "「帰りたくないっていったら…」"}, "hEvCWsSs0AI": {"page": "tomodachi.html", "title": "「付き合ったってことでOK？」"}, "aL6hlSKKmKc": {"page": "bunpou.html", "title": "「口を開けばマウントを取ってくる」"}, "thhzMkcW3j8": {"page": "sqex-pm.html", "title": "「ゲームと仕事は似ている」"}, "vH3D0Ob7rV8": {"page": "oshare-takedatsu.html", "title": "「泣いて帰ってきた日」"}, "H07Ga5eiYEw": {"page": "iginari-fureai.html", "title": "「動物ふれあいSP」"}, "DIJDQQ_7LuE": {"page": "mushoku-sugita.html", "title": "「豪華声優陣が登壇！」"}, "SCshAvEw964": {"page": "honne-talk.html", "title": "「芸能界引退考えたことある？」"}, "IydOjbD9yKA": {"page": "shoten-date.html", "title": "「マジで私の庭！」"}, "Heafu-fkrCI": {"page": "kayanomi-mushoku.html", "title": "かやのみ#190「愛が溢れかえった 無職転生コラボ第3弾！後半」"}, "4LDcyN1XFQI": {"page": "tonari-otayori-182.html", "title": "「お便り'26夏」"}, "wESUEKTU5Yg": {"page": "yoshitaka-oguri.html", "title": "「ショルダーバッグがショルダーしちゃって」"}, "MtCiJ9hnJIw": {"page": "bukuro-tenshoku.html", "title": "「勝手に転職先を探そう！」"}, "Ppyx9UWwmd0": {"page": "shinonome-gravure.html", "title": "「愛理ちゃんの写真集を解説」"}, "JlkcbTce518": {"page": "business-model-9.html", "title": "「なぜモノを売ると儲からないのか」ビジネスモデル9分類"}, "-ULiVRJrZD8": {"page": "sakura-ayane-atama.html", "title": "「ちゃおっ子のままトップ声優になった」佐倉綾音の頭の中"}, "3Ss2Uh8FVFU": {"page": "tokui-yakiniku-nashiko.html", "title": "台所焼肉に初めてのお客様がやってきた【桃月なしこ】"}, "BV1URZeBdE78": {"page": "silent-poor-01.html", "title": "サイレント・プア 第1回「その手を離さない」"}, "BV17vKP64Eev": {"page": "doraemon-3gatsu.html", "title": "ドラえもん「いつでも卒業証書」"}, "BV1p4MD6KEqW": {"page": "mushoku-tensei-s3-07.html", "title": "無職転生 第3期 第7話「第四段階」"}, "BV1PQ4y1N7V8": {"page": "conan-001.html", "title": "名探偵コナン 第1話「ジェットコースター殺人事件」"}, "X3TXmFFtRyg": {"page": "morikasumi-mitame.html", "title": "森香澄・岡田紗佳・東ブクロ「男性に注意する見た目」"}, "wnS33eLfFRQ": {"page": "okada-stretch.html", "title": "全力ストレッチに“ストレッチ目的”で行ってるふりする男"}, "AoUeF2nr4N8": {"page": "renai-tetsugaku.html", "title": "私の恋愛哲学「会いたいが先に来る時はダメ」"}, "1yIWysQrqqg": {"page": "fumikoeta-issen.html", "title": "踏み越えた一線「私はカップルに間違われてもいいよ」"}, "BV18pgA6nEnz": {"page": "queen-scandal-02.html", "title": "スキャンダル専門弁護士 QUEEN 第2話"}, "BV1MrMg6eEhE": {"page": "toshi-densetsu-01.html", "title": "都市伝説の女 第1話"}, "BV1dnj26AEpV": {"page": "alice-irori-01.html", "title": "アリスさんちの囲炉裏端 第1話"}, "BV1d5jc6zE3Q": {"page": "onna-yurusanai-01.html", "title": "女はそれを許さない 第1話"}, "BV15RcSzXESA": {"page": "siren-keiji-01.html", "title": "サイレーン 刑事×彼女×完全悪女 第1話"}, "BV1o4u86BEv7": {"page": "hajimete-koi-01.html", "title": "初めて恋をした日に読む話 第1話"}, "BV1fMJ9zLEKT": {"page": "kake-sayonara-01.html", "title": "賭けからはじまるサヨナラの恋 第1話"}, "BV1kR4y1t7aF": {"page": "conan-002.html", "title": "名探偵コナン 第2話「社長令嬢誘拐事件」"}, "BV1NU4y1u7oL": {"page": "conan-003.html", "title": "名探偵コナン 第3話「アイドル密室殺人事件」"}, "BV1MewWzNEKx": {"page": "animals-01.html", "title": "ANIMALS 第1話（拡大初回）"}, "BV1Vn61YtEGf": {"page": "watadou-01.html", "title": "私たちはどうかしている 第1話「運命の再会」"}, "BV1FJ411977e": {"page": "doctorx-s1-01.html", "title": "ドクターX 第1話「私、失敗しないので」"}, "BV1am3x6xEfD": {"page": "bizkon-01.html", "title": "ビジネス婚 第1話"}, "BV1YR9oBnEoS": {"page": "tonakazo-01.html", "title": "隣の家族は青く見える 第1話"}, "Bv3sj-D5VUU": {"page": "kenryoku-hakaba-01.html", "title": "権力の墓場 1〜5話 · 逐句精讲"}, "YwSjURxQRn4": {"page": "gaffigan-teenagers.html", "title": "Why Teenagers Are So Embarrassing · line by line"}, "YMl-BXQt3V8": {"page": "kareshi-karada-01.html", "title": "亡くなった彼氏が、人の体で生きていた · 逐句精讲"}, "BV1bHDPBHES5": {"page": "shosen-taningoto-01.html", "title": "しょせん他人事ですから ～とある弁護士の本音の仕事~ 第1話"}, "BV1pDKE6kESD": {"page": "fruits-takkyuubin-02.html", "title": "フルーツ宅配便 第2話"}, "BV1xBYL6MEVN": {"page": "otona-ninattemo-01.html", "title": "おとなになっても 第1話"}, "BV1ajb3zGEi3": {"page": "crayon-shinchan-100-1.html", "title": "クレヨンしんちゃん 良い子のしんちゃんダゾ"}, "BV1GwZrBjE1s": {"page": "iyashi-otonari-01.html", "title": "癒やしのお隣さんには秘密がある 第1話"}, "BV1WsbZ6VEkW": {"page": "shichinin-hisho-01.html", "title": "七人の秘書 第1話"}, "BV1KgnBzXED4": {"page": "dame-koi-zukan-01.html", "title": "深夜のダメ恋図鑑 第1話"}, "BV1zm876FESy": {"page": "teiji-kaerimasu-01.html", "title": "わたし、定時で帰ります。 第1話"}, "BV1tZum63EsG": {"page": "hakozume-01.html", "title": "ハコヅメ〜たたかう!交番女子〜 第1話"}, "BV1B97T6cEGh": {"page": "tian-cai-wei-zhuang-nv-you-ep01.html", "title": "その天才様は偽装彼女に執着する 第1話"}, "BV17xZjBXEkD": {"page": "shiranakute-ii-koto-01.html", "title": "知らなくていいコト 第1話"}, "-ZMNHupNQks": {"page": "yanagisawa-suimin-01.html", "title": "「睡眠へのこだわり」ラスカー賞・柳沢正史教授"}, "jxXI-abZwBg": {"page": "yakan-kazoku-s2-05.html", "title": "やかんの家族だゾ！S2 第5話「忘れられない夏の日だゾ！」"}, "yrCTgIpARrg": {"page": "motenai-onna-honne-01.html", "title": "モテない女を本気で好きになる男の本音がエグいほどわかるドラマ"}, "YEdBFj297O4": {"page": "tokyo03-tougeika-deshi.html", "title": "東京03 -「陶芸家と弟子」／『第27回東京03単独公演「とりあえず謝れず」』より"}, "BV1p4b26GEjE": {"page": "koisuru-keigo-s1e01.html", "title": "恋する警護24時 S1E01"}, "BV1gaeA6mEaH": {"page": "wagaya-wa-tanoshii-2025-sp.html", "title": "わが家は楽し（2025）SP"}, "BV17NhJ68EVH": {"page": "ranma-1-2-2024-s1-ep01.html", "title": "らんま1/2 第1話「らんまが来た」"}, "BV1egtg6WEAM": {"page": "waru-2022-ep01.html", "title": "悪女（わる）～働くのがカッコ悪いなんて誰が言った？～ 第1話「コロナ年入社（備品管理課）」"}, "viRjCgqw91U": {"page": "every-meat-mekiki-01.html", "title": "【桐谷美玲“キリモリ”】意外と知らないお肉の目利き術"}},active='sentences',owner=ownerId(),lastTabs='',lastNotes='';
-  var notesEl=document.getElementById('libraryNotes'),empty=document.getElementById('libraryEmpty');
+  var notesEl=document.getElementById('libraryNotes'),empty=document.getElementById('libraryEmpty'),search=document.getElementById('favSearch'),video=document.getElementById('favVideo'),noResults=document.getElementById('libraryNoResults'),review=document.getElementById('libraryReviewActions');
   function ownerId(){return LF.account&&LF.account()?LF.account().id:null;}
   function t(value){return window.LangStudyI18n?LangStudyI18n.t(value):value;}
   function counts(){return {sentences:Object.keys(LF.all()).length,words:Object.keys(LF.getNS('vocab')).length,notes:Object.values(LF.getNS('notes')).filter(function(n){return n&&typeof n.text==='string'&&n.text.trim();}).length};}
-  function noteRows(){
+  function noteRows(query){
     var favorites=LF.all(),notes=LF.getNS('notes');
-    return Object.keys(notes).filter(function(id){return notes[id]&&typeof notes[id].text==='string'&&notes[id].text.trim();}).sort(function(a,b){return (notes[b].at||0)-(notes[a].at||0)||a.localeCompare(b);}).map(function(id){
+    return Object.keys(notes).filter(function(id){var note=notes[id],source=pages[id.split('#')[0]];return note&&typeof note.text==='string'&&note.text.trim()&&(!query||(note.text+' '+(source?source.title:'')).toLowerCase().indexOf(query)>=0);}).sort(function(a,b){return (notes[b].at||0)-(notes[a].at||0)||a.localeCompare(b);}).map(function(id){
       var favorite=favorites[id],source=(favorite&&/^[a-zA-Z0-9_-]+\.html$/.test(favorite.page||''))?{page:favorite.page,title:favorite.page_title||favorite.page}:pages[id.split('#')[0]];
       var link=source?'<a href="'+UI.escape(source.page)+'#s='+encodeURIComponent(id)+'">'+UI.icon('external')+'<span data-ui-chrome>'+UI.escape(t('Open source'))+'</span></a>':'';
       return '<article class="library-note"><small data-user-content>'+UI.escape(source?source.title:id)+'</small><p data-user-content>'+UI.escape(notes[id].text)+'</p>'+link+'</article>';
     }).join('');
   }
   function render(){
-    if(owner!==ownerId()){owner=ownerId();active='sentences';lastNotes='';}
+    if(owner!==ownerId()){owner=ownerId();active='sentences';lastNotes=null;search.value='';video.value='';}
     var count=counts(),focus=document.activeElement&&document.activeElement.closest('#libraryNavigation [data-act]'),focusAction=focus&&focus.dataset.act;
     var html=UI.renderLibraryTabs({active:active,counts:count},{t:t});
     if(html!==lastTabs){nav.innerHTML=html;lastTabs=html;if(focusAction){var target=Array.from(nav.querySelectorAll('[data-act]')).find(function(el){return el.dataset.act===focusAction;});if(target)target.focus({preventScroll:true});}}
     nav.lang={zh:'zh-Hans',en:'en',ja:'ja'}[window.LangStudyPreferences?LangStudyPreferences.get().uiLocale:'zh'];
     document.getElementById('favList').hidden=active!=='sentences';
     document.getElementById('favEmptyReview').hidden=active!=='sentences'||count.sentences>0;
-    document.querySelector('.fav-toolbar').hidden=active!=='sentences';
+    document.querySelector('.fav-toolbar').hidden=false;video.hidden=active!=='sentences';
     document.querySelector('.fav-actions').hidden=active!=='sentences';
-    var start=document.getElementById('srsStart');if(start)start.hidden=active!=='sentences';
-    var vocab=document.getElementById('vocabDeck');if(vocab)vocab.hidden=active!=='words'||count.words===0;
+    var start=document.getElementById('srsStart'),wordStart=document.getElementById('vocabStart'),vocab=document.getElementById('vocabDeck'),words=document.getElementById('libraryWords');
+    if(start){if(start.parentNode!==review)review.appendChild(start);start.hidden=active!=='sentences';}
+    if(wordStart){if(wordStart.parentNode!==review)review.appendChild(wordStart);wordStart.hidden=active!=='words';}
+    [[start,'Review sentences'],[wordStart,'Review words']].forEach(function(pair){var button=pair[0],n=button&&button.textContent.match(/\((\d+)\)$/);if(button&&n)button.textContent=t(pair[1])+' ('+n[1]+')';});
+    if(vocab){if(words&&vocab.parentNode!==words)words.appendChild(vocab);vocab.hidden=active!=='words'||count.words===0;}
+    if(words)words.hidden=active!=='words';
     notesEl.hidden=active!=='notes';
-    var rows=noteRows();if(rows!==lastNotes){notesEl.innerHTML=rows;lastNotes=rows;}
+    var query=search.value.trim().toLowerCase(),rows=noteRows(query);
+    if(rows!==lastNotes){notesEl.innerHTML=rows;lastNotes=rows;}
+    var shown=0;
+    if(active==='words'&&vocab){
+      var records=LF.getNS('vocab');
+      vocab.querySelectorAll('.vrow').forEach(function(row){var key=row.querySelector('[data-id]').dataset.id,record=records[key]||{};var matches=!query||(String(record.term||'')+' '+String(record.gloss||'')).toLowerCase().indexOf(query)>=0;row.hidden=!matches;if(matches)shown++;});
+    }else if(active==='notes')shown=notesEl.children.length;
+    else shown=document.querySelectorAll('#favList .frow').length;
+    document.getElementById('favCount').textContent=shown+' / '+count[active]+' '+t(active==='sentences'?'Sentences':active==='words'?'Vocabulary':'Notes');
+    if(noResults)noResults.hidden=count[active]===0||shown>0;
+    if(review)review.hidden=active==='notes'||count[active]===0;
     empty.hidden=active==='sentences'||count[active]>0;
     var label=t(active==='notes'?'No saved notes yet.':'No saved words yet.');if(empty.textContent!==label)empty.textContent=label;
   }
   nav.addEventListener('click',function(e){var button=e.target.closest('[data-act]');if(!button)return;var choice=button.dataset.act.replace('library-tab:','');if(!['sentences','words','notes'].includes(choice))return;active=choice;render();});
+  var wordList=document.getElementById('vocabList');
+  if(wordList)new MutationObserver(render).observe(wordList,{childList:true});
+  search.addEventListener('input',render);video.addEventListener('change',render);
+  var clear=document.getElementById('libraryClear');if(clear)clear.addEventListener('click',function(){search.value='';video.value='';search.dispatchEvent(new Event('input',{bubbles:true}));search.focus({preventScroll:true});});
   LF.onChange(render);if(LF.ready)LF.ready.then(render);
   document.addEventListener('lang:ui-preferences',render);document.addEventListener('lang:ui-ready',render);
   render();
 })();
+</script>
+<script data-app-pages>
+/* Catalog/library chrome only. No storage, account or review ownership. */
+(function(){
+ 'use strict';
+ var UI=window.LangStudyUI;if(!UI)return;
+ var copy={
+  'Genre':['分类','Genre','ジャンル'],
+  'Library storage note':['学习记录保存在本机；登录后可跨设备同步。请定期导出完整备份，避免浏览器清理数据造成丢失。','Study data stays on this device and syncs after sign-in. Export a complete backup before clearing browser data.','学習データはこの端末に保存され、ログイン後に同期されます。ブラウザのデータを消す前に完全バックアップを保存してください。'],
+  'No saved sentences hint':['还没有收藏。打开任意讲解页，点句子的书签图标即可收藏。','No saved sentences yet. Open a lesson and use a sentence’s bookmark button to save it.','保存した文はまだありません。レッスンのブックマークボタンで文を保存できます。'],
+  'Your lessons':['学习目录','Your lessons','レッスン一覧'],
+  'Choose a lesson and pick up where you left off.':['选择课程，接着上次的进度学习。','Choose a lesson and pick up where you left off.','レッスンを選んで、続きから学びましょう。'],
+  'Your library':['收藏库','Your library','コレクション'],
+  'A home for your saved sentences, words and notes.':['集中查看和复习句子、词汇与笔记。','A home for your saved sentences, words and notes.','保存した文・単語・ノートをまとめて復習。'],
+  'Study tools':['学习工具','Study tools','学習ツール'],
+  'Daily review':['今日学习','Daily review','今日の学習'],
+  'Due cards and recent study':['到期复习与最近学习','Due cards and recent study','復習するカードと学習履歴'],
+  'Grammar examples':['文法索引','Grammar examples','文法の用例'],
+  'Compare examples across lessons':['跨课程查看相同词条','Compare examples across lessons','レッスンを横断して用例を探す'],
+  'Transcript search':['全文检索','Transcript search','全文検索'],
+  'Find a word in every lesson':['在全部对白中查找','Find a word in every lesson','すべての会話から検索'],
+  'Browse lessons':['浏览课程','Browse lessons','レッスンを探す'],
+  'Latest lessons':['最近更新','Latest lessons','最近のレッスン'],
+  'All lessons':['全部课程','All lessons','すべてのレッスン'],
+  'Clear filters':['清除筛选','Clear filters','絞り込みを解除'],
+  'Clear search':['清除搜索','Clear search','検索をクリア'],
+  'No matching saved items.':['没有匹配的收藏。','No matching saved items.','一致する保存項目はありません。'],
+  'Data tools':['数据管理','Data tools','データ管理'],
+  'Complete backup':['完整备份','Complete backup','完全バックアップ'],
+  'Includes sentences, words, notes and study records.':['包含句子、词汇、笔记和学习记录。','Includes sentences, words, notes and study records.','文・単語・ノート・学習記録を含みます。'],
+  'Sentence export':['句子导出','Sentence export','文の書き出し'],
+  'Review sentences':['复习句子','Review sentences','文を復習'],
+  'Review words':['复习词汇','Review words','単語を復習'],
+  'About these lessons':['关于这些课程','About these lessons','レッスンについて'],
+  'Study with sentence timestamps, readings, translations and grammar notes.':['通过逐句时间戳、读音、译文与文法解析学习。','Study with sentence timestamps, readings, translations and grammar notes.','文ごとの時刻・読み方・翻訳・文法解説で学べます。'],
+  'Open a lesson to see its source and playback options.':['打开课程查看来源与播放方式。','Open a lesson to see its source and playback options.','各レッスンで出典と再生方法を確認できます。'],
+  'Search your saved items…':['搜索收藏的句子、词汇、笔记…','Search your saved items…','保存した文・単語・ノートを検索…']
+ };
+ Object.keys(copy).forEach(function(key){['zh','en','ja'].forEach(function(locale,i){UI.strings[locale][key]=copy[key][i];});});
+ function icons(){document.querySelectorAll('.library-app [data-app-icon]').forEach(function(el){if(!el.firstElementChild)el.innerHTML=UI.icon(el.dataset.appIcon);});}
+ var mark=document.querySelector('.library-app .ln-mark');if(mark)mark.innerHTML=UI.icon('courses');
+ icons();document.addEventListener('lang:ui-ready',icons);
+})();
+
 </script>
 <!--study-ui:runtime:start-->
 <script>
