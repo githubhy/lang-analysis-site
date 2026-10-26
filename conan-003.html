@@ -5401,7 +5401,7 @@
 </script>
 
 <!--study-ui:start-->
-<style data-study-ui="251b96613f32ade3ce079b6cc6ae170aabb21db3cb32e003a4ce11a5b45ebc13">
+<style data-study-ui="7748565c9bad5987b03e0e6c318d677908a40f9dbb8673c2e7930b3f33b82abf">
 /* Shared component foundation, scoped away from the surrounding lesson. */
 .study-ui{--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font:14px/1.5 var(--font);color:var(--ink);container-type:inline-size}
 .study-ui *{box-sizing:border-box}
@@ -5709,6 +5709,9 @@ html.study-modal-open :is(dialog.settings-dialog,dialog.account-dialog)[open]{ov
 .study-ui .folded-nav[data-wide="true"] .restore{grid-column:7;grid-row:1}
 
 /* B: common fixed category strip; native fields remain owned by their hosts. */
+.preferences-modal[open]{display:block;position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;overflow:visible;pointer-events:auto}
+.preferences-modal::backdrop{background:#0006;pointer-events:auto}
+.preferences-modal>dialog[open]{pointer-events:auto}
 .study-ui .preferences-tabs{display:flex;gap:0;margin:0;padding:0 8px;border-bottom:1px solid var(--line);background:var(--paper)}
 .study-ui .preferences-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:48px;padding:6px 8px;border:0;border-radius:0;background:transparent;color:var(--muted);font-size:13px;box-shadow:none;position:relative}
 .study-ui .preferences-tabs svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7}
@@ -7656,10 +7659,45 @@ function bindPreferencesTabs(root,select){
  return ()=>{root.removeEventListener('click',click);root.removeEventListener('keydown',key);};
 }
 function createPreferencesWorkspace(context={}){
- const views=new Map(),closing=new WeakMap();let active=null,origin=null,session=0;
+ const views=new Map(),closing=new WeakMap();let active=null,origin=null,session=0,modal=null;
  const t=key=>context.t?context.t(key):global.LangStudyI18n?global.LangStudyI18n.t(key):UI.strings.zh[key]||key;
  function transitioning(root){return (closing.get(root)||0)>0;}
  function owns(root){return root.classList.contains('preferences-workspace');}
+ function finish(restoreFocus=true){
+  if(!active)return;
+  const previous=active,target=origin;active=null;origin=null;
+  if(modal?.open)modal.close();
+  views.forEach(view=>{
+   if(!modal?.contains(view.root))return;
+   if(view.home.parentNode)view.home.after(view.root);
+   if(view.role===null)view.root.removeAttribute('role');else view.root.setAttribute('role',view.role);
+  });
+  document.dispatchEvent(new CustomEvent('lang:preferences-closed',{detail:{category:previous.root.dataset.preferencesCategory}}));
+  if(!restoreFocus)return;
+  const focused=document.activeElement;
+  if(focused&&focused!==document.body&&focused!==modal&&focused!==target&&!focused.closest('.preferences-workspace'))return;
+  if(target?.isConnected&&!target.closest('[inert]')&&target.checkVisibility())target.focus({preventScroll:true});
+ }
+ function modalFor(view){
+  if(!modal){
+   modal=document.createElement('dialog');modal.className='preferences-modal';modal.setAttribute('aria-modal','true');
+   document.body.appendChild(modal);
+   modal.addEventListener('cancel',event=>{event.preventDefault();if(active?.root.open)active.root.close();});
+   // Nonmodal category roots can consume the browser's native close watcher.
+   // Keep Escape owned by the one outer modal after repeated category visits.
+   modal.addEventListener('keydown',event=>{if(event.key==='Escape'&&!event.defaultPrevented){event.preventDefault();if(active?.root.open)active.root.close();}});
+   modal.addEventListener('click',event=>{
+    if(event.target!==modal||!active?.root.open)return;
+    const r=active.root.getBoundingClientRect();
+    if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)active.root.close();
+   });
+   modal.addEventListener('close',()=>{if(!modal.open&&active?.root.open)active.root.close();});
+  }
+  if(view.root.parentNode!==modal)modal.appendChild(view.root);
+  view.root.setAttribute('role','group');
+  if(view.title?.id)modal.setAttribute('aria-labelledby',view.title.id);
+  if(!modal.open)modal.showModal();
+ }
  function refresh(){
   const available=Array.from(views.keys());
   views.forEach((view,key)=>{
@@ -7678,6 +7716,8 @@ function createPreferencesWorkspace(context={}){
   const view=views.get(key);if(!view)return false;
   if(!active||!active.root.open||!owns(active.root)){origin=opener||document.activeElement;session++;}
   if(active&&active!==view)closeForSwitch(active);
+  // A legacy Navigation visit uses the same root outside the shared modal.
+  if(view.root.open&&view.root.parentNode!==modal)closeForSwitch(view);
   active=view;view.root.classList.add('preferences-workspace');
   view.open({opener:origin,fromTab:focusTab,sessionId:session});refresh();
   if(focusTab)view.tabs.querySelector('[aria-selected="true"]')?.focus({preventScroll:true});
@@ -7686,6 +7726,23 @@ function createPreferencesWorkspace(context={}){
  function register(key,view){
   if(views.has(key))throw new Error('Duplicate preferences category: '+key);
   view.title=view.heading.querySelector('h2');
+  view.home=document.createComment('preferences category home');view.root.before(view.home);view.role=view.root.getAttribute('role');
+  const nativeShow=view.root.show,nativeShowModal=view.root.showModal,nativeClose=view.root.close;
+  view.root.close=function(...args){
+   const wasOpen=view.root.open;nativeClose.apply(view.root,args);
+   if(wasOpen&&owns(view.root)&&active===view&&!transitioning(view.root))finish();
+  };
+  view.root.showModal=function(){
+   if(!owns(view.root))return nativeShowModal.call(view.root);
+   modalFor(view);if(!view.root.open)nativeShow.call(view.root);
+  };
+  view.root.show=function(){
+   if(!owns(view.root)&&modal?.contains(view.root)){
+    if(active?.root.open)closeForSwitch(active);
+    finish(false);
+   }
+   return nativeShow.call(view.root);
+  };
   view.heading.classList.add('preferences-heading');
   view.tabs=document.createElement('div');view.tabs.className='preferences-navigation';
   view.heading.after(view.tabs);
@@ -7703,11 +7760,7 @@ function createPreferencesWorkspace(context={}){
    const count=closing.get(view.root)||0;
    if(count){closing.set(view.root,count-1);return;}
    if(view.root.open||!owns(view.root)||active!==view)return;
-   active=null;
-   document.dispatchEvent(new CustomEvent('lang:preferences-closed',{detail:{category:key}}));
-   const target=origin,focused=document.activeElement;origin=null;
-   if(focused&&focused!==document.body&&focused!==target&&!focused.closest('.preferences-workspace'))return;
-   if(target?.isConnected&&!target.closest('[inert]')&&target.checkVisibility())target.focus({preventScroll:true});
+   finish();
   });
   refresh();return scroll;
  }
@@ -11997,7 +12050,7 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   tabs.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();var showPages=document.activeElement===tabControls;chooseTab(showPages?'pages':'controls');(showPages?tabPages:tabControls).focus();}});
   menuClose.addEventListener('click',function(){closeMenu();});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.open){e.preventDefault();closeMenu();}});
-  document.addEventListener('pointerdown',function(e){if(menu.open&&!menu.contains(e.target)&&!phoneNav.contains(e.target)&&!more.contains(e.target))closeMenu();});
+  document.addEventListener('pointerdown',function(e){if(menu.open&&!preferencesWorkspace.owns(menu)&&!menu.contains(e.target)&&!phoneNav.contains(e.target)&&!more.contains(e.target))closeMenu();});
   menu.addEventListener('close',function(){if(menu.open||preferencesWorkspace.transitioning(menu))return;if(!phone.matches&&!dialog.open)restore();[phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded','false');});});
   function openAccount(from){
     var source=document.getElementById('accountOpen');if(!source)return;
@@ -12065,7 +12118,7 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   play.addEventListener('click',function(){if(lp.ready()&&!(lp.seekOnly&&lp.seekOnly())){if(window.LangPractice)LangPractice.play();else lp.toggle();}render();});
   function reserve(){
     var transportHeight=transport.hidden?0:transport.getBoundingClientRect().height;
-    practiceSurface.style.setProperty('--practice-transport-height',transportHeight+'px');
+    if(practiceSurface.style.getPropertyValue('--practice-transport-height')!==transportHeight+'px')practiceSurface.style.setProperty('--practice-transport-height',transportHeight+'px');
     var space=!transport.hidden&&P.placement(mode)==='bottom'?transportHeight+(practiceSurface.hidden?0:practiceSurface.getBoundingClientRect().height):0,value=space+'px';
     if(root.style.getPropertyValue('--sentence-controls-space')!==value)root.style.setProperty('--sentence-controls-space',value);
     if(phone.matches){var top=Math.max(8,sharedHeader.getBoundingClientRect().bottom+8,mode==='c'?transport.getBoundingClientRect().bottom+8:0)+'px';if(root.style.getPropertyValue('--phone-menu-top')!==top)root.style.setProperty('--phone-menu-top',top);}
@@ -12237,8 +12290,16 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   document.addEventListener('lang:active',render);document.addEventListener('lang:transport',render);
   phone.addEventListener('change',function(){emit('lang:controls-will-layout');emit('lang:follow-scroll');reconcile();savedPaint='';render();emit('lang:controls-layout');});
   if(window.ResizeObserver){var lastHeaderHeight=null;var controlSizeObserver=new ResizeObserver(function(entries){reserve();entries.forEach(function(entry){if(entry.target===sharedHeader){var height=sharedHeader.getBoundingClientRect().height,reading=!!(headerReadingResize&&headerReadingResize.bar===sharedHeader.querySelector('.topbar')&&headerReadingResize.folded===headerFolded);if(!reading||!headerHeightAnimating(headerReadingResize.bar))headerReadingResize=null;if(height!==lastHeaderHeight){lastHeaderHeight=height;emit('lang:controls-layout',{reason:reading?'reading-scroll':'layout'});}}});});controlSizeObserver.observe(sharedHeader);controlSizeObserver.observe(transport);controlSizeObserver.observe(practiceSurface);if(picture)controlSizeObserver.observe(picture);}
-  window.addEventListener('resize',reserve,{passive:true});
-  setInterval(render,250); // one timer; unchanged transport states never repaint
+  var renderFrame=null;
+  function requestRender(){if(renderFrame===null)renderFrame=requestAnimationFrame(function(){renderFrame=null;render();});}
+  window.addEventListener('resize',requestRender,{passive:true});
+  // Playback ticks are frequent; only availability or play/pause changes affect
+  // these controls. Sentence boundaries already arrive through lang:active.
+  var lastPlayback='';
+  if(lp.onTick)lp.onTick(function(){var state=String(lp.ready())+':'+String(lp.paused())+':'+String(!!(lp.seekOnly&&lp.seekOnly()));if(state!==lastPlayback){lastPlayback=state;requestRender();}});
+  new MutationObserver(function(records){
+    if(records.some(function(record){return record.target===document.body||record.target.matches('.u,#dockFollow');}))requestRender();
+  }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','hidden','data-follow-mode']});
   if(navSource)new MutationObserver(refreshAccount).observe(navSource,{childList:true,subtree:true});
   if(window.LangFav){if(LangFav.onChange)LangFav.onChange(hydrate);if(LangFav.ready)LangFav.ready.then(hydrate);}
   // Animate a measured outer height, clipping the unchanged video frame inside it.
@@ -12267,7 +12328,7 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   }});
   preferencesWorkspace.register('study',{root:menu,heading:menuHeading,open:function(options){
     menuOpener=options.opener;refreshNavigation();chooseTab('controls');reserve();
-    if(menu.open&&!menu.matches(':modal'))menu.close();
+    if(menu.open&&!menu.closest('.preferences-modal'))menu.close();
     if(!menu.open)menu.showModal();reconcile();render();
   }});
   dialog.addEventListener('close',function(){if(preferencesWorkspace.transitioning(dialog))return;if(!phone.matches&&!menu.open)restore();});
@@ -12527,26 +12588,33 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     workspace.register('display',{root:appDialog,heading:appDialog.querySelector('.settings-heading'),open:function(){refreshSettings(appDialog);if(!appDialog.open)appDialog.showModal();}});
   }
   function containModalScroll(){
-    var selector='dialog.settings-dialog,dialog.account-dialog,dialog.preferences-workspace',dialogs=[],position=null,restore=null,touch=null;
-    function viewport(){
-      if(!position)return;
+    var selector='dialog.settings-dialog,dialog.account-dialog,dialog.preferences-workspace,dialog.preferences-modal',dialogs=[],position=null,restore=null,touch=null;
+    function viewportSize(){
       var view=window.visualViewport;
       // Pinch zoom remains browser-owned; do not resize the dialog under a pinch.
-      if(view&&Math.abs(view.scale-1)>.01)return;
-      root.style.setProperty('--study-modal-height',(view?view.height:window.innerHeight)+'px');
-      root.style.setProperty('--study-modal-top',(view?view.offsetTop:0)+'px');
+      if(view&&Math.abs(view.scale-1)>.01)return null;
+      return {height:(view?view.height:window.innerHeight)+'px',top:(view?view.offsetTop:0)+'px'};
+    }
+    function applyViewport(size){
+      if(!size)return;
+      if(root.style.getPropertyValue('--study-modal-height')!==size.height)root.style.setProperty('--study-modal-height',size.height);
+      if(root.style.getPropertyValue('--study-modal-top')!==size.top)root.style.setProperty('--study-modal-top',size.top);
+    }
+    function viewport(){
+      if(position)applyViewport(viewportSize());
     }
     function seat(saved){
       if(window.scrollX!==saved.x||window.scrollY!==saved.y)window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});
     }
     function lock(){
-      if(position){viewport();return;}
+      if(position)return;
+      var size=viewportSize();
       position=restore?restore.position:{x:window.scrollX,y:window.scrollY};
       if(restore){cancelAnimationFrame(restore.frame);restore=null;}
       document.dispatchEvent(new CustomEvent('lang:follow-scroll',{detail:{reason:'modal'}}));
-      root.classList.add('study-modal-open');guards(true);viewport();
       // Cancel an already-running follow animation without moving its sticky dock.
       window.scrollTo({left:position.x,top:position.y,behavior:'instant'});
+      root.classList.add('study-modal-open');guards(true);applyViewport(size);
     }
     function unlock(){
       if(!position)return;
@@ -12649,14 +12717,33 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     var appButton=document.getElementById('appSettings');
     if(appButton){var label=t('Settings');if(appButton.getAttribute('aria-label')!==label)appButton.setAttribute('aria-label',label);if(appButton.title!==label)appButton.title=label;}
   }
-  function schedule(){if(queued)return;queued=true;queueMicrotask(paint);}
+  var pendingChrome=new Set();
+  function schedule(){if(queued)return;queued=true;queueMicrotask(function(){pendingChrome.clear();paint();});}
+  function localPaint(){
+    if(queued)return;
+    var nodes=Array.from(pendingChrome);pendingChrome.clear();
+    nodes.filter(function(el){return el.isConnected&&!nodes.some(function(parent){return parent!==el&&parent.contains(el);});}).forEach(function(el){
+      localize(el);
+      [el].concat(Array.from(el.querySelectorAll('.study-ui'))).forEach(function(node){if(node.matches('.study-ui'))node.classList.toggle('dark',root.classList.contains('dark'));});
+    });
+  }
   document.addEventListener('lang:ui-preferences',schedule);
   document.addEventListener('lang:study-preferences',schedule);
   if(media.addEventListener)media.addEventListener('change',function(){if(current().theme==='auto')schedule();});
   createAppSettings();containModalScroll();paint();
   // Observe explicit chrome only. Never walk or translate lesson/user content.
   var observer=new MutationObserver(function(records){
-    if(records.some(function(record){var el=record.target.nodeType===1?record.target:record.target.parentElement;return el&&el.closest(chrome);}))schedule();
+    records.forEach(function(record){
+      var el=record.target.nodeType===1?record.target:record.target.parentElement;
+      if(!el)return;
+      if(el.closest(chrome))pendingChrome.add(el);
+      else if(record.type==='childList')record.addedNodes.forEach(function(node){
+        if(node.nodeType!==1)return;
+        if(node.matches(chrome))pendingChrome.add(node);
+        else node.querySelectorAll(chrome).forEach(function(child){pendingChrome.add(child);});
+      });
+    });
+    if(pendingChrome.size)queueMicrotask(localPaint);
   });
   observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder']});
   document.dispatchEvent(new Event('lang:ui-ready'));
