@@ -12588,7 +12588,7 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     workspace.register('display',{root:appDialog,heading:appDialog.querySelector('.settings-heading'),open:function(){refreshSettings(appDialog);if(!appDialog.open)appDialog.showModal();}});
   }
   function containModalScroll(){
-    var selector='dialog.settings-dialog,dialog.account-dialog,dialog.preferences-workspace,dialog.preferences-modal',dialogs=[],position=null,restore=null,touch=null;
+    var selector='dialog.settings-dialog,dialog.account-dialog,dialog.preferences-workspace,dialog.preferences-modal',dialogs=[],position=null,restore=null,touch=null,guarded=new WeakSet();
     function viewportSize(){
       var view=window.visualViewport;
       // Pinch zoom remains browser-owned; do not resize the dialog under a pinch.
@@ -12614,27 +12614,35 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
       document.dispatchEvent(new CustomEvent('lang:follow-scroll',{detail:{reason:'modal'}}));
       // Cancel an already-running follow animation without moving its sticky dock.
       window.scrollTo({left:position.x,top:position.y,behavior:'instant'});
-      root.classList.add('study-modal-open');guards(true);applyViewport(size);
+      root.classList.add('study-modal-open');applyViewport(size);
     }
     function unlock(){
       if(!position)return;
       var saved=position;position=null;touch=null;
       document.dispatchEvent(new CustomEvent('lang:follow-scroll',{detail:{reason:'modal'}}));
-      root.classList.remove('study-modal-open');guards(false);
+      root.classList.remove('study-modal-open');
       root.style.removeProperty('--study-modal-height');root.style.removeProperty('--study-modal-top');
-      seat(saved);
       // Native dialog and host close handlers restore focus before this final seat.
       restore={position:saved,frame:requestAnimationFrame(function(){if(!position)seat(saved);restore=null;})};
     }
     function sync(){
-      var open=Array.from(document.querySelectorAll(selector)).filter(function(dialog){return dialog.open;});
+      var open=Array.from(document.querySelectorAll(selector)).filter(function(dialog){return dialog.open&&!dialog.parentElement.closest('dialog:not([open])');});
       dialogs=dialogs.filter(function(dialog){return open.includes(dialog);}).concat(open.filter(function(dialog){return !dialogs.includes(dialog);}));
+      dialogs.forEach(guardDialog);
       if(dialogs.length)lock();else unlock();
     }
     document.addEventListener('beforetoggle',function(e){
       var dialog=e.target;
-      if(e.newState!=='open'||!dialog.matches||!dialog.matches(selector))return;
+      if(!dialog.matches||!dialog.matches(selector))return;
+      if(e.newState==='closed'){
+        // Release styles before native outside-focus restoration forces layout.
+        // Category switches retain the outer modal and its existing viewport lock.
+        if(!dialogs.some(function(item){return item!==dialog&&item.open&&!dialog.contains(item);}))unlock();
+        queueMicrotask(sync);return;
+      }
+      if(e.newState!=='open')return;
       dialogs=dialogs.filter(function(item){return item!==dialog;});dialogs.push(dialog);
+      guardDialog(dialog);
       // beforetoggle precedes native autofocus; the observer also covers older engines.
       lock();queueMicrotask(sync);
     },true);
@@ -12681,14 +12689,15 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
       if(!inside(dialog,touch.target,point.clientX,point.clientY)||!canScroll(touch.target,dialog,dx,dy))e.preventDefault();
     }
     function touchend(){touch=null;}
-    function guards(enabled){
-      var method=enabled?'addEventListener':'removeEventListener';
-      // Nonpassive guards exist only while a modal is open; ordinary reading keeps
-      // the browser's normal asynchronous scrolling path.
-      document[method]('wheel',wheel,{passive:false,capture:true});
-      document[method]('touchmove',touchmove,{passive:false,capture:true});
-      document[method]('touchstart',touchstart,{passive:true,capture:true});
-      ['touchend','touchcancel'].forEach(function(name){document[method](name,touchend,{passive:true,capture:true});});
+    function guardDialog(dialog){
+      var scope=dialog.closest('dialog.preferences-modal')||dialog;
+      if(guarded.has(scope))return;guarded.add(scope);
+      // Native backdrop events target the modal too. Keep blocking input regions
+      // on that surface; removing document-wide blockers stalls iPhone rendering.
+      scope.addEventListener('wheel',wheel,{passive:false,capture:true});
+      scope.addEventListener('touchmove',touchmove,{passive:false,capture:true});
+      scope.addEventListener('touchstart',touchstart,{passive:true,capture:true});
+      ['touchend','touchcancel'].forEach(function(name){scope.addEventListener(name,touchend,{passive:true,capture:true});});
     }
     sync();
   }
@@ -12721,14 +12730,24 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   function schedule(){if(queued)return;queued=true;queueMicrotask(function(){pendingChrome.clear();paint();});}
   function localPaint(){
     if(queued)return;
-    var nodes=Array.from(pendingChrome);pendingChrome.clear();
-    nodes.filter(function(el){return el.isConnected&&!nodes.some(function(parent){return parent!==el&&parent.contains(el);});}).forEach(function(el){
+    var nodes=Array.from(pendingChrome),changed=new Set(nodes);pendingChrome.clear();
+    nodes.filter(function(el){
+      if(!el.isConnected)return false;
+      for(var parent=el.parentElement;parent;parent=parent.parentElement)if(changed.has(parent))return false;
+      return true;
+    }).forEach(function(el){
       localize(el);
       [el].concat(Array.from(el.querySelectorAll('.study-ui'))).forEach(function(node){if(node.matches('.study-ui'))node.classList.toggle('dark',root.classList.contains('dark'));});
     });
   }
+  var settingsQueued=false;
+  function scheduleSettings(){
+    if(settingsQueued)return;settingsQueued=true;
+    queueMicrotask(function(){settingsQueued=false;document.querySelectorAll('dialog.settings-dialog').forEach(function(dialog){if(dialog.querySelector('[data-shared-settings]'))refreshSettings(dialog);});});
+  }
   document.addEventListener('lang:ui-preferences',schedule);
-  document.addEventListener('lang:study-preferences',schedule);
+  document.addEventListener('lang:study-preferences',scheduleSettings);
+  if(window.LangFav&&LangFav.onChange)LangFav.onChange(scheduleSettings);
   if(media.addEventListener)media.addEventListener('change',function(){if(current().theme==='auto')schedule();});
   createAppSettings();containModalScroll();paint();
   // Observe explicit chrome only. Never walk or translate lesson/user content.
@@ -12736,6 +12755,10 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
     records.forEach(function(record){
       var el=record.target.nodeType===1?record.target:record.target.parentElement;
       if(!el)return;
+      // Our own translated outputs are already settled. Re-observing them doubles
+      // work on a large lesson and can turn a locale change into a long task.
+      if(record.type==='characterData'){var text=sourceText.get(record.target);if(text&&text.output===record.target.nodeValue)return;}
+      if(record.type==='attributes'){var attrs=sourceAttrs.get(el),attr=attrs&&attrs[record.attributeName];if(attr&&attr.output===el.getAttribute(record.attributeName))return;}
       if(el.closest(chrome))pendingChrome.add(el);
       else if(record.type==='childList')record.addedNodes.forEach(function(node){
         if(node.nodeType!==1)return;
