@@ -5537,7 +5537,7 @@
   }, { passive: true });
   document.addEventListener('lang:controls-will-layout',function(){guard.begin(nowms());});
   document.addEventListener('lang:follow-scroll',function(){guard.begin(nowms());});
-  document.addEventListener('lang:controls-layout',function(){guard.begin(nowms());if(following)scrollToActive(true);});
+  document.addEventListener('lang:controls-layout',function(e){guard.begin(nowms());if(following&&(!e.detail||e.detail.reason!=='reading-scroll'))scrollToActive(true);});
   document.addEventListener('lang:fold-settled',function(){
     if(pendingFoldSeek&&following&&dock&&!dock.classList.contains('min'))scrollToActive(true);
     pendingFoldSeek=false;
@@ -6035,7 +6035,7 @@
 </script>
 
 <!--study-ui:start-->
-<style data-study-ui="8170f2d226e781be6f00e49b521c35cd9b32c5fe81e05d385c55f4a26d62e2cd">
+<style data-study-ui="251b96613f32ade3ce079b6cc6ae170aabb21db3cb32e003a4ce11a5b45ebc13">
 /* Shared component foundation, scoped away from the surrounding lesson. */
 .study-ui{--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font:14px/1.5 var(--font);color:var(--ink);container-type:inline-size}
 .study-ui *{box-sizing:border-box}
@@ -6341,6 +6341,76 @@ html.study-modal-open :is(dialog.settings-dialog,dialog.account-dialog)[open]{ov
 .study-ui .folded-nav[data-wide="true"]{grid-template-columns:44px 44px minmax(44px,1fr) minmax(44px,1fr) 49px 44px 44px}
 .study-ui .folded-nav[data-wide="true"] .transcript-tools{grid-column:6;grid-row:1}
 .study-ui .folded-nav[data-wide="true"] .restore{grid-column:7;grid-row:1}
+
+/* B: common fixed category strip; native fields remain owned by their hosts. */
+.study-ui .preferences-tabs{display:flex;gap:0;margin:0;padding:0 8px;border-bottom:1px solid var(--line);background:var(--paper)}
+.study-ui .preferences-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:48px;padding:6px 8px;border:0;border-radius:0;background:transparent;color:var(--muted);font-size:13px;box-shadow:none;position:relative}
+.study-ui .preferences-tabs svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7}
+.study-ui .preferences-tabs [aria-selected=true]{color:var(--accent);font-weight:650}
+.study-ui .preferences-tabs [aria-selected=true]:after{content:'';position:absolute;left:18px;right:18px;bottom:0;height:2px;background:var(--accent);border-radius:2px}
+.study-ui .preferences-tabs button:disabled{opacity:.4;cursor:default}
+.preferences-navigation,.preferences-heading{flex:none}
+.preferences-scroll{display:contents}
+html :is(dialog.settings-dialog,dialog.account-dialog,dialog.phone-menu).preferences-workspace[open]{display:flex;flex-direction:column;overflow:hidden!important;box-sizing:border-box;width:min(480px,calc(100vw - 24px));max-height:calc(var(--study-modal-height,100dvh) - 24px);position:fixed;inset:var(--study-modal-top,0px) 0 calc(100% - var(--study-modal-top,0px) - var(--study-modal-height,100dvh));margin:auto;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--paper);color:var(--ink);box-shadow:0 12px 50px #0004;font-family:var(--font-gothic,system-ui)}
+html.phone-toolbar-active[data-toolbar-arrangement=c] #phoneMenu.preferences-workspace[open]{inset:var(--study-modal-top,0px) 0 calc(100% - var(--study-modal-top,0px) - var(--study-modal-height,100dvh));max-height:calc(var(--study-modal-height,100dvh) - 24px)}
+.preferences-workspace::backdrop{background:#0006}
+.preferences-workspace .preferences-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px;padding:4px 16px;margin:0;border-bottom:0;background:var(--paper)}
+.preferences-workspace .preferences-heading h2{font-size:17px;line-height:1.4;letter-spacing:0;margin:0;min-width:0}
+.preferences-workspace .preferences-heading button{min-width:44px;min-height:44px;float:none;border:0;background:transparent;color:var(--accent);font-size:13px;margin:0;padding:6px}
+.preferences-workspace .preferences-scroll{display:block;overflow:auto;overscroll-behavior:contain;min-height:0;padding:4px 16px 12px;scrollbar-width:thin}
+.preferences-workspace .phone-menu-tabs,.preferences-workspace .phone-menu-footer{display:none!important}
+.preferences-workspace .phone-control-section{margin:0 0 8px!important;padding:0!important;border:0!important}
+.preferences-workspace .phone-control-section h3,.preferences-workspace .preferences-group>h3{display:flex;align-items:center;gap:6px;font:600 11px/1.4 var(--font-gothic,system-ui);color:var(--muted);margin:0;min-height:28px;letter-spacing:.02em}
+.preferences-workspace .phone-control-section h3 svg{width:15px;height:15px}
+.preferences-workspace .phone-control-grid{gap:4px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.preferences-workspace .phone-control-grid-three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.preferences-workspace .phone-control-rows{grid-template-columns:1fr;gap:0}
+.preferences-workspace .phone-control-row{min-height:48px;border-bottom:1px solid var(--line);border-radius:0;padding:0;background:transparent;gap:8px}
+.preferences-workspace .phone-control-row>span{font-size:13px;color:var(--ink)}
+.preferences-workspace .phone-control-grid>button,.preferences-workspace .phone-control-row>button{min-height:44px;min-width:44px;font:500 12px/1.4 var(--font-gothic,system-ui);border:1px solid var(--line);border-radius:7px;padding:5px 8px;background:var(--paper);color:var(--ink);width:auto}
+.preferences-workspace #phoneReadingControls{grid-template-columns:repeat(2,minmax(0,1fr))}
+.preferences-workspace #phoneReadingControls #markStudied{grid-column:1/-1}
+.preferences-workspace .study-setting{min-height:48px;border-bottom:1px solid var(--line)}
+.preferences-workspace .study-setting select{background:transparent;border:0;border-radius:0}
+.preferences-workspace .study-settings-group{border:0;margin:0 0 8px;padding:0}
+.preferences-workspace .study-settings-group legend{min-height:28px;display:flex;align-items:center;font-size:11px}
+.preferences-workspace .study-setting-hint{font-size:11px;margin-top:4px;line-height:1.5}
+.preferences-workspace .study-toolbar-choice{padding:4px;min-height:44px}
+.preferences-workspace .study-account-status{padding:8px 0 12px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent}
+.preferences-workspace .study-account-identity>svg{width:22px;height:22px}
+.preferences-workspace .study-account-identity strong{font-size:13px}
+.preferences-workspace .study-account-status .study-sync-state{margin:4px 0 0;font-size:12px;line-height:1.5}
+.preferences-workspace .study-account-status .study-pending-count{margin:4px 0 0;font-size:12px}
+.preferences-workspace .preferences-group{padding:4px 0 8px;border-bottom:1px solid var(--line)}
+.preferences-workspace .preferences-group button{font-size:13px;min-height:44px;min-width:44px;padding:7px 10px;border:0;background:var(--soft);border-radius:7px}
+.preferences-workspace .preferences-group p{font-size:12px;line-height:1.5;margin:4px 0 8px}
+.preferences-workspace .preferences-group details{margin:4px 0 0}
+.preferences-workspace .preferences-group summary{min-height:44px;font-size:13px}
+.preferences-workspace .account-primary{margin:4px 0!important}
+.preferences-workspace .account-actions{gap:6px;margin:4px 0}
+.preferences-workspace #accountMessage:empty{display:none}
+.preferences-workspace #accountMessage{font-size:12px;line-height:1.5;margin:6px 0 0}
+.preferences-workspace .preferences-signout{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+.preferences-workspace .preferences-signout button{min-height:44px;min-width:44px;color:var(--muted);border:0;background:transparent;font-size:13px}
+.preferences-workspace .study-panel-note{border-top:1px solid var(--line);padding-top:8px;font-size:11px;margin-top:10px}
+.preferences-workspace .preferences-page-link{min-height:44px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink);border:0;border-top:1px solid var(--line);background:transparent}
+.preferences-workspace .preferences-page-link svg{width:18px;height:18px}
+.study-ui .study-dialog.preferences-workspace[open]{display:flex;flex-direction:column;overflow:hidden;padding:0;max-width:calc(100% - 24px)}
+.study-ui .study-dialog.preferences-workspace .dialog-body{padding:4px 16px 12px;min-height:0;flex:1;overflow:auto;overscroll-behavior:contain}
+.preferences-workspace .field-row,.preferences-workspace .switch-row{min-height:48px;padding:0;border-bottom:1px solid var(--line);font-size:13px}
+.preferences-workspace .group-title{min-height:28px;padding:0;margin:8px 0 0;font-size:11px;color:var(--muted)}
+.preferences-workspace .field-row select{min-height:44px;min-width:44px;background:transparent;border:0;font-size:12px;max-width:58%}
+.preferences-workspace .reference-preference-modes{display:flex;gap:4px}
+.preferences-workspace .reference-preference-modes button{flex:1;min-height:44px;min-width:44px;padding:5px;font-size:12px;display:grid;grid-template-columns:18px minmax(0,1fr);gap:4px;white-space:normal;overflow-wrap:anywhere}
+.preferences-workspace .menu-note{font-size:11px;line-height:1.5;margin:4px 0 8px}
+.preferences-workspace .preferences-tabs [aria-selected=true]{color:var(--accent);background:transparent;border-radius:0;box-shadow:none}
+/* Legacy phone selectors must not turn the shared category strip into cards. */
+#phoneMenu.preferences-workspace .preferences-tabs button{font:500 13px/1.4 var(--font-gothic,system-ui);padding:6px 8px;border:0;border-radius:0;background:transparent;box-shadow:none;min-height:48px;color:var(--muted)}
+#phoneMenu.preferences-workspace .preferences-tabs [aria-selected=true]{color:var(--accent);background:transparent}
+#phoneMenu.preferences-workspace .phone-control-grid>button,#phoneMenu.preferences-workspace .phone-control-row>button{border:0;background:var(--soft);color:var(--ink);border-radius:6px;font-size:12px;white-space:normal;overflow-wrap:anywhere}
+#phoneMenu.preferences-workspace .phone-control-grid>button[aria-pressed=true],#phoneMenu.preferences-workspace .phone-control-row>button[aria-pressed=true]{border:0;background:var(--tint);color:var(--accent)}
+#phoneMenu.preferences-workspace #dockFollow{color:var(--accent);background:var(--tint)}
+.preferences-workspace .preferences-group .account-primary{background:var(--tint);color:var(--accent)}
 
 .study-ui{--bg:rgba(238,240,242,1);--paper:rgba(255,255,255,1);--soft:rgba(243,245,246,1);--ink:rgba(32,44,53,1);--muted:rgba(82,97,109,1);--line:rgba(223,230,232,1);--accent:rgba(49,95,78,1);--tint:rgba(237,245,240,1)}
 .dark .study-ui,.study-ui.dark{--bg:rgba(17,23,27,1);--paper:rgba(28,35,40,1);--soft:rgba(37,46,53,1);--ink:rgba(237,244,240,1);--muted:rgba(180,194,200,1);--line:rgba(58,71,77,1);--accent:rgba(177,214,191,1);--tint:rgba(38,61,51,1)}
@@ -7967,6 +8037,16 @@ Object.assign(window.LangStudyLocales.zh,{'History scope':'观看记录范围','
 Object.assign(window.LangStudyLocales.en,{'History scope':'History scope','This lesson':'This lesson','All lessons':'All lessons'});
 Object.assign(window.LangStudyLocales.ja,{'History scope':'履歴の範囲','This lesson':'このレッスン','All lessons':'すべてのレッスン'});
 
+Object.assign(window.LangStudyLocales.zh,{'Study':'学习','Interface':'界面','Preferences categories':'偏好分类','Preferences and tools':'偏好与工具','Sync and study data':'同步与学习记录','Sign-in and security':'登录与安全','Backup and migration':'备份与迁移','Study tools are available in a lesson.':'请在课程中使用学习工具。','Page and chapters':'页面与章节'});
+Object.assign(window.LangStudyLocales.en,{'Study':'Study','Interface':'Interface','Preferences categories':'Preferences categories','Preferences and tools':'Preferences and tools','Sync and study data':'Sync and study data','Sign-in and security':'Sign-in and security','Backup and migration':'Backup and migration','Study tools are available in a lesson.':'Study tools are available in a lesson.','Page and chapters':'Page and chapters'});
+Object.assign(window.LangStudyLocales.ja,{'Study':'学習','Interface':'表示','Preferences categories':'設定の分類','Preferences and tools':'設定と学習ツール','Sync and study data':'同期と学習記録','Sign-in and security':'ログインとセキュリティ','Backup and migration':'バックアップと移行','Study tools are available in a lesson.':'学習ツールはレッスン内で利用できます。','Page and chapters':'ページとチャプター'});
+Object.assign(window.LangStudyLocales.zh,{'Account is available online.':'账号功能仅在线可用。','旧版数据迁移':'旧版数据迁移'});
+Object.assign(window.LangStudyLocales.en,{'Account is available online.':'Account is available online.','旧版数据迁移':'Legacy data migration'});
+Object.assign(window.LangStudyLocales.ja,{'Account is available online.':'アカウント機能はオンライン時に利用できます。','旧版数据迁移':'旧データの移行'});
+Object.assign(window.LangStudyLocales.zh,{'Interaction':'操作方式'});
+Object.assign(window.LangStudyLocales.en,{'Interaction':'Interaction'});
+Object.assign(window.LangStudyLocales.ja,{'Interaction':'操作方法'});
+
 // Pure shared presentation. Import locales.js first; no DOM or host state reads.
 (function(global){
 'use strict';
@@ -8120,7 +8200,7 @@ function renderSettings(model,context={}){
  const toolbar=['a','b','c'].map(value=>`<label class="study-toolbar-choice" for="toolbarArrangement-${value}"><input id="toolbarArrangement-${value}" type="radio" name="toolbarArrangement" data-setting="toolbarArrangement" value="${value}"${model.toolbarArrangement===value?' checked':''}><span><strong>${value.toUpperCase()} · ${esc(t('Toolbar '+value.toUpperCase()+' short'))}<\/strong><\/span><\/label>`).join('');
  const status=syncStatus(model.syncStatus);
  const group=(label,body,cls='')=>`<fieldset class="study-settings-group ${cls}"><legend>${esc(t(label))}<\/legend>${body}<\/fieldset>`;
- return `<div class="study-settings">${group('Appearance',select('uiLocale','UI language',[['zh','简体中文'],['en','English'],['ja','日本語']],model.uiLocale,'language')+select('theme','Theme',[['auto','Automatic'],['light','Light theme'],['dark','Dark theme']],model.theme,'theme'))}${group('Study controls',select('playerInteraction','Playback controls',[['buttons','Buttons'],['tap','Tap player']],model.playerInteraction||'buttons','play')+`<p class="study-setting-hint">${esc(t('Tap left / center / right for previous / play or pause / next.'))}<\/p>`)}${group('Phone toolbar',`<div class="study-toolbar-options">${toolbar}<\/div><p class="study-setting-hint">${esc(t('Toolbar fallback hint'))}<\/p>`,'study-toolbar')}<p id="settingsSync" class="study-panel-note" role="status" data-sync-status="${status}">${esc(t(syncLabels[status]))}<\/p><\/div>`;
+ return `<div class="study-settings">${group('Appearance',select('uiLocale','UI language',[['zh','简体中文'],['en','English'],['ja','日本語']],model.uiLocale,'language')+select('theme','Theme',[['auto','Automatic'],['light','Light theme'],['dark','Dark theme']],model.theme,'theme'))}${group('Interaction',select('playerInteraction','Playback controls',[['buttons','Buttons'],['tap','Tap player']],model.playerInteraction||'buttons','play')+`<p class="study-setting-hint">${esc(t('Tap left / center / right for previous / play or pause / next.'))}<\/p>`)}${group('Phone toolbar',`<div class="study-toolbar-options">${toolbar}<\/div><p class="study-setting-hint">${esc(t('Toolbar fallback hint'))}<\/p>`,'study-toolbar')}<p id="settingsSync" class="study-panel-note" role="status" data-sync-status="${status}">${esc(t(syncLabels[status]))}<\/p><\/div>`;
 }
 function renderHistory(model,context={}){
  const {t,escape:esc,icon,button}=helpers(context);
@@ -8183,6 +8263,93 @@ function patch(parent,html,options={}){
  reconcile(parent,Array.from(template.content.childNodes),options);
 }
 global.LangStudyDOM={patch};
+})(window);
+
+// Shared preference navigation. Hosts retain their existing fields and effects.
+(function(global){
+'use strict';
+const UI=global.LangStudyUI;
+const categories=[['study','Study','reading'],['display','Interface','theme'],['account','Account','person']];
+function renderPreferencesTabs(model,context={}){
+ const t=context.t||((key)=>key),esc=UI.escape;
+ return `<nav class="preferences-tabs" data-preferences-tabs role="tablist" aria-label="${esc(t('Preferences categories'))}">${categories.map(([key,label,glyph])=>{
+  const selected=model.active===key,available=!model.available||model.available.includes(key);
+  return `<button type="button" role="tab" data-preferences-tab="${key}" id="${esc(model.id||'preferences')}-tab-${key}" aria-selected="${selected}" tabindex="${selected?0:-1}"${available?'':` disabled title="${esc(t(key==='study'?'Study tools are available in a lesson.':'Account is available online.'))}"`}${model.panels?.[key]?` aria-controls="${esc(model.panels[key])}"`:''}>${UI.icon(glyph)}<span>${esc(t(label))}<\/span><\/button>`;
+ }).join('')}<\/nav>`;
+}
+function bindPreferencesTabs(root,select){
+ const click=event=>{const tab=event.target.closest('[data-preferences-tab]');if(tab&&!tab.disabled&&root.contains(tab))select(tab.dataset.preferencesTab,true);};
+ const key=event=>{
+  const current=event.target.closest('[data-preferences-tab]');
+  if(!current||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  const tabs=Array.from(current.closest('[data-preferences-tabs]').querySelectorAll('button:not(:disabled)'));
+  const index=tabs.indexOf(current),next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+  event.preventDefault();select(tabs[next].dataset.preferencesTab,true);
+ };
+ root.addEventListener('click',click);root.addEventListener('keydown',key);
+ return ()=>{root.removeEventListener('click',click);root.removeEventListener('keydown',key);};
+}
+function createPreferencesWorkspace(context={}){
+ const views=new Map(),closing=new WeakMap();let active=null,origin=null,session=0;
+ const t=key=>context.t?context.t(key):global.LangStudyI18n?global.LangStudyI18n.t(key):UI.strings.zh[key]||key;
+ function transitioning(root){return (closing.get(root)||0)>0;}
+ function owns(root){return root.classList.contains('preferences-workspace');}
+ function refresh(){
+  const available=Array.from(views.keys());
+  views.forEach((view,key)=>{
+   const nav=view.tabs;
+   const panels=Object.fromEntries(Array.from(views,([name,item])=>[name,item.panel.id]));
+   const html=renderPreferencesTabs({active:key,available,panels,id:view.root.id||'account-preferences'},{t});
+   if(global.LangStudyDOM)LangStudyDOM.patch(nav,html);else nav.innerHTML=html;
+   if(owns(view.root)&&view.title){const text=t('Preferences and tools');if(view.title.textContent!==text)view.title.textContent=text;}
+  });
+ }
+ function closeForSwitch(view){
+  if(!view.root.open)return;
+  closing.set(view.root,(closing.get(view.root)||0)+1);view.root.close();
+ }
+ function open(key,opener,focusTab=false){
+  const view=views.get(key);if(!view)return false;
+  if(!active||!active.root.open||!owns(active.root)){origin=opener||document.activeElement;session++;}
+  if(active&&active!==view)closeForSwitch(active);
+  active=view;view.root.classList.add('preferences-workspace');
+  view.open({opener:origin,fromTab:focusTab,sessionId:session});refresh();
+  if(focusTab)view.tabs.querySelector('[aria-selected="true"]')?.focus({preventScroll:true});
+  return true;
+ }
+ function register(key,view){
+  if(views.has(key))throw new Error('Duplicate preferences category: '+key);
+  view.title=view.heading.querySelector('h2');
+  view.heading.classList.add('preferences-heading');
+  view.tabs=document.createElement('div');view.tabs.className='preferences-navigation';
+  view.heading.after(view.tabs);
+  const scroll=document.createElement('div');scroll.dataset.preferencesScroll='';scroll.className='preferences-scroll';
+  scroll.id=(view.root.id||'account-preferences')+'-panel';scroll.setAttribute('role','tabpanel');scroll.setAttribute('aria-labelledby',(view.root.id||'account-preferences')+'-tab-'+key);view.panel=scroll;
+  Array.from(view.root.children).filter(node=>node!==view.heading&&node!==view.tabs).forEach(node=>scroll.appendChild(node));
+  view.root.appendChild(scroll);view.root.dataset.preferencesCategory=key;
+  views.set(key,view);bindPreferencesTabs(view.tabs,(next,focus)=>open(next,origin,focus));
+  view.root.addEventListener('click',event=>{
+   if(event.target!==view.root||!view.root.open||!owns(view.root))return;
+   const rect=view.root.getBoundingClientRect();
+   if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)view.root.close();
+  });
+  view.root.addEventListener('close',()=>{
+   const count=closing.get(view.root)||0;
+   if(count){closing.set(view.root,count-1);return;}
+   if(view.root.open||!owns(view.root)||active!==view)return;
+   active=null;
+   document.dispatchEvent(new CustomEvent('lang:preferences-closed',{detail:{category:key}}));
+   const target=origin,focused=document.activeElement;origin=null;
+   if(focused&&focused!==document.body&&focused!==target&&!focused.closest('.preferences-workspace'))return;
+   if(target?.isConnected&&!target.closest('[inert]')&&target.checkVisibility())target.focus({preventScroll:true});
+  });
+  refresh();return scroll;
+ }
+ return {register,open,refresh,transitioning,owns,get active(){return active?.root.open&&owns(active.root)?active.root.dataset.preferencesCategory:null;}};
+}
+let production;
+function preferencesWorkspace(){return production||(production=createPreferencesWorkspace());}
+Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWorkspace,preferencesWorkspace});
 })(window);
 
 </script>
@@ -9224,7 +9391,8 @@ global.LangStudyDOM={patch};
   var nEl = nav.querySelector('.ln-fav-n'), dot = nav.querySelector('.ln-dot');
   var DOT = { ok: ['ln-ok', '已同步'], wait: ['ln-wait', '待同步'],
               off: ['ln-off', '仅本机'], err: ['ln-err', '同步失败'], offline: ['ln-wait', '离线 · 已保存在本机'] };
-  var LF, button, dialog, message, busy = false, previousFocus, ui = ACCOUNT_UI_PURE();
+  var workspace=window.LangStudyUI&&LangStudyUI.preferencesWorkspace();
+  var LF, button, dialog, message, busy = false, previousFocus, refreshedSession=null, refreshedOwner=null, passkeysOwner=null, ui = ACCOUNT_UI_PURE();
   function t(value){ return window.LangStudyI18n ? LangStudyI18n.t(value) : value; }
   function refresh(){
     LF = window.LangFav; if (!LF) return;
@@ -9281,9 +9449,11 @@ global.LangStudyDOM={patch};
     message.textContent = '通行密钥已设置。下次可用设备解锁登录。'; await loadPasskeys();
   }
   async function loadPasskeys(){
-    var list = dialog.querySelector('#accountPasskeys'); list.replaceChildren();
+    var owner=LF.account()&&LF.account().id, list=dialog.querySelector('#accountPasskeys'); list.replaceChildren();passkeysOwner=owner;
+    if(!owner)return false;
     var keys = await request('passkey/list-user-passkeys');
-    if (!Array.isArray(keys)) return;
+    if(owner!==(LF.account()&&LF.account().id))return false;
+    if (!Array.isArray(keys)) return false;
     keys.forEach(function(key){
       var row = document.createElement('li'), label = document.createElement('span'), remove = document.createElement('button');
       label.textContent = key.name || '通行密钥'; remove.type = 'button'; remove.textContent = '移除';
@@ -9292,10 +9462,12 @@ global.LangStudyDOM={patch};
         perform(async function(){ await request('passkey/delete-passkey', {id: key.id}); await loadPasskeys(); message.textContent = '已移除通行密钥。'; }); });
       row.append(label, remove); list.append(row);
     });
+    return true;
   }
   function render(){
     if (!dialog) return;
     var user = LF.account(), s = LF.status(), signed = !!user;
+    if(passkeysOwner!==(user&&user.id)){dialog.querySelector('#accountPasskeys').replaceChildren();passkeysOwner=user&&user.id;}
     dialog.querySelector('#accountSignedOut').hidden = signed;
     dialog.querySelector('#accountSignedIn').hidden = !signed;
     dialog.querySelector('#accountEmailLabel').textContent = user ? user.email : '';
@@ -9304,7 +9476,7 @@ global.LangStudyDOM={patch};
     else state.textContent = t(DOT[s] ? DOT[s][1] : '仅本机');
     dialog.querySelector('#accountPasskeySignIn').hidden = !window.PublicKeyCredential;
     dialog.querySelector('#accountAddPasskey').hidden = !window.PublicKeyCredential;
-    dialog.querySelectorAll('button').forEach(function(b){ b.disabled = busy && b.id !== 'accountClose'; });
+    dialog.querySelectorAll('button').forEach(function(b){ if(!b.hasAttribute('data-preferences-tab'))b.disabled = busy && b.id !== 'accountClose'; });
   }
   function setup(){
     var style = document.createElement('style'); style.textContent =
@@ -9321,9 +9493,9 @@ global.LangStudyDOM={patch};
     document.head.appendChild(style);
     button = document.createElement('button'); button.type = 'button'; button.className = 'ln-account'; button.id = 'accountOpen';
     button.setAttribute('aria-haspopup', 'dialog'); nav.appendChild(button);
-    dialog = document.createElement('dialog'); dialog.className = 'account-dialog study-ui'; dialog.setAttribute('aria-labelledby', 'accountTitle');
-    dialog.innerHTML = '<button type="button" class="account-close" id="accountClose" aria-label="关闭账号窗口">×</button>' +
-      '<h2 id="accountTitle">学习账号</h2><div id="accountState"></div>' +
+    dialog = document.createElement('dialog'); dialog.id='accountDialog'; dialog.className = 'account-dialog study-ui'; dialog.setAttribute('aria-labelledby', 'accountTitle');
+    dialog.innerHTML = '<div class="settings-heading"><h2 id="accountTitle">学习账号</h2><button type="button" class="account-close" id="accountClose" aria-label="关闭账号窗口">完成</button></div>' +
+      '<div id="accountState"></div>' +
       '<section id="accountSignedOut"><p>登录后，收藏、复习记录和笔记会自动同步到其他设备。</p>' +
       '<button type="button" class="account-primary" id="accountPasskeySignIn">使用通行密钥登录</button>' +
       '<details id="accountEmailFallback"><summary>使用邮箱登录或创建账号</summary>' +
@@ -9332,23 +9504,25 @@ global.LangStudyDOM={patch};
       '<form id="accountCodeForm" hidden><label for="accountCode">邮箱验证码</label><input id="accountCode" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>' +
       '<button type="submit" class="account-primary">验证并登录</button></form></details></section>' +
       '<section id="accountSignedIn" hidden><p id="accountEmailLabel" hidden></p>' +
-      '<button type="button" class="account-primary" id="accountAddPasskey">设置通行密钥</button><p>以后用设备解锁即可登录。更换设备时也可以用邮箱恢复账号。</p>' +
-      '<details><summary>管理通行密钥</summary><ul id="accountPasskeys"></ul></details>' +
-      '<div class="account-actions"><button type="button" id="accountImportGuest">导入本机学习记录</button><button type="button" id="accountSync">立即同步</button></div>' +
-      '<details><summary>备份与迁移</summary><p>导入会补充缺少的记录，保留账号里已有的内容。</p>' +
-      '<div class="account-actions"><button type="button" id="accountExport">导出完整备份</button><button type="button" id="accountImportFile">导入备份</button></div>' +
+      '<section class="preferences-group"><h3>同步与学习记录</h3><div class="account-actions"><button type="button" id="accountSync">立即同步</button><button type="button" id="accountImportGuest">导入本机学习记录</button></div></section>' +
+      '<section class="preferences-group"><h3>登录与安全</h3><button type="button" class="account-primary" id="accountAddPasskey">设置通行密钥</button>' +
+      '<details><summary>管理通行密钥</summary><p>以后用设备解锁即可登录。更换设备时也可以用邮箱恢复账号。</p><ul id="accountPasskeys"></ul></details></section>' +
+      '<section class="preferences-group"><h3>备份与迁移</h3><div class="account-actions"><button type="button" id="accountExport">导出完整备份</button><button type="button" id="accountImportFile">导入备份</button></div>' +
       '<input type="file" id="accountBackupFile" accept="application/json,.json" hidden>' +
+      '<details id="accountBackupDetails"><summary>旧版数据迁移</summary><p>导入会补充缺少的记录，保留账号里已有的内容。</p>' +
       '<label for="accountGistToken">旧 Gist 的访问令牌（仅用于读取）</label><input id="accountGistToken" type="password" autocomplete="off">' +
-      '<button type="button" id="accountImportGist">从旧 Gist 导入</button><p><a id="accountOldOrigin" href="migrate.html" target="_blank" rel="noopener">从旧网址导出学习记录 ↗</a></p></details>' +
-      '<div class="account-actions"><button type="button" id="accountSignOut">退出账号</button></div></section>' +
+      '<button type="button" id="accountImportGist">从旧 Gist 导入</button><p><a id="accountOldOrigin" href="migrate.html" target="_blank" rel="noopener">从旧网址导出学习记录 ↗</a></p></details></section>' +
+      '<div class="account-actions preferences-signout"><button type="button" id="accountSignOut">退出账号</button></div></section>' +
       '<p id="accountMessage" role="status" aria-live="polite"></p>';
     document.body.appendChild(dialog); message = dialog.querySelector('#accountMessage');
     dialog.querySelector('#accountOldOrigin').href = new URL('/migrate.html', location.origin.replace('://lang.', '://')).href;
     dialog.querySelector('#accountClose').addEventListener('click', function(){ dialog.close(); });
-    dialog.addEventListener('close', function(){ if (previousFocus) previousFocus.focus(); });
+    dialog.addEventListener('close', function(){ if ((!workspace||!workspace.owns(dialog))&&previousFocus) previousFocus.focus(); });
     dialog.addEventListener('click', function(e){ if (e.target === dialog){ var r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close(); } });
-    button.addEventListener('click', function(){ previousFocus = document.activeElement; message.textContent = ''; dialog.showModal(); render();
-      perform(async function(){ await LF.refreshSession(); if (LF.account()) await loadPasskeys(); message.textContent = ''; }); });
+    function openAccount(options){ previousFocus=options.opener; if(!dialog.open)dialog.showModal();render();
+      if(!busy&&(!workspace||refreshedSession!==options.sessionId||refreshedOwner!==(LF.account()&&LF.account().id)))perform(async function(){ await LF.refreshSession(); var owner=LF.account()&&LF.account().id; if(owner&&!(await loadPasskeys()))return; if(owner!==(LF.account()&&LF.account().id))return;refreshedSession=options.sessionId;refreshedOwner=owner;message.textContent = ''; }); }
+    if(workspace)workspace.register('account',{root:dialog,heading:dialog.querySelector('.settings-heading'),open:openAccount});
+    button.addEventListener('click',function(){if(workspace)workspace.open('account',document.activeElement);else openAccount({opener:document.activeElement});});
     dialog.querySelector('#accountPasskeySignIn').addEventListener('click', function(){ perform(passkeySignIn); });
     dialog.querySelector('#accountAddPasskey').addEventListener('click', function(){ perform(addPasskey); });
     dialog.querySelector('#accountEmailForm').addEventListener('submit', function(e){ e.preventDefault(); perform(async function(){
@@ -12310,6 +12484,7 @@ global.LangStudyDOM={patch};
   var dock=document.getElementById('dock'), lp=window.LangPlayer;
   if(!dock||!lp)return;
   var UI=window.LangStudyUI;if(!UI)throw new Error('Missing shared study presentation');
+  var preferencesWorkspace=UI.preferencesWorkspace();
   var P=PHONE_TOOLBAR_PURE(), root=document.documentElement, header=dock.querySelector('.dock-bar'),
       picture=dock.querySelector('.dock-video'), frame=dock.querySelector('.video-frame'),
       navSource=document.querySelector('.lang-nav'), mode='a', savedPaint='', homes=new Map(),
@@ -12363,12 +12538,12 @@ global.LangStudyDOM={patch};
     '<fieldset hidden aria-hidden="true"><input id="sentenceControls-original" type="radio" name="sentenceControls" value="original"><input id="sentenceControls-bottom" type="radio" name="sentenceControls" value="bottom"><input id="sentenceControls-below" type="radio" name="sentenceControls" value="below"></fieldset>';
   var radios=Array.from(dialog.querySelectorAll('input[name="toolbarArrangement"]')), note=dialog.querySelector('#settingsSync');
   settings.addEventListener('click',function(){
-    settingsOpener=launcher(menu.open?menuOpener:settings);closeMenu(false);
-    if(!dialog.open)dialog.showModal();
+    preferencesWorkspace.open('display',launcher(menu.open?menuOpener:settings));
   });
   dialog.querySelector('#settingsClose').addEventListener('click',function(){dialog.close();});
   dialog.addEventListener('close',function(){
     // Native close restores focus before its queued close event. Respect a new user focus target.
+    if(preferencesWorkspace.owns(dialog))return;
     var active=document.activeElement;if(active===document.body||dialog.contains(active)||!visible(active))focus(settingsOpener);
   });
   dialog.addEventListener('click',function(e){if(e.target===dialog){var r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
@@ -12400,7 +12575,7 @@ global.LangStudyDOM={patch};
   var practiceSurface=element('div','productionPractice',document.body);practiceSurface.className='production-practice';practiceSurface.hidden=true;
   var sharedHeader=element('div','productionStudyHeader');sharedHeader.className='study-ui';
   dock.insertBefore(sharedHeader,header);
-  var headerFolded=false,headerExpanded=false,headerUserScroll=false,headerLastScroll=window.scrollY,headerPaint='',pointList=element('div','studyPoints');pointList.className='study-points';var historyScope='lesson';
+  var headerFolded=false,headerExpanded=false,headerUserScroll=false,headerReadingResize=null,headerLastScroll=window.scrollY,headerPaint='',pointList=element('div','studyPoints');pointList.className='study-points';var historyScope='lesson';
 
   var menu=element('dialog','phoneMenu',document.body);menu.className='phone-menu study-ui';menu.setAttribute('aria-labelledby','phoneMenuTitle');
   var menuHeading=element('div','',menu);menuHeading.className='phone-menu-heading';
@@ -12440,6 +12615,8 @@ global.LangStudyDOM={patch};
     if(restoreFocus!==false)focus(menuOpener);
   }
   function openMenu(tab,opener){
+    if(tab==='controls'){preferencesWorkspace.open('study',launcher(opener));return;}
+    menu.classList.remove('preferences-workspace');
     if(menu.open&&menuOpener===opener){closeMenu();return;}
     menuOpener=opener;refreshNavigation();chooseTab(tab);reserve();
     if(!menu.open)menu.show();
@@ -12449,12 +12626,12 @@ global.LangStudyDOM={patch};
   }
   phoneNav.addEventListener('click',function(){openMenu('pages',phoneNav);});
   more.addEventListener('click',function(){openMenu('controls',more);});
-  tabControls.addEventListener('click',function(){chooseTab('controls');});tabPages.addEventListener('click',function(){chooseTab('pages');});
+  tabControls.addEventListener('click',function(){openMenu('controls',menuOpener||tabControls);});tabPages.addEventListener('click',function(){chooseTab('pages');});
   tabs.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();var showPages=document.activeElement===tabControls;chooseTab(showPages?'pages':'controls');(showPages?tabPages:tabControls).focus();}});
   menuClose.addEventListener('click',function(){closeMenu();});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.open){e.preventDefault();closeMenu();}});
   document.addEventListener('pointerdown',function(e){if(menu.open&&!menu.contains(e.target)&&!phoneNav.contains(e.target)&&!more.contains(e.target))closeMenu();});
-  menu.addEventListener('close',function(){if(!phone.matches)restore();[phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded','false');});});
+  menu.addEventListener('close',function(){if(menu.open||preferencesWorkspace.transitioning(menu))return;if(!phone.matches&&!dialog.open)restore();[phoneNav,more].forEach(function(b){b.setAttribute('aria-expanded','false');});});
   function openAccount(from){
     var source=document.getElementById('accountOpen');if(!source)return;
     // nav.js captures activeElement, so preserve a launcher that stays visible after the menu closes.
@@ -12462,7 +12639,7 @@ global.LangStudyDOM={patch};
   }
   accountButton.addEventListener('click',function(){openAccount(accountButton);});menuAccount.addEventListener('click',function(){openAccount(menuAccount);});
   document.addEventListener('close',function(e){
-    if(e.target.classList&&e.target.classList.contains('account-dialog')&&accountOpener){focus(accountOpener);accountOpener=null;}
+    if(e.target.classList&&e.target.classList.contains('account-dialog')&&accountOpener&&!preferencesWorkspace.transitioning(e.target)){focus(accountOpener);accountOpener=null;}
   },true);
   function refreshAccount(){
     accountSource=document.getElementById('accountOpen');
@@ -12488,13 +12665,15 @@ global.LangStudyDOM={patch};
     }
     refreshAccount();
   }
+  document.addEventListener('lang:preferences-closed',function(){if(!phone.matches&&!menu.open&&!dialog.open)restore();});
   function reconcile(){
     var mobile=phone.matches,follow=document.getElementById('dockFollow');
     root.classList.toggle('phone-toolbar-active',mobile);utility.hidden=true;
-    if(!mobile&&!menu.open){restore();return;}
+    if(!mobile&&!menu.open&&!dialog.open){restore();return;}
     ['shadowToggle','dictToggle'].forEach(function(id){move(document.getElementById(id),modes);});
     ['cnMaskToggle','telopToggle','pinToggle','dockMin'].forEach(function(id){move(document.getElementById(id),mainControls);});
     move(document.getElementById('layoutToggle'),layoutRow);
+    if(!dialog.contains(mainControls))move(mainControls.parentNode,displayControls);
     move(settings,menuFooter);
     ['shadowBar','dictBar'].forEach(function(id){move(document.getElementById(id),practiceControls);});
     move(document.getElementById('shRate'),speedRow);
@@ -12527,6 +12706,7 @@ global.LangStudyDOM={patch};
   function uiPreferences(){return window.LangStudyPreferences?LangStudyPreferences.get():Object.assign({uiLocale:'zh',theme:'auto'},window.LangFav?LangFav.getNS('preferences'):{});}
   function translate(key){var value=uiPreferences();return window.LangStudyI18n?LangStudyI18n.t(key):(UI.strings[value.uiLocale]||UI.strings.zh)[key]||UI.strings.en[key]||key;}
   function settingsModel(){var prefs=uiPreferences(),lf=window.LangFav,raw=lf?lf.getNS('preferences'):{};return {uiLocale:prefs.uiLocale,theme:prefs.theme,playerInteraction:prefs.playerInteraction,toolbarArrangement:P.resolve(raw),syncStatus:lf&&lf.status?lf.status():'off'};}
+  var displayControls;
   var context={t:translate},pointRecords=new Map(),selectedPoint=null;
   function transplant(container,selector,node){
     var place=container.querySelector(selector);if(!place)return;
@@ -12539,6 +12719,8 @@ global.LangStudyDOM={patch};
     if(window.LangProgress&&LangProgress.latestCurrent)return LangProgress.latestCurrent();
     var lf=window.LangFav,pg=location.pathname.split('/').pop();return lf&&lf.getNS?lf.getNS('progress')[pg]:null;
   }
+  function headerHeightAnimating(bar){return !!(bar&&bar.getAnimations&&bar.getAnimations().some(function(a){return a.transitionProperty==='height'&&(a.playState==='running'||a.pending);}));}
+  document.addEventListener('lang:active',function(){headerReadingResize=null;});
   function paintHeader(){
     if(!sharedHeader)return;
     var p=pageProgress(),count=document.querySelectorAll('.u.faved').length,
@@ -12627,7 +12809,7 @@ global.LangStudyDOM={patch};
   transport.addEventListener('click',transportAction);modeStrip.addEventListener('click',transportAction);
   // Share one physical reading scroll with the player's video fold, then consume its intent.
   // The fold's later scroll anchoring must not look like a new reverse reading gesture.
-  window.addEventListener('scroll',function(){var now=window.scrollY,delta=now-headerLastScroll;headerLastScroll=now;if(!headerUserScroll||Math.abs(delta)<2)return;headerUserScroll=false;var folded=!headerExpanded&&now>120&&delta>0;if(folded!==headerFolded){headerFolded=folded;paintHeader();}},{passive:true});
+  window.addEventListener('scroll',function(){var now=window.scrollY,delta=now-headerLastScroll;headerLastScroll=now;if(!headerUserScroll||Math.abs(delta)<2)return;headerUserScroll=false;var folded=!headerExpanded&&now>120&&delta>0;if(folded!==headerFolded){var before=sharedHeader.getBoundingClientRect().height;headerFolded=folded;paintHeader();var bar=sharedHeader.querySelector('.topbar'),height=sharedHeader.getBoundingClientRect().height;headerReadingResize=height!==before||headerHeightAnimating(bar)?{bar:bar,folded:folded}:null;}},{passive:true});
   document.addEventListener('lang:follow-scroll',function(e){if(!e.detail||['reading-scroll','fold-settled'].indexOf(e.detail.reason)<0)headerUserScroll=false;});
   ['wheel','touchmove'].forEach(function(name){window.addEventListener(name,function(e){if(root.classList.contains('study-modal-open')||(e.target&&e.target.closest&&e.target.closest('dialog')))return;headerExpanded=false;headerUserScroll=true;},{passive:true});});
   function render(){
@@ -12687,7 +12869,7 @@ global.LangStudyDOM={patch};
   document.addEventListener('lang:player-tap-availability',render);
   document.addEventListener('lang:active',render);document.addEventListener('lang:transport',render);
   phone.addEventListener('change',function(){emit('lang:controls-will-layout');emit('lang:follow-scroll');reconcile();savedPaint='';render();emit('lang:controls-layout');});
-  if(window.ResizeObserver){var lastHeaderHeight=null;var controlSizeObserver=new ResizeObserver(function(entries){reserve();entries.forEach(function(entry){if(entry.target===sharedHeader){var height=sharedHeader.getBoundingClientRect().height;if(height!==lastHeaderHeight){lastHeaderHeight=height;emit('lang:controls-layout');}}});});controlSizeObserver.observe(sharedHeader);controlSizeObserver.observe(transport);controlSizeObserver.observe(practiceSurface);if(picture)controlSizeObserver.observe(picture);}
+  if(window.ResizeObserver){var lastHeaderHeight=null;var controlSizeObserver=new ResizeObserver(function(entries){reserve();entries.forEach(function(entry){if(entry.target===sharedHeader){var height=sharedHeader.getBoundingClientRect().height,reading=!!(headerReadingResize&&headerReadingResize.bar===sharedHeader.querySelector('.topbar')&&headerReadingResize.folded===headerFolded);if(!reading||!headerHeightAnimating(headerReadingResize.bar))headerReadingResize=null;if(height!==lastHeaderHeight){lastHeaderHeight=height;emit('lang:controls-layout',{reason:reading?'reading-scroll':'layout'});}}});});controlSizeObserver.observe(sharedHeader);controlSizeObserver.observe(transport);controlSizeObserver.observe(practiceSurface);if(picture)controlSizeObserver.observe(picture);}
   window.addEventListener('resize',reserve,{passive:true});
   setInterval(render,250); // one timer; unchanged transport states never repaint
   if(navSource)new MutationObserver(refreshAccount).observe(navSource,{childList:true,subtree:true});
@@ -12708,6 +12890,20 @@ global.LangStudyDOM={patch};
   menu.querySelectorAll('h3').forEach(function(h){h.insertAdjacentHTML('afterbegin',UI.menuGlyph('settings'));});
   menuAccount.insertAdjacentHTML('afterbegin',UI.menuGlyph('person'));
   library.insertAdjacentHTML('afterbegin',UI.menuGlyph('bookmark'));
+  displayControls=element('div','settingsDisplayControls',dialog);
+  var settingsPanel=dialog.querySelector('[data-shared-settings]');settingsPanel.before(displayControls);
+  var pageShortcut=button('preferencesPages',translate('Page and chapters'),controls);pageShortcut.className='preferences-page-link';
+  pageShortcut.innerHTML=UI.menuGlyph('chapters')+'<span>'+UI.escape(translate('Page and chapters'))+'</span>'+UI.icon('next');
+  pageShortcut.addEventListener('click',function(){closeMenu(false);openMenu('pages',menuOpener||more);});
+  preferencesWorkspace.register('display',{root:dialog,heading:dialog.querySelector('.settings-heading'),open:function(options){
+    settingsOpener=options.opener;closeMenu(false);if(!dialog.open)dialog.showModal();reconcile();
+  }});
+  preferencesWorkspace.register('study',{root:menu,heading:menuHeading,open:function(options){
+    menuOpener=options.opener;refreshNavigation();chooseTab('controls');reserve();
+    if(menu.open&&!menu.matches(':modal'))menu.close();
+    if(!menu.open)menu.showModal();reconcile();render();
+  }});
+  dialog.addEventListener('close',function(){if(preferencesWorkspace.transitioning(dialog))return;if(!phone.matches&&!menu.open)restore();});
   hydrate();emit('lang:study-controls');
 })();
 </script>
@@ -12882,7 +13078,7 @@ global.LangStudyDOM={patch};
   var UI=window.LangStudyUI, preferences=window.LangStudyPreferences;
   if(!UI||!preferences)return;
   var root=document.documentElement, sourceText=new WeakMap(),sourceAttrs=new WeakMap(),
-      saveFailures=new WeakSet(),media=matchMedia('(prefers-color-scheme:dark)'),queued=false,appDialog=null;
+      saveFailures=new WeakSet(),workspace=UI.preferencesWorkspace(),media=matchMedia('(prefers-color-scheme:dark)'),queued=false,appDialog=null;
   function current(){return preferences.get();}
   var aliases=Object.create(null);
   ['zh','en','ja'].forEach(function(locale){Object.keys(UI.strings[locale]).forEach(function(key){var value=UI.strings[locale][key];if(!Object.prototype.hasOwnProperty.call(aliases,value))aliases[value]=key;});});
@@ -12957,13 +13153,14 @@ global.LangStudyDOM={patch};
     appDialog=document.createElement('dialog');appDialog.id='appSettingsDialog';appDialog.className='settings-dialog study-ui';appDialog.setAttribute('aria-labelledby','appSettingsTitle');
     appDialog.innerHTML='<div class="settings-heading"><h2 id="appSettingsTitle">'+UI.escape(t('Settings'))+'</h2><button type="button" data-settings-close>'+UI.escape(t('Done'))+'</button></div>';
     document.body.appendChild(appDialog);settingsPanel(appDialog);
-    button.addEventListener('click',function(){refreshSettings(appDialog);appDialog.showModal();});
+    button.addEventListener('click',function(){workspace.open('display',button);});
     appDialog.querySelector('[data-settings-close]').addEventListener('click',function(){appDialog.close();});
-    appDialog.addEventListener('close',function(){if(button.isConnected)button.focus({preventScroll:true});});
+    appDialog.addEventListener('close',function(){if(!workspace.owns(appDialog)&&button.isConnected)button.focus({preventScroll:true});});
     appDialog.addEventListener('click',function(e){if(e.target!==appDialog)return;var r=appDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)appDialog.close();});
+    workspace.register('display',{root:appDialog,heading:appDialog.querySelector('.settings-heading'),open:function(){refreshSettings(appDialog);if(!appDialog.open)appDialog.showModal();}});
   }
   function containModalScroll(){
-    var selector='dialog.settings-dialog,dialog.account-dialog',dialogs=[],position=null,restore=null,touch=null;
+    var selector='dialog.settings-dialog,dialog.account-dialog,dialog.preferences-workspace',dialogs=[],position=null,restore=null,touch=null;
     function viewport(){
       if(!position)return;
       var view=window.visualViewport;
@@ -13081,7 +13278,7 @@ global.LangStudyDOM={patch};
     document.querySelectorAll('.study-ui').forEach(function(el){if(el.classList.contains('dark')!==dark)el.classList.toggle('dark',dark);var lang={zh:'zh-Hans',en:'en',ja:'ja'}[value.uiLocale];if(el.lang!==lang)el.lang=lang;});
     document.querySelectorAll(chrome).forEach(localize);
     document.querySelectorAll('dialog.settings-dialog').forEach(function(dialog){if(dialog.querySelector('[data-shared-settings]'))refreshSettings(dialog);});
-    if(appDialog){var title=appDialog.querySelector('#appSettingsTitle');if(title&&title.textContent!==t('Settings'))title.textContent=t('Settings');}
+    workspace.refresh();
     var appButton=document.getElementById('appSettings');
     if(appButton){var label=t('Settings');if(appButton.getAttribute('aria-label')!==label)appButton.setAttribute('aria-label',label);if(appButton.title!==label)appButton.title=label;}
   }
