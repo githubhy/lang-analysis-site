@@ -1,0 +1,1 @@
+function e(e,t){let n=e.currentTarget,r=Array.from(n.closest(`[role="tablist"]`).querySelectorAll(`[role="tab"]`)),i=r.indexOf(n),a;switch(e.key){case`ArrowLeft`:a=(i+r.length-1)%r.length;break;case`ArrowRight`:a=(i+1)%r.length;break;case`Home`:a=0;break;case`End`:a=r.length-1;break;default:return}e.preventDefault(),t(a),r[a].focus()}export{e as t};
