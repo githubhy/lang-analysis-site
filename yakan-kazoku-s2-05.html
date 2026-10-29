@@ -6219,8 +6219,25 @@ Object.assign(UI,{renderPreferencesTabs,bindPreferencesTabs,createPreferencesWor
   });
   document.addEventListener('visibilitychange',function(){if(!document.hidden && active()){refreshSession().then(function(){return doFlush({automatic:true});});}});
 
+  // Optional host acknowledgement. Existing commands remain optimistic; this
+  // barrier observes their real durable chain without inventing another store.
+  async function whenDurable(){
+    var id=owner;await durable;
+    if(owner!==id||!active())throw new Error('account-changed');
+    if(id){if(storageFailed)throw new Error('study storage unavailable');return;}
+    // Legacy guest persistence historically swallows quota errors. Recommit and
+    // read back every authoritative map and queue before a host closes an editor.
+    persist();writeJSON(K.ops,ops);
+    for(var i=0;i<NS.length;i++){
+      var ns=NS[i],key=ns==='items'?K.store:K[ns];
+      if(JSON.stringify(readJSON(key,null))!==JSON.stringify(state[ns]))throw new Error('study storage unavailable');
+    }
+    if(JSON.stringify(readJSON(K.ops,null))!==JSON.stringify(ops))throw new Error('study storage unavailable');
+  }
+
   // ---------- public surface ----------
   window.LangFav = {
+    whenDurable: whenDurable,
     all: function(){ return favs; },
     count: favCount,
     status: storeStatus, pendingCount: pendingCount,
