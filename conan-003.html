@@ -4158,7 +4158,7 @@
         <div class="u-cn"><span class="lbl">译</span>感觉只要和柯南君成为朋友，就能体验到更多的惊险刺激呢。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>此句洋子恢复了对外的丁宁体（〜ですね）。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜と<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>と-条件形，表示『一旦A成立，B就必然发生』的恒常/习惯性条件，不同于「〜たら」的偶发性假定。</span></li>
+          <li><span class="chip joshi">〜と<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>と-条件形，表示『一旦A成立，B就必然发生』的恒常/习惯性条件，不同于「〜たら」的偶发性假定。</span></li>
           <li><span class="chip keigo">〜そうですね</span><span>样态助动词「そう」（看起来…的样子）+丁宁体「です」+终助词「ね」，是委婉、礼貌的推测语气。</span></li>
         </ul>
       </div>
@@ -10198,14 +10198,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

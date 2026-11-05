@@ -17456,14 +17456,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

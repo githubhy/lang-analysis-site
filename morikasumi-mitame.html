@@ -1997,7 +1997,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>whisper「似合って半年ぐらい経って」はテロップにより「付き合って半年」と同定。</div>
         <ul class="u-points">
           <li><span class="chip goi">本性を表す<span class="star">★</span></span><span>露出本性。「本性（ほんしょう）」注意读音不是「ほんせい」。</span></li>
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>「経ってから」＝过了（一段时间）之后，表示时间上的先后。</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>「経ってから」＝过了（一段时间）之后，表示时间上的先后。</span></li>
           <li><span class="chip joshi">とか</span><a class="xref" href="concordance.html#q=とか" title="这个语法点在 38 个视频中共出现 88 次 — 点击查看全部用例">38视频</a><span>列举其中一例，语气含糊，口语高频。</span></li>
         </ul>
       </div>
@@ -2239,7 +2239,7 @@
         <div class="u-cn"><span class="lbl">译</span>都是先确定「这个人超喜欢我」之后，才跟对方交往的情况居多。</div>
         <ul class="u-points">
           <li><span class="chip joshi">〜っていうのが<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜っていうのが" title="这个语法点在 4 个视频中共出现 5 次 — 点击查看全部用例">4视频</a><span>「〜ということが」的口语形，把整句话名词化后当主语。</span></li>
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>表示先后顺序：「分かってから付き合う」＝弄清楚之后才交往。</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>表示先后顺序：「分かってから付き合う」＝弄清楚之后才交往。</span></li>
           <li><span class="chip goi">めっちゃ</span><a class="xref" href="concordance.html#q=めっちゃ" title="这个语法点在 22 个视频中共出现 76 次 — 点击查看全部用例">22视频</a> <span class="dialect" title="方言 → 标准语">→ とても</span><span>关西起源、现已全国通用的程度副词。</span></li>
           <li><span class="chip keigo">お付き合いする</span><span>「お＋动词连用形＋する」的谦让／郑重形，比「付き合う」得体。</span></li>
         </ul>
@@ -8217,14 +8217,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

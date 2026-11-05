@@ -2166,7 +2166,7 @@
         <div class="u-cn"><span class="lbl">译</span>是啊……已经18年了呢。自从我带着你回到这里以来。</div>
         <ul class="u-points">
           <li><span class="chip joshi">だもんね</span> <span class="dialect" title="方言 → 标准语">→ だものね</span><span>「だものね」的口语缩约。「もん（もの）」在此表示理由、辩解的语气，「ね」寻求认同。整句意为「（因为）已经18年了嘛」，带有「这也是没办法的事」的意味。</span></li>
-          <li><span class="chip goi">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>「动词て形＋から」表示「自从……之后」。此处「戻ってきてから」＝「自从回来之后」。</span></li>
+          <li><span class="chip goi">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>「动词て形＋から」表示「自从……之后」。此处「戻ってきてから」＝「自从回来之后」。</span></li>
           <li><span class="chip joshi">あなた連れて</span><span>「あなたを連れて」的「を」在口语中省略。「連れて」是「連れる（带、领）」的て形，此处「あなた連れてここに戻ってきて」＝「带着你回到这里」。</span></li>
         </ul>
       </div>
@@ -11642,14 +11642,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

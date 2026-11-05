@@ -1947,7 +1947,7 @@
         <div class="u-jp">これから<ruby>始<rt>はじ</rt></ruby>まるのは</div>
         <div class="u-cn"><span class="lbl">译</span>接下来即将开始的</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 31 次 — 点击查看全部用例">23视频</a><span>形式名词「の」＋主题助词「は」，构成「〜のは」的铺垫句式。</span></li>
+          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 30 次 — 点击查看全部用例">23视频</a><span>形式名词「の」＋主题助词「は」，构成「〜のは」的铺垫句式。</span></li>
         </ul>
       </div>
     </div>
@@ -2584,7 +2584,7 @@
         <div class="u-cn"><span class="lbl">译</span>因为在这里路会分开，所以就在这里告别吧——（她们是这样想的吧）。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>这是鲁迪乌斯对普露塞娜和莉妮亚想法的推测，承接上一句的内心独白。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>引用助词，这里省略了后续的「思っているのだろう」等，表示引用二人内心的想法。</span></li>
+          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>引用助词，这里省略了后续的「思っているのだろう」等，表示引用二人内心的想法。</span></li>
           <li><span class="chip goi">道が分かれる</span><span>意为「道路分岔」，这里既是字面意思（物理上道路分开），也隐喻人生道路的分歧。</span></li>
           <li><span class="chip katsu">別れよう</span><a class="xref" href="concordance.html#q=別れよう" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「別れる」的意向形，表示「告别吧、分别吧」。</span></li>
         </ul>
@@ -10545,14 +10545,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

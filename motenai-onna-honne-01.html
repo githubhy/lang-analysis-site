@@ -2168,7 +2168,7 @@
         <div class="u-jp">わかんない。</div>
         <div class="u-cn"><span class="lbl">译</span>不知道。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">わかんない</span><a class="xref" href="concordance.html#q=わかんない" title="这个语法点在 9 个视频中共出现 11 次 — 点击查看全部用例">9视频</a> <span class="dialect" title="方言 → 标准语">→ わからない</span><span>「わからない」的口语缩约，意思是「不知道／不明白」。</span></li>
+          <li><span class="chip katsu">わかんない</span><a class="xref" href="concordance.html#q=わかんない" title="这个语法点在 10 个视频中共出现 12 次 — 点击查看全部用例">10视频</a> <span class="dialect" title="方言 → 标准语">→ わからない</span><span>「わからない」的口语缩约，意思是「不知道／不明白」。</span></li>
         </ul>
       </div>
     </div>
@@ -2775,7 +2775,7 @@
         <div class="u-jp"><ruby>長谷<rt>はせ</rt></ruby>くんが<ruby>配属<rt>はいぞく</rt></ruby>されてきてから<ruby>1年半<rt>いちねんはん</rt></ruby>、<ruby>頼<rt>たの</rt></ruby>もしくなったと<ruby>思<rt>おも</rt></ruby>う。</div>
         <div class="u-cn"><span class="lbl">译</span>长谷君被分配到这里以来已经一年半了，我觉得他变得可靠了。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>表示从某事发生以后经过的时间；「配属されてきてから1年半」即“被分配来这里已经一年半”。</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>表示从某事发生以后经过的时间；「配属されてきてから1年半」即“被分配来这里已经一年半”。</span></li>
           <li><span class="chip katsu">〜くなる</span><a class="xref" href="concordance.html#q=〜くなる" title="这个语法点在 6 个视频中共出现 7 次 — 点击查看全部用例">6视频</a><span>い形容词词干接「くなる」，表示状态发生变化；「頼もしくなった」是“变得可靠了”。</span></li>
           <li><span class="chip goi">〜と思う</span><a class="xref" href="concordance.html#q=〜と思う" title="这个语法点在 7 个视频中共出现 12 次 — 点击查看全部用例">7视频</a><span>表达说话人的判断或感受，相当于“我觉得……”。</span></li>
         </ul>
@@ -3947,7 +3947,7 @@
         <ul class="u-points">
           <li><span class="chip joshi">今日の私</span><span>「の」连接时间与人物，限定为「今天的我」这一状态。</span></li>
           <li><span class="chip goi">ぐちゃぐちゃ</span><a class="xref" href="concordance.html#q=ぐちゃぐちゃ" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>口语拟态词，表示杂乱不堪；也可形容思绪或心情一团乱。</span></li>
-          <li><span class="chip katsu">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 26 个视频中共出现 36 次 — 点击查看全部用例">26视频</a><span>「だ」的连接形式，可连接后续内容；句尾悬置表示话还没有说完。</span></li>
+          <li><span class="chip katsu">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 25 个视频中共出现 35 次 — 点击查看全部用例">25视频</a><span>「だ」的连接形式，可连接后续内容；句尾悬置表示话还没有说完。</span></li>
         </ul>
       </div>
     </div>
@@ -9763,14 +9763,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

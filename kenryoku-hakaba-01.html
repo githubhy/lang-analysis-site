@@ -1599,7 +1599,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「引き継ぎます」意为「接手、接替」。此处说话人表示接下来的交涉由自己负责，暗示让对方退下。【复核】质检意见成立：原 src_html 多出一个假名「ひ」，且把「引」注音为「き」，渲染出「私ひ引き継ぎます」、读音错成「ひききつぎ」；现改为「引=ひ」「継=つ」，送假名「き」「ぎ」留在 ruby 外不重复，渲染文本与 src 完全一致。</div>
         <ul class="u-points">
           <li><span class="chip goi">引き継ぐ</span><span>「ひきつぐ」，他动词，意为「接替、接手（工作、任务）」。商务场合常用语。</span></li>
-          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>接续助词，表示原因、理由。此处「引き継ぎますので」后面省略了「（あなたは下がってください）」等指示，用「ので」结尾使语气更柔和、自然。</span></li>
+          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>接续助词，表示原因、理由。此处「引き継ぎますので」后面省略了「（あなたは下がってください）」等指示，用「ので」结尾使语气更柔和、自然。</span></li>
         </ul>
       </div>
     </div>
@@ -1656,7 +1656,7 @@
         <div class="u-cn"><span class="lbl">译</span>这就是我的工作，所以并非与我无关。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「関係ないことはなくて」是双重否定，即「并非没有关系」。说话人礼貌但坚定地反驳对方「这跟你没关系」的说法。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>接续助词，表示原因。此处用「ので」比「から」更礼貌、客观。</span></li>
+          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>接续助词，表示原因。此处用「ので」比「から」更礼貌、客观。</span></li>
           <li><span class="chip katsu">関係ないことはなくて</span><span>双重否定结构。「関係ない（没有关系）」+「ことはなくて（并非…）」，即「并非没有关系」。比直接说「関係あります（有关系）」语气更强硬、更有反驳力。</span></li>
         </ul>
       </div>
@@ -1992,7 +1992,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「時短金」指因缩短工时（時短勤務）而发放的补助金。</div>
         <ul class="u-points">
           <li><span class="chip keigo">お納めください<span class="star">★</span></span><span>「納める」的尊敬语形式（お＋動詞連用形＋ください），意为「请收下」。比「受けてください」更正式、更郑重。</span></li>
-          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>此处表原因、理由，语气比「から」更正式、更委婉，适合职场敬语场景。</span></li>
+          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>此处表原因、理由，语气比「から」更正式、更委婉，适合职场敬语场景。</span></li>
         </ul>
       </div>
     </div>
@@ -9682,14 +9682,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

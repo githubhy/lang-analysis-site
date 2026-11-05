@@ -1302,7 +1302,7 @@
         <div class="u-cn"><span class="lbl">译</span>就是啊，爸爸。和连面都没见过的人……</div>
         <ul class="u-points">
           <li><span class="chip katsu">Vたこともない</span><span>表示连某种经历都没有；「会ったこともない」是“连见都没见过”。</span></li>
-          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>这里标出结婚对象/交往对象；句子被打断，所以以「と」悬置。</span></li>
+          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>这里标出结婚对象/交往对象；句子被打断，所以以「と」悬置。</span></li>
         </ul>
       </div>
     </div>
@@ -2605,7 +2605,7 @@
         <div class="u-cn"><span class="lbl">译</span>这里非常危险，所以已经没人用这处修行场了。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>OCR 字幕作「使てない」；按口语中的促音还原为「使ってない」。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>说明原因，语气通常比「から」更客观、委婉。</span></li>
+          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>说明原因，语气通常比「から」更客观、委婉。</span></li>
           <li><span class="chip joshi">誰も〜ない<span class="star">★</span></span><a class="xref" href="concordance.html#q=誰も〜ない" title="这个语法点在 7 个视频中共出现 7 次 — 点击查看全部用例">7视频</a><span>与否定形式搭配，表示「谁也不……」。</span></li>
           <li><span class="chip katsu">使ってない</span><span>「使っていない」的口语缩约，表示现在无人使用。</span></li>
           <li><span class="chip joshi">〜のよ</span><a class="xref" href="concordance.html#q=〜のよ" title="这个语法点在 21 个视频中共出现 41 次 — 点击查看全部用例">21视频</a><span>带说明、强调的句尾，常用于向对方告知情况。</span></li>
@@ -3317,7 +3317,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>末句前半的OCR有「言って／言うて」两种读法，结合口语语境按「つっても」（「と言っても」的缩约）还原(?)。</div>
         <ul class="u-points">
           <li><span class="chip katsu">言っとく（＝言っておく）</span> <span class="dialect" title="方言 → 标准语">→ 言っておく</span><span>「言っておく」的口语缩约，表示先把话说在前面。</span></li>
-          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 31 次 — 点击查看全部用例">23视频</a><span>把前面的被动句名词化并作为主题：「被看见这件事」。</span></li>
+          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 30 次 — 点击查看全部用例">23视频</a><span>把前面的被动句名词化并作为主题：「被看见这件事」。</span></li>
           <li><span class="chip katsu">見慣れてっから</span> <span class="dialect" title="方言 → 标准语">→ 見慣れているから</span><span>「見慣れているから」的口语缩约，表示已经看惯了。</span></li>
           <li><span class="chip katsu">どうってことねえ（＝どうということはない）</span> <span class="dialect" title="方言 → 标准语">→ どうということはない</span><span>强口语否定，表示「没什么大不了」。</span></li>
           <li><span class="chip goi">つっても（＝と言っても）</span> <span class="dialect" title="方言 → 标准语">→ と言っても</span><span>「と言っても」的口语缩约，表示「话虽这么说」。</span></li>
@@ -9215,14 +9215,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

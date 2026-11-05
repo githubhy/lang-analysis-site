@@ -2274,7 +2274,7 @@
         <div class="u-jp">本当(ほんとう)にしゃべるネタがなくなる。</div>
         <div class="u-cn"><span class="lbl">译</span>真的会没有可聊的话题了。</div>
         <ul class="u-points">
-          <li><span class="chip goi">ネタ</span><a class="xref" href="concordance.html#q=ネタ" title="这个语法点在 6 个视频中共出现 10 次 — 点击查看全部用例">6视频</a><span>话题、素材（俗语），常指聊天或表演的题材。</span></li>
+          <li><span class="chip goi">ネタ</span><a class="xref" href="concordance.html#q=ネタ" title="这个语法点在 5 个视频中共出现 9 次 — 点击查看全部用例">5视频</a><span>话题、素材（俗语），常指聊天或表演的题材。</span></li>
           <li><span class="chip goi">なくなる</span><a class="xref" href="concordance.html#q=なくなる" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「ない＋なる」复合，表示「变得没有、消失」。</span></li>
         </ul>
       </div>
@@ -3914,7 +3914,7 @@
         <div class="u-jp">っていうネタがあるんですけど<ruby>何<rt>なに</rt></ruby>かみんなで<ruby>1列<rt>いちれつ</rt></ruby>になって。</div>
         <div class="u-cn"><span class="lbl">译</span>有一个叫这个的段子，就是大家排成一列。</div>
         <ul class="u-points">
-          <li><span class="chip goi">ネタ</span><a class="xref" href="concordance.html#q=ネタ" title="这个语法点在 6 个视频中共出现 10 次 — 点击查看全部用例">6视频</a><span>（相声/搞笑的）段子、桥段。</span></li>
+          <li><span class="chip goi">ネタ</span><a class="xref" href="concordance.html#q=ネタ" title="这个语法点在 5 个视频中共出现 9 次 — 点击查看全部用例">5视频</a><span>（相声/搞笑的）段子、桥段。</span></li>
           <li><span class="chip goi">になって</span><a class="xref" href="concordance.html#q=になって" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「…になる」变成…的状态。</span></li>
         </ul>
       </div>
@@ -9512,14 +9512,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

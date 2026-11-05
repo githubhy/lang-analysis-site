@@ -1057,7 +1057,7 @@
         <div class="u-cn"><span class="lbl">译</span>我当律师，是因为想帮助别人吧……</div>
         <ul class="u-points">
           <li><span class="chip goi">〜というか</span><a class="xref" href="concordance.html#q=〜というか" title="这个语法点在 17 个视频中共出现 27 次 — 点击查看全部用例">17视频</a><span>用于说话时斟酌措辞，相当于「该怎么说呢/算是……吧」，常在难以精确表达自己想法时使用。</span></li>
-          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 31 次 — 点击查看全部用例">23视频</a><span>把前面的从句名词化并作主题化处理，引出后面对「当律师的原因」的说明，相当于「……这件事/……的原因是」。</span></li>
+          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 30 次 — 点击查看全部用例">23视频</a><span>把前面的从句名词化并作主题化处理，引出后面对「当律师的原因」的说明，相当于「……这件事/……的原因是」。</span></li>
         </ul>
       </div>
     </div>
@@ -4456,7 +4456,7 @@
         <div class="u-cn"><span class="lbl">译</span>今天我只是来跟着律师的。</div>
         <ul class="u-points">
           <li><span class="chip goi">お付き<span class="star">★</span></span><span>指随行、陪同的人（跟班/随员），常用于陪同上司或长辈出席场合，这里凛香借此谦称自己只是随行人员，而非正式出面的代理律师。</span></li>
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>表原因，比「から」更委婉客气，多用于对外场合的解释说明，句末只说到「ので」戛然而止，也是一种客气的言いさし（欲言又止）。</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>表原因，比「から」更委婉客气，多用于对外场合的解释说明，句末只说到「ので」戛然而止，也是一种客气的言いさし（欲言又止）。</span></li>
         </ul>
       </div>
     </div>
@@ -6120,7 +6120,7 @@
         <div class="u-cn"><span class="lbl">译</span>这是什么意思？我搞不懂。</div>
         <ul class="u-points">
           <li><span class="chip goi">何なんですか<span class="star">★</span></span><a class="xref" href="concordance.html#q=何なんですか" title="这个语法点在 6 个视频中共出现 7 次 — 点击查看全部用例">6视频</a><span>「一体何なのですか」的口语说法，なに在な音前变为「なん」（何+な→なん），带质问、不满语气。</span></li>
-          <li><span class="chip katsu">わかんない</span><a class="xref" href="concordance.html#q=わかんない" title="这个语法点在 9 个视频中共出现 11 次 — 点击查看全部用例">9视频</a> <span class="dialect" title="方言 → 标准语">→ わからない</span><span>「わからない」的口语收缩形，「ら」脱落成「ん」。</span></li>
+          <li><span class="chip katsu">わかんない</span><a class="xref" href="concordance.html#q=わかんない" title="这个语法点在 10 个视频中共出现 12 次 — 点击查看全部用例">10视频</a> <span class="dialect" title="方言 → 标准语">→ わからない</span><span>「わからない」的口语收缩形，「ら」脱落成「ん」。</span></li>
         </ul>
       </div>
     </div>
@@ -13082,14 +13082,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

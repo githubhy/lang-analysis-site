@@ -4398,7 +4398,7 @@
         <div class="u-cn"><span class="lbl">译</span>我没养过小白脸之类的，所以不太清楚。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜たことない</span><a class="xref" href="concordance.html#q=〜たことない" title="这个语法点在 11 个视频中共出现 13 次 — 点击查看全部用例">11视频</a> <span class="dialect" title="方言 → 标准语">→ 〜たことがない</span><span>表示「没有做过某事」的经历否定，「飼ったことない」=没养过。</span></li>
-          <li><span class="chip katsu">わかんない</span><a class="xref" href="concordance.html#q=わかんない" title="这个语法点在 9 个视频中共出现 11 次 — 点击查看全部用例">9视频</a> <span class="dialect" title="方言 → 标准语">→ わからない</span><span>「わからない」的口语缩约形。</span></li>
+          <li><span class="chip katsu">わかんない</span><a class="xref" href="concordance.html#q=わかんない" title="这个语法点在 10 个视频中共出现 12 次 — 点击查看全部用例">10视频</a> <span class="dialect" title="方言 → 标准语">→ わからない</span><span>「わからない」的口语缩约形。</span></li>
           <li><span class="chip katsu">んで</span><a class="xref" href="concordance.html#q=んで" title="这个语法点在 12 个视频中共出现 15 次 — 点击查看全部用例">12视频</a> <span class="dialect" title="方言 → 标准语">→ ので</span><span>「ので」的口语形，表示原因。</span></li>
         </ul>
       </div>
@@ -10189,14 +10189,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

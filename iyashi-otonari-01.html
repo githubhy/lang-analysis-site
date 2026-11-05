@@ -1218,7 +1218,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>此处转为藤子的内心独白（モノローグ）。</div>
         <ul class="u-points">
           <li><span class="chip joshi">〜から</span><a class="xref" href="concordance.html#q=〜から" title="这个语法点在 45 个视频中共出现 137 次 — 点击查看全部用例">45视频</a><span>格助词，表示时间起点，意为「从……起」。</span></li>
-          <li><span class="chip katsu">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 26 个视频中共出现 36 次 — 点击查看全部用例">26视频</a><span>此处是「だ」的连用形「で」，表示中顿，连接后面的句子，相当于「……で、……」。口语中常用「で」停顿。</span></li>
+          <li><span class="chip katsu">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 25 个视频中共出现 35 次 — 点击查看全部用例">25视频</a><span>此处是「だ」的连用形「で」，表示中顿，连接后面的句子，相当于「……で、……」。口语中常用「で」停顿。</span></li>
           <li><span class="chip goi">わが家</span><a class="xref" href="concordance.html#q=わが家" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「わが家」意为「我家、自己家」，是较正式或带感情色彩的说法。</span></li>
         </ul>
       </div>
@@ -1230,7 +1230,7 @@
         <div class="u-cn"><span class="lbl">译</span>高中毕业后，马上就进了这家保险公司工作。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>继续内心独白。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>表示「做完……之后」，强调动作的先后顺序。</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>表示「做完……之后」，强调动作的先后顺序。</span></li>
           <li><span class="chip goi">就職する</span><a class="xref" href="concordance.html#q=就職する" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>サ变动词，意为「就业、入职」。与「勤める」不同，「就職する」强调进入公司的动作。</span></li>
         </ul>
       </div>
@@ -2855,7 +2855,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>句末「で」为「〜ので」的省略，表示原因、理由。</div>
         <ul class="u-points">
           <li><span class="chip joshi">〜のに<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜のに" title="这个语法点在 40 个视频中共出现 80 次 — 点击查看全部用例">40视频</a><span>逆接，表示「明明……却」。</span></li>
-          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 31 次 — 点击查看全部用例">23视频</a><span>将前面的动词短语名词化，作主语。</span></li>
+          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 30 次 — 点击查看全部用例">23视频</a><span>将前面的动词短语名词化，作主语。</span></li>
           <li><span class="chip katsu">〜で（理由）</span><a class="xref" href="concordance.html#q=〜で（理由）" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「〜ので」的省略形，口语中用于说明理由。</span></li>
         </ul>
       </div>
@@ -9402,14 +9402,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

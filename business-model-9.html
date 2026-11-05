@@ -2363,7 +2363,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>原字幕「模範の模範教師」疑为重复口误,还原为「模範教師」;「この目」疑为「両目」的听误,均标(?)。</div>
         <ul class="u-points">
           <li><span class="chip goi">模範</span><span>「榜样、模范」之意,与前文的「反面教師」(反面教材)相对,指值得效仿的正面例子。</span></li>
-          <li><span class="chip joshi">〜ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>表原因/理由的接续助词,比「から」更客观、书面一些,常用于说明因果逻辑。</span></li>
+          <li><span class="chip joshi">〜ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>表原因/理由的接续助词,比「から」更客观、书面一些,常用于说明因果逻辑。</span></li>
         </ul>
       </div>
     </div>
@@ -5368,7 +5368,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「長期に」后被打断跳接，未接完整表述（推测近似“长期签约/长期入驻”），按口语原样保留、未续写。</div>
         <ul class="u-points">
           <li><span class="chip joshi">〜ってなったら<span class="star">★</span></span><span>口语中「〜ということになったら」的缩约，＝「一旦变成〜的话」，表示条件/结果。</span></li>
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>表原因的接续助词，此处置于句末，后续内容被省略，属口语中常见的“留白”用法。</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>表原因的接续助词，此处置于句末，后续内容被省略，属口语中常见的“留白”用法。</span></li>
         </ul>
       </div>
     </div>
@@ -11317,14 +11317,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

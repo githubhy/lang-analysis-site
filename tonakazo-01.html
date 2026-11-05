@@ -6723,7 +6723,7 @@
         <div class="u-cn"><span class="lbl">译</span>到这个月就一年零三个月了</div>
         <div class="u-asr"><span class="tag-asr">还原</span>原听写「今まで」应为「今月で」，结合中文「这个月」判断。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 26 个视频中共出现 36 次 — 点击查看全部用例">26视频</a><span>表示时间范围的终点，「到……为止」。</span></li>
+          <li><span class="chip joshi">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 25 个视频中共出现 35 次 — 点击查看全部用例">25视频</a><span>表示时间范围的终点，「到……为止」。</span></li>
         </ul>
       </div>
     </div>
@@ -8633,7 +8633,7 @@
         <ul class="u-points">
           <li><span class="chip goi">フーナーテスト<span class="star">★</span></span><span>医学术语（Huhner test），即性交后试验（PCT），用于检查精子能否穿透宫颈黏液。</span></li>
           <li><span class="chip keigo">いらしてください</span><a class="xref" href="concordance.html#q=いらしてください" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a> <span class="dialect" title="方言 → 标准语">→ 来てください</span><span>「来る」的尊敬语「いらっしゃる」的て形＋ください，医生对患者使用敬语。</span></li>
-          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>表示客观原因/理由，此处医生用「ので」说明检查安排，语气比「から」更正式、柔和。</span></li>
+          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>表示客观原因/理由，此处医生用「ので」说明检查安排，语气比「から」更正式、柔和。</span></li>
         </ul>
       </div>
     </div>
@@ -16619,14 +16619,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

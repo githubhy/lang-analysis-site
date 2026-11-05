@@ -4269,7 +4269,7 @@
         <div class="u-jp"><ruby>大人<rt>おとな</rt></ruby>になってから<ruby>恋愛<rt>れんあい</rt></ruby>しようなんて<ruby>思<rt>おも</rt></ruby>っても、<ruby>恋<rt>こい</rt></ruby>なんてそう<ruby>簡単<rt>かんたん</rt></ruby>にできないんだから</div>
         <div class="u-cn"><span class="lbl">译</span>就算长大成人以后才想着谈恋爱，恋爱也不是那么容易谈成的</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>表示『在…之后』，强调动作的先后顺序</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>表示『在…之后』，强调动作的先后顺序</span></li>
           <li><span class="chip joshi">〜なんて<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜なんて" title="这个语法点在 30 个视频中共出现 83 次 — 点击查看全部用例">30视频</a><span>带轻蔑/意外语气列举例子，意为『…之类的』『…这种事』</span></li>
           <li><span class="chip joshi">〜んだから</span><a class="xref" href="concordance.html#q=〜んだから" title="这个语法点在 20 个视频中共出现 28 次 — 点击查看全部用例">20视频</a><span>说明兼强调语气，常用于陈述理由，带『所以说』的语感</span></li>
         </ul>
@@ -4606,7 +4606,7 @@
         <div class="u-cn"><span class="lbl">译</span>没有没有，感觉挺新鲜挺开心的。</div>
         <ul class="u-points">
           <li><span class="chip goi">いえいえ</span><a class="xref" href="concordance.html#q=いえいえ" title="这个语法点在 5 个视频中共出现 5 次 — 点击查看全部用例">5视频</a><span>口语中否定/谦让对方的话时的应答，“没有没有／哪里哪里”</span></li>
-          <li><span class="chip joshi">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 26 个视频中共出现 36 次 — 点击查看全部用例">26视频</a><span>形容动词「新鮮」的中顿形，连接后面的「楽しいです」</span></li>
+          <li><span class="chip joshi">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 25 个视频中共出现 35 次 — 点击查看全部用例">25视频</a><span>形容动词「新鮮」的中顿形，连接后面的「楽しいです」</span></li>
         </ul>
       </div>
     </div>
@@ -7073,7 +7073,7 @@
         <div class="u-cn"><span class="lbl">译</span>（要是接着说）会说来话长的。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>字幕不完整，「と」前被省略的引述内容不明(?)；「長くなるから」是打住话题时的常用口语理由。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>引用助词，引出前面说过/想到的内容，这里前半句被省略。</span></li>
+          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>引用助词，引出前面说过/想到的内容，这里前半句被省略。</span></li>
           <li><span class="chip katsu">長くなる</span><span>い形容词「長い」词干+「くなる」，表示“变得…”；「から」表原因。</span></li>
         </ul>
       </div>
@@ -14315,14 +14315,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

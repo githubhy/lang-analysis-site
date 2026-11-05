@@ -1647,7 +1647,7 @@
         <ul class="u-points">
           <li><span class="chip goi">とんでもないです</span><a class="xref" href="concordance.html#q=とんでもないです" title="这个语法点在 3 个视频中共出现 3 次 — 点击查看全部用例">3视频</a><span>否认对方的指责或评价，这里表示绝无此意。</span></li>
           <li><span class="chip joshi">本で</span><span>で标示获取知识的来源或媒介。</span></li>
-          <li><span class="chip joshi">〜ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>提出原因，省略后面的解释或结论，使辩解稍显委婉。</span></li>
+          <li><span class="chip joshi">〜ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>提出原因，省略后面的解释或结论，使辩解稍显委婉。</span></li>
         </ul>
       </div>
     </div>
@@ -1701,7 +1701,7 @@
         <ul class="u-points">
           <li><span class="chip goi">〜なりに<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜なりに" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>表示按照自身能力或立场，以自己的方式。</span></li>
           <li><span class="chip goi">〜のことが心配</span><span>のこと概括与某人有关的事情，表示担心某人。</span></li>
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>句末留下理由，省略因此才这样做等结论。</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>句末留下理由，省略因此才这样做等结论。</span></li>
         </ul>
       </div>
     </div>
@@ -1749,7 +1749,7 @@
         <div class="u-jp"><ruby>師匠<rt>ししょう</rt></ruby>と？</div>
         <div class="u-cn"><span class="lbl">译</span>和师傅？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜と<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>表示共同做某事的伙伴；省略了动作谓语。</span></li>
+          <li><span class="chip joshi">〜と<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>表示共同做某事的伙伴；省略了动作谓语。</span></li>
         </ul>
       </div>
     </div>
@@ -1948,7 +1948,7 @@
         <div class="u-jp">じゃあ、<ruby>私<rt>わたし</rt></ruby>たちで<ruby>掃除<rt>そうじ</rt></ruby>します。</div>
         <div class="u-cn"><span class="lbl">译</span>那就由我们来打扫。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜で<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 26 个视频中共出现 36 次 — 点击查看全部用例">26视频</a><span>在私たちで中表示由这一组人承担行动，有我们自己来做的意味。</span></li>
+          <li><span class="chip joshi">〜で<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 25 个视频中共出现 35 次 — 点击查看全部用例">25视频</a><span>在私たちで中表示由这一组人承担行动，有我们自己来做的意味。</span></li>
           <li><span class="chip goi">じゃあ</span><a class="xref" href="concordance.html#q=じゃあ" title="这个语法点在 33 个视频中共出现 49 次 — 点击查看全部用例">33视频</a><span>表示承接前面的情况作出决定，相当于那么。</span></li>
           <li><span class="chip keigo">〜ます</span><a class="xref" href="concordance.html#q=〜ます" title="这个语法点在 12 个视频中共出现 22 次 — 点击查看全部用例">12视频</a><span>礼貌体，用于弟子对师傅的说话。</span></li>
         </ul>
@@ -7695,14 +7695,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

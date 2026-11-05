@@ -1491,7 +1491,7 @@
         <div class="u-jp"><ruby>強制参加<rt>きょうせいさんか</rt></ruby>で</div>
         <div class="u-cn"><span class="lbl">译</span>强制参加</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 26 个视频中共出现 36 次 — 点击查看全部用例">26视频</a><span>句末用「で」结句，表断定、命令式的口语收尾。</span></li>
+          <li><span class="chip katsu">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 25 个视频中共出现 35 次 — 点击查看全部用例">25视频</a><span>句末用「で」结句，表断定、命令式的口语收尾。</span></li>
         </ul>
       </div>
     </div>
@@ -4765,7 +4765,7 @@
         <div class="u-jp"><ruby>酔<rt>よ</rt></ruby>うとネガティブになるから</div>
         <div class="u-cn"><span class="lbl">译</span>因为一喝醉你就会变得消极。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>条件接续，表恒常性条件「一……就……」。</span></li>
+          <li><span class="chip katsu">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>条件接续，表恒常性条件「一……就……」。</span></li>
           <li><span class="chip joshi">〜から</span><a class="xref" href="concordance.html#q=〜から" title="这个语法点在 45 个视频中共出现 137 次 — 点击查看全部用例">45视频</a><span>表原因理由，此处句末省略后句，语气带提醒。</span></li>
         </ul>
       </div>
@@ -15701,14 +15701,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

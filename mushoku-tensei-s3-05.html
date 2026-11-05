@@ -2058,7 +2058,7 @@
         <div class="u-cn"><span class="lbl">译</span>这个注入魔力后里面的东西就会冻住的锅，您觉得怎么样？</div>
         <div class="u-asr"><span class="tag-asr">还原</span>原文在「凍りつく鍋は」处被时间戳截断，根据店员推销的语境补全了句尾的「いかがですか」。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>条件助词，表示「一…就…」的恒常条件。这里「魔力を込めると凍りつく」＝「一注入魔力就会冻住」。</span></li>
+          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>条件助词，表示「一…就…」的恒常条件。这里「魔力を込めると凍りつく」＝「一注入魔力就会冻住」。</span></li>
           <li><span class="chip goi">〜は いかがですか</span><span>「いかが」是「どう」的礼貌形，用于向顾客推荐商品时的固定表达。「这个…怎么样？」。</span></li>
         </ul>
       </div>
@@ -3322,7 +3322,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>鲁迪内心独白/旁白。合并 [15:03] 和 [15:09] 的前半，此处为完整句子。</div>
         <ul class="u-points">
           <li><span class="chip keigo">教わって</span><span>「教わる」= 受教、被教。与「教える」对应，表示从别人那里学到。「ロキシーに教わる」= 跟洛琪希学。</span></li>
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>接在动词て形后，表示「自从…之后」。</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>接在动词て形后，表示「自从…之后」。</span></li>
           <li><span class="chip goi">試行錯誤</span><span>四字熟语，意为「反复试验、摸索」。读作「しこうさくご」。</span></li>
         </ul>
       </div>
@@ -10106,14 +10106,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

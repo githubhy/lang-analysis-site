@@ -3337,7 +3337,7 @@
         <div class="u-cn"><span class="lbl">译</span>我不太有和魔物战斗的经验，所以有点紧张呢。</div>
         <ul class="u-points">
           <li><span class="chip katsu">〜たことがない</span><a class="xref" href="concordance.html#q=〜たことがない" title="这个语法点在 16 个视频中共出现 22 次 — 点击查看全部用例">16视频</a><span>动词过去形+ことがない，表示没有过某种经历。</span></li>
-          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>表示原因、理由，比「から」更正式、礼貌。伊佐尔缇的丁宁体特征之一。</span></li>
+          <li><span class="chip katsu">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>表示原因、理由，比「から」更正式、礼貌。伊佐尔缇的丁宁体特征之一。</span></li>
           <li><span class="chip joshi">ね</span><a class="xref" href="concordance.html#q=ね" title="这个语法点在 48 个视频中共出现 179 次 — 点击查看全部用例">48视频</a><span>句末终助词，表示轻微的感叹或寻求共鸣。</span></li>
         </ul>
       </div>
@@ -9748,14 +9748,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

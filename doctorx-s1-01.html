@@ -4925,7 +4925,7 @@
         <div class="u-jp">これを<ruby>聞<rt>き</rt></ruby>くと<ruby>調子<rt>ちょうし</rt></ruby>がいいんだよ。</div>
         <div class="u-cn"><span class="lbl">译</span>一听这个，状态就特别好。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>表示条件关系，「一…就…」。此处表示习惯性的条件反射。</span></li>
+          <li><span class="chip joshi">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>表示条件关系，「一…就…」。此处表示习惯性的条件反射。</span></li>
           <li><span class="chip joshi">〜んだよ</span><a class="xref" href="concordance.html#q=〜んだよ" title="这个语法点在 31 个视频中共出现 57 次 — 点击查看全部用例">31视频</a><span>「のだ」的口语形，用于说明理由或强调。</span></li>
         </ul>
       </div>
@@ -5009,7 +5009,7 @@
         <div class="u-jp">おい、誰だ、音楽下げたのは。</div>
         <div class="u-cn"><span class="lbl">译</span>喂，谁把音乐调小了？</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 31 次 — 点击查看全部用例">23视频</a><span>「〜のは誰だ」的倒装疑问句，将焦点「音楽下げたの」前置，带有质问语气。</span></li>
+          <li><span class="chip joshi">〜のは</span><a class="xref" href="concordance.html#q=〜のは" title="这个语法点在 23 个视频中共出现 30 次 — 点击查看全部用例">23视频</a><span>「〜のは誰だ」的倒装疑问句，将焦点「音楽下げたの」前置，带有质问语气。</span></li>
           <li><span class="chip goi">おい</span><a class="xref" href="concordance.html#q=おい" title="这个语法点在 11 个视频中共出现 19 次 — 点击查看全部用例">11视频</a><span>对他人不客气的呼唤语，体现未知子对手术室人员毫不客气的态度。</span></li>
         </ul>
       </div>
@@ -8598,7 +8598,7 @@
         <div class="u-jp"><ruby>私<rt>わたし</rt></ruby>、<ruby>失敗<rt>しっぱい</rt></ruby>しないので。</div>
         <div class="u-cn"><span class="lbl">译</span>因为我，从不失败。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>本为原因从句的接续助词，这里以「ので」直接收尾（后半句省略），留下余韵。大门未知子的招牌台词。</span></li>
+          <li><span class="chip joshi">〜ので<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>本为原因从句的接续助词，这里以「ので」直接收尾（后半句省略），留下余韵。大门未知子的招牌台词。</span></li>
           <li><span class="chip katsu">しない</span><span>サ变动词「する」的未然形＋ない，构成否定形。</span></li>
         </ul>
       </div>
@@ -14719,14 +14719,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

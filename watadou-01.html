@@ -1080,7 +1080,7 @@
         <div class="u-cn"><span class="lbl">译</span>就因为那一句话——「是小樱的妈妈」——我失去了一切。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「さくらのお母さん」是当时人们指认凶手时说的话，此处作为引用插入。（复核：「さくら」是人名——女主童年时的称呼——不是花名「樱花」；同处中文硬字幕亦作「是小樱的妈妈」，原译已更正。）</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 26 个视频中共出现 36 次 — 点击查看全部用例">26视频</a><span>此处表原因/契机，「因为那一句话」。</span></li>
+          <li><span class="chip joshi">〜で</span><a class="xref" href="concordance.html#q=〜で" title="这个语法点在 25 个视频中共出现 35 次 — 点击查看全部用例">25视频</a><span>此处表原因/契机，「因为那一句话」。</span></li>
           <li><span class="chip katsu">奪われた</span><span>「奪う」的被动形「奪われる」的过去式。被动表示主语（私）遭受损失。</span></li>
         </ul>
       </div>
@@ -1247,7 +1247,7 @@
         <ul class="u-points">
           <li><span class="chip goi">よく通る声</span><span>「通る」此处指声音「清亮、传得远」。「よく通る声」即「清亮悦耳的声音」。</span></li>
           <li><span class="chip goi">〜が浮かぶ</span><span>「浮かぶ」此处意为「（想法、灵感）浮现、涌出」。「お菓子が浮かびました」即「（这款）点心（的灵感）浮现了出来」。</span></li>
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>表示原因的接续助词，语气比「から」更正式、客观。此处七桜向客人解释创作灵感来源。</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>表示原因的接续助词，语气比「から」更正式、客观。此处七桜向客人解释创作灵感来源。</span></li>
         </ul>
       </div>
     </div>
@@ -1896,7 +1896,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>「いい」后省略了逗号，表示“没关系”。</div>
         <ul class="u-points">
           <li><span class="chip goi">喘息が出る</span><span>哮喘发作的惯用表达，「出る」表示症状出现。</span></li>
-          <li><span class="chip katsu">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>条件助词，表示“一〜就〜”“如果〜的话”。</span></li>
+          <li><span class="chip katsu">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>条件助词，表示“一〜就〜”“如果〜的话”。</span></li>
           <li><span class="chip joshi">の</span><a class="xref" href="concordance.html#q=の" title="这个语法点在 35 个视频中共出现 97 次 — 点击查看全部用例">35视频</a><span>句末「の」用于说明原因、解释情况，语气柔和，女性儿童常用。</span></li>
         </ul>
       </div>
@@ -12796,14 +12796,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

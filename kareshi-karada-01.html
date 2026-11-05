@@ -2556,7 +2556,7 @@
         <div class="u-jp"><ruby>雄介<rt>ゆうすけ</rt></ruby>いないと <ruby>世界<rt>せかい</rt></ruby>つまんないよ！</div>
         <div class="u-cn"><span class="lbl">译</span>没有雄介的话，世界好无聊啊！</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 46 次 — 点击查看全部用例">29视频</a><span>条件接续助词，表示「如果……的话」，此处「いないと」后省略了「だめだ」等结论。</span></li>
+          <li><span class="chip katsu">〜と</span><a class="xref" href="concordance.html#q=〜と" title="这个语法点在 29 个视频中共出现 45 次 — 点击查看全部用例">29视频</a><span>条件接续助词，表示「如果……的话」，此处「いないと」后省略了「だめだ」等结论。</span></li>
           <li><span class="chip goi">つまんない</span><a class="xref" href="concordance.html#q=つまんない" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a> <span class="dialect" title="方言 → 标准语">→ つまらない</span><span>「つまらない」的口语缩约形，意为「无聊、没意思」。</span></li>
           <li><span class="chip joshi">よ</span><a class="xref" href="concordance.html#q=よ" title="这个语法点在 52 个视频中共出现 235 次 — 点击查看全部用例">52视频</a><span>终助词，强调自己的感受或主张。</span></li>
         </ul>
@@ -10178,14 +10178,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

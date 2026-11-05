@@ -1070,7 +1070,7 @@
         <div class="u-cn"><span class="lbl">译</span>小新，我说过把玩具收拾好再去玩吧。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>合并了 00:14 和 00:16 两行。</div>
         <ul class="u-points">
-          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 17 个视频中共出现 26 次 — 点击查看全部用例">17视频</a><span>表示动作先后顺序，「做完前项再做后项」。此处「片付けてから遊びに行く」即「收拾完再去玩」。</span></li>
+          <li><span class="chip katsu">〜てから</span><a class="xref" href="concordance.html#q=〜てから" title="这个语法点在 16 个视频中共出现 25 次 — 点击查看全部用例">16视频</a><span>表示动作先后顺序，「做完前项再做后项」。此处「片付けてから遊びに行く」即「收拾完再去玩」。</span></li>
           <li><span class="chip joshi">〜なさい</span><a class="xref" href="concordance.html#q=〜なさい" title="这个语法点在 16 个视频中共出现 38 次 — 点击查看全部用例">16视频</a><span>对晚辈或孩子的命令表达，语气比「〜て」更正式、带有训诫感。母亲对孩子常用。</span></li>
           <li><span class="chip goi">〜って言ったでしょ</span><a class="xref" href="concordance.html#q=〜って言ったでしょ" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>「我不是说过〜吗」的常用口语表达，带有责备语气。「でしょ」是「でしょう」的口语缩约。</span></li>
         </ul>
@@ -7969,14 +7969,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };

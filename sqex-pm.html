@@ -2238,7 +2238,7 @@
         <div class="u-asr"><span class="tag-asr">还原</span>ASR「3級」→ 应为『産休』（同音さんきゅう），结合『子供たちの年齢も同じ』的语境还原</div>
         <ul class="u-points">
           <li><span class="chip goi">産休<span class="star">★</span></span><a class="xref" href="concordance.html#q=産休" title="这个语法点在 2 个视频中共出现 2 次 — 点击查看全部用例">2视频</a><span>『産休』＝産前産後休業，即产假；与『3級』同音，字幕原文误听成了3級</span></li>
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>表原因，比から更客观委婉，『因为…所以…』</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>表原因，比から更客观委婉，『因为…所以…』</span></li>
           <li><span class="chip katsu">〜と（句末引出用法）</span><span>句末的と引出说话内容，口语中后面常省略言う/思う</span></li>
         </ul>
       </div>
@@ -2496,7 +2496,7 @@
         <div class="u-cn"><span class="lbl">译</span>接下来呢，因为有个叫做「评审会」的相当重要的会议，所以我想移动到别的楼层去。</div>
         <div class="u-asr"><span class="tag-asr">还原</span>「次はですね」在原字幕中重复出现两次（可能是说话者重新组织语言时的重录），合并去重后只保留一次。</div>
         <ul class="u-points">
-          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 74 次 — 点击查看全部用例">33视频</a><span>接续助词，表原因，语气比「から」更客观委婉，常用于郑重场合说明理由。</span></li>
+          <li><span class="chip joshi">〜ので</span><a class="xref" href="concordance.html#q=〜ので" title="这个语法点在 33 个视频中共出现 73 次 — 点击查看全部用例">33视频</a><span>接续助词，表原因，语气比「から」更客观委婉，常用于郑重场合说明理由。</span></li>
           <li><span class="chip katsu">〜たいと思います<span class="star">★</span></span><a class="xref" href="concordance.html#q=〜たいと思います" title="这个语法点在 8 个视频中共出现 10 次 — 点击查看全部用例">8视频</a><span>「意向对象+たい+と思います」，礼貌地表达自己的意愿／打算，是日语中极常见的委婉表达方式。</span></li>
         </ul>
       </div>
@@ -8941,14 +8941,15 @@ c.complete=true;c.started=true;c.migration.complete=true;c.migration.enabled=tru
       return null;
     }
 
-    // A sentence end is optional: old pages and unmatched lines keep the established next-row
-    // fallback. Accept only finite ends that extend beyond the fallback's normal turn point; clamp
-    // to media duration so stale sidecars cannot hold the drill past EOF.
+    // A measured sentence end is optional: old pages and unmatched lines keep the established
+    // next-row fallback. Trust a valid measured end even when it precedes that fallback, because
+    // the next card may be several seconds later. Clamp to media duration so stale sidecars cannot
+    // hold the drill past EOF.
     function resolveLineEnd(lineStart, endRaw, nextStart, duration, lastLen){
       var fallback = (nextStart != null) ? nextStart
                    : (duration > lineStart ? duration : lineStart + lastLen);
       var end = parseFloat(endRaw);
-      if (isFinite(end) && end > lineStart + MIN_SPAN && end > fallback - LOOP_LEAD){
+      if (isFinite(end) && end > lineStart + MIN_SPAN){
         if (duration > lineStart) end = Math.min(end, duration);
         if (end > lineStart + MIN_SPAN)
           return { lineStart: lineStart, lineEnd: end, nextStart: nextStart, measured: true };
